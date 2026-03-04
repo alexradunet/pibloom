@@ -131,10 +131,19 @@ export default function (pi: ExtensionAPI) {
 	const gardenDir = getGardenDir();
 	const packageDir = getPackageDir();
 
-	pi.on("session_start", () => {
+	pi.on("session_start", (_event, ctx) => {
 		ensureGarden(gardenDir);
 		seedBlueprints(gardenDir, packageDir);
 		process.env._BLOOM_GARDEN_RESOLVED = gardenDir;
+
+		const versions = readBlueprintVersions(gardenDir);
+		const updates = Object.keys(versions.updatesAvailable);
+		if (updates.length > 0) {
+			ctx.ui.setWidget("bloom-updates", [
+				`${updates.length} blueprint update(s) available — /garden update-blueprints`,
+			]);
+		}
+		ctx.ui.setStatus("bloom-garden", `Garden: ${gardenDir}`);
 	});
 
 	pi.registerTool({

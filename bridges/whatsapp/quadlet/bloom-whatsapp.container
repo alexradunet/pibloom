@@ -22,13 +22,23 @@ Environment=NODE_ENV=production
 # Resource limits (~50MB expected)
 PodmanArgs=--memory=128m
 
+# Health check
+HealthCmd=node -e "process.exit(0)"
+HealthInterval=30s
+HealthRetries=3
+HealthTimeout=10s
+
+# Security hardening
+NoNewPrivileges=true
+DropCapability=ALL
+
 # Logging
 LogDriver=journald
 
 [Service]
 Restart=on-failure
 RestartSec=10
-TimeoutStartSec=30
+TimeoutStartSec=300
 
 [Install]
 WantedBy=default.target

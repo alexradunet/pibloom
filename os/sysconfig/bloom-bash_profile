@@ -1,0 +1,6 @@
+# Start Pi on interactive login
+if [ -t 0 ] && [ -z "$PI_SESSION" ]; then
+  export PI_SESSION=1
+  /usr/local/bin/bloom-greeting.sh
+  exec pi
+fi

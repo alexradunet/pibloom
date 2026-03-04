@@ -35,6 +35,10 @@ function loadPersona(): string {
 export default function (pi: ExtensionAPI) {
 	let personaBlock: string | undefined;
 
+	pi.on("session_start", () => {
+		pi.setSessionName("Bloom");
+	});
+
 	pi.on("before_agent_start", async (event) => {
 		if (personaBlock === undefined) {
 			personaBlock = loadPersona();

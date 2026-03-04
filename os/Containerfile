@@ -14,8 +14,9 @@ RUN dnf install -y \
     jq \
     && dnf clean all
 
-# Create bloom system user
-RUN useradd -r -m -d /var/lib/bloom -s /bin/bash -u 900 bloom
+# Create bloom system user via systemd-sysusers
+COPY os/sysconfig/bloom-sysusers.conf /usr/lib/sysusers.d/bloom.conf
+RUN systemd-sysusers
 
 # Install Pi coding agent globally
 RUN npm install -g @mariozechner/pi-coding-agent
@@ -24,10 +25,17 @@ RUN npm install -g @mariozechner/pi-coding-agent
 COPY . /usr/local/share/bloom/
 RUN cd /usr/local/share/bloom && npm install --production 2>/dev/null || true
 
-# Configure Pi to load Bloom package
-RUN mkdir -p /var/lib/bloom/.pi/agent && \
-    echo '{"packages": ["/usr/local/share/bloom"]}' > /var/lib/bloom/.pi/agent/settings.json && \
-    chown -R bloom:bloom /var/lib/bloom
+# Configure Pi settings defaults in /usr (immutable layer)
+RUN mkdir -p /usr/local/share/bloom/.pi/agent && \
+    echo '{"packages": ["/usr/local/share/bloom"]}' > /usr/local/share/bloom/.pi/agent/settings.json
+
+# Shell config skel in /usr (immutable layer)
+COPY os/sysconfig/bloom-bashrc /usr/local/share/bloom/skel/.bashrc
+COPY os/sysconfig/bloom-bash_profile /usr/local/share/bloom/skel/.bash_profile
+
+# tmpfiles.d for /var directory structure (created at boot)
+COPY os/sysconfig/bloom-tmpfiles.conf /usr/lib/tmpfiles.d/bloom.conf
+RUN systemd-tmpfiles --create
 
 # Install persona files
 RUN mkdir -p /usr/local/share/bloom/persona
@@ -39,19 +47,8 @@ COPY bridges/whatsapp/quadlet/ /usr/share/containers/systemd/
 COPY os/sysconfig/bloom-greeting.sh /usr/local/bin/bloom-greeting.sh
 RUN chmod +x /usr/local/bin/bloom-greeting.sh
 
-# Add bloom user to necessary groups
-RUN usermod -aG systemd-journal bloom
-
-# Set default environment
-RUN echo 'export BLOOM_GARDEN_DIR=/var/lib/bloom/Garden' >> /var/lib/bloom/.bashrc && \
-    echo 'export PATH="/usr/local/share/bloom/node_modules/.bin:$PATH"' >> /var/lib/bloom/.bashrc && \
-    echo '# Start Pi on interactive login' >> /var/lib/bloom/.bash_profile && \
-    echo 'if [ -t 0 ] && [ -z "$PI_SESSION" ]; then' >> /var/lib/bloom/.bash_profile && \
-    echo '  export PI_SESSION=1' >> /var/lib/bloom/.bash_profile && \
-    echo '  /usr/local/bin/bloom-greeting.sh' >> /var/lib/bloom/.bash_profile && \
-    echo '  exec pi' >> /var/lib/bloom/.bash_profile && \
-    echo 'fi' >> /var/lib/bloom/.bash_profile && \
-    chown bloom:bloom /var/lib/bloom/.bashrc /var/lib/bloom/.bash_profile
+# Validate bootc image
+RUN bootc container lint
 
 # Labels
 LABEL com.github.containers.toolbox="false"

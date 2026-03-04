@@ -8,9 +8,11 @@ Bloom is a Pi package that turns a Fedora bootc machine into a personal AI compa
 
 | Extension | Purpose | LOC |
 |-----------|---------|-----|
-| `bloom-persona` | Identity injection, safety guardrails, compaction guidance | ~66 |
+| `bloom-persona` | Identity injection, safety guardrails, compaction guidance | ~84 |
 | `bloom-os` | bootc, Podman, systemd management tools | ~238 |
-| `bloom-memory` | Flat-file object store (YAML frontmatter + Markdown) | ~287 |
+| `bloom-memory` | Flat-file object store (YAML frontmatter + Markdown) | ~648 |
+| `bloom-garden` | Garden vault initialization, blueprint seeding and updates | ~214 |
+| `bloom-channels` | Channel bridge socket server, topic management | ~320 |
 
 ## Skills
 
@@ -37,5 +39,5 @@ pi install /path/to/bloom
 
 Or for development:
 ```bash
-pi -e ./extensions/bloom-persona.ts -e ./extensions/bloom-os.ts -e ./extensions/bloom-memory.ts
+pi -e ./extensions/bloom-persona.ts -e ./extensions/bloom-os.ts -e ./extensions/bloom-memory.ts -e ./extensions/bloom-garden.ts -e ./extensions/bloom-channels.ts
 ```

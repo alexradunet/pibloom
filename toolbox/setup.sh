@@ -55,6 +55,7 @@ toolbox run --container "$CONTAINER" bash -c '
 	echo "── Biome: $(biome --version)"
 	echo "── just: $(just --version)"
 	echo "── Claude Code: $(claude --version 2>/dev/null || echo "installed")"
+	echo "── Pi: $(pi --version 2>/dev/null || echo "installed")"
 	echo "── VS Code: $(code --version 2>/dev/null | head -1)"
 	echo "── QEMU: $(qemu-system-x86_64 --version | head -1)"
 	echo "── Podman: $(podman --version)"

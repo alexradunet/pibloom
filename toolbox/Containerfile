@@ -43,6 +43,7 @@ RUN curl -fsSL https://rpm.nodesource.com/setup_22.x | bash - \
 # ── Global npm tools ─────────────────────────────────────────────
 RUN npm install -g \
     @anthropic-ai/claude-code \
+    @mariozechner/pi-coding-agent \
     @biomejs/biome \
     typescript
 
@@ -56,4 +57,4 @@ RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc \
 LABEL com.github.containers.toolbox="true" \
       name="bloom-dev-toolbox" \
       version="1.0" \
-      description="Bloom development environment with Node.js, VS Code, Claude Code, QEMU"
+      description="Bloom development environment with Node.js, VS Code, Claude Code, Pi, QEMU"

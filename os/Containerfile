@@ -3,20 +3,41 @@
 # Install: sudo bootc install to-disk /dev/sdX --source-imgref containers-storage:bloom-os:latest
 FROM quay.io/fedora/fedora-bootc:42
 
-# System packages
+# System + development packages
 RUN dnf install -y \
-    podman \
-    nodejs \
-    npm \
-    git \
-    gh \
     syncthing \
+    git \
+    git-lfs \
+    gh \
     ripgrep \
     fd-find \
     jq \
+    bat \
+    htop \
+    just \
+    ShellCheck \
+    openssl \
+    openssh-clients \
     curl \
+    wget \
+    unzip \
+    libatomic \
+    podman \
+    buildah \
+    skopeo \
+    qemu-system-x86 \
+    edk2-ovmf \
+    nodejs \
+    npm \
     && dnf clean all \
     && rm -rf /var/cache/libdnf5 /var/lib/dnf /var/log/dnf5.log /var/log/dnf.log /var/cache/ldconfig/aux-cache
+
+# Install VS Code (Microsoft repo)
+RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc && \
+    printf "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc\n" > /etc/yum.repos.d/vscode.repo && \
+    dnf install -y code && \
+    dnf clean all && \
+    rm -rf /var/cache/libdnf5 /var/lib/dnf /var/log/dnf5.log /var/log/dnf.log /var/cache/ldconfig/aux-cache
 
 # Install oras CLI for OCI artifact management
 RUN curl -LO https://github.com/oras-project/oras/releases/download/v1.2.2/oras_1.2.2_linux_amd64.tar.gz && \
@@ -27,9 +48,13 @@ RUN curl -LO https://github.com/oras-project/oras/releases/download/v1.2.2/oras_
 COPY os/sysconfig/bloom-sysusers.conf /usr/lib/sysusers.d/bloom.conf
 RUN systemd-sysusers
 
-# Install Pi coding agent globally (keep npm cache out of /var for bootc lint)
-RUN HOME=/tmp npm install -g --cache /tmp/npm-cache @mariozechner/pi-coding-agent && \
-    rm -rf /tmp/npm-cache /var/roothome/.npm /root/.npm
+# Install global CLI tooling (keep npm cache out of /var for bootc lint)
+RUN HOME=/tmp npm install -g --cache /tmp/npm-cache \
+    @anthropic-ai/claude-code \
+    @mariozechner/pi-coding-agent \
+    @biomejs/biome \
+    typescript \
+    && rm -rf /tmp/npm-cache /var/roothome/.npm /root/.npm
 
 # Install Bloom Pi package
 COPY . /usr/local/share/bloom/

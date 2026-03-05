@@ -224,6 +224,10 @@ export default function (pi: ExtensionAPI) {
 	// --- Dynamic skill discovery ---
 
 	pi.on("resources_discover", () => {
+		// Ensure seeded Garden skills exist before skill discovery runs.
+		ensureGarden(gardenDir);
+		seedBlueprints(gardenDir, packageDir);
+
 		const skillsDir = path.join(gardenDir, "Bloom", "Skills");
 		if (!fs.existsSync(skillsDir)) return;
 		return { skillPaths: [skillsDir] };

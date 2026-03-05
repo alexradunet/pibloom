@@ -29,6 +29,9 @@ RUN curl -LO https://github.com/oras-project/oras/releases/download/v${ORAS_VERS
 COPY os/sysconfig/bloom-sysusers.conf /usr/lib/sysusers.d/bloom.conf
 RUN systemd-sysusers
 
+# bootc images have /root -> /var/roothome; ensure it exists during build
+RUN mkdir -p /var/roothome
+
 # Install Pi coding agent globally (pinned version, no post-install scripts)
 ARG PI_VERSION=0.56.1
 RUN npm install -g --ignore-scripts @mariozechner/pi-coding-agent@${PI_VERSION}

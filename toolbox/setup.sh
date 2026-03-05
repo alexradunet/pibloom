@@ -49,6 +49,12 @@ fi
 # ── Post-create setup (runs inside the toolbox) ──────────────────
 blue "Running post-create setup..."
 toolbox run --container "$CONTAINER" bash -c '
+	if command -v flatpak-spawn >/dev/null 2>&1; then
+		if ! grep -Fq "alias podman=\"flatpak-spawn --host podman\"" ~/.bashrc 2>/dev/null; then
+			echo "alias podman=\"flatpak-spawn --host podman\"" >> ~/.bashrc
+		fi
+	fi
+
 	echo "── Node.js: $(node --version)"
 	echo "── npm: $(npm --version)"
 	echo "── TypeScript: $(tsc --version)"
@@ -59,6 +65,7 @@ toolbox run --container "$CONTAINER" bash -c '
 	echo "── VS Code: $(code --version 2>/dev/null | head -1)"
 	echo "── QEMU: $(qemu-system-x86_64 --version | head -1)"
 	echo "── Podman: $(podman --version)"
+	echo "── Podman alias: $(grep -F "alias podman=" ~/.bashrc 2>/dev/null | tail -1 || echo "not set")"
 '
 
 echo ""

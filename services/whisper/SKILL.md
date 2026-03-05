@@ -38,7 +38,7 @@ curl -sf http://localhost:9000/health
 Whisper is socket-activated via `bloom-whisper.socket`:
 
 ```bash
-systemctl --user enable --now bloom-whisper.socket
+systemctl --user start bloom-whisper.socket
 ```
 
 The container starts on first request to `localhost:9000`.

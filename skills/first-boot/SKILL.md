@@ -17,6 +17,7 @@ If `~/.bloom/.setup-complete` exists, setup is already complete. Skip unless use
 - Let user skip/defer steps
 - Prefer Bloom tools over long shell copy-paste blocks
 - Clarify tool-vs-shell: `service_install`, `bloom_repo_configure`, etc. are Pi tools (not bash commands)
+- On fresh Bloom OS, user `bloom` has passwordless `sudo` for bootstrap tasks.
 
 ## Setup Steps
 

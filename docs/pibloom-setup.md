@@ -9,6 +9,8 @@ This guide is for the first interactive session on a freshly installed Bloom OS 
 
 If `~/.bloom/.setup-complete` exists, first-boot was already completed.
 
+Fresh Bloom OS images grant user `bloom` passwordless `sudo` for bootstrap operations.
+
 ## 1) LLM provider and API key
 
 Configure your preferred provider in Pi (OpenAI, Anthropic, etc.) and validate with a short prompt.

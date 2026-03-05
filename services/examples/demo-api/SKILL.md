@@ -36,7 +36,7 @@ cp services/examples/demo-api/quadlet/* ~/.config/containers/systemd/
 mkdir -p ~/Garden/Bloom/Skills/demo-api
 cp services/examples/demo-api/SKILL.md ~/Garden/Bloom/Skills/demo-api/SKILL.md
 systemctl --user daemon-reload
-systemctl --user enable --now bloom-demo-api
+systemctl --user start bloom-demo-api.service
 ```
 
 ## Notes

@@ -43,15 +43,17 @@ Or manually:
 ```bash
 mkdir -p /tmp/bloom-svc
 oras pull ghcr.io/pibloom/bloom-svc-{name}:{version} -o /tmp/bloom-svc/
-cp /tmp/bloom-svc/quadlet/* ~/.config/containers/systemd/
+mkdir -p ~/.config/containers/systemd ~/.config/systemd/user
+find /tmp/bloom-svc/quadlet -maxdepth 1 -type f -name '*.socket' -exec cp {} ~/.config/systemd/user/ \;
+find /tmp/bloom-svc/quadlet -maxdepth 1 -type f ! -name '*.socket' -exec cp {} ~/.config/containers/systemd/ \;
 [ -f ~/.config/containers/systemd/bloom.network ] || cp /usr/local/share/bloom/os/sysconfig/bloom.network ~/.config/containers/systemd/bloom.network 2>/dev/null || cp os/sysconfig/bloom.network ~/.config/containers/systemd/bloom.network
 mkdir -p ~/Garden/Bloom/Skills/{name}
 cp /tmp/bloom-svc/SKILL.md ~/Garden/Bloom/Skills/{name}/SKILL.md
 systemctl --user daemon-reload
-if [ -f ~/.config/containers/systemd/bloom-{name}.socket ]; then
-  systemctl --user enable --now bloom-{name}.socket
+if [ -f ~/.config/systemd/user/bloom-{name}.socket ]; then
+  systemctl --user start bloom-{name}.socket
 else
-  systemctl --user enable --now bloom-{name}
+  systemctl --user start bloom-{name}.service
 fi
 rm -rf /tmp/bloom-svc
 ```

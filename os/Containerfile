@@ -5,6 +5,7 @@ FROM quay.io/fedora/fedora-bootc:42@sha256:88db1a4a445e904a40187fc23594500a0671a
 
 # System + development packages
 RUN dnf install -y \
+    sudo \
     git \
     git-lfs \
     gh \
@@ -51,6 +52,10 @@ RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc && \
 # Create bloom system user via systemd-sysusers
 COPY os/sysconfig/bloom-sysusers.conf /usr/lib/sysusers.d/bloom.conf
 RUN systemd-sysusers
+
+# First-boot sudo access for the bloom user (non-interactive setup tasks).
+COPY os/sysconfig/bloom-sudoers /etc/sudoers.d/10-bloom-firstboot
+RUN chmod 0440 /etc/sudoers.d/10-bloom-firstboot
 
 # Rootless Podman prerequisite: subordinate UID/GID ranges for user namespaces
 RUN printf "bloom:100000:65536\n" >> /etc/subuid && \

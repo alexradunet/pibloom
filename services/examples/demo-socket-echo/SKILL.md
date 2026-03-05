@@ -24,9 +24,11 @@ Use this as a reference when creating new socket-activated services.
 ## Local Install (reference only)
 
 ```bash
-cp services/examples/demo-socket-echo/quadlet/* ~/.config/containers/systemd/
+mkdir -p ~/.config/containers/systemd ~/.config/systemd/user
+cp services/examples/demo-socket-echo/quadlet/bloom-demo-socket-echo.container ~/.config/containers/systemd/
+cp services/examples/demo-socket-echo/quadlet/bloom-demo-socket-echo.socket ~/.config/systemd/user/
 mkdir -p ~/Garden/Bloom/Skills/demo-socket-echo
 cp services/examples/demo-socket-echo/SKILL.md ~/Garden/Bloom/Skills/demo-socket-echo/SKILL.md
 systemctl --user daemon-reload
-systemctl --user enable --now bloom-demo-socket-echo.socket
+systemctl --user start bloom-demo-socket-echo.socket
 ```

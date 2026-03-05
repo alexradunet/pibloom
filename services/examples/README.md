@@ -17,11 +17,12 @@ This folder contains worked reference packages for Bloom service lifecycle patte
 ### 1) Standard example: `demo-api`
 
 ```bash
+mkdir -p ~/.config/containers/systemd
 cp services/examples/demo-api/quadlet/* ~/.config/containers/systemd/
 mkdir -p ~/Garden/Bloom/Skills/demo-api
 cp services/examples/demo-api/SKILL.md ~/Garden/Bloom/Skills/demo-api/SKILL.md
 systemctl --user daemon-reload
-systemctl --user enable --now bloom-demo-api
+systemctl --user start bloom-demo-api.service
 systemctl --user status bloom-demo-api --no-pager
 curl -s http://localhost:9080
 ```
@@ -29,11 +30,13 @@ curl -s http://localhost:9080
 ### 2) Socket reference: `demo-socket-echo`
 
 ```bash
-cp services/examples/demo-socket-echo/quadlet/* ~/.config/containers/systemd/
+mkdir -p ~/.config/containers/systemd ~/.config/systemd/user
+cp services/examples/demo-socket-echo/quadlet/bloom-demo-socket-echo.container ~/.config/containers/systemd/
+cp services/examples/demo-socket-echo/quadlet/bloom-demo-socket-echo.socket ~/.config/systemd/user/
 mkdir -p ~/Garden/Bloom/Skills/demo-socket-echo
 cp services/examples/demo-socket-echo/SKILL.md ~/Garden/Bloom/Skills/demo-socket-echo/SKILL.md
 systemctl --user daemon-reload
-systemctl --user enable --now bloom-demo-socket-echo.socket
+systemctl --user start bloom-demo-socket-echo.socket
 systemctl --user status bloom-demo-socket-echo.socket --no-pager
 ```
 
@@ -42,12 +45,12 @@ systemctl --user status bloom-demo-socket-echo.socket --no-pager
 Run after testing to remove demo services:
 
 ```bash
-systemctl --user disable --now bloom-demo-api 2>/dev/null || true
-systemctl --user disable --now bloom-demo-socket-echo.socket 2>/dev/null || true
-systemctl --user disable --now bloom-demo-socket-echo 2>/dev/null || true
+systemctl --user stop bloom-demo-api.service 2>/dev/null || true
+systemctl --user stop bloom-demo-socket-echo.socket 2>/dev/null || true
+systemctl --user stop bloom-demo-socket-echo.service 2>/dev/null || true
 rm -f ~/.config/containers/systemd/bloom-demo-api.container
 rm -f ~/.config/containers/systemd/bloom-demo-socket-echo.container
-rm -f ~/.config/containers/systemd/bloom-demo-socket-echo.socket
+rm -f ~/.config/systemd/user/bloom-demo-socket-echo.socket
 rm -rf ~/Garden/Bloom/Skills/demo-api
 rm -rf ~/Garden/Bloom/Skills/demo-socket-echo
 systemctl --user daemon-reload

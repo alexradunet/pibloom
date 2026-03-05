@@ -32,6 +32,7 @@ For multi-device code contribution and PR flow, see `docs/fleet-pr-workflow.md`,
 | `bloom-garden` | Garden vault, blueprint seeding, skill creation, persona evolution | ~310 |
 | `bloom-channels` | Channel bridge Unix socket server, WhatsApp command | ~193 |
 | `bloom-topics` | Topic management, /topic command, topic guidance | ~140 |
+| `bloom-weather` | Weather retrieval via Open-Meteo with wttr fallback | ~230 |
 
 ## Skills
 
@@ -42,6 +43,7 @@ For multi-device code contribution and PR flow, see `docs/fleet-pr-workflow.md`,
 | `self-evolution` | Structured system change workflow |
 | `service-management` | Install, manage, and discover OCI service packages |
 | `first-boot` | One-time system setup guide |
+| `weather` | Current weather retrieval by city or coordinates |
 
 ## Services (OCI Packages)
 

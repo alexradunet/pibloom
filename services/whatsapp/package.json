@@ -8,6 +8,7 @@
 		"build": "tsc",
 		"test": "vitest run",
 		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
 		"start": "node dist/transport.js"
 	},
 	"dependencies": {
@@ -18,6 +19,7 @@
 	"devDependencies": {
 		"@types/node": "^22.0.0",
 		"@types/qrcode-terminal": "^0.12.2",
+		"@vitest/coverage-v8": "^4.0.18",
 		"typescript": "^5.7.0",
 		"vitest": "^4.0.18"
 	}

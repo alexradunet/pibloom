@@ -50,9 +50,7 @@ describe("bloom-channels registration", () => {
 
 		expect(toolNames(api)).toEqual([]);
 		expect(commandNames(api)).toEqual(["wa"]);
-		expect(eventNames(api)).toEqual(
-			expect.arrayContaining(["session_start", "agent_end", "session_shutdown"]),
-		);
+		expect(eventNames(api)).toEqual(expect.arrayContaining(["session_start", "agent_end", "session_shutdown"]));
 	});
 });
 
@@ -121,12 +119,8 @@ describe("bloom-os registration", () => {
 		const api = createMockExtensionAPI();
 		mod.default(api as never);
 
-		expect(toolNames(api)).toEqual(
-			expect.arrayContaining(["bootc_status", "bootc_update", "bootc_rollback"]),
-		);
-		expect(eventNames(api)).toEqual(
-			expect.arrayContaining(["session_start", "before_agent_start"]),
-		);
+		expect(toolNames(api)).toEqual(expect.arrayContaining(["bootc_status", "bootc_update", "bootc_rollback"]));
+		expect(eventNames(api)).toEqual(expect.arrayContaining(["session_start", "before_agent_start"]));
 	});
 });
 
@@ -142,12 +136,7 @@ describe("bloom-persona registration", () => {
 		expect(toolNames(api)).toEqual([]);
 		expect(commandNames(api)).toEqual([]);
 		expect(eventNames(api)).toEqual(
-			expect.arrayContaining([
-				"session_start",
-				"before_agent_start",
-				"tool_call",
-				"session_before_compact",
-			]),
+			expect.arrayContaining(["session_start", "before_agent_start", "tool_call", "session_before_compact"]),
 		);
 	});
 });
@@ -162,12 +151,7 @@ describe("bloom-services registration", () => {
 		mod.default(api as never);
 
 		expect(toolNames(api)).toEqual(
-			expect.arrayContaining([
-				"service_scaffold",
-				"service_publish",
-				"service_install",
-				"service_test",
-			]),
+			expect.arrayContaining(["service_scaffold", "service_publish", "service_install", "service_test"]),
 		);
 		expect(eventNames(api)).toEqual(expect.arrayContaining(["session_start"]));
 	});
@@ -184,8 +168,6 @@ describe("bloom-topics registration", () => {
 
 		expect(toolNames(api)).toEqual([]);
 		expect(commandNames(api)).toEqual(["topic"]);
-		expect(eventNames(api)).toEqual(
-			expect.arrayContaining(["session_start", "before_agent_start"]),
-		);
+		expect(eventNames(api)).toEqual(expect.arrayContaining(["session_start", "before_agent_start"]));
 	});
 });

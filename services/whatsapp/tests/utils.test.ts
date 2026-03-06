@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { isChannelMessage, makeLogger, MEDIA_TYPES, mimeToExt } from "../src/utils.js";
 
 // ---------------------------------------------------------------------------
@@ -102,5 +102,60 @@ describe("makeLogger", () => {
 		expect(typeof child.trace).toBe("function");
 		expect(typeof child.warn).toBe("function");
 		expect(typeof child.child).toBe("function");
+	});
+
+	it("warn logs to console.warn with message", () => {
+		const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const logger = makeLogger();
+		logger.warn({}, "test warning");
+		expect(spy).toHaveBeenCalledWith("[wa:warn]", "test warning");
+		spy.mockRestore();
+	});
+
+	it("warn uses obj when message is omitted", () => {
+		const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const logger = makeLogger();
+		logger.warn("fallback warning");
+		expect(spy).toHaveBeenCalledWith("[wa:warn]", "fallback warning");
+		spy.mockRestore();
+	});
+
+	it("error logs to console.error with message", () => {
+		const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+		const logger = makeLogger();
+		logger.error({}, "test error");
+		expect(spy).toHaveBeenCalledWith("[wa:error]", "test error");
+		spy.mockRestore();
+	});
+
+	it("error uses obj when message is omitted", () => {
+		const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+		const logger = makeLogger();
+		logger.error("fallback error");
+		expect(spy).toHaveBeenCalledWith("[wa:error]", "fallback error");
+		spy.mockRestore();
+	});
+
+	it("fatal logs to console.error with message", () => {
+		const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+		const logger = makeLogger();
+		logger.fatal({}, "test fatal");
+		expect(spy).toHaveBeenCalledWith("[wa:fatal]", "test fatal");
+		spy.mockRestore();
+	});
+
+	it("fatal uses obj when message is omitted", () => {
+		const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+		const logger = makeLogger();
+		logger.fatal("fallback fatal");
+		expect(spy).toHaveBeenCalledWith("[wa:fatal]", "fallback fatal");
+		spy.mockRestore();
+	});
+
+	it("noop methods do not throw", () => {
+		const logger = makeLogger();
+		expect(() => logger.trace("test")).not.toThrow();
+		expect(() => logger.debug("test")).not.toThrow();
+		expect(() => logger.info("test")).not.toThrow();
 	});
 });

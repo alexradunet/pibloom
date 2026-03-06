@@ -1,22 +1,36 @@
 # Bloom OS Quick Deploy & Installation
 
+> 📖 [Emoji Legend](LEGEND.md)
+
 This guide covers the fastest dev path (QEMU) and production-style installation options.
 
-## Option A — QEMU (fastest for development)
+```mermaid
+flowchart TD
+    Start([🚀 Deploy Bloom OS]) --> Q1{Development?}
+    Q1 -->|Yes| QEMU[💻 Option A: QEMU<br/>just build → just qcow2 → just vm]
+    Q1 -->|No| Q2{Bare metal / VM?}
+    Q2 -->|Yes| ISO[💻 Option B: Installer ISO<br/>just iso]
+    Q2 -->|No| Bootc[💻 Option C: bootc install<br/>Direct to disk]
+    QEMU --> Setup[🚀 First Boot Setup]
+    ISO --> Setup
+    Bootc --> Setup
+```
 
-### 1) Install host dependencies (Fedora)
+## 💻 Option A — QEMU (fastest for development)
+
+### 🚀 1) Install host dependencies (Fedora)
 
 ```bash
 sudo dnf install -y just qemu-system-x86 edk2-ovmf podman
 ```
 
-### 2) Build Bloom OS image
+### 🚀 2) Build Bloom OS image
 
 ```bash
 just build
 ```
 
-### 3) Generate VM disk (qcow2)
+### 🚀 3) Generate VM disk (qcow2)
 
 ```bash
 just qcow2
@@ -26,7 +40,7 @@ Output:
 
 - `os/output/qcow2/disk.qcow2`
 
-### 4) Boot VM
+### 🚀 4) Boot VM
 
 ```bash
 just vm
@@ -43,7 +57,7 @@ Headless mode:
 just vm-serial
 ```
 
-### 5) Log in
+### 🚀 5) Log in
 
 Default user comes from `os/bib-config.toml`:
 
@@ -52,13 +66,13 @@ Default user comes from `os/bib-config.toml`:
 
 If you want password auth, configure it explicitly in your bootc-image-builder config and rebuild.
 
-### 6) Run first-boot setup
+### 🚀 6) Run first-boot setup
 
 Follow the setup guide:
 
 - `docs/pibloom-setup.md`
 
-### 7) Stop VM
+### 🚀 7) Stop VM
 
 ```bash
 just vm-kill
@@ -66,7 +80,7 @@ just vm-kill
 
 ---
 
-## Option B — Installer ISO (VM manager / bare metal)
+## 💻 Option B — Installer ISO (VM manager / bare metal)
 
 Build installer media:
 
@@ -84,7 +98,7 @@ just iso-production
 
 ---
 
-## Option C — Direct bootc install (advanced)
+## 💻 Option C — Direct bootc install (advanced)
 
 After building locally, install directly to a disk:
 
@@ -96,7 +110,7 @@ Replace `/dev/sdX` with the target disk.
 
 ---
 
-## Optional: Remote desktop (Sway + wayvnc)
+## 💻 Optional: Remote desktop (Sway + wayvnc)
 
 Bloom OS boots to `graphical.target` with `greetd` and starts a Sway session for user `bloom`.
 The Sway config starts `wayvnc` on `127.0.0.1:5901`.
@@ -108,3 +122,9 @@ ssh -N -L 5901:127.0.0.1:5901 bloom@<host>
 ```
 
 Then connect your VNC client to `localhost:5901`.
+
+## 🔗 Related
+
+- [Emoji Legend](LEGEND.md) — Notation reference
+- [First Boot Setup](pibloom-setup.md) — Initial configuration guide
+- [Service Architecture](service-architecture.md) — Extensibility hierarchy details

@@ -1,3 +1,10 @@
+/**
+ * 💻 bloom-os — OS management, bootc lifecycle, containers, systemd, repo management.
+ *
+ * @tools bootc_status, bootc_update, bootc_rollback, container_status, container_logs, container_deploy, systemd_control, system_health, update_status, schedule_reboot, bloom_repo_configure, bloom_repo_sync, bloom_repo_submit_pr, bloom_repo_status, manifest_show, manifest_sync, manifest_set_service, manifest_apply
+ * @hooks session_start, before_agent_start
+ * @see {@link ../AGENTS.md#bloom-os} Extension reference
+ */
 import { execFile } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import {

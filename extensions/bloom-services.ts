@@ -1,3 +1,10 @@
+/**
+ * 📦 bloom-services — Service lifecycle: scaffold, publish, install, and test OCI service packages.
+ *
+ * @tools service_scaffold, service_publish, service_install, service_test
+ * @hooks session_start
+ * @see {@link ../AGENTS.md#bloom-services} Extension reference
+ */
 import { execFile } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";

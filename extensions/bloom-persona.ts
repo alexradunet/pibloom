@@ -1,3 +1,9 @@
+/**
+ * 🧩 bloom-persona — Identity injection, safety guardrails, compaction context.
+ *
+ * @hooks session_start, before_agent_start, tool_call, session_before_compact
+ * @see {@link ../AGENTS.md#bloom-persona} Extension reference
+ */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import os from "node:os";
@@ -10,17 +16,20 @@ import { getGardenDir } from "../lib/shared.js";
 const require = createRequire(import.meta.url);
 const yaml: { load: (str: string) => unknown } = require("js-yaml");
 
+/** A single guardrail regex pattern with its human-readable label. */
 interface GuardrailPattern {
 	pattern: string;
 	label: string;
 }
 
+/** A guardrail rule binding patterns to a tool action. */
 interface GuardrailRule {
 	tool: string;
 	action: "block";
 	patterns: GuardrailPattern[];
 }
 
+/** Top-level guardrails configuration loaded from guardrails.yaml. */
 interface GuardrailsConfig {
 	rules: GuardrailRule[];
 }

@@ -1,3 +1,10 @@
+/**
+ * 📡 bloom-channels — Channel bridge Unix socket server at /run/bloom/channels.sock.
+ *
+ * @commands /wa (send message to WhatsApp channel)
+ * @hooks session_start, agent_end, session_shutdown
+ * @see {@link ../AGENTS.md#bloom-channels} Extension reference
+ */
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync, unlinkSync } from "node:fs";
 import { createServer, type Server, type Socket } from "node:net";
@@ -15,6 +22,7 @@ import { createLogger } from "../lib/shared.js";
 
 const log = createLogger("bloom-channels");
 
+/** State tracking for a connected channel bridge socket. */
 interface ChannelInfo {
 	socket: Socket;
 	connected: boolean;
@@ -25,6 +33,7 @@ interface ChannelInfo {
 	rateTimer?: ReturnType<typeof setInterval>;
 }
 
+/** Context attached to a pending inbound channel message awaiting response. */
 interface ChannelContext {
 	channel: string;
 	from: string;

@@ -1,3 +1,10 @@
+/**
+ * 🗂️ bloom-objects — Flat-file object store with YAML frontmatter in the Garden vault.
+ *
+ * @tools memory_create, memory_read, memory_search, memory_link, memory_list, memory_move, garden_reindex
+ * @hooks session_start
+ * @see {@link ../AGENTS.md#bloom-objects} Extension reference
+ */
 import fs from "node:fs";
 import path from "node:path";
 import { StringEnum } from "@mariozechner/pi-ai";
@@ -16,6 +23,7 @@ import {
 
 // --- In-memory index ---
 
+/** In-memory index entry for a Garden vault object. */
 interface IndexEntry {
 	ref: string;
 	path: string;

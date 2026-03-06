@@ -1,3 +1,9 @@
+/**
+ * 📓 bloom-journal — Daily journal entries at ~/Garden/Journal/{YYYY}/{MM}/{YYYY-MM-DD}.md.
+ *
+ * @tools journal_write, journal_read
+ * @see {@link ../AGENTS.md#bloom-journal} Extension reference
+ */
 import fs from "node:fs";
 import path from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";

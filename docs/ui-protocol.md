@@ -1,5 +1,7 @@
 # Bloom UI Protocol (v0.1)
 
+> 📖 [Emoji Legend](LEGEND.md)
+
 ## Status
 - **Owner:** Bloom core
 - **Date:** 2026-03-05
@@ -8,7 +10,7 @@
 
 ---
 
-## 1) Purpose
+## 1) 🌱 Purpose
 
 Define how the Bloom web UI communicates with Pi for:
 - reading system state
@@ -20,7 +22,7 @@ This protocol is local-first and optimized for reliability, auditability, and si
 
 ---
 
-## 2) Design Goals
+## 2) 🌱 Design Goals
 
 1. **Headless-first:** usable from phone/laptop browser without HDMI.
 2. **API-driven ops:** no GUI click automation; real operations go through system APIs/tools.
@@ -30,9 +32,9 @@ This protocol is local-first and optimized for reliability, auditability, and si
 
 ---
 
-## 3) Protocol Surfaces
+## 3) 📡 Protocol Surfaces
 
-## 3.1 HTTP JSON API
+## 3.1 📡 HTTP JSON API
 
 Used for:
 - initial state bootstrap
@@ -46,7 +48,7 @@ Base path:
 Content type:
 - `application/json`
 
-## 3.2 WebSocket Event Stream
+## 3.2 📡 WebSocket Event Stream
 
 Used for:
 - live action updates
@@ -60,9 +62,26 @@ Direction:
 - server -> client events (primary)
 - client -> server control frames (`ack`, `pong`)
 
+```mermaid
+sequenceDiagram
+    participant Client as 🖥️ Browser
+    participant Server as 🌱 Bloom UI
+
+    Client->>Server: WebSocket connect /api/v1/stream
+    Server-->>Client: hello (protocol_version, server_time)
+    Server-->>Client: snapshot (system status, pending counts)
+    Client->>Server: subscribe (topics)
+    loop Event Stream
+        Server-->>Client: event (action.updated, system.updated, ...)
+        Client-->>Server: ack (event_id)
+    end
+    Server->>Client: ping
+    Client-->>Server: pong
+```
+
 ---
 
-## 4) Authentication & Session (v0.1)
+## 4) 🛡️ Authentication & Session (v0.1)
 
 1. User pairs once (pairing code / local setup flow).
 2. UI receives short-lived session token (cookie or bearer).
@@ -73,9 +92,9 @@ Direction:
 
 ---
 
-## 5) Resource Model
+## 5) 🗂️ Resource Model
 
-## 5.1 Envelope
+## 5.1 🗂️ Envelope
 
 All HTTP responses use:
 
@@ -91,7 +110,7 @@ All HTTP responses use:
 }
 ```
 
-## 5.2 Core Resources
+## 5.2 🗂️ Core Resources
 
 - `system` — health + host status summary
 - `services` — Bloom-managed services
@@ -101,9 +120,9 @@ All HTTP responses use:
 
 ---
 
-## 6) HTTP Endpoints (v0.1)
+## 6) 📡 HTTP Endpoints (v0.1)
 
-## 6.1 API Root (discovery)
+## 6.1 📡 API Root (discovery)
 
 `GET /api/v1`
 
@@ -125,19 +144,19 @@ All HTTP responses use:
 }
 ```
 
-## 6.2 System Overview
+## 6.2 💻 System Overview
 
 `GET /api/v1/system`
 
 Returns summary state (health, load, memory, update status, etc.).
 
-## 6.3 Services
+## 6.3 📦 Services
 
 `GET /api/v1/services`
 
 Returns Bloom services and statuses.
 
-## 6.4 Actions
+## 6.4 🗂️ Actions
 
 `GET /api/v1/actions?status=pending|running|succeeded|failed&limit=50`
 
@@ -157,7 +176,7 @@ Request example:
 Response:
 - `202 Accepted` with created action record.
 
-## 6.5 Confirmations
+## 6.5 🛡️ Confirmations
 
 `GET /api/v1/confirmations`
 
@@ -176,7 +195,7 @@ Request:
 - `approve`
 - `reject`
 
-## 6.6 Network (minimal)
+## 6.6 📡 Network (minimal)
 
 `GET /api/v1/network`
 
@@ -193,7 +212,18 @@ Optional v0.1 write operation (if backend support is ready):
 
 ---
 
-## 7) Action Lifecycle
+## 7) 🗂️ Action Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending: Action created
+    pending --> waiting_confirmation: Sensitive action
+    pending --> running: Non-sensitive action
+    waiting_confirmation --> running: User approves
+    waiting_confirmation --> cancelled: User rejects
+    running --> succeeded: Completed OK
+    running --> failed: Error occurred
+```
 
 Action object:
 
@@ -226,9 +256,9 @@ Sensitive actions MUST enter `waiting_confirmation` before execution.
 
 ---
 
-## 8) WebSocket Frames
+## 8) 📡 WebSocket Frames
 
-## 8.1 Server -> Client
+## 8.1 📡 Server -> Client
 
 ### hello
 
@@ -283,7 +313,7 @@ Supported `event_type` values (v0.1):
 {"type":"ping","ts":"2026-03-05T14:12:10Z"}
 ```
 
-## 8.2 Client -> Server
+## 8.2 📡 Client -> Server
 
 ### ack
 
@@ -311,7 +341,7 @@ Supported `event_type` values (v0.1):
 
 ---
 
-## 9) Error Model
+## 9) 🛡️ Error Model
 
 HTTP errors:
 
@@ -341,7 +371,7 @@ Common codes:
 
 ---
 
-## 10) Safety Rules (Normative)
+## 10) 🛡️ Safety Rules (Normative)
 
 The following operations MUST require confirmation before execution:
 - reboot scheduling
@@ -358,12 +388,12 @@ All confirmation decisions MUST be audit logged with:
 
 ---
 
-## 11) HATEOAS Decision (v0.1)
+## 11) 📖 HATEOAS Decision (v0.1)
 
-## Question
+## 📖 Question
 Should Bloom implement textbook HATEOAS strictly?
 
-## Decision
+## 📖 Decision
 Use **pragmatic hypermedia**, not strict textbook HATEOAS, in v0.1.
 
 ### Why
@@ -385,7 +415,7 @@ If external clients/integrations grow, move toward HAL/JSON:API-style affordance
 
 ---
 
-## 12) Versioning & Compatibility
+## 12) 📖 Versioning & Compatibility
 
 - Path versioning: `/api/v1`
 - Event schema version indicated by `protocol_version`
@@ -394,7 +424,7 @@ If external clients/integrations grow, move toward HAL/JSON:API-style affordance
 
 ---
 
-## 13) First End-to-End Flow (reference)
+## 13) 🚀 First End-to-End Flow (reference)
 
 1. UI calls `POST /api/v1/actions` with `os.update.check`
 2. Server returns `202` + action id
@@ -409,9 +439,16 @@ For a sensitive action (`os.update.apply`):
 
 ---
 
-## 14) Implementation Notes
+## 14) 📖 Implementation Notes
 
 - Keep protocol messages compact and explicit.
 - Prefer append-only action/event history for troubleshooting.
 - Correlate logs with `request_id`, `action_id`, and `event_id`.
 - Reuse existing Bloom tools under the hood; protocol is orchestration, not a duplicate control plane.
+
+## 🔗 Related
+
+- [Emoji Legend](LEGEND.md) — Notation reference
+- [Headless Web UI Plan](headless-web-ui-plan.md) — Implementation plan for the web UI
+- [Channel Protocol](channel-protocol.md) — Unix socket IPC spec
+- [Service Architecture](service-architecture.md) — Extensibility hierarchy details

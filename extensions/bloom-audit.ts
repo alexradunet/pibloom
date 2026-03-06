@@ -1,3 +1,10 @@
+/**
+ * 🔍 bloom-audit — Tool-call audit trail with 30-day retention.
+ *
+ * @tools audit_review
+ * @hooks session_start, tool_call, tool_result
+ * @see {@link ../AGENTS.md#bloom-audit} Extension reference
+ */
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
@@ -10,6 +17,7 @@ const log = createLogger("bloom-audit");
 const RETENTION_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** A single audit log entry recording a tool call or result event. */
 interface AuditEntry {
 	ts: string;
 	event: "tool_call" | "tool_result";

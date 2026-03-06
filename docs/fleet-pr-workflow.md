@@ -1,10 +1,12 @@
 # Fleet Contribution Workflow (Repo as Source of Truth)
 
+> 📖 [Emoji Legend](LEGEND.md)
+
 This document describes how to run Bloom as a multi-device contributor system while keeping a single canonical repository as source of truth.
 
 For quick execution steps, see `docs/fleet-bootstrap-checklist.md`.
 
-## Principle
+## 🌱 Principle
 
 - Canonical state lives in one upstream repository (`upstream/main`).
 - Devices never push directly to `upstream/main`.
@@ -17,7 +19,7 @@ This gives you both:
 
 ---
 
-## 1) Upstream Repository Governance
+## 1) 🛡️ Upstream Repository Governance
 
 Configure these once in GitHub settings:
 
@@ -29,7 +31,7 @@ Configure these once in GitHub settings:
 2. Enable CODEOWNERS (recommended)
 3. Require linear history (optional but clean)
 
-### Required CI check
+### 🚀 Required CI check
 
 Use workflow: `.github/workflows/pr-validate.yml`
 
@@ -39,15 +41,15 @@ Expected checks:
 
 ---
 
-## 2) Device Bootstrapping (one-time per machine)
+## 2) 💻 Device Bootstrapping (one-time per machine)
 
-### Prerequisites
+### 💻 Prerequisites
 
 - `gh auth login` completed on the device
 - access to upstream repo
 - writable fork (or ability to create one)
 
-### Tool-first setup
+### 🤖 Tool-first setup
 
 Run:
 
@@ -59,7 +61,18 @@ Optional explicit fork:
 
 - `bloom_repo_configure(..., fork_url="https://github.com/<you>/pi-bloom.git")`
 
-### What `bloom_repo_configure` does
+### 🤖 What `bloom_repo_configure` does
+
+```mermaid
+graph LR
+    Local["💻 ~/.bloom/pi-bloom<br/>(local clone)"] -->|push branches| Origin["🗂️ origin<br/>(your fork)"]
+    Origin -->|open PRs| Upstream["🛡️ upstream<br/>(canonical repo)"]
+    Upstream -->|sync main| Local
+
+    style Local fill:#d5d5f5
+    style Origin fill:#d5f5e8
+    style Upstream fill:#f5e8d5
+```
 
 - Ensures `~/.bloom/pi-bloom` exists (clones if missing)
 - Sets/updates `upstream`
@@ -69,7 +82,23 @@ Optional explicit fork:
 
 ---
 
-## 3) Day-to-day Device Fix Flow
+## 3) 🚀 Day-to-day Device Fix Flow
+
+```mermaid
+sequenceDiagram
+    participant Device as 💻 Bloom Device
+    participant Fork as 🗂️ Origin (Fork)
+    participant Upstream as 🛡️ Upstream
+    participant CI as 🚀 CI
+
+    Device->>Device: bloom_repo_sync(main)
+    Device->>Device: Implement + test locally
+    Device->>Fork: bloom_repo_submit_pr<br/>(push branch)
+    Fork->>Upstream: Open PR
+    Upstream->>CI: Run checks (build + lint)
+    CI-->>Upstream: ✅ Pass
+    Upstream->>Upstream: Review + merge
+```
 
 When a Bloom host identifies a bug and applies a fix:
 
@@ -92,15 +121,15 @@ Output includes PR URL for review.
 
 ---
 
-## 4) Recommended Naming Conventions
+## 4) 📖 Recommended Naming Conventions
 
-### Branch
+### 📖 Branch
 
 Auto-generated pattern:
 
 `node/<hostname>/<slug>`
 
-### Commit
+### 📖 Commit
 
 Conventional commits:
 
@@ -109,7 +138,7 @@ Conventional commits:
 - `docs:` documentation
 - `refactor:` internal restructuring
 
-### PR title
+### 📖 PR title
 
 Keep concise and action-oriented:
 
@@ -118,7 +147,7 @@ Keep concise and action-oriented:
 
 ---
 
-## 5) Security + Permissions Model
+## 5) 🛡️ Security + Permissions Model
 
 - Prefer per-device GitHub identity or app token with least privilege.
 - Use fork-based write permissions, not direct upstream write.
@@ -127,7 +156,7 @@ Keep concise and action-oriented:
 
 ---
 
-## 6) Failure Handling
+## 6) 🛡️ Failure Handling
 
 ### `bloom_repo_status` says not PR-ready
 
@@ -152,7 +181,7 @@ Fix:
 
 ---
 
-## 7) Rollout Checklist (Fleet)
+## 7) 🚀 Rollout Checklist (Fleet)
 
 For each new machine:
 
@@ -170,7 +199,7 @@ For central repo:
 
 ---
 
-## 8) Why this works
+## 8) 🌱 Why this works
 
 This model gives a clean split:
 
@@ -179,3 +208,8 @@ This model gives a clean split:
 - **Fleet** converges only after merge/release.
 
 So the repository remains the source of truth, while every Bloom system can still contribute fixes continuously.
+
+## 🔗 Related
+
+- [Emoji Legend](LEGEND.md) — Notation reference
+- [Supply Chain](supply-chain.md) — Artifact trust and releases

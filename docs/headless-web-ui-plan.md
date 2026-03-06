@@ -1,5 +1,7 @@
 # Bloom Headless Web UI Plan (v0.1)
 
+> 📖 [Emoji Legend](LEGEND.md)
+
 ## Status
 - **Owner:** Bloom core
 - **Date:** 2026-03-05
@@ -7,7 +9,7 @@
 
 ---
 
-## 1) Goal
+## 1) 🌱 Goal
 
 Provide a simple, local-first UI for Bloom OS that works without HDMI, keyboard, or remote desktop.
 
@@ -19,7 +21,7 @@ Users should be able to:
 
 ---
 
-## 2) Explicit Product Decision
+## 2) 🌱 Explicit Product Decision
 
 For v0.1:
 - ✅ Build **containerized web UI service** (`bloom-ui`)
@@ -32,9 +34,22 @@ Pi performs real operations through system APIs/tools (NetworkManager, systemd, 
 
 ---
 
-## 3) Architecture
+## 3) 🌱 Architecture
 
-## Components
+## 🧩 Components
+
+```mermaid
+graph TD
+    Browser[🖥️ Browser] -->|HTTP + WebSocket| UI[📦 bloom-ui service<br/>Quadlet container]
+    UI -->|Pi Extension API| Bridge[🧩 bloom-ui-bridge<br/>In-process extension]
+    Bridge --> Tools[🧩 Existing Bloom Tools<br/>bootc, systemd, NetworkManager]
+    Bridge --> Events[📡 Event Stream<br/>Actions, confirmations, status]
+
+    style Browser fill:#f5f5d5
+    style UI fill:#f5d5d5
+    style Bridge fill:#d5d5f5
+    style Tools fill:#d5f5d5
+```
 
 1. **`bloom-ui` service (OCI package)**
    - Runs as Quadlet-managed container
@@ -51,7 +66,7 @@ Pi performs real operations through system APIs/tools (NetworkManager, systemd, 
    - Services via systemd tools
    - OS updates via bootc tools
 
-## Data Flow
+## 📡 Data Flow
 
 1. User opens web UI (`bloom.local`)
 2. UI subscribes to Pi event stream (WebSocket)
@@ -62,9 +77,9 @@ Pi performs real operations through system APIs/tools (NetworkManager, systemd, 
 
 ---
 
-## 4) UX Scope (v0.1)
+## 4) 🖥️ UX Scope (v0.1)
 
-## Screens
+## 🖥️ Screens
 
 1. **System Overview**
    - host health summary
@@ -90,7 +105,7 @@ Pi performs real operations through system APIs/tools (NetworkManager, systemd, 
 
 ---
 
-## 5) Security + Safety
+## 5) 🛡️ Security + Safety
 
 - Local-first access only (LAN; optional Tailscale later)
 - Pairing/auth required before control actions
@@ -104,9 +119,9 @@ Pi performs real operations through system APIs/tools (NetworkManager, systemd, 
 
 ---
 
-## 6) Delivery Phases
+## 6) 🚀 Delivery Phases
 
-## Phase 0 — Foundations
+## 🚀 Phase 0 — Foundations
 
 ### Tasks
 - Define `docs/ui-protocol.md` (message schema)
@@ -120,7 +135,7 @@ Pi performs real operations through system APIs/tools (NetworkManager, systemd, 
 
 ---
 
-## Phase 1 — Pi ↔ UI bridge
+## 🚀 Phase 1 — Pi ↔ UI bridge
 
 ### Tasks
 - Create extension skeleton for `bloom-ui-bridge`
@@ -134,7 +149,7 @@ Pi performs real operations through system APIs/tools (NetworkManager, systemd, 
 
 ---
 
-## Phase 2 — Core operations in UI
+## 🚀 Phase 2 — Core operations in UI
 
 ### Tasks
 - Integrate system overview (health + services)
@@ -149,7 +164,7 @@ Pi performs real operations through system APIs/tools (NetworkManager, systemd, 
 
 ---
 
-## Phase 3 — Headless onboarding
+## 🚀 Phase 3 — Headless onboarding
 
 ### Tasks
 - Add first-boot access guidance to UI
@@ -161,7 +176,7 @@ Pi performs real operations through system APIs/tools (NetworkManager, systemd, 
 
 ---
 
-## 7) Technical Constraints
+## 7) 📖 Technical Constraints
 
 - Reuse Bloom service conventions (OCI package + Quadlet)
 - Prefer pinned image tags/digests (avoid mutable `latest` in release path)
@@ -170,7 +185,7 @@ Pi performs real operations through system APIs/tools (NetworkManager, systemd, 
 
 ---
 
-## 8) Proposed Initial Backlog (Sprint-ready)
+## 8) 🗂️ Proposed Initial Backlog (Sprint-ready)
 
 1. Create `docs/ui-protocol.md`
 2. `service_scaffold` for `ui` service package
@@ -183,7 +198,7 @@ Pi performs real operations through system APIs/tools (NetworkManager, systemd, 
 
 ---
 
-## 9) Open Questions
+## 9) 📖 Open Questions
 
 1. Should v0.1 expose HTTP only on localhost + reverse proxy, or directly on LAN?
 2. Is TLS required in v0.1 LAN mode, or deferred to Tailscale/ingress setup?
@@ -192,7 +207,7 @@ Pi performs real operations through system APIs/tools (NetworkManager, systemd, 
 
 ---
 
-## 10) Definition of Done (v0.1)
+## 10) 🚀 Definition of Done (v0.1)
 
 - Headless user can open Bloom UI from another device
 - User sees Pi actions in real time
@@ -200,3 +215,10 @@ Pi performs real operations through system APIs/tools (NetworkManager, systemd, 
 - At least one system operation is fully controllable from UI
 - Service is packaged/installable through Bloom service lifecycle
 - Documentation is complete for install, run, and troubleshooting
+
+## 🔗 Related
+
+- [Emoji Legend](LEGEND.md) — Notation reference
+- [UI Protocol](ui-protocol.md) — Message schema and API spec
+- [Service Architecture](service-architecture.md) — Extensibility hierarchy details
+- [Channel Protocol](channel-protocol.md) — Unix socket IPC spec

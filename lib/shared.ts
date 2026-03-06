@@ -2,6 +2,7 @@ import os from "node:os";
 import path from "node:path";
 import { truncateHead } from "@mariozechner/pi-coding-agent";
 
+/** Result of parsing YAML frontmatter from a markdown string. */
 export interface ParsedFrontmatter<T> {
 	attributes: T;
 	body: string;
@@ -9,14 +10,17 @@ export interface ParsedFrontmatter<T> {
 	frontmatter: string;
 }
 
+/** Resolve the Garden vault directory. Checks `_BLOOM_GARDEN_RESOLVED`, then `BLOOM_GARDEN_DIR`, then falls back to `~/Garden`. */
 export function getGardenDir(): string {
 	return process.env._BLOOM_GARDEN_RESOLVED ?? process.env.BLOOM_GARDEN_DIR ?? path.join(os.homedir(), "Garden");
 }
 
+/** Truncate text to 2000 lines / 50KB using Pi's truncateHead utility. */
 export function truncate(text: string): string {
 	return truncateHead(text, { maxLines: 2000, maxBytes: 50000 }).content;
 }
 
+/** Build a standardized Pi tool error response. */
 export function errorResult(message: string) {
 	return {
 		content: [{ type: "text" as const, text: message }],
@@ -25,10 +29,12 @@ export function errorResult(message: string) {
 	};
 }
 
+/** Return current time as ISO 8601 string without milliseconds (e.g., `2026-03-06T12:00:00Z`). */
 export function nowIso(): string {
 	return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
+/** Serialize a data object and markdown body into a frontmatter-delimited string. */
 export function stringifyFrontmatter(data: Record<string, unknown>, content: string): string {
 	const lines: string[] = ["---"];
 	for (const [key, val] of Object.entries(data)) {
@@ -42,6 +48,7 @@ export function stringifyFrontmatter(data: Record<string, unknown>, content: str
 	return `${lines.join("\n")}\n${content}`;
 }
 
+/** Parse YAML frontmatter from a markdown string. Returns attributes, body, and metadata. Supports comma-separated arrays and YAML-style list arrays. */
 export function parseFrontmatter<T extends Record<string, unknown> = Record<string, unknown>>(
 	str: string,
 ): ParsedFrontmatter<T> {
@@ -123,10 +130,12 @@ export function parseFrontmatter<T extends Record<string, unknown> = Record<stri
 	};
 }
 
+/** The five PARA methodology directory names used in the Garden vault. */
 export const PARA_DIRS = ["Inbox", "Projects", "Areas", "Resources", "Archive"];
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 
+/** Create a structured JSON logger for a named component. Outputs to stdout/stderr with timestamp, level, component, and message. */
 export function createLogger(component: string) {
 	function log(level: LogLevel, msg: string, extra?: Record<string, unknown>): void {
 		const entry: Record<string, unknown> = {

@@ -1,8 +1,10 @@
 # Channel Protocol
 
+> 📖 [Emoji Legend](LEGEND.md)
+
 Bloom uses a JSON-over-Unix-socket bridge protocol for external messaging platforms.
 
-## Connection
+## 📡 Connection
 
 Bridges connect to the Unix socket:
 
@@ -11,7 +13,7 @@ Bridges connect to the Unix socket:
 
 All frames are newline-delimited JSON (`\n`-terminated).
 
-## Authentication
+## 🛡️ Authentication
 
 Each channel must register with a token from:
 
@@ -19,9 +21,9 @@ Each channel must register with a token from:
 
 If token is missing or invalid, registration is rejected.
 
-## Message Format
+## 📡 Message Format
 
-### Bridge → Bloom
+### 📡 Bridge → Bloom
 
 **Register**
 
@@ -61,7 +63,7 @@ If token is missing or invalid, registration is rejected.
 {"type":"pong","channel":"whatsapp"}
 ```
 
-### Bloom → Bridge
+### 📡 Bloom → Bridge
 
 **Status** (registration acknowledged)
 
@@ -93,7 +95,34 @@ If token is missing or invalid, registration is rejected.
 {"type":"error","id":"msg-123","reason":"queue full"}
 ```
 
-## Flow
+## 📡 Flow
+
+```mermaid
+sequenceDiagram
+    participant Bridge as 📦 Bridge
+    participant Socket as 📡 Unix Socket
+    participant Bloom as 🌱 Bloom
+
+    Bridge->>Socket: connect()
+    Bridge->>Bloom: {"type":"register","channel":"whatsapp","token":"..."}
+    Bloom-->>Bridge: {"type":"status","connected":true}
+    Bridge->>Bloom: {"type":"message","id":"msg-123","from":"John","text":"Hello!"}
+    Bloom-->>Bridge: {"type":"response","id":"msg-123","to":"John","text":"Hey!"}
+    Bloom->>Bridge: {"type":"ping"}
+    Bridge-->>Bloom: {"type":"pong","channel":"whatsapp"}
+```
+
+```mermaid
+stateDiagram-v2
+    [*] --> Unregistered: Bridge connects
+    Unregistered --> Registering: Send register frame
+    Registering --> Connected: Status connected=true
+    Registering --> Rejected: Invalid token
+    Connected --> Connected: message / response / ping / pong
+    Connected --> Disconnected: Socket close / missed pings
+    Rejected --> [*]
+    Disconnected --> [*]
+```
 
 1. Bridge connects to `/run/bloom/channels.sock`
 2. Bridge sends `register` with channel token
@@ -102,6 +131,13 @@ If token is missing or invalid, registration is rejected.
 5. Bloom replies with `response` events
 6. Heartbeat: Bloom sends `ping`, bridge sends `pong`
 
-## Current Bridges
+## 📦 Current Bridges
 
 - **WhatsApp (Baileys)** — channel `whatsapp`, deployed as a Podman Quadlet service
+
+## 🔗 Related
+
+- [Emoji Legend](LEGEND.md) — Notation reference
+- [Service Architecture](service-architecture.md) — Extensibility hierarchy details
+- [AGENTS.md](../AGENTS.md#bloom-channels) — bloom-channels extension reference
+- [UI Protocol](ui-protocol.md) — Headless web UI protocol spec

@@ -1,9 +1,12 @@
+/** Regex matching keys that should be redacted in audit logs (tokens, secrets, passwords, API keys). */
 export const SENSITIVE_KEY = /(token|secret|password|authorization|api[_-]?key|cookie)/i;
 
+/** Format a Date as `YYYY-MM-DD` string. */
 export function dayStamp(date: Date): string {
 	return date.toISOString().slice(0, 10);
 }
 
+/** Deep-clone a value, redacting keys matching SENSITIVE_KEY and truncating long strings. */
 export function sanitize(value: unknown): unknown {
 	if (value === null || value === undefined) return value;
 	if (Array.isArray(value)) return value.map((v) => sanitize(v));
@@ -20,6 +23,7 @@ export function sanitize(value: unknown): unknown {
 	return value;
 }
 
+/** Produce a compact JSON summary of tool input, truncated to 160 characters. */
 export function summarizeInput(input: unknown): string {
 	if (input === undefined) return "";
 	try {

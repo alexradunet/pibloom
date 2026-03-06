@@ -1,3 +1,11 @@
+/**
+ * 🌿 bloom-garden — Garden vault management, blueprint seeding, skill creation, persona evolution.
+ *
+ * @tools garden_status, skill_create, skill_list, persona_evolve
+ * @commands /garden (init | status | update-blueprints)
+ * @hooks session_start, resources_discover
+ * @see {@link ../AGENTS.md#bloom-garden} Extension reference
+ */
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";

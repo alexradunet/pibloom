@@ -1,3 +1,4 @@
+/** Validate that a service/unit name starts with `bloom-`. Returns error message or null. */
 export function guardBloom(name: string): string | null {
 	if (!name.startsWith("bloom-")) {
 		return `Security error: only bloom-* names are permitted, got "${name}"`;
@@ -5,6 +6,7 @@ export function guardBloom(name: string): string | null {
 	return null;
 }
 
+/** Extract `owner/repo` slug from a GitHub URL (HTTPS, SSH, or ssh:// format). Returns null if not a valid GitHub URL. */
 export function parseGithubSlugFromUrl(url: string): string | null {
 	const trimmed = url.trim();
 	const ssh = trimmed.match(/^git@github\.com:([^/]+)\/([^/]+?)(?:\.git)?$/);
@@ -19,6 +21,7 @@ export function parseGithubSlugFromUrl(url: string): string | null {
 	return null;
 }
 
+/** Convert a string to a safe git branch name segment (lowercase, alphanumeric + hyphens, max 48 chars). */
 export function slugifyBranchPart(input: string): string {
 	return input
 		.toLowerCase()

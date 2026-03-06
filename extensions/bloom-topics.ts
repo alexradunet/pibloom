@@ -1,5 +1,13 @@
+/**
+ * 🗂️ bloom-topics — Conversation topic management and session organization.
+ *
+ * @commands /topic (new | close | list | switch)
+ * @hooks session_start, before_agent_start
+ * @see {@link ../AGENTS.md#bloom-topics} Extension reference
+ */
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 
+/** Metadata for a conversation topic within a session. */
 interface TopicInfo {
 	name: string;
 	status: "active" | "closed";

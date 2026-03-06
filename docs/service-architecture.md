@@ -1,8 +1,10 @@
 # Service Architecture
 
+> 📖 [Emoji Legend](LEGEND.md)
+
 Bloom extends Pi's capabilities through three mechanisms, each suited to different needs. When Pi detects a capability gap or the user requests a new feature, choose the lightest mechanism that fits.
 
-## Extensibility Hierarchy
+## 🌱 Extensibility Hierarchy
 
 ```mermaid
 graph TD
@@ -21,7 +23,7 @@ graph TD
     style svc fill:#f5d5d5
 ```
 
-### When to Use What
+### 🌱 When to Use What
 
 | Mechanism | Use When | Examples | Cost |
 |-----------|----------|----------|------|
@@ -31,7 +33,7 @@ graph TD
 
 **Always prefer the lighter option.** A skill that teaches Pi to call an existing API is better than an extension wrapping that API, which is better than a service re-implementing it.
 
-## System Overview
+## 🌱 System Overview
 
 ```mermaid
 graph TB
@@ -73,7 +75,7 @@ graph TB
     style channels fill:#f5e8d5
 ```
 
-## The Three Layers
+## 🌱 The Three Layers
 
 | Layer | Mechanism | Lifecycle | Communication | Created By |
 |-------|-----------|-----------|---------------|------------|
@@ -81,13 +83,13 @@ graph TB
 | **Extensions** | In-process TypeScript | Loaded with Pi session | Direct API (ExtensionAPI) | Developer (requires code review + PR) |
 | **Services** | OCI containers via Podman Quadlet | systemd-managed, independent | Unix socket, HTTP, shell | Pi (via self-evolution) or developer |
 
-### Why Three Layers?
+### 🌱 Why Three Layers?
 
 - **Skills** are pure knowledge — procedures, API references, troubleshooting guides. Pi reads them and acts. No code, no process, no resources. Pi can create these autonomously.
 - **Extensions** need direct access to Pi's session (send messages, register commands, access context). They run in-process and require TypeScript. These are core platform code.
 - **Services** are standalone workloads (speech-to-text, messaging bridges, VPN, sync daemons) that benefit from container isolation, independent updates, and resource limits. Pi can create and distribute these via OCI artifacts.
 
-### The `bloom-` Prefix
+### 📦 The `bloom-` Prefix
 
 Service containers use a `bloom-` prefix on their **Quadlet unit names** (e.g., `bloom-whisper`, `bloom-tailscale`). This is a management namespace — it does NOT mean the container image is Bloom-specific. Most services use upstream images directly:
 
@@ -103,7 +105,7 @@ The prefix enables:
 - `ls ~/.config/containers/systemd/bloom-*.container` — discover installed services
 - Clear separation from user-installed containers
 
-## OCI Artifact Distribution
+## 📦 OCI Artifact Distribution
 
 Service packages are distributed as OCI artifacts via GHCR, using `oras` for push/pull.
 
@@ -132,7 +134,7 @@ sequenceDiagram
     Pi->>Pi: Share with other Bloom devices
 ```
 
-### Package Format
+### 📦 Package Format
 
 ```
 services/{name}/
@@ -142,7 +144,7 @@ services/{name}/
 └── SKILL.md                      # Skill file (frontmatter + API docs)
 ```
 
-### Service Catalog
+### 📦 Service Catalog
 
 `services/catalog.yaml` is the declarative metadata index for install automation:
 
@@ -153,7 +155,7 @@ services/{name}/
 
 The `manifest_apply` tool uses this catalog to auto-install missing services and enforce preflight checks.
 
-### OCI Annotations
+### 📦 OCI Annotations
 
 ```
 org.opencontainers.image.title       = bloom-{name}
@@ -164,7 +166,7 @@ dev.bloom.service.category           = media | communication | networking | sync
 dev.bloom.service.port               = 9000
 ```
 
-## Service Lifecycle
+## 📦 Service Lifecycle
 
 ```mermaid
 stateDiagram-v2
@@ -188,7 +190,7 @@ stateDiagram-v2
     end note
 ```
 
-## Media Pipeline
+## 📡 Media Pipeline
 
 When WhatsApp receives a voice note or image, the media flows through multiple services:
 
@@ -215,7 +217,7 @@ sequenceDiagram
     Bridge->>WA: Send reply
 ```
 
-### Media Message Format (Channel Protocol)
+### 📡 Media Message Format (Channel Protocol)
 
 ```json
 {
@@ -234,7 +236,7 @@ sequenceDiagram
 }
 ```
 
-## File System Layout
+## 🗂️ File System Layout
 
 ```mermaid
 graph LR
@@ -265,7 +267,7 @@ graph LR
     config --> st_state
 ```
 
-## Available Services
+## 📦 Available Services
 
 | Service | Category | Port | Image | Resources |
 |---------|----------|------|-------|-----------|
@@ -274,7 +276,7 @@ graph LR
 | bloom-tailscale | networking | — | tailscale/tailscale@sha256:95e528798bebe75f39b10e74e7051cf51188ee615934f232ba7ad06a3390ffa1 | 256MB RAM |
 | bloom-syncthing | sync | 8384 | syncthing/syncthing@sha256:1feffa2d4826b48f25faefed093d07c5f00304d7e7ac86fd7cda334d22651643 | 256MB RAM |
 
-## Adding a New Service
+## 📦 Adding a New Service
 
 1. Create `services/{name}/quadlet/bloom-{name}.container` with Quadlet conventions
 2. Create `services/{name}/SKILL.md` documenting the API and usage
@@ -282,7 +284,7 @@ graph LR
 4. Push to GHCR: `just svc-push {name}`
 5. Update the services table in `services/README.md` and `AGENTS.md`
 
-### Quadlet Conventions Checklist
+### 📦 Quadlet Conventions Checklist
 
 - [ ] Container name: `bloom-{name}`
 - [ ] Network: prefer `bloom.network` isolation (`host` only when required, e.g. VPN)
@@ -292,3 +294,10 @@ graph LR
 - [ ] Restart policy: `on-failure` with `RestartSec=10`
 - [ ] Resource limits set (`--memory`)
 - [ ] `WantedBy=default.target` in `[Install]`
+
+## 🔗 Related
+
+- [Emoji Legend](LEGEND.md) — Notation reference
+- [Channel Protocol](channel-protocol.md) — Unix socket IPC spec
+- [Supply Chain](supply-chain.md) — Artifact trust and releases
+- [Quick Deploy](quick_deploy.md) — OS build and deployment

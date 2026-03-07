@@ -66,7 +66,7 @@ describe("bloom-garden registration", () => {
 		expect(toolNames(api)).toEqual(
 			expect.arrayContaining(["garden_status", "skill_create", "skill_list", "persona_evolve"]),
 		);
-		expect(commandNames(api)).toEqual(["garden"]);
+		expect(commandNames(api)).toEqual(["bloom"]);
 		expect(eventNames(api)).toEqual(expect.arrayContaining(["session_start", "resources_discover"]));
 	});
 });

@@ -19,6 +19,16 @@ If `~/.bloom/.setup-complete` exists, setup is already complete. Skip unless use
 - Clarify tool-vs-shell: `service_install`, `bloom_repo_configure`, etc. are Pi tools (not bash commands)
 - On fresh Bloom OS, user `bloom` has passwordless `sudo` for bootstrap tasks.
 
+## Pre-Requisite: NetBird
+
+NetBird mesh networking is configured before Pi starts (during the login greeting). If the user skipped it, they can authenticate later:
+
+```bash
+sudo netbird up
+```
+
+Verify with `sudo netbird status` -- look for "Connected".
+
 ## Setup Steps
 
 ### 1) Git Identity
@@ -32,54 +42,44 @@ git config --global user.email "<email>"
 
 Suggest sensible defaults (e.g., hostname-based) but let the user choose.
 
-### 2) NetBird Setup (mesh networking)
-
-NetBird provides the mesh network that other services (dufs, VNC) are accessible through remotely. Set it up first.
-
-- Install service package: `service_install(name="netbird", version="0.1.0")`
-- Preflight: confirm user has entries in `/etc/subuid` and `/etc/subgid`
-- Authenticate: `podman exec bloom-netbird netbird up`
-- Validate: `service_test(name="netbird")`
-
-### 3) dufs Setup (tool-first)
+### 2) dufs Setup
 
 - Install service package: `service_install(name="dufs", version="0.1.0")`
 - Validate service: `service_test(name="dufs")`
-- Direct user to `http://localhost:5000`
+- The WebDAV password is the channel token in `~/.config/bloom/channel-tokens/dufs.env` (BLOOM_CHANNEL_TOKEN)
+- Direct user to `http://localhost:5000` (username: `admin`)
 - dufs serves `$HOME` over WebDAV (mapped in container as bind mount)
 
 If Bloom runs inside a VM, `localhost` in the guest may not be reachable from the host machine.
 Offer one of these access paths:
 
-- QEMU host-forwarded port (recommended in dev): host `localhost:5000` → guest `5000`
+- QEMU host-forwarded port (recommended in dev): host `localhost:5000` -> guest `5000`
 - SSH tunnel: `ssh -L 5000:localhost:5000 -p 2222 bloom@localhost`
 - Guest IP direct access on LAN if routing allows (`http://<guest-ip>:5000`)
 
-### 4) Optional Service Packages (manifest-first)
+### 3) Optional Services
 
-Prefer declarative setup:
+#### Lemonade (local LLM + speech-to-text)
 
-1. Declare desired services in manifest (`manifest_set_service`)
-2. Apply desired state (`manifest_apply(install_missing=true)`)
-3. Validate selected services (`service_test` / `systemd_control` / `container_logs`)
+- Install service package: `service_install(name="lemonade", version="0.1.0")`
+- Validate: `service_test(name="lemonade")`
+- API available at `http://localhost:8000` (OpenAI-compatible)
 
-Suggested optional profiles:
+#### WhatsApp Bridge
 
-- **sync-only**: dufs
-- **communication**: whatsapp + lemonade
-Example declaration flow:
+WhatsApp runs as a native systemd user service (not a container). Enable it:
 
-1. `manifest_set_service(name="whatsapp", image="ghcr.io/pibloom/bloom-whatsapp:0.2.0", version="0.2.0", enabled=true)`
-2. `manifest_set_service(name="lemonade", image="ghcr.io/lemonade-sdk/lemonade-server:latest", version="0.1.0", enabled=true)`
-3. `manifest_apply(install_missing=true)`
+```bash
+systemctl --user enable --now bloom-whatsapp
+```
 
-Post-install guidance:
+The first start opens a Chromium window on the Sway desktop with a WhatsApp QR code. Scan it with your phone to pair.
 
-- WhatsApp pairing: `journalctl --user -u bloom-whatsapp -f` and scan QR
+Check logs: `journalctl --user -u bloom-whatsapp -f`
 
-If tooling is unavailable, use the fallback manual `oras pull` flow from `skills/service-management/SKILL.md`.
+The WhatsApp bridge needs the bloom-channels socket for IPC. If bloom-channels is not running, WhatsApp will reconnect automatically when it becomes available.
 
-### 5) Mark Setup Complete
+### 4) Mark Setup Complete
 
 ```bash
 touch ~/.bloom/.setup-complete

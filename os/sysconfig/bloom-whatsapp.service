@@ -1,0 +1,28 @@
+[Unit]
+Description=Bloom WhatsApp Bridge (whatsapp-web.js)
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/node /usr/local/share/bloom/services/whatsapp/dist/transport.js
+
+# Wayland display passthrough for Chromium
+Environment=WAYLAND_DISPLAY=wayland-1
+Environment=PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+Environment=PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+Environment=NODE_ENV=production
+
+# Bloom service environment
+Environment=BLOOM_AUTH_DIR=%h/.local/share/bloom-whatsapp
+Environment=BLOOM_CHANNELS_SOCKET=/run/bloom/channels.sock
+Environment=BLOOM_MEDIA_DIR=/var/lib/bloom/media
+
+# Channel authentication token
+EnvironmentFile=%h/.config/bloom/channel-tokens/whatsapp.env
+
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target

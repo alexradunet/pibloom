@@ -81,6 +81,13 @@ RUN cd /usr/local/share/bloom && \
     npm prune --omit=dev && \
     rm -rf /tmp/npm-cache /var/roothome/.npm /root/.npm
 
+# Build WhatsApp transport (native service — no container image needed)
+RUN cd /usr/local/share/bloom/services/whatsapp && \
+    HOME=/tmp npm install --cache /tmp/npm-cache && \
+    npm run build && \
+    npm prune --omit=dev && \
+    rm -rf /tmp/npm-cache /var/roothome/.npm /root/.npm
+
 # Configure Pi settings defaults in /usr (immutable layer)
 RUN mkdir -p /usr/local/share/bloom/.pi/agent && \
     echo '{"packages": ["/usr/local/share/bloom"]}' > /usr/local/share/bloom/.pi/agent/settings.json
@@ -105,6 +112,9 @@ COPY os/sysconfig/bloom.network /usr/share/containers/systemd/bloom.network
 
 # Install persona files
 RUN mkdir -p /usr/local/share/bloom/persona
+
+# WhatsApp bridge runs natively (Node.js + Chromium already in image)
+COPY os/sysconfig/bloom-whatsapp.service /usr/lib/systemd/user/bloom-whatsapp.service
 
 # Systemd service for Pi auto-start on login
 COPY os/sysconfig/bloom-greeting.sh /usr/local/bin/bloom-greeting.sh

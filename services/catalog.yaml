@@ -13,19 +13,10 @@ services:
   whatsapp:
     version: "0.2.0"
     category: communication
-    artifact: ghcr.io/pibloom/bloom-svc-whatsapp
-    image: ghcr.io/pibloom/bloom-whatsapp:0.2.0
     optional: true
+    native: true
     preflight:
-      commands: [oras, podman, systemctl]
-  netbird:
-    version: "0.1.0"
-    category: networking
-    artifact: ghcr.io/pibloom/bloom-svc-netbird
-    image: netbirdio/netbird@sha256:b3e69490e58cf255caf1b9b6a8bbfcfae4d1b2bbaa3c40a06cfdbba5b8fdc0d2
-    optional: false
-    preflight:
-      commands: [oras, podman, systemctl]
+      commands: [systemctl]
   dufs:
     version: "0.1.0"
     category: sync

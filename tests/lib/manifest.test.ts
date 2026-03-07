@@ -9,7 +9,6 @@ import {
 	loadManifest,
 	loadServiceCatalog,
 	saveManifest,
-	tailscaleAuthConfigured,
 } from "../../lib/manifest.js";
 
 describe("loadManifest", () => {
@@ -79,8 +78,8 @@ describe("saveManifest + loadManifest roundtrip", () => {
 					version: "0.1.0",
 					enabled: true,
 				},
-				tailscale: {
-					image: "docker.io/tailscale/tailscale:latest",
+				netbird: {
+					image: "netbirdio/netbird@sha256:b3e69490e58cf255caf1b9b6a8bbfcfae4d1b2bbaa3c40a06cfdbba5b8fdc0d2",
 					enabled: false,
 				},
 			},
@@ -94,7 +93,7 @@ describe("saveManifest + loadManifest roundtrip", () => {
 		expect(reloaded.services.whisper.image).toBe("docker.io/fedirz/faster-whisper-server:latest");
 		expect(reloaded.services.whisper.version).toBe("0.1.0");
 		expect(reloaded.services.whisper.enabled).toBe(true);
-		expect(reloaded.services.tailscale.enabled).toBe(false);
+		expect(reloaded.services.netbird.enabled).toBe(false);
 	});
 
 	it("creates parent Bloom directory if missing", () => {
@@ -124,34 +123,6 @@ describe("hasTagOrDigest", () => {
 
 	it("returns false for bare name without registry", () => {
 		expect(hasTagOrDigest("myimage")).toBe(false);
-	});
-});
-
-describe("tailscaleAuthConfigured", () => {
-	const originalEnv = process.env.TS_AUTHKEY;
-
-	afterEach(() => {
-		if (originalEnv !== undefined) {
-			process.env.TS_AUTHKEY = originalEnv;
-		} else {
-			delete process.env.TS_AUTHKEY;
-		}
-	});
-
-	it("returns true when TS_AUTHKEY env var is set", () => {
-		process.env.TS_AUTHKEY = "tskey-auth-abc123";
-		expect(tailscaleAuthConfigured()).toBe(true);
-	});
-
-	it("returns false when TS_AUTHKEY is empty and no config file", () => {
-		process.env.TS_AUTHKEY = "";
-		// tailscale.env file won't exist in test env
-		expect(tailscaleAuthConfigured()).toBe(false);
-	});
-
-	it("returns false when TS_AUTHKEY is not set and no config file", () => {
-		delete process.env.TS_AUTHKEY;
-		expect(tailscaleAuthConfigured()).toBe(false);
 	});
 });
 

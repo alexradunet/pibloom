@@ -135,7 +135,7 @@ export async function servicePreflightErrors(
 		if (!ok) errors.push(`missing command: ${command}`);
 	}
 
-	const needsSubids = entry?.preflight?.rootless_subids ?? name === "tailscale";
+	const needsSubids = entry?.preflight?.rootless_subids === true;
 	if (needsSubids) {
 		const user = os.userInfo().username;
 		const hasSubuid = hasSubidRange("/etc/subuid", user);
@@ -160,22 +160,6 @@ export function hasTagOrDigest(ref: string): boolean {
 	const lastSlash = ref.lastIndexOf("/");
 	const tail = ref.slice(lastSlash + 1);
 	return tail.includes(":");
-}
-
-/** Check whether Tailscale auth is configured (via `TS_AUTHKEY` env or bloom config file). */
-export function tailscaleAuthConfigured(): boolean {
-	const direct = process.env.TS_AUTHKEY?.trim();
-	if (direct) return true;
-	const envPath = join(os.homedir(), ".config", "bloom", "tailscale.env");
-	if (!existsSync(envPath)) return false;
-	try {
-		const raw = readFileSync(envPath, "utf-8");
-		return raw
-			.split("\n")
-			.some((line) => line.trim().startsWith("TS_AUTHKEY=") && line.trim().length > "TS_AUTHKEY=".length);
-	} catch {
-		return false;
-	}
 }
 
 // ---------------------------------------------------------------------------

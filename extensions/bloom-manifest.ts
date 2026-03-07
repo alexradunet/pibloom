@@ -20,7 +20,6 @@ import {
 	type Manifest,
 	saveManifest,
 	servicePreflightErrors,
-	tailscaleAuthConfigured,
 } from "../lib/manifest.js";
 import { errorResult, getGardenDir, getServiceRegistry, requireConfirmation, truncate } from "../lib/shared.js";
 
@@ -326,13 +325,6 @@ export default function (pi: ExtensionAPI) {
 				if (svc.enabled) {
 					if (!existsSync(containerDef)) {
 						errors.push(`${name}: cannot start, unit not installed`);
-						continue;
-					}
-
-					if (name === "tailscale" && !tailscaleAuthConfigured()) {
-						lines.push(
-							"Skipped starting bloom-tailscale.service (TS_AUTHKEY not configured). Configure auth, then start it manually.",
-						);
 						continue;
 					}
 

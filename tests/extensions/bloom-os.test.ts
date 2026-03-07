@@ -6,13 +6,9 @@ let temp: TempGarden;
 let api: MockExtensionAPI;
 
 const EXPECTED_TOOL_NAMES = [
-	"bootc_status",
-	"bootc_update",
-	"bootc_rollback",
-	"container_status",
-	"container_logs",
+	"bootc",
+	"container",
 	"systemd_control",
-	"container_deploy",
 	"update_status",
 	"schedule_reboot",
 	"system_health",
@@ -37,8 +33,8 @@ function toolNames(): string[] {
 // Registration
 // ---------------------------------------------------------------------------
 describe("bloom-os registration", () => {
-	it("registers exactly 10 tools", () => {
-		expect(api._registeredTools).toHaveLength(10);
+	it("registers exactly 6 tools", () => {
+		expect(api._registeredTools).toHaveLength(6);
 	});
 
 	it("registers all expected tool names", () => {

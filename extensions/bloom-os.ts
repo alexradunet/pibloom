@@ -1,7 +1,7 @@
 /**
  * 💻 bloom-os — OS management: bootc lifecycle, containers, systemd, health, updates.
  *
- * @tools bootc_status, bootc_update, bootc_rollback, container_status, container_logs, container_deploy, systemd_control, system_health, update_status, schedule_reboot
+ * @tools bootc, container, systemd_control, system_health, update_status, schedule_reboot
  * @hooks before_agent_start
  * @see {@link ../AGENTS.md#bloom-os} Extension reference
  */
@@ -16,161 +16,146 @@ import { errorResult, guardBloom, requireConfirmation, truncate } from "../lib/s
 
 export default function (pi: ExtensionAPI) {
 	pi.registerTool({
-		name: "bootc_status",
-		label: "OS Image Status",
-		description: "Shows the current Fedora bootc OS image status, pending updates, and rollback availability.",
-		promptSnippet: "bootc_status — show OS image version and update status",
-		promptGuidelines: ["Use bootc_status when the user asks about OS version, update status, or system health"],
-		parameters: Type.Object({}),
-		async execute(_toolCallId, _params, signal, _onUpdate, _ctx) {
-			const result = await run("bootc", ["status"], signal);
-			const text = truncate(result.exitCode === 0 ? result.stdout : `Error running bootc status:\n${result.stderr}`);
-			return {
-				content: [{ type: "text", text }],
-				details: { exitCode: result.exitCode },
-				isError: result.exitCode !== 0,
-			};
-		},
-	});
-
-	pi.registerTool({
-		name: "bootc_update",
-		label: "OS Update",
-		description: "Check for, download, or apply a Fedora bootc OS update using a staged workflow.",
-		promptSnippet: "bootc_update — check, download, or apply OS updates",
-		promptGuidelines: [
-			"Use bootc_update with stage='check' first, then 'download' to fetch, then 'apply' to stage for reboot.",
-			"The 'download' and 'apply' stages require user confirmation.",
-		],
+		name: "bootc",
+		label: "Bootc Management",
+		description: "Manage Fedora bootc OS image: status, check/download/apply updates, or rollback.",
 		parameters: Type.Object({
-			stage: Type.Optional(
-				StringEnum(["check", "download", "apply"] as const, {
-					description: "Update stage: check (default), download (fetch only), apply (stage for reboot)",
-					default: "check",
-				}),
-			),
+			action: StringEnum(["status", "check", "download", "apply", "rollback"] as const, {
+				description:
+					"status: show image. check/download/apply: staged update workflow. rollback: revert to previous image.",
+			}),
 		}),
 		async execute(_toolCallId, params, signal, _onUpdate, ctx) {
-			const stage = params.stage ?? "check";
-			if (stage !== "check") {
-				const denied = await requireConfirmation(ctx, `OS update: ${stage}`);
+			const { action } = params;
+			if (action === "download" || action === "apply" || action === "rollback") {
+				const denied = await requireConfirmation(ctx, `OS ${action}`);
 				if (denied) return errorResult(denied);
 			}
 			let cmd: string;
-			let fullArgs: string[];
-			switch (stage) {
+			let args: string[];
+			switch (action) {
+				case "status":
+					cmd = "bootc";
+					args = ["status"];
+					break;
 				case "check":
 					cmd = "bootc";
-					fullArgs = ["upgrade", "--check"];
+					args = ["upgrade", "--check"];
 					break;
 				case "download":
 					cmd = "sudo";
-					fullArgs = ["bootc", "upgrade"];
+					args = ["bootc", "upgrade"];
 					break;
 				case "apply":
 					cmd = "sudo";
-					fullArgs = ["bootc", "upgrade", "--apply"];
+					args = ["bootc", "upgrade", "--apply"];
+					break;
+				case "rollback":
+					cmd = "sudo";
+					args = ["bootc", "rollback"];
 					break;
 			}
-			const result = await run(cmd, fullArgs, signal);
-			const text = truncate(result.exitCode === 0 ? result.stdout || "No output." : `Error:\n${result.stderr}`);
-			return {
-				content: [{ type: "text", text }],
-				details: { exitCode: result.exitCode, stage },
-				isError: result.exitCode !== 0,
-			};
-		},
-	});
-
-	pi.registerTool({
-		name: "bootc_rollback",
-		label: "OS Rollback",
-		description: "Rollback to the previous Fedora bootc OS image. Requires reboot to take effect.",
-		promptSnippet: "bootc_rollback — rollback to previous OS image",
-		promptGuidelines: [
-			"Use bootc_rollback to revert to the previous OS image after a failed update.",
-			"Requires user confirmation. Takes effect on next reboot.",
-		],
-		parameters: Type.Object({}),
-		async execute(_toolCallId, _params, signal, _onUpdate, ctx) {
-			const denied = await requireConfirmation(ctx, "Rollback to previous OS image via bootc rollback");
-			if (denied) return errorResult(denied);
-			const result = await run("sudo", ["bootc", "rollback"], signal);
-			const text = truncate(
-				result.exitCode === 0 ? result.stdout || "Rollback staged. Reboot to apply." : `Error:\n${result.stderr}`,
-			);
-			return {
-				content: [{ type: "text", text }],
-				details: { exitCode: result.exitCode },
-				isError: result.exitCode !== 0,
-			};
-		},
-	});
-
-	pi.registerTool({
-		name: "container_status",
-		label: "Container Status",
-		description: "Lists running Bloom containers and their health status.",
-		promptSnippet: "container_status — list running bloom-* containers",
-		promptGuidelines: ["Use container_status to check running Bloom containers and their health"],
-		parameters: Type.Object({}),
-		async execute(_toolCallId, _params, signal, _onUpdate, _ctx) {
-			const result = await run("podman", ["ps", "--format", "json", "--filter", "name=bloom-"], signal);
-			if (result.exitCode !== 0) {
-				return errorResult(`Error listing containers:\n${result.stderr}`);
-			}
+			const result = await run(cmd, args, signal);
 			let text: string;
-			try {
-				const containers = JSON.parse(result.stdout || "[]") as Array<{
-					Names?: string[];
-					Status?: string;
-					State?: string;
-					Image?: string;
-				}>;
-				if (containers.length === 0) {
-					text = "No bloom-* containers are currently running.";
-				} else {
-					text = containers
-						.map((c) => {
-							const name = (c.Names ?? []).join(", ") || "unknown";
-							const status = c.Status ?? c.State ?? "unknown";
-							const image = c.Image ?? "unknown";
-							return `${name}\n  status: ${status}\n  image:  ${image}`;
-						})
-						.join("\n\n");
-				}
-			} catch {
-				text = result.stdout;
+			if (result.exitCode !== 0) {
+				text = action === "status" ? `Error running bootc status:\n${result.stderr}` : `Error:\n${result.stderr}`;
+			} else if (action === "rollback") {
+				text = result.stdout || "Rollback staged. Reboot to apply.";
+			} else {
+				text = result.stdout || "No output.";
 			}
-			return { content: [{ type: "text", text: truncate(text) }], details: {} };
+			return {
+				content: [{ type: "text", text: truncate(text) }],
+				details: { exitCode: result.exitCode, action },
+				isError: result.exitCode !== 0,
+			};
 		},
 	});
 
 	pi.registerTool({
-		name: "container_logs",
-		label: "Container Logs",
-		description: "Fetches recent journald logs for a Bloom service.",
-		promptSnippet: "container_logs — tail logs for a bloom-* service",
-		promptGuidelines: [
-			"Use container_logs to check recent logs for a Bloom service. Only bloom-* services are accessible.",
-		],
+		name: "container",
+		label: "Container Management",
+		description: "Manage Bloom containers: list status, view logs, or deploy a Quadlet unit.",
 		parameters: Type.Object({
-			service: Type.String({ description: "Service name (e.g. bloom-whatsapp)" }),
-			lines: Type.Optional(Type.Number({ description: "Number of log lines to return", default: 50 })),
+			action: StringEnum(["status", "logs", "deploy"] as const, {
+				description: "status: list running bloom-* containers. logs: view service logs. deploy: start a Quadlet unit.",
+			}),
+			service: Type.Optional(
+				Type.String({ description: "Service name, required for logs/deploy (e.g. bloom-whatsapp)" }),
+			),
+			lines: Type.Optional(Type.Number({ description: "Log lines to return (default 50)", default: 50 })),
 		}),
-		async execute(_toolCallId, params, signal, _onUpdate, _ctx) {
-			const guard = guardBloom(params.service);
+		async execute(_toolCallId, params, signal, _onUpdate, ctx) {
+			const { action, service } = params;
+
+			if (action === "status") {
+				const result = await run("podman", ["ps", "--format", "json", "--filter", "name=bloom-"], signal);
+				if (result.exitCode !== 0) {
+					return errorResult(`Error listing containers:\n${result.stderr}`);
+				}
+				let text: string;
+				try {
+					const containers = JSON.parse(result.stdout || "[]") as Array<{
+						Names?: string[];
+						Status?: string;
+						State?: string;
+						Image?: string;
+					}>;
+					if (containers.length === 0) {
+						text = "No bloom-* containers are currently running.";
+					} else {
+						text = containers
+							.map((c) => {
+								const name = (c.Names ?? []).join(", ") || "unknown";
+								const status = c.Status ?? c.State ?? "unknown";
+								const image = c.Image ?? "unknown";
+								return `${name}\n  status: ${status}\n  image:  ${image}`;
+							})
+							.join("\n\n");
+					}
+				} catch {
+					text = result.stdout;
+				}
+				return { content: [{ type: "text", text: truncate(text) }], details: {} };
+			}
+
+			// logs and deploy both require a service name
+			if (!service) {
+				return errorResult(`The "${action}" action requires a service name.`);
+			}
+			const guard = guardBloom(service);
 			if (guard) return errorResult(guard);
-			const n = String(params.lines ?? 50);
-			const unit = `${params.service}.service`;
-			const result = await run("journalctl", ["--user", "-u", unit, "--no-pager", "-n", n], signal);
+
+			if (action === "logs") {
+				const n = String(params.lines ?? 50);
+				const unit = `${service}.service`;
+				const result = await run("journalctl", ["--user", "-u", unit, "--no-pager", "-n", n], signal);
+				const text = truncate(
+					result.exitCode === 0 ? result.stdout || "(no log output)" : `Error fetching logs:\n${result.stderr}`,
+				);
+				return {
+					content: [{ type: "text", text }],
+					details: { exitCode: result.exitCode },
+					isError: result.exitCode !== 0,
+				};
+			}
+
+			// action === "deploy"
+			const unit = `${service}.service`;
+			const denied = await requireConfirmation(ctx, `Deploy container ${unit}`);
+			if (denied) return errorResult(denied);
+			const reload = await run("systemctl", ["--user", "daemon-reload"], signal);
+			if (reload.exitCode !== 0) {
+				return errorResult(`systemctl --user daemon-reload failed:\n${reload.stderr}`);
+			}
+			const start = await run("systemctl", ["--user", "start", unit], signal);
 			const text = truncate(
-				result.exitCode === 0 ? result.stdout || "(no log output)" : `Error fetching logs:\n${result.stderr}`,
+				start.exitCode === 0 ? `Started ${unit} successfully.` : `Failed to start ${unit}:\n${start.stderr}`,
 			);
 			return {
 				content: [{ type: "text", text }],
-				details: { exitCode: result.exitCode },
-				isError: result.exitCode !== 0,
+				details: { exitCode: start.exitCode },
+				isError: start.exitCode !== 0,
 			};
 		},
 	});
@@ -178,12 +163,7 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "systemd_control",
 		label: "Systemd Service Control",
-		description: "Manage a Bloom user-systemd service (start, stop, restart, status).",
-		promptSnippet: "systemd_control — start/stop/restart/status a bloom-* service",
-		promptGuidelines: [
-			"Use systemd_control to manage Bloom user-systemd services. Only bloom-* services can be controlled.",
-			"Use status for read-only checks; other actions require justification.",
-		],
+		description: "Manage a Bloom user-systemd service (start, stop, restart, status). Only bloom-* services allowed.",
 		parameters: Type.Object({
 			service: Type.String({ description: "Service name (e.g. bloom-whatsapp)" }),
 			action: StringEnum(["start", "stop", "restart", "status"] as const),
@@ -207,39 +187,6 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerTool({
-		name: "container_deploy",
-		label: "Deploy Container",
-		description: "Reload user systemd and start a Bloom Quadlet unit.",
-		promptSnippet: "container_deploy — deploy a bloom-* Quadlet container unit",
-		promptGuidelines: [
-			"Use container_deploy to start a new container from an existing Quadlet unit file. Only bloom-* units can be deployed.",
-		],
-		parameters: Type.Object({
-			quadlet_name: Type.String({ description: "Name of the Quadlet unit to deploy (e.g. bloom-web)" }),
-		}),
-		async execute(_toolCallId, params, signal, _onUpdate, ctx) {
-			const guard = guardBloom(params.quadlet_name);
-			if (guard) return errorResult(guard);
-			const unit = `${params.quadlet_name}.service`;
-			const denied = await requireConfirmation(ctx, `Deploy container ${unit}`);
-			if (denied) return errorResult(denied);
-			const reload = await run("systemctl", ["--user", "daemon-reload"], signal);
-			if (reload.exitCode !== 0) {
-				return errorResult(`systemctl --user daemon-reload failed:\n${reload.stderr}`);
-			}
-			const start = await run("systemctl", ["--user", "start", unit], signal);
-			const text = truncate(
-				start.exitCode === 0 ? `Started ${unit} successfully.` : `Failed to start ${unit}:\n${start.stderr}`,
-			);
-			return {
-				content: [{ type: "text", text }],
-				details: { exitCode: start.exitCode },
-				isError: start.exitCode !== 0,
-			};
-		},
-	});
-
 	// --- Update detection tools ---
 
 	const bloomDir = join(os.homedir(), ".bloom");
@@ -249,8 +196,6 @@ export default function (pi: ExtensionAPI) {
 		name: "update_status",
 		label: "Update Status",
 		description: "Reads the Bloom OS update status from the last scheduled check.",
-		promptSnippet: "update_status — check if an OS update is available",
-		promptGuidelines: ["Use update_status to check whether a new OS image is available before suggesting an upgrade."],
 		parameters: Type.Object({}),
 		async execute(_toolCallId, _params, _signal, _onUpdate, _ctx) {
 			try {
@@ -270,11 +215,6 @@ export default function (pi: ExtensionAPI) {
 		name: "schedule_reboot",
 		label: "Schedule Reboot",
 		description: "Schedule a system reboot after a delay (in minutes). Requires user confirmation.",
-		promptSnippet: "schedule_reboot — schedule a delayed system reboot",
-		promptGuidelines: [
-			"ALWAYS ask for explicit user confirmation before calling schedule_reboot.",
-			"Use after staging an OS update to apply it.",
-		],
 		parameters: Type.Object({
 			delay_minutes: Type.Number({ description: "Minutes to wait before rebooting", default: 1 }),
 		}),
@@ -297,11 +237,6 @@ export default function (pi: ExtensionAPI) {
 		name: "system_health",
 		label: "System Health",
 		description: "Composite health check: OS image status, containers, disk usage, system load, and memory.",
-		promptSnippet: "system_health — comprehensive system health overview",
-		promptGuidelines: [
-			"Use system_health for a quick overview of the entire system.",
-			"Run proactively at session start or when the user asks about system health.",
-		],
 		parameters: Type.Object({}),
 		async execute(_toolCallId, _params, signal, _onUpdate, _ctx) {
 			const sections: string[] = [];

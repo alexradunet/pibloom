@@ -204,8 +204,6 @@ export default function (pi: ExtensionAPI) {
 		name: "garden_status",
 		label: "Bloom Status",
 		description: "Show Bloom directory location and blueprint state",
-		promptSnippet: "Show Bloom directory status and blueprint state",
-		promptGuidelines: ["Use garden_status to check the Bloom directory state."],
 		parameters: Type.Object({}),
 		async execute() {
 			const lines: string[] = [`Bloom: ${bloomDir}`, ""];
@@ -286,11 +284,6 @@ export default function (pi: ExtensionAPI) {
 		name: "skill_create",
 		label: "Create Skill",
 		description: "Create a new skill markdown file in the Bloom directory",
-		promptSnippet: "Create a new SKILL.md in ~/Bloom/Skills/",
-		promptGuidelines: [
-			"Use skill_create when the user wants to teach Bloom a new capability.",
-			"Skills are markdown files with YAML frontmatter (name, description) and structured instructions.",
-		],
 		parameters: Type.Object({
 			name: Type.String({ description: "Skill name (kebab-case, e.g. meal-planning)" }),
 			description: Type.String({ description: "One-line skill description" }),
@@ -324,8 +317,6 @@ export default function (pi: ExtensionAPI) {
 		name: "skill_list",
 		label: "List Skills",
 		description: "List all skills in the Bloom directory",
-		promptSnippet: "List skills in ~/Bloom/Skills/",
-		promptGuidelines: ["Use skill_list to show available Bloom skills."],
 		parameters: Type.Object({}),
 		async execute() {
 			const skillsDir = path.join(bloomDir, "Skills");
@@ -357,11 +348,7 @@ export default function (pi: ExtensionAPI) {
 		name: "persona_evolve",
 		label: "Propose Persona Change",
 		description: "Propose a change to a persona layer, tracked as an evolution object",
-		promptSnippet: "Propose a change to Bloom's persona (requires user approval)",
-		promptGuidelines: [
-			"Use persona_evolve to propose changes to SOUL.md, BODY.md, FACULTY.md, or SKILL.md.",
-			"Changes are tracked as evolution objects and require explicit user approval before applying.",
-		],
+		promptGuidelines: ["Changes require explicit user approval before applying."],
 		parameters: Type.Object({
 			layer: Type.String({ description: "Persona layer to change: SOUL, BODY, FACULTY, or SKILL" }),
 			slug: Type.String({ description: "Evolution slug (e.g. add-health-awareness)" }),

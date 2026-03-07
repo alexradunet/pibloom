@@ -37,8 +37,6 @@ export default function (pi: ExtensionAPI) {
 		name: "memory_create",
 		label: "Memory Create",
 		description: "Create a new markdown object in ~/Bloom/Objects/",
-		promptSnippet: "Create a new tracked object (task, note, project, etc.)",
-		promptGuidelines: ["Use memory_create when the user mentions something new to track. Always set a title."],
 		parameters: Type.Object({
 			type: Type.String({
 				description: "Object type (e.g. task, note, project)",
@@ -127,8 +125,6 @@ export default function (pi: ExtensionAPI) {
 		name: "memory_read",
 		label: "Memory Read",
 		description: "Read a markdown object from ~/Bloom/Objects/",
-		promptSnippet: "Read a specific object by type and slug",
-		promptGuidelines: ["Use memory_read to retrieve a specific object by type and slug."],
 		parameters: Type.Object({
 			type: Type.String({ description: "Object type" }),
 			slug: Type.String({ description: "Object slug" }),
@@ -162,8 +158,6 @@ export default function (pi: ExtensionAPI) {
 		name: "memory_search",
 		label: "Memory Search",
 		description: "Search markdown files for a pattern (simple string match)",
-		promptSnippet: "Search objects by content pattern",
-		promptGuidelines: ["Use memory_search when the user remembers content but not the exact object name."],
 		parameters: Type.Object({
 			pattern: Type.String({
 				description: "Text pattern to search for",
@@ -205,8 +199,6 @@ export default function (pi: ExtensionAPI) {
 		name: "memory_link",
 		label: "Memory Link",
 		description: "Add bidirectional links between two objects",
-		promptSnippet: "Link two objects bidirectionally",
-		promptGuidelines: ["Use memory_link when two objects are related. Links are bidirectional."],
 		parameters: Type.Object({
 			ref_a: Type.String({
 				description: "First object reference (type/slug)",
@@ -255,8 +247,6 @@ export default function (pi: ExtensionAPI) {
 		name: "memory_list",
 		label: "Memory List",
 		description: "List objects, optionally filtered by type or frontmatter fields",
-		promptSnippet: "List objects by type or filter",
-		promptGuidelines: ["Use memory_list to show all objects of a type, or filter by status, etc."],
 		parameters: Type.Object({
 			type: Type.Optional(Type.String({ description: "Object type to filter by" })),
 			directory: Type.Optional(Type.String({ description: "Directory to walk (default: ~/Bloom/Objects/)" })),

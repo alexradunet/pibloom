@@ -60,12 +60,7 @@ export default function (pi: ExtensionAPI) {
 		name: "service_scaffold",
 		label: "Scaffold Service Package",
 		description: "Generate a new Bloom service package (quadlet + SKILL.md) from a template.",
-		promptSnippet: "service_scaffold — create a new service package skeleton",
-		promptGuidelines: [
-			"Use service_scaffold to bootstrap a new service package with correct Bloom conventions.",
-			"Prefer upstream images and Quadlet composition (no Containerfile builds).",
-			"Use pinned image tags or digests; avoid latest/latest-* tags.",
-		],
+		promptGuidelines: ["Use pinned image tags or digests; avoid latest/latest-* tags."],
 		parameters: Type.Object({
 			name: Type.String({ description: "Service name (kebab-case, e.g. my-api)" }),
 			description: Type.String({ description: "Short service description" }),
@@ -143,11 +138,6 @@ export default function (pi: ExtensionAPI) {
 		name: "service_install",
 		label: "Install Service Package",
 		description: "Install a service package from a bundled local package to Quadlet + Bloom skill paths.",
-		promptSnippet: "service_install — install Bloom service package from local bundle",
-		promptGuidelines: [
-			"Use service_install to deploy a bundled service package.",
-			"After install, verify with systemctl status and container logs.",
-		],
 		parameters: Type.Object({
 			name: Type.String({ description: "Service name (e.g. lemonade)" }),
 			version: Type.Optional(Type.String({ description: "Version tag for manifest", default: "latest" })),
@@ -223,11 +213,6 @@ export default function (pi: ExtensionAPI) {
 		name: "service_test",
 		label: "Test Service",
 		description: "Smoke-test installed service unit: reload, start, wait, inspect status/logs, optional cleanup.",
-		promptSnippet: "service_test — run local smoke test for installed service",
-		promptGuidelines: [
-			"Use service_test to verify a service package is working correctly.",
-			"Check returned status and logs; fix issues before release.",
-		],
 		parameters: Type.Object({
 			name: Type.String({ description: "Installed service name (e.g. lemonade)" }),
 			start_timeout_sec: Type.Optional(Type.Number({ description: "Timeout waiting for active state", default: 120 })),
@@ -327,8 +312,6 @@ export default function (pi: ExtensionAPI) {
 		name: "manifest_show",
 		label: "Show Manifest",
 		description: "Display the declarative service manifest from ~/Bloom/manifest.yaml",
-		promptSnippet: "manifest_show — display the Bloom service manifest",
-		promptGuidelines: ["Use manifest_show to view the current manifest state and configured services."],
 		parameters: Type.Object({}),
 		async execute() {
 			const manifest = loadManifest(manifestPath);
@@ -367,11 +350,6 @@ export default function (pi: ExtensionAPI) {
 		label: "Sync Manifest",
 		description:
 			"Reconcile the manifest with actual running containers. Detects drift and can update the manifest or report differences.",
-		promptSnippet: "manifest_sync — reconcile manifest with running state",
-		promptGuidelines: [
-			"Use manifest_sync to detect drift between the manifest and reality.",
-			"Pass mode='detect' (default) to report differences, mode='update' to update the manifest to match reality.",
-		],
 		parameters: Type.Object({
 			mode: Type.Optional(
 				StringEnum(["detect", "update"] as const, {
@@ -465,8 +443,6 @@ export default function (pi: ExtensionAPI) {
 		name: "manifest_set_service",
 		label: "Set Manifest Service",
 		description: "Add or update a service entry in the manifest.",
-		promptSnippet: "manifest_set_service — add/update a service in the manifest",
-		promptGuidelines: ["Use manifest_set_service to declare a service in the manifest."],
 		parameters: Type.Object({
 			name: Type.String({ description: "Service name (e.g. whatsapp, lemonade)" }),
 			image: Type.String({ description: "Container image reference" }),
@@ -498,11 +474,6 @@ export default function (pi: ExtensionAPI) {
 		label: "Apply Manifest",
 		description:
 			"Apply desired service state from manifest: install/start enabled services and stop disabled services.",
-		promptSnippet: "manifest_apply — apply manifest desired service state",
-		promptGuidelines: [
-			"Use manifest_apply to enact desired service state from manifest.yaml.",
-			"Prefer install_missing=true for first-time setup on fresh devices.",
-		],
 		parameters: Type.Object({
 			install_missing: Type.Optional(
 				Type.Boolean({

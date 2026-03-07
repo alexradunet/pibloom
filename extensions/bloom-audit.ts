@@ -129,11 +129,6 @@ export default function (pi: ExtensionAPI) {
 		name: "audit_review",
 		label: "Audit Review",
 		description: "Review recent tool calls/results from the Bloom audit trail.",
-		promptSnippet: "audit_review — inspect recent audited tool activity",
-		promptGuidelines: [
-			"Use audit_review to inspect what tools were executed recently.",
-			"Filter by tool name when investigating suspicious or failing operations.",
-		],
 		parameters: Type.Object({
 			days: Type.Optional(Type.Number({ description: "How many days to scan (1-30)", default: 1 })),
 			limit: Type.Optional(Type.Number({ description: "Max entries to return (1-500)", default: 50 })),

@@ -67,9 +67,12 @@ RUN HOME=/tmp npm install -g --cache /tmp/npm-cache \
     typescript@${TYPESCRIPT_VERSION} \
     && rm -rf /tmp/npm-cache /var/roothome/.npm /root/.npm
 
-# Install Bloom Pi package
+# Install Bloom Pi package (install all deps, build TypeScript, then prune dev deps)
 COPY . /usr/local/share/bloom/
-RUN cd /usr/local/share/bloom && HOME=/tmp npm install --omit=dev --cache /tmp/npm-cache && \
+RUN cd /usr/local/share/bloom && \
+    HOME=/tmp npm install --cache /tmp/npm-cache && \
+    npm run build && \
+    npm prune --omit=dev && \
     rm -rf /tmp/npm-cache /var/roothome/.npm /root/.npm
 
 # Configure Pi settings defaults in /usr (immutable layer)

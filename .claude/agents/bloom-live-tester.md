@@ -47,7 +47,7 @@ When asked to test, consider these categories:
 - **Pi State**: Is `~/.pi/` initialized correctly?
 - **Services**: Do Quadlet units start? Are containers healthy? Do health checks pass?
 - **Network**: Is `bloom.network` created? Can services communicate?
-- **Channels**: Is the Unix socket at `/run/bloom/channels.sock` available?
+- **Channels**: Is the Unix socket at `$XDG_RUNTIME_DIR/bloom/channels.sock` available?
 - **Guardrails**: Are dangerous commands blocked?
 - **Syncthing**: Is sync configured for home directory but NOT for `~/.pi/`?
 

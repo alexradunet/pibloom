@@ -9,7 +9,8 @@ import { isChannelMessage, mimeToExt } from "./utils.js";
 const { Client, LocalAuth } = pkg;
 
 const AUTH_DIR = process.env.BLOOM_AUTH_DIR ?? "/data/auth";
-const CHANNELS_SOCKET = process.env.BLOOM_CHANNELS_SOCKET ?? "/run/bloom/channels.sock";
+const defaultSocketPath = `${process.env.XDG_RUNTIME_DIR ?? `/run/user/${process.getuid?.() ?? 1000}`}/bloom/channels.sock`;
+const CHANNELS_SOCKET = process.env.BLOOM_CHANNELS_SOCKET ?? defaultSocketPath;
 const MEDIA_DIR = process.env.BLOOM_MEDIA_DIR ?? "/media/bloom";
 const CHANNEL_TOKEN = process.env.BLOOM_CHANNEL_TOKEN ?? "";
 

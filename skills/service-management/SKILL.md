@@ -141,7 +141,7 @@ Services may depend on other components:
 
 | Service | Depends On | Handling |
 |---------|-----------|----------|
-| `whatsapp` | Pi channels server (`/run/bloom/channels.sock`) | Unix socket reconnect with exponential backoff |
+| `whatsapp` | Pi channels server (`$XDG_RUNTIME_DIR/bloom/channels.sock`) | Unix socket reconnect with exponential backoff |
 | `lemonade` | None (standalone HTTP API) | — |
 | `netbird` | Network stack (NET_ADMIN, /dev/net/tun) | Host network mode |
 | `dufs` | Local home bind mount | `%h` bind mount |

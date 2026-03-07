@@ -26,6 +26,7 @@ HealthCmd=curl -sf http://localhost:8000/health || exit 1
 HealthInterval=30s
 HealthRetries=3
 HealthTimeout=10s
+HealthStartPeriod=5m
 NoNewPrivileges=true
 LogDriver=journald
 

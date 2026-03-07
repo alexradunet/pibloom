@@ -34,7 +34,7 @@ Bloom extends Pi through three mechanisms, lightest first: **Skill → Extension
 | `~/.pi/` | Pi agent state, sessions | No |
 | `~/.pi/bloom-context.json` | Compaction context persistence | No |
 | `~/.config/containers/systemd/` | Quadlet container units | No |
-| `/run/bloom/channels.sock` | Channel bridge Unix socket | No |
+| `$XDG_RUNTIME_DIR/bloom/channels.sock` | Channel bridge Unix socket | No |
 
 ## Build and Test
 

@@ -1,15 +1,15 @@
 /**
- * 📡 bloom-channels — Channel bridge Unix socket server at /run/bloom/channels.sock.
+ * 📡 bloom-channels — Channel bridge Unix socket server at $XDG_RUNTIME_DIR/bloom/channels.sock.
  *
  * @commands /wa (send message to WhatsApp channel)
  * @hooks session_start, agent_end, session_shutdown
  * @see {@link ../AGENTS.md#bloom-channels} Extension reference
  */
 import { randomUUID } from "node:crypto";
-import { existsSync, readFileSync, unlinkSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, unlinkSync } from "node:fs";
 import { createServer, type Server, type Socket } from "node:net";
 import os from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import type {
 	AgentEndEvent,
 	ExtensionAPI,
@@ -60,7 +60,12 @@ interface IncomingMessage {
 	media?: MediaInfo;
 }
 
-const SOCKET_PATH = process.env.BLOOM_CHANNELS_SOCKET ?? "/run/bloom/channels.sock";
+const defaultSocketPath = join(
+	process.env.XDG_RUNTIME_DIR ?? `/run/user/${process.getuid?.() ?? 1000}`,
+	"bloom",
+	"channels.sock",
+);
+const SOCKET_PATH = process.env.BLOOM_CHANNELS_SOCKET ?? defaultSocketPath;
 const TOKEN_DIR = join(os.homedir(), ".config", "bloom", "channel-tokens");
 const PING_INTERVAL_MS = 30_000;
 const MAX_MISSED_PINGS = 3;
@@ -306,6 +311,7 @@ export default function (pi: ExtensionAPI) {
 			log.error("server error", { error: err.message });
 		});
 
+		mkdirSync(dirname(SOCKET_PATH), { recursive: true });
 		server.listen(SOCKET_PATH, () => {
 			log.info("listening", { path: SOCKET_PATH });
 		});

@@ -19,7 +19,7 @@ Use `audit_review` to inspect recent tool actions when you need to reconstruct w
 4. Check logs: `container_logs service=bloom-whatsapp lines=100`
 5. Common causes:
    - WhatsApp session expired → user must re-scan QR code
-   - Channel socket unreachable → verify `/run/bloom/channels.sock` exists
+   - Channel socket unreachable → verify `$XDG_RUNTIME_DIR/bloom/channels.sock` exists
    - Token mismatch → verify `~/.config/bloom/channel-tokens/whatsapp.env`
 6. Recovery: `systemd_control service=bloom-whatsapp action=restart`
 
@@ -58,7 +58,7 @@ Use `audit_review` to inspect recent tool actions when you need to reconstruct w
 3. Common causes:
    - Extension compilation error → `npm run build` in Bloom package
    - Missing dependency → `npm install` in Bloom package
-   - Socket file stale → remove `/run/bloom/channels.sock` and restart
+   - Socket file stale → remove `$XDG_RUNTIME_DIR/bloom/channels.sock` and restart
 4. Recovery: restart the Pi agent service
 
 ## Container Health Issues

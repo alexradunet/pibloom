@@ -43,7 +43,7 @@ graph TB
             garden[bloom-garden]
             objects[bloom-objects]
             topics[bloom-topics]
-            channels[bloom-channels<br/>Unix socket<br/>/run/bloom/channels.sock]
+            channels[bloom-channels<br/>Unix socket<br/>$XDG_RUNTIME_DIR/bloom/channels.sock]
         end
 
         subgraph "Service Containers (Podman Quadlet)"

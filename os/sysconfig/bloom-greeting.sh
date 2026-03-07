@@ -49,6 +49,17 @@ else
     echo ""
 fi
 
+# --- Pre-create channel tokens for native services ---
+TOKEN_DIR="$HOME/.config/bloom/channel-tokens"
+mkdir -p "$TOKEN_DIR"
+for svc in whatsapp; do
+    if [ ! -f "$TOKEN_DIR/$svc.env" ]; then
+        token=$(openssl rand -hex 32)
+        echo "$token" > "$TOKEN_DIR/$svc"
+        echo "BLOOM_CHANNEL_TOKEN=$token" > "$TOKEN_DIR/$svc.env"
+    fi
+done
+
 # --- NetBird authentication (runs every login until connected) ---
 if command -v netbird >/dev/null 2>&1; then
     # Check if NetBird is already connected

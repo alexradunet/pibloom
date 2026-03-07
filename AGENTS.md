@@ -136,7 +136,7 @@ Bloom directory management, blueprint seeding, skill creation, persona evolution
 
 ### 📡 bloom-channels (410 lines)
 
-Channel bridge Unix socket server at `/run/bloom/channels.sock`. JSON-newline protocol with rate limiting and heartbeat.
+Channel bridge Unix socket server at `$XDG_RUNTIME_DIR/bloom/channels.sock`. JSON-newline protocol with rate limiting and heartbeat.
 
 **Commands:** `/wa` (send message to WhatsApp channel)
 **Hooks:**

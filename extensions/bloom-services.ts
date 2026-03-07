@@ -316,25 +316,29 @@ export default function (pi: ExtensionAPI) {
 
 				let installSource: "oci" | "local" = "oci";
 				let sourceNote: string | null = null;
-				const pull = await run("oras", ["pull", ref, "-o", tempDir], signal);
-				if (pull.exitCode !== 0) {
-					const localServiceDir = join(packageRoot, "services", params.name);
-					const localQuadlet = join(localServiceDir, "quadlet");
-					const localSkill = join(localServiceDir, "SKILL.md");
-					if (!existsSync(localQuadlet) || !existsSync(localSkill)) {
-						return errorResult(`Failed to pull ${ref}:\n${pull.stderr || pull.stdout}`);
-					}
 
+				const localServiceDir = join(packageRoot, "services", params.name);
+				const localQuadlet = join(localServiceDir, "quadlet");
+				const localSkill = join(localServiceDir, "SKILL.md");
+
+				if (existsSync(localQuadlet) && existsSync(localSkill)) {
+					// Use local bundled package directly — skip OCI pull
 					const localTempQuadlet = join(tempDir, "quadlet");
 					mkdirSync(localTempQuadlet, { recursive: true });
-					for (const name of readdirSync(localQuadlet)) {
-						const src = join(localQuadlet, name);
+					for (const fname of readdirSync(localQuadlet)) {
+						const src = join(localQuadlet, fname);
 						if (!statSync(src).isFile()) continue;
-						writeFileSync(join(localTempQuadlet, name), readFileSync(src));
+						writeFileSync(join(localTempQuadlet, fname), readFileSync(src));
 					}
 					writeFileSync(join(tempDir, "SKILL.md"), readFileSync(localSkill));
 					installSource = "local";
-					sourceNote = `OCI pull failed for ${ref}; installed bundled local service package from ${localServiceDir}.`;
+					sourceNote = `Installed from bundled local service package at ${localServiceDir}.`;
+				} else {
+					// No local package — try OCI pull
+					const pull = await run("oras", ["pull", ref, "-o", tempDir], signal);
+					if (pull.exitCode !== 0) {
+						return errorResult(`Failed to pull ${ref}:\n${pull.stderr || pull.stdout}`);
+					}
 				}
 
 				const quadletSrc = join(tempDir, "quadlet");

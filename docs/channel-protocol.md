@@ -8,7 +8,7 @@ Bloom uses a JSON-over-Unix-socket bridge protocol for external messaging platfo
 
 Bridges connect to the Unix socket:
 
-- Default: `/run/bloom/channels.sock`
+- Default: `$XDG_RUNTIME_DIR/bloom/channels.sock`
 - Override: `BLOOM_CHANNELS_SOCKET`
 
 All frames are newline-delimited JSON (`\n`-terminated).
@@ -124,7 +124,7 @@ stateDiagram-v2
     Disconnected --> [*]
 ```
 
-1. Bridge connects to `/run/bloom/channels.sock`
+1. Bridge connects to `$XDG_RUNTIME_DIR/bloom/channels.sock`
 2. Bridge sends `register` with channel token
 3. Bloom replies `status`
 4. Bridge sends inbound `message` events

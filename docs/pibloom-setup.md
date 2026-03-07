@@ -53,9 +53,7 @@ Expected local path:
 Declare desired services in `~/Bloom/manifest.yaml` via tool calls:
 
 - `manifest_set_service(name="dufs", image="docker.io/sigoden/dufs:latest", version="0.1.0", enabled=true)`
-- `manifest_set_service(name="whatsapp", image="ghcr.io/pibloom/bloom-whatsapp:0.2.0", version="0.2.0", enabled=true)`
 - `manifest_set_service(name="lemonade", image="ghcr.io/lemonade-sdk/lemonade-server:latest", version="0.1.0", enabled=true)`
-- `manifest_set_service(name="netbird", image="netbirdio/netbird@sha256:...", version="0.1.0", enabled=true)`
 
 Preview:
 
@@ -67,40 +65,42 @@ Apply:
 
 ## 5) 📦 Service-specific follow-up
 
-### 📦 Syncthing
+### 📦 NetBird
 
-Open:
+NetBird is installed as a system RPM service on the OS image.
 
-- `http://localhost:8384`
-
-If running inside QEMU dev VM, host access works via forwarded port:
-
-- host `localhost:8384` -> guest `8384`
-
-Alternative tunnel:
+Authenticate:
 
 ```bash
-ssh -L 8384:localhost:8384 -p 2222 bloom@localhost
+sudo netbird up
+```
+
+Check status:
+
+```bash
+sudo netbird status
+```
+
+Logs:
+
+```bash
+sudo journalctl -u netbird -f
 ```
 
 ### 📦 WhatsApp
+
+WhatsApp runs as a native systemd user service (not a container).
+
+Enable and start:
+
+```bash
+systemctl --user enable --now bloom-whatsapp
+```
 
 Watch logs and pair QR:
 
 ```bash
 journalctl --user -u bloom-whatsapp -f
-```
-
-### 📦 NetBird
-
-Check rootless prerequisites before first start:
-
-- user must have entries in `/etc/subuid` and `/etc/subgid`
-
-Then authenticate:
-
-```bash
-podman exec bloom-netbird netbird up
 ```
 
 ## 6) 🚀 Mark setup complete

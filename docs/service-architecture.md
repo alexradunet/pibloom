@@ -29,7 +29,7 @@ graph TD
 |-----------|----------|----------|------|
 | **Skill** | Pi needs knowledge or a procedure to follow | meal-planning, troubleshooting guides, API references | Zero — just a markdown file |
 | **Extension** | Pi needs to register commands, tools, or react to session events | bloom-channels (Unix socket server), bloom-objects (object store) | Low — TypeScript, runs in-process |
-| **Service** | A standalone process needs to run independently of Pi's session | Lemonade (local LLM), WhatsApp bridge (always-on), NetBird (VPN) | Medium — container image, systemd unit, resource allocation |
+| **Service** | A standalone process needs to run independently of Pi's session | Lemonade (local LLM), WhatsApp bridge (always-on), dufs (WebDAV) | Medium — systemd unit, resource allocation |
 
 **Always prefer the lighter option.** A skill that teaches Pi to call an existing API is better than an extension wrapping that API, which is better than a service re-implementing it.
 
@@ -47,14 +47,18 @@ graph TB
         end
 
         subgraph "Service Containers (Podman Quadlet)"
-            wa[bloom-whatsapp<br/>whatsapp-web.js Bridge]
             lemonade[bloom-lemonade<br/>Lemonade :8000]
-            netbird[bloom-netbird<br/>NetBird VPN]
             dufs[bloom-dufs<br/>WebDAV :5000]
+        end
+
+        subgraph "Native Services"
+            wa[bloom-whatsapp<br/>whatsapp-web.js Bridge<br/>systemd --user]
+            netbird[netbird<br/>NetBird VPN<br/>system RPM service]
         end
 
         subgraph "System Services"
             systemd[systemd --user]
+            systemd_sys[systemd system]
         end
     end
 
@@ -65,8 +69,8 @@ graph TB
     dufs -->|WebDAV| devices[Other Devices]
     systemd -->|manages| wa
     systemd -->|manages| lemonade
-    systemd -->|manages| netbird
     systemd -->|manages| dufs
+    systemd_sys -->|manages| netbird
 
     style persona fill:#e8d5f5
     style garden fill:#d5f5e8
@@ -80,29 +84,28 @@ graph TB
 |-------|-----------|-----------|---------------|------------|
 | **Skills** | Markdown files (SKILL.md) | Discovered at session start | Pi reads and follows instructions | Pi (via `skill_create`) or developer |
 | **Extensions** | In-process TypeScript | Loaded with Pi session | Direct API (ExtensionAPI) | Developer (requires code review + PR) |
-| **Services** | OCI containers via Podman Quadlet | systemd-managed, independent | Unix socket, HTTP, shell | Pi (via self-evolution) or developer |
+| **Services** | Containers (Podman Quadlet) or native systemd units | systemd-managed, independent | Unix socket, HTTP, shell | Pi (via self-evolution) or developer |
 
 ### 🌱 Why Three Layers?
 
 - **Skills** are pure knowledge — procedures, API references, troubleshooting guides. Pi reads them and acts. No code, no process, no resources. Pi can create these autonomously.
 - **Extensions** need direct access to Pi's session (send messages, register commands, access context). They run in-process and require TypeScript. These are core platform code.
-- **Services** are standalone workloads (speech-to-text, messaging bridges, mesh VPN, sync daemons) that benefit from container isolation, independent updates, and resource limits. Pi can create and distribute these via OCI artifacts.
+- **Services** are standalone workloads (speech-to-text, messaging bridges, mesh VPN, file sync) that run as either containers (for isolation) or native systemd units (when container overhead is unnecessary). Pi can create and distribute containerized services via OCI artifacts.
 
 ### 📦 The `bloom-` Prefix
 
-Service containers use a `bloom-` prefix on their **Quadlet unit names** (e.g., `bloom-lemonade`, `bloom-netbird`). This is a management namespace — it does NOT mean the container image is Bloom-specific. Most services use upstream images directly:
+Bloom-managed services use a `bloom-` prefix on their **unit names** (e.g., `bloom-lemonade`, `bloom-whatsapp`). This is a management namespace — it does NOT mean the underlying image is Bloom-specific. Some services run as containers, others as native systemd units, and NetBird runs as a system-level RPM service:
 
-| Quadlet Name | Container Image | Bloom-specific? |
-|-------------|-----------------|-----------------|
-| `bloom-lemonade` | `ghcr.io/lemonade-sdk/lemonade-server:latest` | No — upstream image |
-| `bloom-netbird` | `netbirdio/netbird@sha256:b3e69490e58cf255caf1b9b6a8bbfcfae4d1b2bbaa3c40a06cfdbba5b8fdc0d2` | No — upstream image |
-| `bloom-dufs` | `docker.io/sigoden/dufs:latest` | No — upstream image |
-| `bloom-whatsapp` | `ghcr.io/pibloom/bloom-whatsapp:0.2.0` | Yes — custom bridge |
+| Unit Name | Type | Image / Runtime | Bloom-specific? |
+|-----------|------|-----------------|-----------------|
+| `bloom-lemonade` | Podman Quadlet (user) | `ghcr.io/lemonade-sdk/lemonade-server:latest` | No — upstream image |
+| `bloom-dufs` | Podman Quadlet (user) | `docker.io/sigoden/dufs:latest` | No — upstream image |
+| `bloom-whatsapp` | Native systemd (user) | Node.js + whatsapp-web.js | Yes — custom bridge |
+| `netbird` | System RPM service | NetBird package | No — upstream RPM |
 
 The prefix enables:
-- `systemctl --user status bloom-*` — list all Bloom-managed services
-- `ls ~/.config/containers/systemd/bloom-*.container` — discover installed services
-- Clear separation from user-installed containers
+- `systemctl --user status bloom-*` — list all Bloom-managed user services
+- Clear separation from user-installed services
 
 ## 📦 OCI Artifact Distribution
 
@@ -150,7 +153,7 @@ services/{name}/
 - default service versions
 - OCI artifact references (`bloom-svc-*`)
 - runtime image references
-- preflight requirements (for example rootless subuid/subgid for NetBird)
+- preflight requirements (for example `oras` and `podman` for container services)
 
 The `manifest_apply` tool uses this catalog to auto-install missing services and enforce preflight checks.
 
@@ -253,25 +256,26 @@ graph LR
     end
 
     subgraph "Container Volumes"
-        wa_auth["bloom-whatsapp-auth<br/>WhatsApp credentials"]
         lemonade_models["bloom-lemonade-models<br/>ML model cache"]
-        nb_state["bloom-netbird-state<br/>NetBird identity"]
+    end
+
+    subgraph "Native State"
+        wa_auth["~/.local/share/bloom-whatsapp/<br/>WhatsApp credentials"]
+        nb_state["/var/lib/netbird/<br/>NetBird identity"]
     end
 
     bloom_pkg --> config
-    config --> wa_auth
     config --> lemonade_models
-    config --> nb_state
 ```
 
 ## 📦 Available Services
 
-| Service | Category | Port | Image | Resources |
-|---------|----------|------|-------|-----------|
-| bloom-whatsapp | communication | — | ghcr.io/pibloom/bloom-whatsapp:0.2.0 | 128MB RAM |
-| bloom-lemonade | ai | 8000 | ghcr.io/lemonade-sdk/lemonade-server:latest | 2GB RAM |
-| bloom-netbird | networking | — | netbirdio/netbird@sha256:b3e69490e58cf255caf1b9b6a8bbfcfae4d1b2bbaa3c40a06cfdbba5b8fdc0d2 | 256MB RAM |
-| bloom-dufs | sync | 5000 | docker.io/sigoden/dufs:latest | 64MB RAM |
+| Service | Category | Port | Type | Image / Runtime | Resources |
+|---------|----------|------|------|-----------------|-----------|
+| bloom-lemonade | ai | 8000 | Podman Quadlet | ghcr.io/lemonade-sdk/lemonade-server:latest | 2GB RAM |
+| bloom-dufs | sync | 5000 | Podman Quadlet | docker.io/sigoden/dufs:latest | 64MB RAM |
+| bloom-whatsapp | communication | — | Native systemd (user) | Node.js + whatsapp-web.js | 128MB RAM |
+| netbird | networking | — | System RPM service | NetBird package | 256MB RAM |
 
 ## 📦 Adding a New Service
 

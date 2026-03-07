@@ -24,7 +24,7 @@ Bloom extends Pi through three mechanisms, lightest first:
 |-------|------|------|
 | **Skill** | Markdown instructions (SKILL.md) | Pi needs knowledge or a procedure |
 | **Extension** | In-process TypeScript module | Pi needs tools, commands, or event hooks |
-| **Service** | OCI container (Podman Quadlet) | Standalone workload needing isolation |
+| **Service** | Container or native systemd unit | Standalone workload needing isolation |
 
 Always prefer the lightest option.
 
@@ -73,14 +73,14 @@ graph TD
 
 ### 📦 Services
 
-Modular capabilities packaged as OCI artifacts, installed via `oras` from GHCR:
+Modular capabilities running as containers or native systemd services:
 
-| Service | What |
-|---------|------|
-| `bloom-svc-lemonade` | Local LLM + STT (Lemonade) |
-| `bloom-svc-whatsapp` | WhatsApp bridge (whatsapp-web.js) |
-| `bloom-svc-netbird` | Mesh VPN |
-| `bloom-svc-dufs` | WebDAV file server |
+| Service | What | Type |
+|---------|------|------|
+| `bloom-lemonade` | Local LLM + STT (Lemonade) | Podman Quadlet |
+| `bloom-dufs` | WebDAV file server | Podman Quadlet |
+| `bloom-whatsapp` | WhatsApp bridge (whatsapp-web.js) | Native systemd (user) |
+| `netbird` | Mesh VPN | System RPM service |
 
 ### 🪞 Persona
 

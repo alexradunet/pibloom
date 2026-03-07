@@ -14,7 +14,7 @@ Bloom extends Pi through three mechanisms, lightest first: **Skill → Extension
 |-------|------|------|------------|
 | **Skill** | Markdown instructions (SKILL.md) | Pi needs knowledge or a procedure | Pi or developer |
 | **Extension** | In-process TypeScript | Pi needs commands, tools, or event hooks | Developer (PR required) |
-| **Service** | OCI container (Podman Quadlet) | Standalone workload needing isolation | Pi or developer |
+| **Service** | Container (Podman Quadlet) or native systemd unit | Standalone workload needing isolation | Pi or developer |
 
 Always prefer the lightest option. See `docs/service-architecture.md` for details.
 
@@ -204,17 +204,17 @@ Quick reference of every tool name available to Pi:
 | `self-evolution` | Structured system change workflow |
 | `recovery` | Troubleshooting playbooks (WhatsApp, OS updates, dufs, disk, containers) |
 
-## 📦 Services (OCI Packages)
+## 📦 Services
 
-Modular capabilities packaged as OCI artifacts, installed via `oras` from GHCR.
+Modular capabilities managed as container or native systemd services.
 Canonical metadata for automation lives in `services/catalog.yaml`.
 
-| Service | Category | Port |
-|---------|----------|------|
-| `bloom-svc-lemonade` | ai | 8000 |
-| `bloom-svc-whatsapp` | communication | — |
-| `bloom-svc-netbird` | networking | — |
-| `bloom-svc-dufs` | sync | 5000 |
+| Service | Category | Port | Type |
+|---------|----------|------|------|
+| `bloom-svc-lemonade` | ai | 8000 | Podman Quadlet |
+| `bloom-svc-dufs` | sync | 5000 | Podman Quadlet |
+| `bloom-whatsapp` | communication | — | Native systemd (user) |
+| `netbird` | networking | — | System RPM service |
 
 ## 🪞 Persona
 

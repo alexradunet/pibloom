@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { isChannelMessage, MEDIA_TYPES, mimeToExt } from "../src/utils.js";
+import {
+	isChannelMessage,
+	isWhatsAppSenderAllowed,
+	MEDIA_TYPES,
+	mimeToExt,
+	parseAllowedSenders,
+} from "../src/utils.js";
 
 // ---------------------------------------------------------------------------
 // mimeToExt
@@ -75,5 +81,61 @@ describe("isChannelMessage", () => {
 
 	it("returns false for non-string type", () => {
 		expect(isChannelMessage({ type: 123 })).toBe(false);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// parseAllowedSenders
+// ---------------------------------------------------------------------------
+describe("parseAllowedSenders", () => {
+	it("returns empty set for empty string", () => {
+		expect(parseAllowedSenders("").size).toBe(0);
+	});
+
+	it("parses comma-separated entries", () => {
+		const set = parseAllowedSenders("+1234567890,+0987654321");
+		expect(set.size).toBe(2);
+		expect(set.has("+1234567890")).toBe(true);
+		expect(set.has("+0987654321")).toBe(true);
+	});
+
+	it("trims whitespace", () => {
+		const set = parseAllowedSenders(" +123 , +456 ");
+		expect(set.has("+123")).toBe(true);
+		expect(set.has("+456")).toBe(true);
+	});
+
+	it("ignores empty entries from trailing commas", () => {
+		const set = parseAllowedSenders("+123,,+456,");
+		expect(set.size).toBe(2);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// isWhatsAppSenderAllowed
+// ---------------------------------------------------------------------------
+describe("isWhatsAppSenderAllowed", () => {
+	it("allows all when allowlist is empty", () => {
+		expect(isWhatsAppSenderAllowed("1234567890@s.whatsapp.net", new Set())).toBe(true);
+	});
+
+	it("allows by full JID", () => {
+		const allowed = new Set(["1234567890@s.whatsapp.net"]);
+		expect(isWhatsAppSenderAllowed("1234567890@s.whatsapp.net", allowed)).toBe(true);
+	});
+
+	it("allows by number without @domain", () => {
+		const allowed = new Set(["1234567890"]);
+		expect(isWhatsAppSenderAllowed("1234567890@s.whatsapp.net", allowed)).toBe(true);
+	});
+
+	it("allows by +number format", () => {
+		const allowed = new Set(["+1234567890"]);
+		expect(isWhatsAppSenderAllowed("1234567890@s.whatsapp.net", allowed)).toBe(true);
+	});
+
+	it("rejects when not in allowlist", () => {
+		const allowed = new Set(["+9999999999"]);
+		expect(isWhatsAppSenderAllowed("1234567890@s.whatsapp.net", allowed)).toBe(false);
 	});
 });

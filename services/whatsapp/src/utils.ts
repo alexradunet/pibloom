@@ -39,3 +39,20 @@ export function isChannelMessage(val: unknown): val is ChannelMessage {
 		typeof (val as Record<string, unknown>).type === "string"
 	);
 }
+
+export function parseAllowedSenders(raw: string): Set<string> {
+	const entries = raw
+		.split(",")
+		.map((s) => s.trim())
+		.filter(Boolean);
+	return new Set(entries);
+}
+
+export function isWhatsAppSenderAllowed(jid: string, allowedSenders: Set<string>): boolean {
+	if (allowedSenders.size === 0) return true;
+	if (allowedSenders.has(jid)) return true;
+	const number = jid.split("@")[0];
+	if (allowedSenders.has(number)) return true;
+	if (allowedSenders.has(`+${number}`)) return true;
+	return false;
+}

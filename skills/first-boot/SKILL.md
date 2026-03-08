@@ -52,7 +52,18 @@ If Bloom runs inside a VM, offer access paths:
 - QEMU port forward: host `localhost:5000` -> guest `5000`
 - SSH tunnel: `ssh -L 5000:localhost:5000 -p 2222 bloom@localhost`
 
-### 3) Optional Services
+### 3) Sender Allowlist (recommended before messaging services)
+
+Ask the user which phone numbers should be allowed to send messages. Write to `~/.config/bloom/bloom.env`:
+
+```bash
+mkdir -p ~/.config/bloom
+echo 'BLOOM_ALLOWED_SENDERS=+1234567890,+0987654321' > ~/.config/bloom/bloom.env
+```
+
+If left empty or unset, all senders are allowed. Both WhatsApp and Signal services read this file.
+
+### 4) Optional Services
 
 #### WhatsApp Bridge
 
@@ -63,7 +74,7 @@ If Bloom runs inside a VM, offer access paths:
 
 #### Signal Bridge
 
-- Ask the user for their phone number (E.164 format, e.g. +40749588297)
+- Ask the user for their phone number (E.164 format, e.g. +40749599297)
 - Create config: write `SIGNAL_ACCOUNT=+<number>` to `~/.config/bloom/signal.env`
 - Install: `service_install(name="signal")`
   - This auto-installs STT (whisper.cpp) as a dependency
@@ -76,7 +87,7 @@ If Bloom runs inside a VM, offer access paths:
 - Note: requires a GGUF model file in the `bloom-llm-models` volume
 - API at `http://localhost:8080` (OpenAI-compatible)
 
-### 4) Mark Setup Complete
+### 5) Mark Setup Complete
 
 ```bash
 touch ~/.bloom/.setup-complete

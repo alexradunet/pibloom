@@ -2,7 +2,7 @@
  * bloom-repo — Repository management: configure, sync, submit PRs, check status.
  *
  * @tools bloom_repo, bloom_repo_submit_pr
- * @see {@link ../../AGENTS.md#bloom-os} Extension reference
+ * @see {@link ../../AGENTS.md#bloom-repo} Extension reference
  */
 import { StringEnum } from "@mariozechner/pi-ai";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";

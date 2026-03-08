@@ -47,7 +47,7 @@ npm run check                  # biome lint + format check
 npm run check:fix              # biome auto-fix
 npm run test                   # vitest run
 npm run test:watch             # vitest watch mode
-npm run test:coverage          # vitest with v8 coverage (80% threshold)
+npm run test:coverage          # vitest with v8 coverage (lib/ 60% lines, extensions/ 20% lines)
 ```
 
 ### OS Image Build & VM Testing
@@ -91,4 +91,4 @@ Canonical locations: tool/hook reference → `AGENTS.md`, architecture → `docs
 - Add eslint, prettier, or formatting tools besides Biome
 - Use `Dockerfile` naming — always `Containerfile`
 - Use `docker` CLI — always `podman`
-- Import from pi SDK at runtime — use `peerDependencies` only
+- Bundle Pi SDK as a dependency — it must be a `peerDependency` (runtime VALUE imports like StringEnum, Type are fine)

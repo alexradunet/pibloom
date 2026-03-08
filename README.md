@@ -58,6 +58,7 @@ graph TD
 | `bloom-garden` | Bloom directory, blueprint seeding, skill discovery |
 | `bloom-channels` | Channel bridge Unix socket server |
 | `bloom-topics` | Topic management and session organization |
+| `bloom-display` | AI computer use: screenshots, input, accessibility tree, window management |
 
 ### 📜 Skills
 
@@ -139,18 +140,10 @@ npm run test           # vitest
 npm run test:coverage  # with 80% threshold enforcement
 ```
 
-Load extensions directly for development:
+Load extensions for development:
 
 ```bash
-pi -e ./extensions/bloom-persona.ts \
-   -e ./extensions/bloom-audit.ts \
-   -e ./extensions/bloom-os.ts \
-   -e ./extensions/bloom-repo.ts \
-   -e ./extensions/bloom-services.ts \
-   -e ./extensions/bloom-objects.ts \
-   -e ./extensions/bloom-garden.ts \
-   -e ./extensions/bloom-channels.ts \
-   -e ./extensions/bloom-topics.ts
+pi install ./
 ```
 
 ### 💻 Build the OS Image

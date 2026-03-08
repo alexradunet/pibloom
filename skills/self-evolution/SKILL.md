@@ -30,7 +30,7 @@ When extending capabilities, prefer the lightest option: **Skill → Extension �
 
 ### Skill Self-Creation
 - `skill_create` — Create a new skill in `~/Bloom/Skills/` with proper frontmatter
-- `skill_list` — List all skills currently in the Garden vault
+- `skill_list` — List all skills in `~/Bloom/Skills/`
 
 ### Persona Evolution
 - `persona_evolve` — Propose a change to a persona layer (SOUL, BODY, FACULTY, SKILL), tracked as an evolution object requiring user approval

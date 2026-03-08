@@ -29,7 +29,6 @@ extensions/bloom-{name}/
   index.ts       # export default function(pi) — registration ONLY
   actions.ts     # handler functions that call lib/ and format results
   types.ts       # extension-specific types (file optional, directory mandatory)
-  tests/         # colocated tests
 ```
 
 ### Rules
@@ -37,7 +36,7 @@ extensions/bloom-{name}/
 1. **`index.ts` is wiring only.** It registers tools, hooks, and commands with the Pi SDK. Zero business logic. If a reviewer sees an `if` statement doing domain work, it belongs in `actions.ts` or `lib/`.
 2. **`actions.ts` orchestrates.** It imports pure functions from `lib/`, calls them, and formats results for Pi. Side effects (fs, exec, net) happen here, not in `lib/`.
 3. **`types.ts` defines interfaces.** Extension-specific types. Shared types go in `lib/`.
-4. **Tests are colocated.** `extensions/bloom-{name}/tests/` with Vitest.
+4. **Tests live in `tests/`.** Organized by type: `tests/extensions/`, `tests/lib/`, `tests/integration/`, `tests/e2e/`.
 
 ### Why
 
@@ -47,26 +46,25 @@ AI always knows the structure. Reviewers check one mechanical rule: "is there lo
 
 ```
 lib/
-  shared.ts        # generic utilities (createLogger, nowIso, truncate, errorResult)
-  frontmatter.ts   # parseFrontmatter, stringifyFrontmatter
-  filesystem.ts    # safePath, file operations, Bloom dir resolution
-  containers.ts    # podman/Quadlet parsing, container status, health checks
-  exec.ts          # command execution helpers
-  networking.ts    # socket utilities, channel protocol helpers
-  persona.ts       # guardrail compilation, persona loading
-  services.ts      # catalog parsing, service metadata, manifest logic
+  shared.ts        # generic utilities (createLogger, nowIso, truncate, errorResult, guardBloom, requireConfirmation)
+  frontmatter.ts   # parseFrontmatter, stringifyFrontmatter, yaml
+  filesystem.ts    # safePath, getBloomDir
+  exec.ts          # command execution (run)
+  repo.ts          # git remote helpers (getRemoteUrl, inferRepoUrl)
+  audit.ts         # audit utilities (dayStamp, sanitize, summarizeInput)
+  services.ts      # catalog parsing, service metadata, manifest logic, service validation
 ```
 
 ### Rules
 
 1. **Every lib/ file is pure.** No side effects, no global state, no I/O at module level. Functions take inputs, return outputs.
-2. **Named by capability, not consumer.** `lib/containers.ts`, not `lib/bloom-os-helpers.ts`. Multiple extensions can import the same capability file.
+2. **Named by capability, not consumer.** `lib/services.ts`, not `lib/bloom-services-helpers.ts`. Multiple extensions can import the same capability file.
 3. **`shared.ts` is the last resort.** Only truly generic utilities (logging, timestamps, string truncation) belong here. If it relates to a specific capability, it has its own file.
 4. **Testable without mocks.** Pure functions with injected dependencies. If you need to mock to test a lib/ function, the architecture is wrong.
 
 ### Why
 
-Multiple extensions deal with the same underlying systems (containers, filesystem, networking). Capability-based organization means logic lands in the right place from the start, no reshuffling when a second extension needs it.
+Capability-based organization means logic lands in the right place from the start, no reshuffling when a second extension needs it. New capability files (e.g., `containers.ts`, `networking.ts`) are created when logic warrants extraction — don't create empty placeholder files.
 
 ## Service Structure
 
@@ -121,7 +119,7 @@ Used by humans, AI, and the bloom-architect agent when reviewing code:
 - [ ] Biome formatting (tabs, double quotes, 120 line width)
 - [ ] Tests exist and pass (TDD: failing test first)
 - [ ] lib/ functions are pure and testable without mocks
-- [ ] 80% coverage threshold maintained
+- [ ] Coverage thresholds maintained (lib/: 60% lines, 80% functions; extensions/: 20% lines, 25% functions)
 
 **bootc:**
 - [ ] No runtime system mutation — changes go through image builds

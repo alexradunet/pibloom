@@ -63,7 +63,7 @@ sequenceDiagram
     end
 ```
 
-### 🪞 bloom-persona (217 lines)
+### 🪞 bloom-persona
 
 Identity injection, safety guardrails, and compaction context.
 
@@ -73,7 +73,7 @@ Identity injection, safety guardrails, and compaction context.
 - `tool_call` — Check bash commands against guardrails, block if pattern matches
 - `session_before_compact` — Save context (active topic, pending channels, update status) to `~/.pi/bloom-context.json`
 
-### 🔍 bloom-audit (183 lines)
+### 🔍 bloom-audit
 
 Tool-call audit trail with 30-day retention.
 
@@ -126,7 +126,7 @@ Bloom directory management, blueprint seeding, skill creation, persona evolution
 - `session_start` — Ensure Bloom directory structure, seed blueprints (hash-based change detection)
 - `resources_discover` — Return skill paths from `~/Bloom/Skills/`
 
-### 📡 bloom-channels (410 lines)
+### 📡 bloom-channels
 
 Channel bridge Unix socket server at `$XDG_RUNTIME_DIR/bloom/channels.sock`. JSON-newline protocol with rate limiting and heartbeat.
 
@@ -136,7 +136,7 @@ Channel bridge Unix socket server at `$XDG_RUNTIME_DIR/bloom/channels.sock`. JSO
 - `agent_end` — Extract response, send back to channel socket by message ID
 - `session_shutdown` — Close socket server, cleanup
 
-### 🗂️ bloom-topics (162 lines)
+### 🗂️ bloom-topics
 
 Conversation topic management and session organization.
 
@@ -233,19 +233,19 @@ graph LR
 
 ## 📖 Shared Library
 
-`lib/shared.ts` — shared utilities:
+See `ARCHITECTURE.md` for structural rules and enforcement checklist.
 
-| Export | Purpose |
-|--------|---------|
-| `getBloomDir()` | Resolve Bloom directory path (`$BLOOM_DIR` or `~/Bloom`) |
-| `safePath(root, ...segments)` | Resolve path under root, blocking traversal |
-| `parseFrontmatter<T>(str)` | Parse YAML frontmatter from markdown |
-| `stringifyFrontmatter(data, content)` | Build markdown with YAML frontmatter |
-| `createLogger(component)` | JSON-structured logging (debug/info/warn/error) |
-| `truncate(text)` | Truncate to 2000 lines / 50KB |
-| `errorResult(message)` | Standardized error response |
-| `requireConfirmation(ctx, action)` | Prompt for UI confirmation, returns null or error string |
-| `nowIso()` | ISO timestamp without milliseconds |
+`lib/` — pure logic organized by capability:
+
+| File | Key Exports |
+|------|-------------|
+| `shared.ts` | `createLogger`, `truncate`, `errorResult`, `requireConfirmation`, `nowIso`, `guardBloom` |
+| `frontmatter.ts` | `parseFrontmatter`, `stringifyFrontmatter`, `yaml` |
+| `filesystem.ts` | `safePath`, `getBloomDir` |
+| `exec.ts` | `run` (command execution) |
+| `repo.ts` | `getRemoteUrl`, `inferRepoUrl` |
+| `audit.ts` | `dayStamp`, `sanitize`, `summarizeInput` |
+| `services.ts` | `loadManifest`, `saveManifest`, `loadServiceCatalog`, `installServicePackage`, `buildLocalImage`, `detectRunningServices`, `validateServiceName`, `validatePinnedImage` |
 
 ## 🚀 Install
 
@@ -253,9 +253,9 @@ graph LR
 pi install /path/to/bloom
 ```
 
-Or for development:
+Or for development (loads all extensions from the `extensions/` directory):
 ```bash
-pi -e ./extensions/bloom-persona.ts -e ./extensions/bloom-audit.ts -e ./extensions/bloom-os.ts -e ./extensions/bloom-repo.ts -e ./extensions/bloom-services.ts -e ./extensions/bloom-objects.ts -e ./extensions/bloom-garden.ts -e ./extensions/bloom-channels.ts -e ./extensions/bloom-topics.ts
+pi install ./
 ```
 
 ## 📖 Setup & Deployment Docs

@@ -6,14 +6,12 @@
  * @hooks session_start, resources_discover
  * @see {@link ../../AGENTS.md#bloom-garden} Extension reference
  */
-import os from "node:os";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { getBloomDir } from "../../lib/filesystem.js";
 import {
 	discoverSkillPaths,
 	ensureBloom,
-	ensureStignore,
 	getPackageDir,
 	handleGardenStatus,
 	handlePersonaEvolve,
@@ -31,7 +29,6 @@ export default function (pi: ExtensionAPI) {
 	pi.on("session_start", (_event, ctx) => {
 		ensureBloom(bloomDir);
 		seedBlueprints(bloomDir, packageDir);
-		ensureStignore(os.homedir());
 		process.env._BLOOM_DIR_RESOLVED = bloomDir;
 
 		const versions = readBlueprintVersions(bloomDir);

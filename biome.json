@@ -40,7 +40,7 @@
 			"**",
 			"!node_modules",
 			"!dist",
-			"!services/whatsapp/node_modules",
+			"!services/*/node_modules",
 			"!.worktrees",
 			"!os/output",
 			"!.pi",

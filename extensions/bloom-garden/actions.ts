@@ -14,22 +14,6 @@ const BLOOM_DIRS = ["Persona", "Skills", "Evolutions", "audit"];
 
 const PERSONA_FILES = ["SOUL.md", "BODY.md", "FACULTY.md", "SKILL.md"];
 
-const STIGNORE_CONTENT = `// Device-specific exclusions (used by sync services)
-.pi
-.ssh
-.gnupg
-.config/containers
-.config/systemd
-.config/bloom/channel-tokens
-.local
-.cache
-.mozilla
-.pki
-node_modules
-*.sock
-.git
-`;
-
 // --- Package helpers ---
 
 export function getPackageDir(): string {
@@ -71,13 +55,6 @@ export function writeBlueprintVersions(bloomDir: string, versions: BlueprintVers
 export function ensureBloom(bloomDir: string): void {
 	for (const dir of BLOOM_DIRS) {
 		fs.mkdirSync(path.join(bloomDir, dir), { recursive: true });
-	}
-}
-
-export function ensureStignore(homeDir: string): void {
-	const stignore = path.join(homeDir, ".stignore");
-	if (!fs.existsSync(stignore)) {
-		fs.writeFileSync(stignore, STIGNORE_CONTENT);
 	}
 }
 

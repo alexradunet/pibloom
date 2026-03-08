@@ -148,7 +148,7 @@ show_welcome() {
 
 	printf "  %sSteps:%s\n" "$DIM" "$RESET"
 	printf "    %s WiFi          %s(if hardware detected)%s\n" "$BULLET" "$DIM" "$RESET"
-	printf "    %s Password      %s(for your bloom account)%s\n" "$BULLET" "$DIM" "$RESET"
+	printf "    %s Password      %s(for your pi account)%s\n" "$BULLET" "$DIM" "$RESET"
 	printf "    %s NetBird       %s(optional mesh networking)%s\n" "$BULLET" "$DIM" "$RESET"
 	printf "\n"
 	printf "  Press %sEnter%s to begin " "$BOLD" "$RESET"
@@ -333,7 +333,7 @@ setup_wifi() {
 setup_password() {
 	clear
 	step_header "Step 2 of 3 — Password" \
-		"Create a password for your bloom user account." \
+		"Create a password for your pi user account." \
 		"Protects your Bloom. Used for login, sudo, and remote access."
 
 	while true; do
@@ -360,9 +360,9 @@ setup_password() {
 		fi
 
 		# Set the password
-		if printf "%s:%s" "bloom" "$pass1" | chpasswd 2>/dev/null; then
+		if printf "%s:%s" "pi" "$pass1" | chpasswd 2>/dev/null; then
 			printf "\n"
-			success "Password set for the ${BOLD}bloom${RESET} account."
+			success "Password set for the ${BOLD}pi${RESET} account."
 			sleep 2
 			return 0
 		else
@@ -393,8 +393,9 @@ apply_hardening() {
 	# NetBird mesh (wt0) is trusted — allow all traffic from mesh peers
 	firewall-cmd --permanent --zone=trusted --add-interface=wt0 >/dev/null 2>&1 || true
 
-	# Default zone allows SSH only
+	# Default zone allows SSH and HTTP (nginx reverse proxy)
 	firewall-cmd --permanent --zone=bloom --add-service=ssh >/dev/null 2>&1 || true
+	firewall-cmd --permanent --zone=bloom --add-service=http >/dev/null 2>&1 || true
 
 	# Detect local RFC1918 subnets from active interfaces and allow SSH from them
 	while IFS=' ' read -r _ _ subnet _; do
@@ -418,7 +419,7 @@ apply_hardening() {
 	mkdir -p /etc/ssh/sshd_config.d
 	cat > /etc/ssh/sshd_config.d/bloom.conf <<-'SSHEOF'
 		PasswordAuthentication yes
-		AllowUsers bloom
+		AllowUsers pi
 		PermitRootLogin no
 		MaxAuthTries 3
 		LoginGraceTime 30
@@ -427,7 +428,7 @@ apply_hardening() {
 	# Restart sshd to apply
 	systemctl restart sshd 2>/dev/null || true
 
-	success "SSH hardened — only bloom user, no root login, max 3 attempts."
+	success "SSH hardened — only pi user, no root login, max 3 attempts."
 	printf "\n"
 }
 

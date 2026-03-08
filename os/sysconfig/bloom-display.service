@@ -3,7 +3,7 @@ Description=Bloom Display (Xvfb headless framebuffer)
 After=network.target
 
 [Service]
-User=bloom
+User=pi
 Environment=DISPLAY=:99
 ExecStart=/usr/bin/Xvfb :99 -screen 0 1280x1024x24
 Restart=on-failure

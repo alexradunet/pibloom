@@ -52,7 +52,7 @@ vm:
 		-drive if=pflash,format=raw,readonly=on,file={{ ovmf }} \
 		-drive if=pflash,format=raw,snapshot=on,file={{ ovmf_vars }} \
 		-drive file={{ output }}/qcow2/disk.qcow2,format=qcow2,if=virtio \
-		-netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::5000-:5000,hostfwd=tcp::8080-:8080,hostfwd=tcp::8081-:8081 \
+		-netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::5000-:5000,hostfwd=tcp::8080-:8080,hostfwd=tcp::8081-:8081,hostfwd=tcp::8888-:80 \
 		-device virtio-net-pci,netdev=net0 \
 		-display gtk
 
@@ -67,14 +67,14 @@ vm-serial:
 		-drive if=pflash,format=raw,readonly=on,file={{ ovmf }} \
 		-drive if=pflash,format=raw,snapshot=on,file={{ ovmf_vars }} \
 		-drive file={{ output }}/qcow2/disk.qcow2,format=qcow2,if=virtio \
-		-netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::5000-:5000,hostfwd=tcp::8080-:8080,hostfwd=tcp::8081-:8081 \
+		-netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::5000-:5000,hostfwd=tcp::8080-:8080,hostfwd=tcp::8081-:8081,hostfwd=tcp::8888-:80 \
 		-device virtio-net-pci,netdev=net0 \
 		-nographic \
 		-serial mon:stdio
 
 # SSH into the running VM
 vm-ssh:
-	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 2222 bloom@localhost
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 2222 pi@localhost
 
 # Kill the running QEMU VM
 vm-kill:

@@ -20,7 +20,7 @@ Volume=bloom-stt-models:/models
 Volume=/var/lib/bloom/media:/media:ro
 
 # Run whisper server with base model
-Exec=--host 0.0.0.0 --port 8081 --model /models/ggml-base.en.bin --threads 4
+Exec=/app/build/bin/whisper-server --host 0.0.0.0 --port 8081 --model /models/ggml-base.en.bin --threads 4
 
 PodmanArgs=--memory=1g
 PodmanArgs=--security-opt label=disable

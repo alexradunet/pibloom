@@ -6,10 +6,10 @@
 
 **Architecture:** Three independent fixes — STT is a Quadlet config change, WhatsApp is a transport.ts config addition, Signal is a moderate rewrite of daemon startup + JSON-RPC pairing. Each can be committed separately.
 
-**Tech Stack:** Podman Quadlet, TypeScript (ES2022/NodeNext), @whiskeysockets/baileys 6.7.x, signal-cli 0.14.1 JSON-RPC
+**Tech Stack:** Podman Quadlet, TypeScript (ES2022/NodeNext), @whiskeysockets/baileys 7.0.0-rc.9, signal-cli 0.14.1 JSON-RPC
 
 **Version Notes:**
-- Baileys: Keep `@whiskeysockets/baileys@6.x` (v7 is RC, still has 405 bug, renamed package). Use `fetchLatestBaileysVersion()` for dynamic version fetch.
+- Baileys: Bump `@whiskeysockets/baileys` from `^6.7.16` to `7.0.0-rc.9`. All imports compatible (verified). Add `makeCacheableSignalKeyStore` for better key store perf. Use `fetchLatestBaileysVersion()` for dynamic version fetch.
 - signal-cli: Bump `0.13.12` → `0.14.1` in Containerfile for better `startLink`/`finishLink` support.
 - whisper.cpp: Already tracking `:main` rolling tag.
 - pino, @hapi/boom, qrcode-terminal: Up to date or low-priority bumps.
@@ -71,14 +71,24 @@ port 8080 inside the container with 8081:8080 port mapping."
 
 ---
 
-### Task 2: Fix WhatsApp 405 disconnect with dynamic version fetch
+### Task 2: Bump Baileys to v7 RC + fix WhatsApp 405 disconnect
 
 **Files:**
-- Modify: `services/whatsapp/src/transport.ts:6-13,90-100`
+- Modify: `services/whatsapp/package.json` (bump Baileys to 7.0.0-rc.9)
+- Modify: `services/whatsapp/src/transport.ts:5-13,90-100`
 
-**Step 1: Update Baileys imports**
+**Step 1: Bump Baileys version in package.json**
 
-In `services/whatsapp/src/transport.ts`, change the import block (lines 6-13) to add `Browsers` and `fetchLatestWaWebVersion`:
+In `services/whatsapp/package.json`, change:
+```json
+"@whiskeysockets/baileys": "7.0.0-rc.9"
+```
+
+Then install: `cd services/whatsapp && npm install`
+
+**Step 2: Update Baileys imports**
+
+In `services/whatsapp/src/transport.ts`, change the import block to add `Browsers`, `fetchLatestBaileysVersion`, and `makeCacheableSignalKeyStore`:
 
 ```typescript
 import makeWASocket, {
@@ -88,14 +98,26 @@ import makeWASocket, {
 	downloadContentFromMessage,
 	fetchLatestBaileysVersion,
 	getContentType,
+	makeCacheableSignalKeyStore,
 	type MediaType,
 	useMultiFileAuthState,
 } from "@whiskeysockets/baileys";
 ```
 
-**Step 2: Add version fetching to startWhatsApp()**
+Also remove the `@hapi/boom` type-only import (line 5) — Baileys v7 bundles it. Instead import `Boom` from Baileys or cast inline:
+```typescript
+// Remove this line:
+// import type { Boom } from "@hapi/boom";
+```
 
-Replace lines 90-100 (the `startWhatsApp` function opening) with:
+And update the statusCode extraction (line ~121) to cast inline:
+```typescript
+const statusCode = (lastDisconnect?.error as { output?: { statusCode?: number } })?.output?.statusCode;
+```
+
+**Step 3: Add version fetching + cacheable key store to startWhatsApp()**
+
+Replace the `startWhatsApp` function opening with:
 
 ```typescript
 async function startWhatsApp(): Promise<void> {
@@ -116,7 +138,10 @@ async function startWhatsApp(): Promise<void> {
 	const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
 
 	const sock = makeWASocket({
-		auth: state,
+		auth: {
+			creds: state.creds,
+			keys: makeCacheableSignalKeyStore(state.keys, logger),
+		},
 		logger,
 		version,
 		browser: Browsers.macOS("Desktop"),
@@ -124,26 +149,37 @@ async function startWhatsApp(): Promise<void> {
 	});
 ```
 
-**Step 3: Build the WhatsApp service to verify TypeScript compiles**
+**Step 4: Remove @hapi/boom from package.json dependencies**
+
+Since Baileys v7 bundles it and we no longer import it directly:
+```json
+"dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc.9",
+    "pino": "^9.6.0",
+    "qrcode-terminal": "^0.12.0"
+}
+```
+
+Run: `cd services/whatsapp && npm install`
+
+**Step 5: Build and test**
 
 Run: `cd services/whatsapp && npx tsc --noEmit`
 Expected: No errors
 
-**Step 4: Run existing tests**
-
 Run: `cd services/whatsapp && npx vitest run`
-Expected: All 31 tests pass (tests don't touch transport.ts internals)
+Expected: All 31 tests pass
 
-**Step 5: Commit**
+**Step 6: Commit**
 
 ```bash
-git add services/whatsapp/src/transport.ts
-git commit -m "fix(whatsapp): fetch latest WA Web version to fix 405 disconnect
+git add services/whatsapp/package.json services/whatsapp/package-lock.json services/whatsapp/src/transport.ts
+git commit -m "fix(whatsapp): bump Baileys to v7 RC.9 + dynamic version fetch
 
-Baileys hardcodes a stale WA protocol version that WhatsApp rejects
-with 405. Fetch the latest version dynamically with a fallback to a
-known-good version. Also set browser to macOS Desktop for pairing
-compatibility."
+Upgrade from Baileys 6.7.x to 7.0.0-rc.9. Fetch the latest WA Web
+version dynamically to prevent 405 disconnect from stale hardcoded
+version. Add makeCacheableSignalKeyStore for better key store perf.
+Set browser to macOS Desktop for pairing compatibility."
 ```
 
 ---

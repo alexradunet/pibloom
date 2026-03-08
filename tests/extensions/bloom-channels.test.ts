@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractResponseText } from "../../extensions/bloom-channels.js";
+import { extractResponseText, getPairingData, setPairingData, clearPairingData } from "../../extensions/bloom-channels.js";
 
 // ---------------------------------------------------------------------------
 // extractResponseText (inlined from lib/channel-utils.ts)
@@ -72,5 +72,33 @@ describe("extractResponseText", () => {
 
 	it("returns empty string for empty messages array", () => {
 		expect(extractResponseText([])).toBe("");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// pairing state
+// ---------------------------------------------------------------------------
+describe("pairing state", () => {
+	it("returns null when no pairing data exists", () => {
+		expect(getPairingData("whatsapp")).toBeNull();
+	});
+
+	it("stores and retrieves pairing data", () => {
+		setPairingData("whatsapp", "2@ABC123");
+		expect(getPairingData("whatsapp")).toBe("2@ABC123");
+		clearPairingData("whatsapp");
+	});
+
+	it("overwrites previous pairing data", () => {
+		setPairingData("signal", "sgnl://first");
+		setPairingData("signal", "sgnl://second");
+		expect(getPairingData("signal")).toBe("sgnl://second");
+		clearPairingData("signal");
+	});
+
+	it("clearPairingData removes data", () => {
+		setPairingData("whatsapp", "data");
+		clearPairingData("whatsapp");
+		expect(getPairingData("whatsapp")).toBeNull();
 	});
 });

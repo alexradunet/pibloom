@@ -49,7 +49,7 @@ interface MediaInfo {
 }
 
 interface IncomingMessage {
-	type: "register" | "message" | "pong";
+	type: "register" | "message" | "pong" | "pairing";
 	id?: string;
 	channel: string;
 	token?: string;
@@ -57,6 +57,7 @@ interface IncomingMessage {
 	text?: string;
 	timestamp?: number;
 	media?: MediaInfo;
+	data?: string;
 }
 
 const defaultSocketPath = join(
@@ -73,6 +74,22 @@ const RATE_LIMIT_PER_SEC = 1;
 const RATE_BURST = 5;
 const PENDING_SWEEP_INTERVAL_MS = 5 * 60_000;
 const PENDING_MAX_AGE_MS = 10 * 60_000;
+
+// --- Pairing state (shared with service_pair tool) ---
+
+const pairingState = new Map<string, string>();
+
+export function getPairingData(channel: string): string | null {
+	return pairingState.get(channel) ?? null;
+}
+
+export function setPairingData(channel: string, data: string): void {
+	pairingState.set(channel, data);
+}
+
+export function clearPairingData(channel: string): void {
+	pairingState.delete(channel);
+}
 
 function loadToken(channel: string): string | null {
 	try {
@@ -202,6 +219,15 @@ export default function (pi: ExtensionAPI) {
 						info.missedPings = 0;
 						break;
 					}
+				}
+				continue;
+			}
+
+			if (msg.type === "pairing") {
+				const channel = msg.channel;
+				if (channel && msg.data) {
+					setPairingData(channel, msg.data);
+					log.info("received pairing data", { channel });
 				}
 				continue;
 			}

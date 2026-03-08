@@ -106,7 +106,7 @@ Repository management: configure, sync, submit PRs, check status.
 
 Service lifecycle: scaffold, install, test, and declarative manifest management.
 
-**Tools:** `service_scaffold`, `service_install`, `service_test`, `manifest_show`, `manifest_sync`, `manifest_set_service`, `manifest_apply`
+**Tools:** `service_scaffold`, `service_install`, `service_test`, `service_pair`, `manifest_show`, `manifest_sync`, `manifest_set_service`, `manifest_apply`
 **Hooks:**
 - `session_start` — Set UI status, check manifest drift, display status widget
 
@@ -146,7 +146,13 @@ Conversation topic management and session organization.
 - `before_agent_start` — Inject topic guidance into system prompt
 - `session_start` — Initialize topic state
 
-## 🧩 All Registered Tools (25)
+### 🖥️ bloom-display
+
+AI agent computer use: screenshots, input injection, accessibility tree, and window management on the Xvfb+i3 display.
+
+**Tools:** `display` (actions: screenshot, click, type, key, move, scroll, ui_tree, windows, workspace, launch, focus)
+
+## 🧩 All Registered Tools (27)
 
 Quick reference of every tool name available to Pi:
 
@@ -164,6 +170,7 @@ Quick reference of every tool name available to Pi:
 | `service_scaffold` | bloom-services | Generate service package skeleton |
 | `service_install` | bloom-services | Install service from bundled local package |
 | `service_test` | bloom-services | Smoke-test installed service units |
+| `service_pair` | bloom-services | Get QR code for pairing WhatsApp or Signal |
 | `manifest_show` | bloom-services | Display service manifest |
 | `manifest_sync` | bloom-services | Reconcile manifest with running state |
 | `manifest_set_service` | bloom-services | Declare service in manifest |
@@ -177,6 +184,7 @@ Quick reference of every tool name available to Pi:
 | `skill_create` | bloom-garden | Create new SKILL.md in ~/Bloom/Skills/ |
 | `skill_list` | bloom-garden | List all skills in ~/Bloom/Skills/ |
 | `persona_evolve` | bloom-garden | Propose persona layer change |
+| `display` | bloom-display | AI computer use: screenshots, input, accessibility tree, window management |
 
 ## 📜 Skills
 

@@ -222,7 +222,7 @@ graph LR
     subgraph "Container Volumes"
         llm_models["bloom-llm-models<br/>LLM model cache"]
         stt_models["bloom-stt-models<br/>STT model cache"]
-        wa_auth["bloom-whatsapp-data<br/>WhatsApp credentials"]
+        wa_auth["bloom-whatsapp-auth<br/>WhatsApp credentials"]
         signal_data["bloom-signal-data<br/>Signal credentials"]
     end
 

@@ -18,7 +18,7 @@ Use `audit_review` to inspect recent tool actions when you need to reconstruct w
 3. If container not running: `systemd_control service=bloom-whatsapp action=status`
 4. Check logs: `container(action="logs", service="bloom-whatsapp", lines=100)`
 5. Common causes:
-   - WhatsApp session expired → user must re-scan QR code
+   - WhatsApp session expired → re-pair with `service_pair(name="whatsapp")`
    - Channel socket unreachable → verify `$XDG_RUNTIME_DIR/bloom/channels.sock` exists
    - Token mismatch → verify `~/.config/bloom/channel-tokens/whatsapp.env`
 6. Recovery: `systemd_control service=bloom-whatsapp action=restart`

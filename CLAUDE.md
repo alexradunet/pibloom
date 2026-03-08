@@ -10,7 +10,7 @@ The bloom word comes from the concept that you "plant" your mini-pc and then in 
 Bloom extends Pi through three mechanisms, lightest first: **Skill → Extension → Service**.
 
 - **Pi package**: Extensions + skills bundled as a Pi package (`pi install ./`)
-- **Extensions**: `extensions/` — 9 TypeScript Pi extensions (bloom-persona, bloom-audit, bloom-os, bloom-repo, bloom-services, bloom-objects, bloom-garden, bloom-channels, bloom-topics)
+- **Extensions**: `extensions/` — 10 TypeScript Pi extensions (bloom-persona, bloom-audit, bloom-os, bloom-repo, bloom-services, bloom-objects, bloom-garden, bloom-channels, bloom-topics, bloom-display)
 - **Shared lib**: `lib/shared.ts` — utilities used across extensions (parseFrontmatter, stringifyFrontmatter, getBloomDir, createLogger, truncate, errorResult, nowIso)
 - **Skills**: `skills/` — 6 Pi skill markdown files (first-boot, os-operations, object-store, service-management, self-evolution, recovery)
 - **Services**: `services/` — containerized (llm, stt, whatsapp, signal, dufs) services. NetBird is a system RPM. Metadata in `services/catalog.yaml`

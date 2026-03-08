@@ -89,18 +89,29 @@ sudo journalctl -u netbird -f
 
 ### 📦 WhatsApp
 
-WhatsApp runs as a containerized service (Podman Quadlet with Baileys).
+WhatsApp runs as a containerized service (Podman Quadlet with whatsapp-web.js).
 
 Install via manifest or directly:
 
-- `manifest_set_service(name="whatsapp", image="localhost/bloom-whatsapp:latest", version="0.2.0", enabled=true)`
+- `manifest_set_service(name="whatsapp", image="localhost/bloom-whatsapp:latest", version="0.3.0", enabled=true)`
 - Or: `service_install(name="whatsapp")`
 
-Watch logs for the pairing QR code:
+Pair by scanning the QR code:
 
-```bash
-journalctl --user -u bloom-whatsapp -f
-```
+- `service_pair(name="whatsapp")`
+
+### 📦 Signal
+
+Signal runs as a containerized service (Podman Quadlet with signal-cli).
+
+Install via manifest or directly:
+
+- `manifest_set_service(name="signal", image="localhost/bloom-signal:latest", version="0.1.0", enabled=true)`
+- Or: `service_install(name="signal")`
+
+Pair by scanning the QR code:
+
+- `service_pair(name="signal")`
 
 ## 6) 🚀 Mark setup complete
 

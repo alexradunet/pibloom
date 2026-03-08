@@ -106,6 +106,8 @@ async function startWhatsApp(): Promise<void> {
 		if (qr) {
 			console.log("[wa] QR code — scan with WhatsApp mobile app (Settings > Linked Devices):");
 			qrcode.generate(qr, { small: true });
+			// Send QR data to channel bridge for service_pair tool
+			sendToChannels({ type: "pairing", channel: "whatsapp", data: qr });
 		}
 
 		if (connection === "close") {

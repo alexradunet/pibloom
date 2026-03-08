@@ -146,6 +146,12 @@ function startSignalDaemon(): void {
 		const line = chunk.toString().trim();
 		if (line) console.error(`[signal-cli] ${line}`);
 
+		// Capture device linking URI
+		const linkMatch = line.match(/(sgnl:\/\/linkdevice\?[^\s]+)/);
+		if (linkMatch) {
+			sendToChannels({ type: "pairing", channel: "signal", data: linkMatch[1] });
+		}
+
 		if (line.includes("Connected") || line.includes("Listening")) {
 			signalConnected = true;
 			tcpReconnectDelay = RECONNECT_BASE_MS;

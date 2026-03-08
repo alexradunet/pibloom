@@ -1,0 +1,3 @@
+1. Update dufs to not setup any authentication method, we are protected by netbird
+2. Replace lemonade with llama.cpp and whisper.cpp. WE just need it to run a simple local llm model to be able to run pi on it without connecting to smarter cloud llms. If should be small enough and should suffice for the first boot. Also maybe we can make the codebase simpler. Let's brianstorm on this.
+3. Use signal cli to introduce the second channels, which will be an alternative to whatsapp which the user can choose

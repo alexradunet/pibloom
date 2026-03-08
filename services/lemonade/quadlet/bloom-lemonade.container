@@ -22,7 +22,7 @@ Volume=/var/lib/bloom/media:/media:ro
 Environment=LEMONADE_LLAMACPP_BACKEND=cpu
 PodmanArgs=--memory=4g
 PodmanArgs=--security-opt label=disable
-HealthCmd=curl -sf http://localhost:8000/health || exit 1
+HealthCmd=curl -sf http://localhost:8000/api/v1/health|| exit 1
 HealthInterval=30s
 HealthRetries=3
 HealthTimeout=10s

@@ -1,0 +1,18 @@
+[Unit]
+Description=Bloom First-Boot Setup Wizard
+ConditionPathExists=!/bloom-setup-done
+Before=getty@tty1.service
+After=NetworkManager.service systemd-resolved.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/bloom-setup.sh
+StandardInput=tty
+StandardOutput=tty
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target

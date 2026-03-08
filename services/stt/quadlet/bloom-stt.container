@@ -1,0 +1,42 @@
+[Unit]
+Description=Bloom STT — Speech-to-text (whisper.cpp server, OpenAI-compatible)
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=ghcr.io/ggml-org/whisper.cpp:main
+ContainerName=bloom-stt
+
+# Bridge network for isolation
+Network=bloom.network
+
+# Expose API on localhost
+PublishPort=127.0.0.1:8081:8081
+
+# Model storage persists across restarts
+Volume=bloom-stt-models:/models
+
+# Media files for transcription (read-only)
+Volume=/var/lib/bloom/media:/media:ro
+
+# Run whisper server with base model
+Exec=--host 0.0.0.0 --port 8081 --model /models/ggml-base.en.bin --threads 4
+
+PodmanArgs=--memory=1g
+PodmanArgs=--security-opt label=disable
+HealthCmd=curl -sf http://localhost:8081/health || exit 1
+HealthInterval=30s
+HealthRetries=3
+HealthTimeout=10s
+HealthStartPeriod=2m
+NoNewPrivileges=true
+LogDriver=journald
+
+[Service]
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=300
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

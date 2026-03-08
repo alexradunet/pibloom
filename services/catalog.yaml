@@ -1,11 +1,18 @@
 version: 1
 source_repo: https://github.com/pibloom/pi-bloom
 services:
-  lemonade:
+  llm:
     version: "0.1.0"
     category: ai
-    image: ghcr.io/lemonade-sdk/lemonade-server:latest
+    image: ghcr.io/ggml-org/llama.cpp:server
     optional: false
+    preflight:
+      commands: [podman, systemctl]
+  stt:
+    version: "0.1.0"
+    category: ai
+    image: ghcr.io/ggml-org/whisper.cpp:main
+    optional: true
     preflight:
       commands: [podman, systemctl]
   whatsapp:

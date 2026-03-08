@@ -36,7 +36,6 @@ extensions/bloom-{name}/
   index.ts       # registration ONLY — no business logic
   actions.ts     # handlers that call lib/ and format results
   types.ts       # extension-specific types
-  tests/         # colocated tests
 ```
 The #1 review check: **is there business logic in `index.ts`?** If yes, it must move.
 

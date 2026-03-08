@@ -11,6 +11,16 @@ Use this skill on the first session after a fresh Bloom OS install.
 
 If `~/.bloom/.setup-complete` exists, setup is already complete. Skip unless user asks to re-run specific steps.
 
+## What the OS Setup Wizard Already Handled
+
+Before Pi starts, the Bloom OS setup wizard has already configured:
+- WiFi network connection
+- User password for the `bloom` account
+- NetBird mesh networking (if user provided a setup key)
+- SSH and firewall hardening (if NetBird was configured)
+
+This skill handles the remaining software-level setup.
+
 ## Setup Style
 
 - Be conversational (one step at a time)
@@ -21,29 +31,7 @@ If `~/.bloom/.setup-complete` exists, setup is already complete. Skip unless use
 
 ## Setup Steps
 
-### 1) NetBird Mesh Networking
-
-Check connection status:
-
-```bash
-sudo netbird status
-```
-
-If not connected, ask the user for their NetBird setup key (from https://app.netbird.io > Setup Keys):
-
-```bash
-sudo netbird up --setup-key "<key>"
-```
-
-Poll until connected:
-
-```bash
-sudo netbird status
-```
-
-Look for "Connected" in the output. The user can skip this step and connect later with `sudo netbird up`.
-
-### 2) Git Identity
+### 1) Git Identity
 
 Ask the user for their name and email, then set globally:
 
@@ -52,7 +40,7 @@ git config --global user.name "<name>"
 git config --global user.email "<email>"
 ```
 
-### 3) dufs Setup
+### 2) dufs Setup
 
 - Install service package: `service_install(name="dufs", version="0.1.0")`
 - Validate service: `service_test(name="dufs")`
@@ -64,7 +52,7 @@ If Bloom runs inside a VM, offer access paths:
 - QEMU port forward: host `localhost:5000` -> guest `5000`
 - SSH tunnel: `ssh -L 5000:localhost:5000 -p 2222 bloom@localhost`
 
-### 4) Optional Services
+### 3) Optional Services
 
 #### WhatsApp Bridge
 
@@ -88,7 +76,7 @@ If Bloom runs inside a VM, offer access paths:
 - Note: requires a GGUF model file in the `bloom-llm-models` volume
 - API at `http://localhost:8080` (OpenAI-compatible)
 
-### 5) Mark Setup Complete
+### 4) Mark Setup Complete
 
 ```bash
 touch ~/.bloom/.setup-complete

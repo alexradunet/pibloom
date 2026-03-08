@@ -2,24 +2,29 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { createServer as createHttpServer } from "node:http";
 import { createConnection, type Socket } from "node:net";
-import type { Boom } from "@hapi/boom";
 import makeWASocket, {
+	Browsers,
 	DisconnectReason,
 	type DownloadableMessage,
 	downloadContentFromMessage,
+	fetchLatestBaileysVersion,
 	getContentType,
+	makeCacheableSignalKeyStore,
 	type MediaType,
 	useMultiFileAuthState,
 } from "@whiskeysockets/baileys";
 import pino from "pino";
 import qrcode from "qrcode-terminal";
-import { isChannelMessage, mimeToExt } from "./utils.js";
+import { isChannelMessage, isWhatsAppSenderAllowed, mimeToExt, parseAllowedSenders } from "./utils.js";
 
 const AUTH_DIR = process.env.BLOOM_AUTH_DIR ?? "/data/auth";
 const defaultSocketPath = `${process.env.XDG_RUNTIME_DIR ?? `/run/user/${process.getuid?.() ?? 1000}`}/bloom/channels.sock`;
 const CHANNELS_SOCKET = process.env.BLOOM_CHANNELS_SOCKET ?? defaultSocketPath;
 const MEDIA_DIR = process.env.BLOOM_MEDIA_DIR ?? "/media/bloom";
 const CHANNEL_TOKEN = process.env.BLOOM_CHANNEL_TOKEN ?? "";
+
+// Sender allowlist: comma-separated JIDs or phone numbers. Empty = allow all.
+const ALLOWED_SENDERS = parseAllowedSenders(process.env.BLOOM_ALLOWED_SENDERS ?? "");
 
 const RECONNECT_BASE_MS = 2_000;
 const RECONNECT_MAX_MS = 30_000;
@@ -89,11 +94,27 @@ async function startWhatsApp(): Promise<void> {
 
 	console.log("[wa] starting Baileys client...");
 
+	let version: [number, number, number] | undefined;
+	try {
+		const { version: fetched } = await fetchLatestBaileysVersion();
+		version = fetched;
+		console.log(`[wa] using WA Web version: ${version.join(".")}`);
+	} catch (err) {
+		version = [2, 3000, 1034074495];
+		console.log(`[wa] version fetch failed, using fallback: ${version.join(".")} (${(err as Error).message})`);
+	}
+
 	const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
 
 	const sock = makeWASocket({
-		auth: state,
+		auth: {
+			creds: state.creds,
+			keys: makeCacheableSignalKeyStore(state.keys, logger),
+		},
 		logger,
+		version,
+		browser: Browsers.macOS("Desktop"),
+		syncFullHistory: false,
 	});
 
 	waSock = sock;
@@ -115,7 +136,7 @@ async function startWhatsApp(): Promise<void> {
 			clearTcpReconnectTimer();
 			resetChannelSocket();
 
-			const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+			const statusCode = (lastDisconnect?.error as { output?: { statusCode?: number } })?.output?.statusCode;
 			const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
 			console.log(`[wa] disconnected (code=${statusCode}). Reconnecting: ${shouldReconnect}`);
@@ -143,6 +164,10 @@ async function startWhatsApp(): Promise<void> {
 			if (!msg.message) continue;
 
 			const from = msg.key.remoteJid ?? "";
+			if (!isWhatsAppSenderAllowed(from, ALLOWED_SENDERS)) {
+				console.log(`[wa] filtered message from ${from} (not in BLOOM_ALLOWED_SENDERS)`);
+				continue;
+			}
 			const timestamp = msg.messageTimestamp as number;
 
 			const messageType = getContentType(msg.message);

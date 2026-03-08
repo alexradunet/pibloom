@@ -124,7 +124,7 @@ xpra attach tcp://<netbird-ip>:14500
 ```
 
 The display runs headless — no physical monitor needed. If a monitor is connected,
-greetd auto-attaches to the Xpra session on login.
+getty auto-logs in and Pi starts in the terminal.
 
 ## 🔗 Related
 

@@ -145,7 +145,7 @@ export async function handleInstall(
 	bloomDir: string,
 	manifestPath: string,
 	repoDir: string,
-	signal: AbortSignal,
+	signal: AbortSignal | undefined,
 ) {
 	const guard = validateServiceName(params.name);
 	if (guard) return errorResult(guard);
@@ -278,7 +278,7 @@ export async function handleTest(
 		start_timeout_sec?: number;
 		cleanup?: boolean;
 	},
-	signal: AbortSignal,
+	signal: AbortSignal | undefined,
 ) {
 	const guard = validateServiceName(params.name);
 	if (guard) return errorResult(guard);
@@ -371,7 +371,7 @@ export async function handlePair(
 		name: "whatsapp" | "signal";
 		timeout_sec?: number;
 	},
-	signal: AbortSignal,
+	signal: AbortSignal | undefined,
 ) {
 	const serviceName = params.name;
 	const timeoutSec = Math.max(10, Math.round(params.timeout_sec ?? 60));
@@ -473,7 +473,7 @@ export function handleManifestShow(manifestPath: string) {
 export async function handleManifestSync(
 	params: { mode?: "detect" | "update" },
 	manifestPath: string,
-	signal: AbortSignal,
+	signal: AbortSignal | undefined,
 ) {
 	const mode = params.mode ?? "detect";
 	const manifest = loadManifest(manifestPath);
@@ -589,7 +589,7 @@ export async function handleManifestApply(
 	bloomDir: string,
 	manifestPath: string,
 	repoDir: string,
-	signal: AbortSignal,
+	signal: AbortSignal | undefined,
 	ctx: ExtensionContext,
 ) {
 	const manifest = loadManifest(manifestPath);

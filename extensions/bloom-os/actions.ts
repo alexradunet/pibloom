@@ -16,7 +16,7 @@ const statusFile = join(bloomDir, "update-status.json");
 
 export async function handleBootc(
 	action: "status" | "check" | "download" | "apply" | "rollback",
-	signal: AbortSignal,
+	signal: AbortSignal | undefined,
 	ctx: ExtensionContext,
 ) {
 	if (action === "download" || action === "apply" || action === "rollback") {
@@ -57,7 +57,7 @@ export async function handleBootc(
 		text = result.stdout || "No output.";
 	}
 	return {
-		content: [{ type: "text", text: truncate(text) }],
+		content: [{ type: "text" as const, text: truncate(text) }],
 		details: { exitCode: result.exitCode, action },
 		isError: result.exitCode !== 0,
 	};
@@ -65,7 +65,7 @@ export async function handleBootc(
 
 // --- Container handler ---
 
-export async function handleContainerStatus(signal: AbortSignal) {
+export async function handleContainerStatus(signal: AbortSignal | undefined) {
 	const result = await run("podman", ["ps", "--format", "json", "--filter", "name=bloom-"], signal);
 	if (result.exitCode !== 0) {
 		return errorResult(`Error listing containers:\n${result.stderr}`);
@@ -88,10 +88,10 @@ export async function handleContainerStatus(signal: AbortSignal) {
 	} catch {
 		text = result.stdout;
 	}
-	return { content: [{ type: "text", text: truncate(text) }], details: {} };
+	return { content: [{ type: "text" as const, text: truncate(text) }], details: {} };
 }
 
-export async function handleContainerLogs(service: string, lines: number, signal: AbortSignal) {
+export async function handleContainerLogs(service: string, lines: number, signal: AbortSignal | undefined) {
 	const n = String(lines);
 	const unit = `${service}.service`;
 	const result = await run("journalctl", ["--user", "-u", unit, "--no-pager", "-n", n], signal);
@@ -99,13 +99,13 @@ export async function handleContainerLogs(service: string, lines: number, signal
 		result.exitCode === 0 ? result.stdout || "(no log output)" : `Error fetching logs:\n${result.stderr}`,
 	);
 	return {
-		content: [{ type: "text", text }],
+		content: [{ type: "text" as const, text }],
 		details: { exitCode: result.exitCode },
 		isError: result.exitCode !== 0,
 	};
 }
 
-export async function handleContainerDeploy(service: string, signal: AbortSignal, ctx: ExtensionContext) {
+export async function handleContainerDeploy(service: string, signal: AbortSignal | undefined, ctx: ExtensionContext) {
 	const unit = `${service}.service`;
 	const denied = await requireConfirmation(ctx, `Deploy container ${unit}`);
 	if (denied) return errorResult(denied);
@@ -118,7 +118,7 @@ export async function handleContainerDeploy(service: string, signal: AbortSignal
 		start.exitCode === 0 ? `Started ${unit} successfully.` : `Failed to start ${unit}:\n${start.stderr}`,
 	);
 	return {
-		content: [{ type: "text", text }],
+		content: [{ type: "text" as const, text }],
 		details: { exitCode: start.exitCode },
 		isError: start.exitCode !== 0,
 	};
@@ -129,7 +129,7 @@ export async function handleContainerDeploy(service: string, signal: AbortSignal
 export async function handleSystemdControl(
 	service: string,
 	action: "start" | "stop" | "restart" | "status",
-	signal: AbortSignal,
+	signal: AbortSignal | undefined,
 	ctx: ExtensionContext,
 ) {
 	const guard = guardBloom(service);
@@ -143,7 +143,7 @@ export async function handleSystemdControl(
 	const result = await run("systemctl", ["--user", action, unit], signal);
 	const text = truncate(result.stdout || result.stderr || `systemctl --user ${action} ${unit} completed.`);
 	return {
-		content: [{ type: "text", text }],
+		content: [{ type: "text" as const, text }],
 		details: { exitCode: result.exitCode },
 		isError: result.exitCode !== 0,
 	};
@@ -158,7 +158,7 @@ export async function handleUpdateStatus() {
 		const text = status.available
 			? `Update available (checked ${status.checked}). Version: ${status.version || "unknown"}`
 			: `System is up to date (checked ${status.checked}).`;
-		return { content: [{ type: "text", text }], details: status };
+		return { content: [{ type: "text" as const, text }], details: status };
 	} catch {
 		return errorResult("No update status available. The update check timer may not have run yet.");
 	}
@@ -166,7 +166,7 @@ export async function handleUpdateStatus() {
 
 // --- Schedule reboot handler ---
 
-export async function handleScheduleReboot(delayMinutes: number, signal: AbortSignal, ctx: ExtensionContext) {
+export async function handleScheduleReboot(delayMinutes: number, signal: AbortSignal | undefined, ctx: ExtensionContext) {
 	const delay = Math.max(1, Math.round(delayMinutes));
 	const denied = await requireConfirmation(ctx, `Schedule reboot in ${delay} minute(s)`);
 	if (denied) return errorResult(denied);
@@ -175,14 +175,14 @@ export async function handleScheduleReboot(delayMinutes: number, signal: AbortSi
 		return errorResult(`Failed to schedule reboot:\n${result.stderr}`);
 	}
 	return {
-		content: [{ type: "text", text: `Reboot scheduled in ${delay} minute(s).` }],
+		content: [{ type: "text" as const, text: `Reboot scheduled in ${delay} minute(s).` }],
 		details: { delay_minutes: delay },
 	};
 }
 
 // --- System health handler ---
 
-export async function handleSystemHealth(signal: AbortSignal) {
+export async function handleSystemHealth(signal: AbortSignal | undefined) {
 	const [bootc, ps, df, loadavg, meminfo, uptime] = await Promise.all([
 		run("bootc", ["status", "--format=json"], signal),
 		run("podman", ["ps", "--format", "json", "--filter", "name=bloom-"], signal),
@@ -253,7 +253,7 @@ export async function handleSystemHealth(signal: AbortSignal) {
 	}
 
 	const text = sections.join("\n\n");
-	return { content: [{ type: "text", text: truncate(text) }], details: {} };
+	return { content: [{ type: "text" as const, text: truncate(text) }], details: {} };
 }
 
 // --- Update check hook handler ---

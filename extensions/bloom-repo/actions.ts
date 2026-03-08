@@ -43,7 +43,7 @@ export async function handleConfigure(
 		git_name?: string;
 		git_email?: string;
 	},
-	signal: AbortSignal,
+	signal: AbortSignal | undefined,
 ) {
 	mkdirSync(bloomDir, { recursive: true });
 	const changes: string[] = [];
@@ -134,12 +134,12 @@ export async function handleConfigure(
 		`\nRemotes:\n${(remotes.stdout || remotes.stderr).trim() || "(none)"}`,
 		notes.length > 0 ? `\nNotes:\n- ${notes.join("\n- ")}` : "",
 	].join("\n");
-	return { content: [{ type: "text", text: text.trim() }], details: { path: repoDir } };
+	return { content: [{ type: "text" as const, text: text.trim() }], details: { path: repoDir } };
 }
 
 // --- Status handler ---
 
-export async function handleStatus(signal: AbortSignal) {
+export async function handleStatus(signal: AbortSignal | undefined) {
 	const check = await run("git", ["-C", repoDir, "rev-parse", "--git-dir"], signal);
 	if (check.exitCode !== 0) {
 		return errorResult(`No repo clone found at ${repoDir}. Run bloom_repo action=configure first.`);
@@ -171,14 +171,14 @@ export async function handleStatus(signal: AbortSignal) {
 		`\nGitHub auth:\n${ghAuth.exitCode === 0 ? "ok" : (ghAuth.stderr || ghAuth.stdout).trim() || "not authenticated"}`,
 	].join("\n");
 	return {
-		content: [{ type: "text", text }],
+		content: [{ type: "text" as const, text }],
 		details: { path: repoDir, pr_ready: ready === "yes" },
 	};
 }
 
 // --- Sync handler ---
 
-export async function handleSync(branch: string, signal: AbortSignal) {
+export async function handleSync(branch: string, signal: AbortSignal | undefined) {
 	const check = await run("git", ["-C", repoDir, "rev-parse", "--git-dir"], signal);
 	if (check.exitCode !== 0)
 		return errorResult(`No repo clone found at ${repoDir}. Run bloom_repo action=configure first.`);
@@ -200,7 +200,7 @@ export async function handleSync(branch: string, signal: AbortSignal) {
 
 	const short = await run("git", ["-C", repoDir, "rev-parse", "--short", "HEAD"], signal);
 	const text = `Synced ${branch} from upstream. HEAD: ${short.stdout.trim() || "unknown"}`;
-	return { content: [{ type: "text", text }], details: { path: repoDir, branch } };
+	return { content: [{ type: "text" as const, text }], details: { path: repoDir, branch } };
 }
 
 // --- Submit PR handler ---
@@ -215,7 +215,7 @@ export async function handleSubmitPr(
 		draft?: boolean;
 		add_all?: boolean;
 	},
-	signal: AbortSignal,
+	signal: AbortSignal | undefined,
 	ctx: ExtensionContext,
 ) {
 	const denied = await requireConfirmation(
@@ -348,7 +348,7 @@ export async function handleSubmitPr(
 	].join("\n");
 
 	return {
-		content: [{ type: "text", text }],
+		content: [{ type: "text" as const, text }],
 		details: { path: repoDir, branch: targetBranch, base, pr_url: prUrl || null },
 	};
 }

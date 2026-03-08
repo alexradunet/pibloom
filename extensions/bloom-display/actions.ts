@@ -63,7 +63,7 @@ export async function handleClick(
 		return errorResult(`Click failed:\n${result.stderr}`);
 	}
 	return {
-		content: [{ type: "text", text: `Clicked (${params.x}, ${params.y}) button ${btn}.` }],
+		content: [{ type: "text" as const, text: `Clicked (${params.x}, ${params.y}) button ${btn}.` }],
 		details: { x: params.x, y: params.y, button: btn },
 	};
 }
@@ -78,7 +78,7 @@ export async function handleType(params: { text?: string }, signal?: AbortSignal
 		return errorResult(`Type failed:\n${result.stderr}`);
 	}
 	return {
-		content: [{ type: "text", text: `Typed ${params.text.length} characters.` }],
+		content: [{ type: "text" as const, text: `Typed ${params.text.length} characters.` }],
 		details: { length: params.text.length },
 	};
 }
@@ -93,7 +93,7 @@ export async function handleKey(params: { keys?: string }, signal?: AbortSignal)
 		return errorResult(`Key press failed:\n${result.stderr}`);
 	}
 	return {
-		content: [{ type: "text", text: `Sent key: ${params.keys}` }],
+		content: [{ type: "text" as const, text: `Sent key: ${params.keys}` }],
 		details: { keys: params.keys },
 	};
 }
@@ -112,7 +112,7 @@ export async function handleMove(params: { x?: number; y?: number }, signal?: Ab
 		return errorResult(`Mouse move failed:\n${result.stderr}`);
 	}
 	return {
-		content: [{ type: "text", text: `Moved mouse to (${params.x}, ${params.y}).` }],
+		content: [{ type: "text" as const, text: `Moved mouse to (${params.x}, ${params.y}).` }],
 		details: { x: params.x, y: params.y },
 	};
 }
@@ -141,7 +141,7 @@ export async function handleScroll(
 	return {
 		content: [
 			{
-				type: "text",
+				type: "text" as const,
 				text: `Scrolled ${params.direction} ${n} clicks at (${params.x}, ${params.y}).`,
 			},
 		],
@@ -161,7 +161,7 @@ export async function handleUiTree(params: { app?: string }, signal?: AbortSigna
 		return errorResult(`AT-SPI2 tree failed:\n${result.stderr}`);
 	}
 	return {
-		content: [{ type: "text", text: truncate(result.stdout || "[]") }],
+		content: [{ type: "text" as const, text: truncate(result.stdout || "[]") }],
 		details: { app: params.app ?? null },
 	};
 }
@@ -213,12 +213,12 @@ export async function handleWindows(signal?: AbortSignal) {
 		}
 		walk(tree, "");
 		return {
-			content: [{ type: "text", text: JSON.stringify(windows, null, 2) }],
+			content: [{ type: "text" as const, text: JSON.stringify(windows, null, 2) }],
 			details: { count: windows.length },
 		};
 	} catch {
 		return {
-			content: [{ type: "text", text: truncate(result.stdout) }],
+			content: [{ type: "text" as const, text: truncate(result.stdout) }],
 			details: {},
 		};
 	}
@@ -234,7 +234,7 @@ export async function handleWorkspace(params: { number?: number }, signal?: Abor
 		return errorResult(`Workspace switch failed:\n${result.stderr}`);
 	}
 	return {
-		content: [{ type: "text", text: `Switched to workspace ${params.number}.` }],
+		content: [{ type: "text" as const, text: `Switched to workspace ${params.number}.` }],
 		details: { workspace: params.number },
 	};
 }
@@ -249,7 +249,7 @@ export async function handleLaunch(params: { command?: string }, signal?: AbortS
 		return errorResult(`Launch failed:\n${result.stderr}`);
 	}
 	return {
-		content: [{ type: "text", text: `Launched: ${params.command}` }],
+		content: [{ type: "text" as const, text: `Launched: ${params.command}` }],
 		details: { command: params.command },
 	};
 }
@@ -266,7 +266,7 @@ export async function handleFocus(params: { target?: string }, signal?: AbortSig
 		return errorResult(`Focus failed:\n${result.stderr}`);
 	}
 	return {
-		content: [{ type: "text", text: `Focused window: ${params.target}` }],
+		content: [{ type: "text" as const, text: `Focused window: ${params.target}` }],
 		details: { target: params.target },
 	};
 }

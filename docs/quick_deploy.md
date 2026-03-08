@@ -116,7 +116,7 @@ Bloom OS is accessed via SSH. tmux is pre-installed for persistent terminal sess
 
 ```bash
 # SSH into your Bloom (replace with your NetBird IP or hostname)
-ssh bloom@<netbird-ip>
+ssh pi@<netbird-ip>
 
 # Start or attach to a persistent tmux session
 tmux new-session -A -s main

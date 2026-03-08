@@ -23,7 +23,7 @@ just build          # Build the container image
 just qcow2          # Generate qcow2 disk image
 just vm             # Boot VM (graphical + SSH on :2222)
 just vm-serial      # Boot VM serial-only (no GUI)
-just vm-ssh         # SSH into VM: ssh -p 2222 bloom@localhost
+just vm-ssh         # SSH into VM: ssh -p 2222 pi@localhost
 just vm-kill        # Stop running VM
 just clean          # Remove os/output/
 ```
@@ -32,7 +32,7 @@ just clean          # Remove os/output/
 
 1. **Prepare**: Ensure the image is built (`just build && just qcow2`). If changes were made, rebuild.
 2. **Boot**: Start the VM with `just vm` or `just vm-serial` depending on the scenario.
-3. **Wait for Ready**: After booting, wait for SSH availability before connecting. Poll with `just vm-ssh` or `ssh -p 2222 bloom@localhost` until connection succeeds (allow up to 60 seconds for boot).
+3. **Wait for Ready**: After booting, wait for SSH availability before connecting. Poll with `just vm-ssh` or `ssh -p 2222 pi@localhost` until connection succeeds (allow up to 60 seconds for boot).
 4. **Execute Tests**: Run commands over SSH to validate the scenario.
 5. **Collect Evidence**: Capture logs, service status, file contents, and other artifacts.
 6. **Report Results**: Clearly report pass/fail with evidence.
@@ -55,10 +55,10 @@ When asked to test, consider these categories:
 
 When running commands via SSH, use patterns like:
 ```bash
-ssh -p 2222 bloom@localhost 'systemctl --user status bloom-*'
-ssh -p 2222 bloom@localhost 'ls -la ~/Bloom/'
-ssh -p 2222 bloom@localhost 'podman ps --format "{{.Names}} {{.Status}}"'
-ssh -p 2222 bloom@localhost 'journalctl --user -u bloom-llm --no-pager -n 50'
+ssh -p 2222 pi@localhost 'systemctl --user status bloom-*'
+ssh -p 2222 pi@localhost 'ls -la ~/Bloom/'
+ssh -p 2222 pi@localhost 'podman ps --format "{{.Names}} {{.Status}}"'
+ssh -p 2222 pi@localhost 'journalctl --user -u bloom-llm --no-pager -n 50'
 ```
 
 ## Improvement Opportunities

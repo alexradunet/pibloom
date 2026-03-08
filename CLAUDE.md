@@ -60,7 +60,7 @@ just qcow2                     # generate qcow2 disk image (BIB)
 just iso                       # generate anaconda-iso installer (BIB)
 just vm                        # boot qcow2 in QEMU (graphical + SSH :2222)
 just vm-serial                 # boot qcow2 serial-only (no GUI)
-just vm-ssh                    # ssh -p 2222 bloom@localhost
+just vm-ssh                    # ssh -p 2222 pi@localhost
 just vm-kill                   # stop running VM
 just clean                     # remove os/output/
 ```

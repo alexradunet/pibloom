@@ -50,7 +50,7 @@ git config --global user.email "<email>"
 
 If Bloom runs inside a VM, offer access paths:
 - QEMU port forward: host `localhost:5000` -> guest `5000`
-- SSH tunnel: `ssh -L 5000:localhost:5000 -p 2222 bloom@localhost`
+- SSH tunnel: `ssh -L 5000:localhost:5000 -p 2222 pi@localhost`
 
 ### 3) Sender Allowlist (recommended before messaging services)
 

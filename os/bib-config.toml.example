@@ -9,7 +9,7 @@
 [customizations]
 
 [[customizations.user]]
-name = "bloom"
+name = "pi"
 # SSH key only — no password auth. Paste your public key below.
 key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBynaoLubnHPtUl+LsSUlYzZ6uidMnxuVBBQnllga8NZ alex@toolbx"
 groups = ["wheel"]

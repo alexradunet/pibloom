@@ -230,10 +230,17 @@ export default function (pi: ExtensionAPI) {
 				}
 
 				const depImage = depCatalog?.image ?? "";
-				await buildLocalImage(dep, depImage, repoDir, signal);
+				const depBuild = await buildLocalImage(dep, depImage, repoDir, signal);
+				if (!depBuild.ok) {
+					log.warn("dependency image build failed", { dep, note: depBuild.note });
+					continue;
+				}
 
 				if (depCatalog?.models && depCatalog.models.length > 0) {
-					await downloadServiceModels(depCatalog.models, signal);
+					const depModels = await downloadServiceModels(depCatalog.models, signal);
+					if (!depModels.ok) {
+						log.warn("dependency model download failed", { dep, note: depModels.note });
+					}
 				}
 
 				await run("systemctl", ["--user", "daemon-reload"], signal);

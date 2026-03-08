@@ -346,9 +346,8 @@ export async function buildLocalImage(
 			}
 		}
 
-		// podman build
-		const tag = image.replace(/^localhost\//, "");
-		const podmanBuild = await run("podman", ["build", "-t", tag, "-f", "Containerfile", "."], signal, buildDir);
+		// podman build — use full image reference as tag so it matches `podman image exists` checks
+		const podmanBuild = await run("podman", ["build", "-t", image, "-f", "Containerfile", "."], signal, buildDir);
 		if (podmanBuild.exitCode !== 0) {
 			return { ok: false, skipped: false, note: `podman build failed: ${podmanBuild.stderr}` };
 		}

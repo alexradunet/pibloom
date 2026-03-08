@@ -1,43 +1,46 @@
 # Bloom Architect Memory
 
-## Last Full Review
-- Date: 2026-03-08, post-slimdown refactor
-- Overall: Healthy — major codebase slimdown completed
+## Architecture Decisions (Settled)
 
-## Resolved (2026-03-07 slimdown)
-- D-1: Duplicated service install → service_install now delegates to installServicePackage
-- D-2: systemdDir duplication → bloom-manifest merged into bloom-services
-- D-3: Package root resolution → still 3 patterns but acceptable (different contexts)
-- L-4: ensureCommand duplication → removed with OCI distribution
-- Single-function lib files → 6 files inlined into consumers
-- OCI distribution → removed entirely (local-only install)
-- extensions/shared.ts → deleted (no-op bridge, unused)
-- createRequire hacks → replaced with direct ESM imports
+### Extension directory structure (2026-03-08)
+- Every extension is a directory: `extensions/bloom-{name}/index.ts + actions.ts + types.ts + tests/`
+- Always a directory, even for thin extensions — consistency for AI-driven development
+- `index.ts` is registration only, `actions.ts` handles orchestration, lib/ has pure logic
 
-## Current Architecture (9 extensions, 25 tools)
-- bloom-persona: identity injection, guardrails, compaction context
-- bloom-audit: tool-call audit trail with 30-day retention
-- bloom-os: bootc(action), container(action), systemd_control, system_health, update_status, schedule_reboot
-- bloom-repo: bloom_repo(action), bloom_repo_submit_pr
-- bloom-services: service_scaffold/install/test + manifest_show/sync/set_service/apply (merged from bloom-manifest)
-- bloom-objects: memory_create/read/search/link/list
-- bloom-garden: garden_status, skill_create/list, persona_evolve
-- bloom-channels: Unix socket server, /wa command
-- bloom-topics: /topic command, session organization
+### lib/ organized by capability (2026-03-08)
+- Files named by what they do: `containers.ts`, `filesystem.ts`, `networking.ts`
+- NOT by consumer: no `lib/bloom-os.ts`
+- Reason: multiple extensions share underlying systems, capability grouping avoids churn
+- `shared.ts` is last resort for truly generic utilities
 
-## Architecture Patterns
-- lib/ layer is genuinely pure (no side effects) — good domain core
-- Extensions lack port/adapter separation — directly call fs, execFile, net
-- Cross-extension coupling is low (communicate via Pi events only)
-- Shared env var `_BLOOM_DIR_RESOLVED` is the only cross-extension state
+### Service scaffold, no shared runtime (2026-03-08)
+- Template at `services/_template/`, generates independent services
+- No shared service library — services are containers, independence is the point
+- Template is single source of truth for patterns; backporting is deliberate
 
-## Pi SDK Import Clarification
-- CLAUDE.md says "never import at runtime" — MISLEADING
-- `StringEnum`, `Type`, `truncateHead` are VALUE exports requiring runtime import
-- They are peerDependencies resolved by Pi — architecturally correct
+### Development model (2026-03-08)
+- 70% AI-driven, 30% human-directed
+- Conventions optimized for AI: predictable patterns, mechanical rules, zero judgment calls
+- Philosophy priority: containers-first → Pi-native → lightest tier → convention-driven → testable
 
-## Testing Patterns
-- `tests/helpers/temp-garden.ts` — creates temp dir, saves/restores env vars
-- `tests/helpers/mock-extension-api.ts` — mock with _registeredTools, fireEvent
-- Vitest with v8 coverage, thresholds: lib/ 60% lines, extensions/ 20% lines
-- 250 tests across 19 test files
+## Architecture State
+
+### Last review: 2026-03-08
+- 10 extensions (currently single files, migration to directories planned)
+- 25 tools across extensions
+- lib/ layer is pure (good), needs reorganization from shared.ts into capability files
+- Services: llm, stt, whatsapp, signal, dufs + NetBird (system RPM)
+- 255 tests across 20 test files
+
+### Canonical docs
+- `ARCHITECTURE.md` — the rulebook (structure, philosophy, enforcement checklist)
+- `CLAUDE.md` — build/test/workflow commands
+- `AGENTS.md` — tool/hook reference
+- `docs/service-architecture.md` — service-specific architecture
+
+## Convention Violations Seen
+(None yet — tracking starts with next review)
+
+## Pi SDK Notes
+- `StringEnum`, `Type`, `truncateHead` are VALUE exports requiring runtime import as peerDependencies — this is correct
+- CLAUDE.md's "never import at runtime" is misleading — peerDependency runtime imports are fine

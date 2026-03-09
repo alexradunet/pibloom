@@ -1,10 +1,11 @@
 /**
  * Handler / business logic for bloom-dev.
  */
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { run } from "../../lib/exec.js";
+import { getBloomDir } from "../../lib/filesystem.js";
 import { errorResult, requireConfirmation, truncate } from "../../lib/shared.js";
 import type { DevBuildResult, DevTestResult } from "./types.js";
 
@@ -202,9 +203,43 @@ export async function handleDevRollback(_bloomRuntime: string, signal: AbortSign
 	};
 }
 
-/** Run the edit-build-switch development loop. */
-export async function handleDevLoop(_bloomRuntime: string, _signal?: AbortSignal) {
-	return errorResult("Not yet implemented: dev_loop");
+/** Run the edit-build-switch development loop: build → switch → reboot. */
+export async function handleDevLoop(
+	params: { tag?: string; skip_reboot?: boolean },
+	signal?: AbortSignal,
+	ctx?: ExtensionContext,
+	repoDir?: string,
+) {
+	if (!repoDir) return errorResult("Repo directory not configured.");
+
+	const steps: string[] = [];
+
+	// Step 1: Build
+	const buildResult = await handleDevBuild(repoDir, signal, params.tag);
+	if ("isError" in buildResult && buildResult.isError) return buildResult;
+	steps.push(`Build: ${buildResult.content[0].text}`);
+
+	// Step 2: Switch
+	const switchResult = await handleDevSwitch("", params.tag, signal, ctx as ExtensionContext);
+	if ("isError" in switchResult && switchResult.isError) return switchResult;
+	steps.push(`Switch: ${switchResult.content[0].text}`);
+
+	// Step 3: Reboot or report
+	if (params.skip_reboot) {
+		steps.push("Reboot skipped — run `sudo reboot` when ready.");
+	} else {
+		const reboot = await run("sudo", ["shutdown", "-r", "+0", "bloom dev loop"], signal);
+		if (reboot.exitCode !== 0) {
+			steps.push(`Reboot failed: ${reboot.stderr}`);
+		} else {
+			steps.push("Reboot initiated.");
+		}
+	}
+
+	return {
+		content: [{ type: "text" as const, text: steps.join("\n") }],
+		details: { steps },
+	};
 }
 
 /** Run tests and linting against the local repo. */
@@ -237,27 +272,160 @@ export async function handleDevTest(repoDir: string, signal?: AbortSignal) {
 	};
 }
 
-/** Submit a pull request from local changes. */
-export async function handleDevSubmitPr(_bloomRuntime: string, _signal?: AbortSignal) {
-	return errorResult("Not yet implemented: dev_submit_pr");
+/** Convert a string to a safe git branch name slug. */
+function slugify(input: string): string {
+	return input
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "")
+		.slice(0, 48);
 }
 
-/** Push a skill to the device. */
-export async function handleDevPushSkill(_bloomRuntime: string, _signal?: AbortSignal) {
-	return errorResult("Not yet implemented: dev_push_skill");
+/** Submit a pull request from local changes, including test results in the body. */
+export async function handleDevSubmitPr(
+	params: { title: string; body?: string; branch?: string },
+	repoDir: string,
+	signal?: AbortSignal,
+	ctx?: ExtensionContext,
+) {
+	const gitDir = join(repoDir, ".git");
+	if (!existsSync(gitDir)) {
+		return errorResult(`No .git directory found at ${repoDir}. Is the repo cloned?`);
+	}
+
+	if (ctx) {
+		const denied = await requireConfirmation(ctx, `Create PR "${params.title}" from local changes`, {
+			requireUi: false,
+		});
+		if (denied) return errorResult(denied);
+	}
+
+	// Run tests for PR body
+	const testResult = await handleDevTest(repoDir, signal);
+	const testSummary =
+		"isError" in testResult && testResult.isError ? `Tests: FAILED\n${testResult.content[0].text}` : `Tests: PASSED`;
+
+	// Branch
+	const branch = params.branch || `dev/${slugify(params.title) || "patch"}`;
+	const checkout = await run("git", ["-C", repoDir, "checkout", "-b", branch], signal);
+	if (checkout.exitCode !== 0) {
+		return errorResult(`Failed to create branch ${branch}: ${checkout.stderr}`);
+	}
+
+	// Stage and commit
+	const add = await run("git", ["-C", repoDir, "add", "-A"], signal);
+	if (add.exitCode !== 0) {
+		return errorResult(`Failed to stage changes: ${add.stderr}`);
+	}
+
+	const commit = await run("git", ["-C", repoDir, "commit", "-m", params.title], signal);
+	if (commit.exitCode !== 0) {
+		return errorResult(`Failed to commit: ${commit.stderr}`);
+	}
+
+	// Push
+	const push = await run("git", ["-C", repoDir, "push", "-u", "origin", branch], signal);
+	if (push.exitCode !== 0) {
+		return errorResult(`Failed to push branch ${branch}: ${push.stderr}`);
+	}
+
+	// Create PR
+	const body = [params.body || `## Summary\n${params.title}`, "", "## Test Results", testSummary].join("\n");
+
+	const pr = await run("gh", ["pr", "create", "--title", params.title, "--body", body], signal, repoDir);
+	if (pr.exitCode !== 0) {
+		return errorResult(`Failed to create PR: ${pr.stderr}`);
+	}
+
+	const prUrl = pr.stdout.trim();
+	return {
+		content: [{ type: "text" as const, text: `PR created: ${prUrl}\nBranch: ${branch}` }],
+		details: { prUrl, branch },
+	};
 }
 
-/** Push a service to the device. */
-export async function handleDevPushService(_bloomRuntime: string, _signal?: AbortSignal) {
-	return errorResult("Not yet implemented: dev_push_service");
+/** Push a skill from ~/Bloom/Skills/ into the repo and submit a PR. */
+export async function handleDevPushSkill(
+	params: { skill_name: string; title?: string },
+	repoDir: string,
+	signal?: AbortSignal,
+	ctx?: ExtensionContext,
+) {
+	const bloomDir = getBloomDir();
+	const skillSrc = join(bloomDir, "Skills", params.skill_name);
+	if (!existsSync(skillSrc)) {
+		return errorResult(`Skill not found at ${skillSrc}`);
+	}
+
+	const skillDest = join(repoDir, "skills", params.skill_name);
+	mkdirSync(skillDest, { recursive: true });
+	cpSync(skillSrc, skillDest, { recursive: true });
+
+	const title = params.title || `feat(skills): add ${params.skill_name}`;
+	return handleDevSubmitPr({ title }, repoDir, signal, ctx);
 }
 
-/** Push an extension to the device. */
-export async function handleDevPushExtension(_bloomRuntime: string, _signal?: AbortSignal) {
-	return errorResult("Not yet implemented: dev_push_extension");
+/** Push a service into the repo and submit a PR. */
+export async function handleDevPushService(
+	params: { service_name: string; title?: string },
+	repoDir: string,
+	signal?: AbortSignal,
+	ctx?: ExtensionContext,
+) {
+	const bloomDir = getBloomDir();
+	const candidates = [join(bloomDir, "services", params.service_name), join(repoDir, "services", params.service_name)];
+	const serviceSrc = candidates.find((p) => existsSync(p));
+	if (!serviceSrc) {
+		return errorResult(`Service ${params.service_name} not found in ~/Bloom/services/ or repo services/`);
+	}
+
+	const serviceDest = join(repoDir, "services", params.service_name);
+	if (serviceSrc !== serviceDest) {
+		mkdirSync(serviceDest, { recursive: true });
+		cpSync(serviceSrc, serviceDest, { recursive: true });
+	}
+
+	const title = params.title || `feat(services): add ${params.service_name}`;
+	return handleDevSubmitPr({ title }, repoDir, signal, ctx);
 }
 
-/** Install a Pi package from a local path. */
-export async function handleDevInstallPackage(_bloomRuntime: string, _signal?: AbortSignal) {
-	return errorResult("Not yet implemented: dev_install_package");
+/** Push an extension into the repo and submit a PR. */
+export async function handleDevPushExtension(
+	params: { extension_name: string; source_path?: string; title?: string },
+	repoDir: string,
+	signal?: AbortSignal,
+	ctx?: ExtensionContext,
+) {
+	const bloomDir = getBloomDir();
+	const candidates = [params.source_path, join(bloomDir, "extensions", params.extension_name)].filter(
+		Boolean,
+	) as string[];
+	const extSrc = candidates.find((p) => existsSync(p));
+	if (!extSrc) {
+		return errorResult(`Extension ${params.extension_name} not found`);
+	}
+
+	const extDest = join(repoDir, "extensions", params.extension_name);
+	mkdirSync(extDest, { recursive: true });
+	cpSync(extSrc, extDest, { recursive: true });
+
+	const title = params.title || `feat(extensions): add ${params.extension_name}`;
+	return handleDevSubmitPr({ title }, repoDir, signal, ctx);
+}
+
+/** Install a Pi package from a local path or URL. */
+export async function handleDevInstallPackage(params: { source: string }, signal?: AbortSignal) {
+	if (!params.source.trim()) {
+		return errorResult("source must be a non-empty path or URL.");
+	}
+
+	const result = await run("pi", ["install", params.source], signal);
+	if (result.exitCode !== 0) {
+		return errorResult(`pi install failed: ${truncate(result.stderr || result.stdout)}`);
+	}
+
+	return {
+		content: [{ type: "text" as const, text: `Package installed from ${params.source}.\n${truncate(result.stdout)}` }],
+		details: { source: params.source, success: true },
+	};
 }

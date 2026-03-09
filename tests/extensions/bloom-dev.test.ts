@@ -6,7 +6,11 @@ import {
 	handleDevCodeServer,
 	handleDevDisable,
 	handleDevEnable,
+	handleDevInstallPackage,
+	handleDevLoop,
+	handleDevPushSkill,
 	handleDevStatus,
+	handleDevSubmitPr,
 	handleDevTest,
 	isDevEnabled,
 } from "../../extensions/bloom-dev/actions.js";
@@ -245,5 +249,64 @@ describe("handleDevTest", () => {
 		const result = await handleDevTest(missing);
 		expect(result.isError).toBe(true);
 		expect(result.content[0].text).toContain("package.json not found");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Task 9: dev_loop handler
+// ---------------------------------------------------------------------------
+describe("handleDevLoop", () => {
+	it("returns error when repo dir is missing", async () => {
+		const result = await handleDevLoop({});
+		expect("isError" in result && result.isError).toBe(true);
+		expect(result.content[0].text).toContain("Repo directory not configured");
+	});
+
+	it("returns error when repo dir has no Containerfile", async () => {
+		const missing = join(temp.gardenDir, "nonexistent-repo");
+		const result = await handleDevLoop({}, undefined, undefined, missing);
+		expect("isError" in result && result.isError).toBe(true);
+		expect(result.content[0].text).toContain("Containerfile not found");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Task 10: dev_submit_pr handler
+// ---------------------------------------------------------------------------
+describe("handleDevSubmitPr", () => {
+	it("returns error when repo dir has no .git", async () => {
+		const missing = join(temp.gardenDir, "no-repo");
+		const result = await handleDevSubmitPr({ title: "test" }, missing);
+		expect("isError" in result && result.isError).toBe(true);
+		expect(result.content[0].text).toContain("No .git directory found");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Task 11: dev_push_skill handler
+// ---------------------------------------------------------------------------
+describe("handleDevPushSkill", () => {
+	it("returns error when skill is not found", async () => {
+		const repoDir = join(temp.gardenDir, "repo");
+		const result = await handleDevPushSkill({ skill_name: "nonexistent-skill" }, repoDir);
+		expect("isError" in result && result.isError).toBe(true);
+		expect(result.content[0].text).toContain("Skill not found");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Task 12: dev_install_package handler
+// ---------------------------------------------------------------------------
+describe("handleDevInstallPackage", () => {
+	it("returns error for empty source", async () => {
+		const result = await handleDevInstallPackage({ source: "" });
+		expect("isError" in result && result.isError).toBe(true);
+		expect(result.content[0].text).toContain("non-empty");
+	});
+
+	it("returns error for whitespace-only source", async () => {
+		const result = await handleDevInstallPackage({ source: "   " });
+		expect("isError" in result && result.isError).toBe(true);
+		expect(result.content[0].text).toContain("non-empty");
 	});
 });

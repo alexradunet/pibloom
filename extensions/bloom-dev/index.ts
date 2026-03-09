@@ -135,11 +135,15 @@ export default function (pi: ExtensionAPI) {
 		name: "dev_loop",
 		label: "Dev Loop",
 		description: "Run the edit-build-switch development loop: build local image, switch to it, reboot.",
-		parameters: Type.Object({}),
-		async execute(_toolCallId, _params, signal) {
+		parameters: Type.Object({
+			tag: Type.Optional(Type.String({ description: "Image tag (default: localhost/bloom:dev)" })),
+			skip_reboot: Type.Optional(Type.Boolean({ description: "If true, stage the switch but skip automatic reboot" })),
+		}),
+		async execute(_toolCallId, params, signal, _onUpdate, ctx) {
 			const gate = devGate();
 			if (gate) return gate;
-			return handleDevLoop(bloomRuntime, signal);
+			const repoDir = join(bloomRuntime, "pi-bloom");
+			return handleDevLoop(params, signal, ctx, repoDir);
 		},
 	});
 
@@ -163,53 +167,62 @@ export default function (pi: ExtensionAPI) {
 		parameters: Type.Object({
 			title: Type.String({ description: "Pull request title" }),
 			body: Type.Optional(Type.String({ description: "Pull request body markdown" })),
+			branch: Type.Optional(Type.String({ description: "Branch name (auto-generated from title if omitted)" })),
 		}),
-		async execute(_toolCallId, _params, signal) {
+		async execute(_toolCallId, params, signal, _onUpdate, ctx) {
 			const gate = devGate();
 			if (gate) return gate;
-			return handleDevSubmitPr(bloomRuntime, signal);
+			const repoDir = join(bloomRuntime, "pi-bloom");
+			return handleDevSubmitPr(params, repoDir, signal, ctx);
 		},
 	});
 
 	pi.registerTool({
 		name: "dev_push_skill",
 		label: "Push Skill",
-		description: "Push a skill from the local repo to the device's active skills.",
+		description: "Push a skill from ~/Bloom/Skills/ into the repo and open a PR.",
 		parameters: Type.Object({
 			skill_name: Type.String({ description: "Name of the skill to push" }),
+			title: Type.Optional(Type.String({ description: "PR title (auto-generated if omitted)" })),
 		}),
-		async execute(_toolCallId, _params, signal) {
+		async execute(_toolCallId, params, signal, _onUpdate, ctx) {
 			const gate = devGate();
 			if (gate) return gate;
-			return handleDevPushSkill(bloomRuntime, signal);
+			const repoDir = join(bloomRuntime, "pi-bloom");
+			return handleDevPushSkill(params, repoDir, signal, ctx);
 		},
 	});
 
 	pi.registerTool({
 		name: "dev_push_service",
 		label: "Push Service",
-		description: "Push a service from the local repo to the device.",
+		description: "Push a service into the repo and open a PR.",
 		parameters: Type.Object({
 			service_name: Type.String({ description: "Name of the service to push" }),
+			title: Type.Optional(Type.String({ description: "PR title (auto-generated if omitted)" })),
 		}),
-		async execute(_toolCallId, _params, signal) {
+		async execute(_toolCallId, params, signal, _onUpdate, ctx) {
 			const gate = devGate();
 			if (gate) return gate;
-			return handleDevPushService(bloomRuntime, signal);
+			const repoDir = join(bloomRuntime, "pi-bloom");
+			return handleDevPushService(params, repoDir, signal, ctx);
 		},
 	});
 
 	pi.registerTool({
 		name: "dev_push_extension",
 		label: "Push Extension",
-		description: "Push an extension from the local repo to the device.",
+		description: "Push an extension into the repo and open a PR.",
 		parameters: Type.Object({
 			extension_name: Type.String({ description: "Name of the extension to push" }),
+			source_path: Type.Optional(Type.String({ description: "Source path override (default: ~/Bloom/extensions/)" })),
+			title: Type.Optional(Type.String({ description: "PR title (auto-generated if omitted)" })),
 		}),
-		async execute(_toolCallId, _params, signal) {
+		async execute(_toolCallId, params, signal, _onUpdate, ctx) {
 			const gate = devGate();
 			if (gate) return gate;
-			return handleDevPushExtension(bloomRuntime, signal);
+			const repoDir = join(bloomRuntime, "pi-bloom");
+			return handleDevPushExtension(params, repoDir, signal, ctx);
 		},
 	});
 
@@ -218,12 +231,12 @@ export default function (pi: ExtensionAPI) {
 		label: "Install Package",
 		description: "Install a Pi package from a local path on the device.",
 		parameters: Type.Object({
-			path: Type.String({ description: "Local path to the Pi package directory" }),
+			source: Type.String({ description: "Local path to the Pi package directory or URL" }),
 		}),
-		async execute(_toolCallId, _params, signal) {
+		async execute(_toolCallId, params, signal) {
 			const gate = devGate();
 			if (gate) return gate;
-			return handleDevInstallPackage(bloomRuntime, signal);
+			return handleDevInstallPackage(params, signal);
 		},
 	});
 }

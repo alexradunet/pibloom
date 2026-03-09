@@ -69,7 +69,7 @@ vm-kill:
 clean:
 	rm -rf {{ output }}
 
-# Generate ISO with GHCR target-imgref for OTA updates
+# Generate production ISO (after install, run: sudo bootc switch <registry-image> for OTA)
 iso-production: build _require-bib-config
 	mkdir -p {{ output }}
 	{{ podman }} run --rm -it --privileged --pull=newer \
@@ -78,7 +78,7 @@ iso-production: build _require-bib-config
 		-v ./{{ output }}:/output \
 		-v {{ storage }}:/var/lib/containers/storage \
 		{{ bib }} \
-		--type anaconda-iso --target-imgref {{ remote_image }} --local {{ image }}
+		--type anaconda-iso {{ image }}
 	# bootc-image-builder may leave host files owned by nobody:nobody
 	sudo chown -R $(id -u):$(id -g) {{ output }} || true
 

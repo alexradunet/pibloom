@@ -6,34 +6,35 @@
 - Every extension is a directory: `extensions/bloom-{name}/index.ts + actions.ts + types.ts`
 - Always a directory, even for thin extensions -- consistency for AI-driven development
 - `index.ts` is registration only, `actions.ts` handles orchestration, lib/ has pure logic
-- Migration to directories is COMPLETE -- all 10 extensions are directories
-- Tests live in `tests/` at project root (NOT colocated in extension dirs despite ARCHITECTURE.md claiming otherwise)
+- All 12 extensions are directories (10 original + bloom-dev + bloom-setup added post-migration)
+- Tests live in `tests/` at project root (NOT colocated in extension dirs)
 
-### lib/ actual files (2026-03-08, verified)
+### lib/ actual files (2026-03-09, verified)
 - `shared.ts` -- generic utilities (createLogger, nowIso, truncate, errorResult, guardBloom, requireConfirmation)
 - `exec.ts` -- command execution (run)
 - `repo.ts` -- git remote helpers (getRemoteUrl, inferRepoUrl)
 - `audit.ts` -- audit utilities (dayStamp, sanitize, summarizeInput, SENSITIVE_KEY)
 - `filesystem.ts` -- path helpers (safePath, getBloomDir)
 - `frontmatter.ts` -- YAML frontmatter (parseFrontmatter, stringifyFrontmatter, yaml)
-- `services.ts` -- service catalog, manifest, install, validation, container detection
+- `services.ts` -- catalog parsing, manifest, install, validation, container detection
+- `lemonade.ts` -- lemonade-server model catalog and pull helpers (UNDOCUMENTED in ARCHITECTURE.md)
+- `setup.ts` -- setup wizard state machine: STEP_ORDER, advanceStep, etc. (UNDOCUMENTED in ARCHITECTURE.md)
 
 ### Service template (2026-03-08)
 - `services/_template/` EXISTS with: Containerfile, package.json, src/, tests/, quadlet/, tsconfig, vitest.config
 - No shared service library -- independence is the point
 
-## Architecture State (last verified: 2026-03-08)
-- 10 extensions (all directory-based)
-- 27 tools registered (verified via grep)
-- 263 tests across 20 test files (all passing)
-- Build clean, no compilation errors
+## Architecture State (last verified: 2026-03-09)
+- 12 extensions (all directory-based)
+- ~41 tools registered (AGENTS.md says 27 -- stale)
+- code-server service in catalog.yaml but undocumented
+- Missing extension test files: bloom-garden, bloom-services, bloom-topics, bloom-audit
 
-## Convention Violations Found
-
-### Documentation drift (2026-03-08 audit)
-- AGENTS.md: old `bloom-foo.ts` dev paths, stale line counts, shared lib table outdated
-- README.md: missing bloom-display, old `bloom-foo.ts` dev paths
-- CLAUDE.md "Do Not" Pi SDK import rule is misleading (peerDep runtime imports are fine)
+## Codebase Audit (2026-03-09)
+See `audit-2026-03-09.md` for full findings.
+Key: CI references deleted whatsapp service, Matrix image mismatch across files,
+AGENTS.md/README.md/ARCHITECTURE.md all missing bloom-dev and bloom-setup,
+duplicated slugify logic, bloom-audit index.ts has business logic in execute block.
 
 ## Pi SDK Notes
 - `StringEnum`, `Type`, `truncateHead` are VALUE exports requiring runtime import as peerDependencies -- correct

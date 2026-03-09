@@ -7,7 +7,7 @@ import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { run } from "../../lib/exec.js";
 import { getBloomDir } from "../../lib/filesystem.js";
 import { errorResult, requireConfirmation, truncate } from "../../lib/shared.js";
-import { slugifyBranchPart } from "../bloom-repo/actions.js";
+import { slugifyBranchPart } from "../../lib/git.js";
 import type { DevBuildResult, DevTestResult } from "./types.js";
 
 const DEV_IMAGE_TAG = "localhost/bloom:dev";

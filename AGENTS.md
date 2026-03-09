@@ -274,6 +274,7 @@ See `ARCHITECTURE.md` for structural rules and enforcement checklist.
 | `frontmatter.ts` | `parseFrontmatter`, `stringifyFrontmatter`, `yaml` |
 | `filesystem.ts` | `safePath`, `getBloomDir` |
 | `exec.ts` | `run` (command execution) |
+| `git.ts` | `parseGithubSlugFromUrl`, `slugifyBranchPart` |
 | `repo.ts` | `getRemoteUrl`, `inferRepoUrl` |
 | `audit.ts` | `dayStamp`, `sanitize`, `summarizeInput` |
 | `services.ts` | `loadManifest`, `saveManifest`, `loadServiceCatalog`, `installServicePackage`, `buildLocalImage`, `detectRunningServices`, `validateServiceName`, `validatePinnedImage` |

@@ -5,29 +5,13 @@ import { mkdirSync } from "node:fs";
 import os from "node:os";
 import { join } from "node:path";
 import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
-import HostedGitInfo from "hosted-git-info";
 import { run } from "../../lib/exec.js";
+import { parseGithubSlugFromUrl, slugifyBranchPart } from "../../lib/git.js";
 import { getRemoteUrl, inferRepoUrl } from "../../lib/repo.js";
 import { errorResult, requireConfirmation } from "../../lib/shared.js";
 
 const bloomDir = join(os.homedir(), ".bloom");
 const repoDir = join(bloomDir, "pi-bloom");
-
-/** Extract `owner/repo` slug from a GitHub URL (HTTPS, SSH, or ssh:// format). Returns null if not a valid GitHub URL. */
-export function parseGithubSlugFromUrl(url: string): string | null {
-	const info = HostedGitInfo.fromUrl(url.trim());
-	if (info && info.type === "github") return `${info.user}/${info.project}`;
-	return null;
-}
-
-/** Convert a string to a safe git branch name segment (lowercase, alphanumeric + hyphens, max 48 chars). */
-export function slugifyBranchPart(input: string): string {
-	return input
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-+|-+$/g, "")
-		.slice(0, 48);
-}
 
 /** Get the repo directory path. */
 export function getRepoDir(): string {

@@ -9,7 +9,7 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { handleConfigure, handleStatus, handleSubmitPr, handleSync } from "./actions.js";
 
-export { parseGithubSlugFromUrl, slugifyBranchPart } from "./actions.js";
+export { parseGithubSlugFromUrl, slugifyBranchPart } from "../../lib/git.js";
 
 export default function (pi: ExtensionAPI) {
 	pi.registerTool({

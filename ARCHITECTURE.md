@@ -50,6 +50,7 @@ lib/
   frontmatter.ts   # parseFrontmatter, stringifyFrontmatter, yaml
   filesystem.ts    # safePath, getBloomDir
   exec.ts          # command execution (run)
+  git.ts           # git utilities (parseGithubSlugFromUrl, slugifyBranchPart)
   repo.ts          # git remote helpers (getRemoteUrl, inferRepoUrl)
   audit.ts         # audit utilities (dayStamp, sanitize, summarizeInput)
   services.ts      # catalog parsing, service metadata, manifest logic, service validation

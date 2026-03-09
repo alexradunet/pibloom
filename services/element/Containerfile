@@ -1,0 +1,22 @@
+FROM docker.io/library/node:22-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+COPY dist/ dist/
+
+ENV NODE_ENV=production
+ENV BLOOM_HEALTH_PORT=18803
+
+RUN mkdir -p /data/element /media/bloom && chown -R node:node /data /media/bloom
+
+EXPOSE 18803
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD wget -qO- http://localhost:18803/health || exit 1
+
+USER node
+
+CMD ["node", "dist/transport.js"]

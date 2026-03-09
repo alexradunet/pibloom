@@ -42,7 +42,7 @@ export const STEP_GUIDANCE: Record<StepName, string> = {
 	git_identity:
 		"Ask for the user's name and email for git commits. Run: git config --global user.name '<name>' and git config --global user.email '<email>'. Confirm the settings.",
 	contributing:
-		"Explain how the user can contribute: (1) Create custom extensions in ~/Bloom/, (2) Build new services, (3) Submit PRs to the Bloom repo, (4) Share their personal bloom configuration. This is informational — no action needed.",
+		"Developer tools let you contribute to Bloom from this device:\n- **code-server**: Edit code in a web browser\n- **Local OS builds**: Rebuild and test the OS image without waiting for CI\n- **Upstream contributions**: Push skills, services, and extensions as PRs\n\nAsk the user: \"Would you like to enable developer tools? You can always enable them later with dev_enable.\"\n\nIf yes: Call dev_enable to activate dev mode, then guide through bloom_repo(action: 'configure') if not already done.\nIf no: Acknowledge and move on. Mention they can run dev_enable anytime.",
 	persona:
 		"Guide the user through personalizing their AI companion. Ask one question at a time: SOUL — 'What should I call you?', 'How formal or casual should I be?', 'Any values important to you?'. BODY — 'Short messages on mobile, longer on terminal?'. FACULTY — 'Step-by-step thinker or quick and direct?'. Update ~/Bloom/Persona/ files with their preferences. Fully skippable.",
 	test_message:

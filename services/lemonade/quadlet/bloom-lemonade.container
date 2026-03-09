@@ -1,0 +1,45 @@
+[Unit]
+Description=Bloom Lemonade — Unified local AI (LLM, STT, TTS, Image Gen)
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=ghcr.io/lemonade-sdk/lemonade-server:v9.4.1
+ContainerName=bloom-lemonade
+
+# Bridge network for isolation
+Network=bloom.network
+
+# Lemonade default port
+PublishPort=0.0.0.0:8000:8000
+
+# Persistent model + data storage
+Volume=bloom-lemonade-data:/root/.lemonade
+
+# Serve on all interfaces, large context for LLM
+Environment=LEMONADE_HOST=0.0.0.0
+Environment=LEMONADE_PORT=8000
+Environment=LEMONADE_CTX_SIZE=8192
+Environment=LEMONADE_LOG_LEVEL=info
+
+# Allow multiple model types loaded simultaneously
+Exec=serve --max-loaded-models -1
+
+PodmanArgs=--memory=6g
+PodmanArgs=--security-opt label=disable
+HealthCmd=curl -sf http://localhost:8000/api/v1/health || exit 1
+HealthInterval=30s
+HealthRetries=3
+HealthTimeout=10s
+HealthStartPeriod=3m
+NoNewPrivileges=true
+LogDriver=journald
+
+[Service]
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=300
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

@@ -1,6 +1,9 @@
 # Bloom OS — bootc-image-builder user configuration
-# Copy this file to bib-config.toml and fill in your SSH key.
+# Copy this file to bib-config.toml and customize as needed.
 # NEVER commit bib-config.toml — it is gitignored.
+#
+# Anaconda will prompt for: password, disk selection, timezone.
+# The 'pi' user is created automatically (Bloom convention).
 #
 # WiFi — to pre-configure WiFi for headless first-boot, pass build args:
 #   podman build --build-arg WIFI_SSID="MyNetwork" --build-arg WIFI_PSK="secret" ...
@@ -11,6 +14,4 @@ hostname = "bloom"
 
 [[customizations.user]]
 name = "pi"
-# SSH key only — no password auth. Paste your public key below.
-key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBynaoLubnHPtUl+LsSUlYzZ6uidMnxuVBBQnllga8NZ alex@toolbx"
 groups = ["wheel"]

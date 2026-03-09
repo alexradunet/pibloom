@@ -29,8 +29,6 @@ export const STEP_GUIDANCE: Record<StepName, string> = {
 		"Check network connectivity by running: nmcli general status. If connected, confirm and move on. If not, scan for WiFi with: nmcli device wifi list, show the results, ask the user to pick a network, then connect with: nmcli device wifi connect <SSID> password <password>. Retry if it fails.",
 	netbird:
 		"Explain that NetBird creates a private mesh network so the user can access this device from anywhere. Ask for their NetBird setup key. Run: sudo netbird up --setup-key <KEY>. Check status with: netbird status. Show the assigned mesh IP.",
-	password:
-		"Now that remote access is being opened via NetBird, set a password for security. Run: sudo passwd pi. Ask the user to type their desired password. Confirm success.",
 	connectivity:
 		"Summarize how to connect: (1) Locally at localhost if sitting at the device, (2) Via NetBird mesh IP from any peer device. Show the mesh IP from: netbird status. Mention SSH: ssh pi@<mesh-ip>.",
 	webdav:

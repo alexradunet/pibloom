@@ -3,7 +3,6 @@ export const STEP_ORDER = [
 	"welcome",
 	"network",
 	"netbird",
-	"password",
 	"connectivity",
 	"llm_upgrade",
 	"webdav",

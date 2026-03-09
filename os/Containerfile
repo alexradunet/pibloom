@@ -100,6 +100,7 @@ ARG CLAUDE_CODE_VERSION=2.1.69
 RUN HOME=/tmp npm install -g --cache /tmp/npm-cache \
     @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} \
     @mariozechner/pi-coding-agent@${PI_CODING_AGENT_VERSION} \
+    @benvargas/pi-synthetic-provider@latest \
     @biomejs/biome@${BIOME_VERSION} \
     typescript@${TYPESCRIPT_VERSION} \
     && rm -rf /tmp/npm-cache /var/roothome/.npm /root/.npm
@@ -119,8 +120,10 @@ RUN cd /usr/local/share/bloom && \
 RUN chmod +x /usr/local/share/bloom/os/scripts/ui-tree.py
 
 # Configure Pi settings defaults in /usr (immutable layer)
-RUN mkdir -p /usr/local/share/bloom/.pi/agent && \
-    echo '{"packages": ["/usr/local/share/bloom"]}' > /usr/local/share/bloom/.pi/agent/settings.json
+RUN SYNTH_PKG=$(npm root -g)/@benvargas/pi-synthetic-provider && \
+    mkdir -p /usr/local/share/bloom/.pi/agent && \
+    printf '{"packages": ["/usr/local/share/bloom", "%s"]}' "$SYNTH_PKG" \
+    > /usr/local/share/bloom/.pi/agent/settings.json
 
 # Shell config skel — Anaconda copies /etc/skel/ to new user's home
 COPY os/sysconfig/bloom-bashrc /etc/skel/.bashrc

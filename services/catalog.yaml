@@ -19,20 +19,19 @@ services:
         url: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin"
     preflight:
       commands: [podman, systemctl]
-  whatsapp:
-    version: "0.3.0"
-    category: communication
-    image: localhost/bloom-whatsapp:latest
-    optional: true
-    depends: [stt]
-    preflight:
-      commands: [podman, systemctl]
-  signal:
+  matrix:
     version: "0.1.0"
     category: communication
-    image: localhost/bloom-signal:latest
-    optional: true
-    depends: [stt]
+    image: forgejo.ellis.link/continuwuation/continuwuity:latest
+    optional: false
+    preflight:
+      commands: [podman, systemctl]
+  element:
+    version: "0.1.0"
+    category: communication
+    image: localhost/bloom-element:latest
+    optional: false
+    depends: [matrix, stt]
     preflight:
       commands: [podman, systemctl]
   dufs:

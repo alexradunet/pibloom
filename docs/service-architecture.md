@@ -29,7 +29,7 @@ graph TD
 |-----------|----------|----------|------|
 | **Skill** | Pi needs knowledge or a procedure to follow | meal-planning, troubleshooting guides, API references | Zero — just a markdown file |
 | **Extension** | Pi needs to register commands, tools, or react to session events | bloom-channels (Unix socket server), bloom-objects (object store) | Low — TypeScript, runs in-process |
-| **Service** | A standalone process needs to run independently of Pi's session | LLM (llama.cpp), STT (whisper.cpp), WhatsApp bridge (always-on), dufs (WebDAV) | Medium — systemd unit, resource allocation |
+| **Service** | A standalone process needs to run independently of Pi's session | LLM (llama.cpp), STT (whisper.cpp), Matrix homeserver (always-on), dufs (WebDAV) | Medium — systemd unit, resource allocation |
 
 **Always prefer the lighter option.** A skill that teaches Pi to call an existing API is better than an extension wrapping that API, which is better than a service re-implementing it.
 
@@ -50,8 +50,8 @@ graph TB
             llm[bloom-llm<br/>llama.cpp :8080]
             stt[bloom-stt<br/>whisper.cpp :8081]
             dufs[bloom-dufs<br/>WebDAV :5000]
-            wa[bloom-whatsapp<br/>Baileys Bridge]
-            signal[bloom-signal<br/>Signal Bridge]
+            element[bloom-element<br/>Element Bridge]
+            matrix[bloom-matrix<br/>Continuwuity Homeserver]
         end
 
         subgraph "System Services (RPM)"
@@ -64,15 +64,13 @@ graph TB
         end
     end
 
-    channels <-->|Unix socket JSON| wa
-    channels <-->|Unix socket JSON| signal
-    wa <-->|Baileys| whatsapp_cloud[WhatsApp Cloud]
-    signal <-->|signal-cli| signal_cloud[Signal Cloud]
+    channels <-->|Unix socket JSON| element
+    element <-->|Matrix CS API| matrix
     llm -->|HTTP API| channels
     netbird <-->|WireGuard| netbird_cloud[NetBird Cloud]
     dufs -->|WebDAV| devices[Other Devices]
-    systemd -->|manages| wa
-    systemd -->|manages| signal
+    systemd -->|manages| element
+    systemd -->|manages| matrix
     systemd -->|manages| llm
     systemd -->|manages| stt
     systemd -->|manages| dufs
@@ -100,15 +98,15 @@ graph TB
 
 ### 📦 The `bloom-` Prefix
 
-Bloom-managed services use a `bloom-` prefix on their **unit names** (e.g., `bloom-llm`, `bloom-whatsapp`). This is a management namespace — it does NOT mean the underlying image is Bloom-specific. NetBird runs as a system-level RPM service:
+Bloom-managed services use a `bloom-` prefix on their **unit names** (e.g., `bloom-llm`, `bloom-element`). This is a management namespace — it does NOT mean the underlying image is Bloom-specific. NetBird runs as a system-level RPM service:
 
 | Unit Name | Type | Image / Runtime | Bloom-specific? |
 |-----------|------|-----------------|-----------------|
 | `bloom-llm` | Podman Quadlet (user) | `ghcr.io/ggml-org/llama.cpp:server` | No — upstream image |
 | `bloom-stt` | Podman Quadlet (user) | `ghcr.io/ggml-org/whisper.cpp:main` | No — upstream image |
 | `bloom-dufs` | Podman Quadlet (user) | `docker.io/sigoden/dufs:latest` | No — upstream image |
-| `bloom-whatsapp` | Podman Quadlet (user) | localhost/bloom-whatsapp:latest | Yes — custom bridge |
-| `bloom-signal` | Podman Quadlet (user) | localhost/bloom-signal:latest | Yes — custom bridge |
+| `bloom-element` | Podman Quadlet (user) | localhost/bloom-element:latest | Yes — custom bridge |
+| `bloom-matrix` | Podman Quadlet (user) | ghcr.io/girlbossceo/continuwuity:main | No — upstream image |
 | `netbird` | System RPM service | NetBird package | No — upstream RPM |
 
 The prefix enables:
@@ -159,29 +157,29 @@ stateDiagram-v2
 
 ## 📡 Media Pipeline
 
-When WhatsApp receives a voice note or image, the media flows through multiple services:
+When Element receives a voice note or image, the media flows through multiple services:
 
 ```mermaid
 sequenceDiagram
-    participant WA as WhatsApp Cloud
-    participant Bridge as bloom-whatsapp
+    participant Matrix as bloom-matrix
+    participant Bridge as bloom-element
     participant FS as /var/lib/bloom/media/
     participant Channels as bloom-channels
     participant Pi as Pi Agent
     participant STT as bloom-stt
 
-    WA->>Bridge: Incoming voice note
-    Bridge->>Bridge: downloadMediaMessage()
+    Matrix->>Bridge: Incoming voice note (Matrix CS API)
+    Bridge->>Bridge: downloadMedia()
     Bridge->>FS: Save as {timestamp}-{id}.ogg
     Bridge->>Channels: Unix socket JSON with media metadata
-    Channels->>Pi: "[whatsapp: John] sent audio (15s, 24KB, audio/ogg). File: /var/lib/bloom/media/..."
+    Channels->>Pi: "[element: John] sent audio (15s, 24KB, audio/ogg). File: /var/lib/bloom/media/..."
 
     Note over Pi: Pi decides to transcribe
     Pi->>STT: POST http://localhost:8081/inference<br/>file=@/var/lib/bloom/media/...ogg
     STT->>Pi: {"text": "transcribed content"}
     Pi->>Channels: Response text
     Channels->>Bridge: Unix socket JSON response
-    Bridge->>WA: Send reply
+    Bridge->>Matrix: Send reply (Matrix CS API)
 ```
 
 ### 📡 Media Message Format (Channel Protocol)
@@ -189,7 +187,7 @@ sequenceDiagram
 ```json
 {
   "type": "message",
-  "channel": "whatsapp",
+  "channel": "element",
   "from": "John",
   "timestamp": 1709568000,
   "media": {
@@ -222,8 +220,8 @@ graph LR
     subgraph "Container Volumes"
         llm_models["bloom-llm-models<br/>LLM model cache"]
         stt_models["bloom-stt-models<br/>STT model cache"]
-        wa_auth["bloom-whatsapp-auth<br/>WhatsApp credentials"]
-        signal_data["bloom-signal-data<br/>Signal credentials"]
+        matrix_data["bloom-matrix-data<br/>Continuwuity homeserver data"]
+        element_data["bloom-element-data<br/>Element bridge state"]
     end
 
     subgraph "System State"
@@ -241,8 +239,8 @@ graph LR
 | bloom-llm | ai | 8080 | Podman Quadlet | ghcr.io/ggml-org/llama.cpp:server | 2GB RAM |
 | bloom-stt | ai | 8081 | Podman Quadlet | ghcr.io/ggml-org/whisper.cpp:main | 512MB RAM |
 | bloom-dufs | sync | 5000 | Podman Quadlet | docker.io/sigoden/dufs:latest | 64MB RAM |
-| bloom-whatsapp | communication | — | Podman Quadlet | localhost/bloom-whatsapp:latest | 128MB RAM |
-| bloom-signal | communication | 18802 | Podman Quadlet | localhost/bloom-signal:latest | 128MB RAM |
+| bloom-element | communication | — | Podman Quadlet | localhost/bloom-element:latest | 128MB RAM |
+| bloom-matrix | communication | 6167 | Podman Quadlet | ghcr.io/girlbossceo/continuwuity:main | 512MB RAM |
 | netbird | networking | — | System RPM service | NetBird package | 256MB RAM |
 
 ## 📦 Adding a New Service

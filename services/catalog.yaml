@@ -1,13 +1,6 @@
 version: 1
 source_repo: https://github.com/pibloom/pi-bloom
 services:
-  lemonade:
-    version: "0.1.0"
-    category: ai
-    image: ghcr.io/lemonade-sdk/lemonade-server:v9.4.1
-    optional: false
-    preflight:
-      commands: [podman, systemctl]
   matrix:
     version: "0.1.0"
     category: communication
@@ -20,7 +13,7 @@ services:
     category: communication
     image: localhost/bloom-element:latest
     optional: false
-    depends: [matrix, lemonade]
+    depends: [matrix]
     preflight:
       commands: [podman, systemctl]
   dufs:

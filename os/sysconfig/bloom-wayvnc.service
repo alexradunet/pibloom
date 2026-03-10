@@ -1,0 +1,16 @@
+[Unit]
+Description=Bloom VNC Server (wayvnc)
+After=bloom-sway.service
+BindsTo=bloom-sway.service
+
+[Service]
+Type=simple
+User=pi
+Environment=WAYLAND_DISPLAY=wayland-1
+Environment=XDG_RUNTIME_DIR=/run/user/%U
+ExecStart=/usr/bin/wayvnc --output=* 127.0.0.1 5900
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=bloom-display.target

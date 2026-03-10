@@ -1,0 +1,6 @@
+[Unit]
+Description=Bloom Display Stack (Sway + VNC + noVNC)
+Wants=bloom-sway.service bloom-wayvnc.service bloom-novnc.service
+
+[Install]
+WantedBy=multi-user.target

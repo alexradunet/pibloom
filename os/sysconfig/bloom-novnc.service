@@ -1,0 +1,13 @@
+[Unit]
+Description=Bloom Web Desktop (noVNC)
+After=bloom-wayvnc.service
+
+[Service]
+Type=simple
+User=pi
+ExecStart=/usr/bin/websockify --web=/usr/share/novnc 6080 127.0.0.1:5900
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=bloom-display.target

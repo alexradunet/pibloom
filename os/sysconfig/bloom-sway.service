@@ -1,0 +1,17 @@
+[Unit]
+Description=Bloom Display (Sway Wayland compositor)
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+RuntimeDirectory=bloom
+ExecStartPre=/usr/local/share/bloom/os/scripts/detect-display.sh
+EnvironmentFile=-/run/bloom/display-env
+Environment=XDG_RUNTIME_DIR=/run/user/%U
+ExecStart=/usr/bin/sway --config /etc/bloom/sway-config
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=bloom-display.target

@@ -163,7 +163,7 @@ First-boot setup wizard with 13 guided steps.
 
 ### 🖥️ bloom-display
 
-AI agent computer use: screenshots, input injection, accessibility tree, and window management on the headless Xvfb display.
+AI agent computer use: screenshots, input injection, accessibility tree, and window management on the Sway Wayland compositor. Browser remote desktop via noVNC on port 6080.
 
 **Tools:** `display` (actions: screenshot, click, type, key, move, scroll, ui_tree, windows, launch, focus)
 

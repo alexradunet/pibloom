@@ -116,8 +116,8 @@ ssh pi@<netbird-ip>
 tmux new-session -A -s main
 ```
 
-Pi runs in the terminal. The headless Xvfb display (:99) is available for AI computer use
-(screenshots, browser automation, GUI apps) — no remote viewer is needed.
+Pi runs in the terminal. The Sway Wayland display is available for AI computer use
+(screenshots, browser automation, GUI apps). Open http://<bloom-ip>:6080 for browser-based remote desktop.
 
 ## 🔗 Related
 

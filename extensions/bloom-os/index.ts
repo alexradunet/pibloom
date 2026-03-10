@@ -8,13 +8,10 @@
 import { StringEnum } from "@mariozechner/pi-ai";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
-import { errorResult, guardBloom } from "../../lib/shared.js";
 import {
 	checkPendingUpdates,
 	handleBootc,
-	handleContainerDeploy,
-	handleContainerLogs,
-	handleContainerStatus,
+	handleContainer,
 	handleScheduleReboot,
 	handleSystemdControl,
 	handleSystemHealth,
@@ -51,23 +48,7 @@ export default function (pi: ExtensionAPI) {
 			lines: Type.Optional(Type.Number({ description: "Log lines to return (default 50)", default: 50 })),
 		}),
 		async execute(_toolCallId, params, signal, _onUpdate, ctx) {
-			const { action, service } = params;
-
-			if (action === "status") {
-				return handleContainerStatus(signal);
-			}
-
-			if (!service) {
-				return errorResult(`The "${action}" action requires a service name.`);
-			}
-			const guard = guardBloom(service);
-			if (guard) return errorResult(guard);
-
-			if (action === "logs") {
-				return handleContainerLogs(service, params.lines ?? 50, signal);
-			}
-
-			return handleContainerDeploy(service, signal, ctx);
+			return handleContainer(params, signal, ctx);
 		},
 	});
 

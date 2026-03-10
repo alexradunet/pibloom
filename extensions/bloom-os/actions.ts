@@ -63,6 +63,33 @@ export async function handleBootc(
 	};
 }
 
+// --- Container routing handler ---
+
+/** Route a container tool call to the appropriate sub-handler with guard checks. */
+export async function handleContainer(
+	params: { action: "status" | "logs" | "deploy"; service?: string; lines?: number },
+	signal: AbortSignal | undefined,
+	ctx: ExtensionContext,
+) {
+	const { action, service } = params;
+
+	if (action === "status") {
+		return handleContainerStatus(signal);
+	}
+
+	if (!service) {
+		return errorResult(`The "${action}" action requires a service name.`);
+	}
+	const guard = guardBloom(service);
+	if (guard) return errorResult(guard);
+
+	if (action === "logs") {
+		return handleContainerLogs(service, params.lines ?? 50, signal);
+	}
+
+	return handleContainerDeploy(service, signal, ctx);
+}
+
 // --- Container handler ---
 
 export async function handleContainerStatus(signal: AbortSignal | undefined) {

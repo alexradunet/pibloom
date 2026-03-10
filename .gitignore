@@ -5,4 +5,4 @@ coverage/
 .omc/
 os/output/
 .worktrees/
-os/bib-config.toml
+os/bib-config.toml  # contains plaintext password — never commit

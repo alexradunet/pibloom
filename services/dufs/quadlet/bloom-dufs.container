@@ -21,6 +21,12 @@ PodmanArgs=--security-opt label=disable
 NoNewPrivileges=true
 LogDriver=journald
 
+HealthCmd=wget -qO- http://localhost:5000/ || exit 1
+HealthInterval=30s
+HealthRetries=3
+HealthStartPeriod=10s
+HealthTimeout=5s
+
 [Service]
 Restart=on-failure
 RestartSec=10

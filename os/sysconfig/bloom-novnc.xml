@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>Bloom Web Desktop</short>
+  <description>noVNC browser-based remote desktop for Bloom OS (port 6080)</description>
+  <port protocol="tcp" port="6080"/>
+</service>

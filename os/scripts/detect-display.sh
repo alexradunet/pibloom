@@ -8,7 +8,7 @@ set -euo pipefail
 ENV_FILE="/run/bloom/display-env"
 mkdir -p "$(dirname "$ENV_FILE")"
 
-if [ -d /dev/dri ] && ls /dev/dri/renderD* >/dev/null 2>&1; then
+if [[ -d /dev/dri ]] && ls /dev/dri/renderD* >/dev/null 2>&1; then
     # Real GPU available — use DRM backend
     echo "# GPU detected — using DRM backend" > "$ENV_FILE"
     echo "WLR_BACKENDS=drm" >> "$ENV_FILE"

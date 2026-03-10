@@ -19,10 +19,10 @@ fi
 # Preserve notified and staged flags if status file already exists
 NOTIFIED=false
 STAGED=false
-if [ -f "$STATUS_FILE" ]; then
+if [[ -f "$STATUS_FILE" ]]; then
     PREV_NOTIFIED=$(jq -r '.notified // false' "$STATUS_FILE" 2>/dev/null || echo "false")
     PREV_STAGED=$(jq -r '.staged // false' "$STATUS_FILE" 2>/dev/null || echo "false")
-    if [ "$AVAILABLE" = "true" ]; then
+    if [[ "$AVAILABLE" = "true" ]]; then
         NOTIFIED=$PREV_NOTIFIED
         STAGED=$PREV_STAGED
     fi

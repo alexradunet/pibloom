@@ -107,6 +107,15 @@ export async function installServicePackage(
 			writeFileSync(tokenEnvPath, `BLOOM_CHANNEL_TOKEN=${token}\n`);
 		}
 
+		// Ensure service-specific env file exists so the container can start
+		// (service_pair will populate credentials later)
+		const configDir = join(os.homedir(), ".config", "bloom");
+		const serviceEnvPath = join(configDir, `${name}.env`);
+		if (!existsSync(serviceEnvPath)) {
+			mkdirSync(configDir, { recursive: true });
+			writeFileSync(serviceEnvPath, "");
+		}
+
 		return { ok: true, source: "local", ref: name };
 	} finally {
 		rmSync(tempDir, { recursive: true, force: true });

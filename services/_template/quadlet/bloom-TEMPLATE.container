@@ -31,7 +31,7 @@ Environment=NODE_ENV=production
 EnvironmentFile=%h/.config/bloom/channel-tokens/TEMPLATE.env
 
 # Shared Bloom config (BLOOM_ALLOWED_SENDERS, etc.)
-EnvironmentFile=-%h/.config/bloom/bloom.env
+EnvironmentFile=%h/.config/bloom/bloom.env
 
 PodmanArgs=--memory=256m
 PodmanArgs=--security-opt label=disable

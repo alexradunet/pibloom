@@ -456,11 +456,6 @@ rm tests/extensions/bloom-channels.test.ts
 
 Note: The full Matrix client integration (connecting to Continuwuity, syncing messages) cannot be unit-tested without a running homeserver. Integration testing happens via `just vm` and manual verification.
 
-- [ ] **Step 2: Run tests to verify they fail**
-
-Run: `npm run test -- tests/extensions/bloom-channels.test.ts`
-Expected: FAIL (old imports broken after rewrite, or tests reference removed code).
-
 - [ ] **Step 3: Create new types.ts**
 
 ```typescript
@@ -740,7 +735,7 @@ export function createMatrixBridge(pi: ExtensionAPI) {
 		}
 	}
 
-	async function handleSessionShutdown(): Promise<void> {
+	async function handleSessionShutdown(_event?: unknown, _ctx?: unknown): Promise<void> {
 		if (client) {
 			try {
 				client.stop();
@@ -824,7 +819,7 @@ export default function (pi: ExtensionAPI) {
 	pi.registerCommand("matrix", {
 		description: "Send a message via Matrix",
 		handler: async (args, ctx) => {
-			bridge.handleMatrixCommand(args, ctx);
+			await bridge.handleMatrixCommand(args, ctx);
 		},
 	});
 }
@@ -837,12 +832,7 @@ rm extensions/bloom-channels/channel-server.ts
 rm extensions/bloom-channels/pairing.ts
 ```
 
-- [ ] **Step 8: Run tests**
-
-Run: `npm run test -- tests/extensions/bloom-channels.test.ts`
-Expected: PASS
-
-- [ ] **Step 9: Run full test suite to check for broken imports**
+- [ ] **Step 8: Run full test suite to check for broken imports**
 
 Run: `npm run test`
 Expected: Check for any imports of the deleted files or removed exports (like `getPairingData`, `setPairingData`, `clearPairingData`).
@@ -1348,14 +1338,17 @@ bridges:
   whatsapp:
     image: dock.mau.dev/mautrix/whatsapp:latest
     auth_method: qr_code
+    health_port: 29318
     description: Bridge WhatsApp conversations to Matrix
   telegram:
     image: dock.mau.dev/mautrix/telegram:latest
     auth_method: phone_code
+    health_port: 29300
     description: Bridge Telegram conversations to Matrix
   signal:
     image: dock.mau.dev/mautrix/signal:latest
     auth_method: qr_code
+    health_port: 29328
     description: Bridge Signal conversations to Matrix
 ```
 

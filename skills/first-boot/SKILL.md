@@ -59,7 +59,7 @@ Matrix homeserver is pre-installed as a native OS service. The registration toke
 5. Register `@user:bloom` account for the human user
 6. Store credentials in `~/.pi/matrix-credentials.json` (schema: `{ homeserver, botUserId, botAccessToken, botPassword, userUserId, userPassword, registrationToken }`)
 7. Create `#general:bloom` room and auto-join `@user:bloom` to it
-8. Tell user: open `http://<host>/cinny/`, login as `user` (localpart only, not `@user:bloom`), password shown
+8. Tell user: open `http://cinny.bloom.mesh:18810`, login as `user` (localpart only, not `@user:bloom`), password shown
 9. User is already in `#general:bloom` — suggest DM with `@pi:bloom`
 
 ### git_identity

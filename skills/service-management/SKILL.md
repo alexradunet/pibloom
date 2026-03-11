@@ -36,15 +36,14 @@ External messaging bridges (WhatsApp, Telegram, Signal) connect to the native Ma
 
 Bridge metadata is in `services/catalog.yaml` under `bridges:`.
 
-## Subdomain Access
+## Mesh Access
 
 When a service has a `port` defined in `services/catalog.yaml`, `service_install` automatically creates:
-- An nginx vhost at `/etc/nginx/conf.d/bloom-{name}.conf` for `{name}.bloom.mesh`
-- A NetBird DNS A record (if `NETBIRD_API_TOKEN` is set in `~/.config/bloom/netbird.env`)
+- A NetBird DNS A record for `{name}.bloom.mesh` (if `NETBIRD_API_TOKEN` is set in `~/.config/bloom/netbird.env`)
 
-After installation, services are accessible at `http://{name}.bloom.mesh` from any mesh peer. With search domains enabled, `http://{name}` also works.
+After installation, services are accessible at `http://{name}.bloom.mesh:{port}` from any mesh peer. Services bind directly to the host network — no reverse proxy is needed.
 
-If no NetBird token is configured, DNS is skipped but the nginx vhost is still written. Services remain accessible via path-based routing or direct IP.
+If no NetBird token is configured, DNS is skipped. Services remain accessible via the device's mesh IP and port directly.
 
 ## End-to-End Example (Scaffold -> Test -> Install)
 
@@ -117,7 +116,6 @@ These are baked into the OS image and run as native systemd services:
 |---------|------|---------|
 | Matrix (Continuwuity) | `bloom-matrix.service` | Communication backbone |
 | NetBird | `netbird.service` | Mesh networking |
-| Nginx | `nginx.service` | Reverse proxy, Cinny web client |
 
 ## Known Container Services
 

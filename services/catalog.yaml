@@ -1,21 +1,6 @@
 version: 1
 source_repo: https://github.com/pibloom/pi-bloom
 services:
-  matrix:
-    version: "0.1.0"
-    category: communication
-    image: forgejo.ellis.link/continuwuation/continuwuity:0.5.0-rc.6
-    optional: false
-    preflight:
-      commands: [podman, systemctl]
-  element:
-    version: "0.1.0"
-    category: communication
-    image: localhost/bloom-element:latest
-    optional: false
-    depends: [matrix]
-    preflight:
-      commands: [podman, systemctl]
   dufs:
     version: "0.1.0"
     category: sync
@@ -30,3 +15,20 @@ services:
     optional: true
     preflight:
       commands: [podman, systemctl]
+
+bridges:
+  whatsapp:
+    image: dock.mau.dev/mautrix/whatsapp:latest
+    auth_method: qr_code
+    health_port: 29318
+    description: Bridge WhatsApp conversations to Matrix
+  telegram:
+    image: dock.mau.dev/mautrix/telegram:latest
+    auth_method: phone_code
+    health_port: 29300
+    description: Bridge Telegram conversations to Matrix
+  signal:
+    image: dock.mau.dev/mautrix/signal:latest
+    auth_method: qr_code
+    health_port: 29328
+    description: Bridge Signal conversations to Matrix

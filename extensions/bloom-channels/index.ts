@@ -1,17 +1,19 @@
 /**
- * bloom-channels — Channel bridge Unix socket server at $XDG_RUNTIME_DIR/bloom/channels.sock.
+ * bloom-channels — Matrix client bridge for Pi messaging.
+ *
+ * Connects directly to the local Continuwuity homeserver via matrix-bot-sdk.
+ * Pi logs in as @pi:bloom and listens for messages in Matrix rooms.
  *
  * @commands /matrix (send message via Matrix)
  * @hooks session_start, agent_end, session_shutdown
- * @see {@link ../../AGENTS.md#bloom-channels} Extension reference
  */
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { createChannelBridge } from "./actions.js";
+import { createMatrixBridge } from "./actions.js";
 
-export { clearPairingData, extractResponseText, getPairingData, setPairingData } from "./actions.js";
+export { registerMatrixAccount } from "./actions.js";
 
 export default function (pi: ExtensionAPI) {
-	const bridge = createChannelBridge(pi);
+	const bridge = createMatrixBridge(pi);
 
 	pi.on("session_start", (event, ctx) => {
 		bridge.handleSessionStart(event, ctx);
@@ -28,7 +30,7 @@ export default function (pi: ExtensionAPI) {
 	pi.registerCommand("matrix", {
 		description: "Send a message via Matrix",
 		handler: async (args, ctx) => {
-			bridge.handleMatrixCommand(args, ctx);
+			await bridge.handleMatrixCommand(args, ctx);
 		},
 	});
 }

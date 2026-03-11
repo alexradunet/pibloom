@@ -112,13 +112,7 @@ export async function installServicePackage(
 		const serviceEnvPath = join(configDir, `${name}.env`);
 		if (!existsSync(serviceEnvPath)) {
 			mkdirSync(configDir, { recursive: true });
-			// Matrix needs a registration token for account creation
-			if (name === "matrix") {
-				const regToken = randomBytes(24).toString("base64url");
-				writeFileSync(serviceEnvPath, `CONTINUWUITY_REGISTRATION_TOKEN=${regToken}\n`);
-			} else {
-				writeFileSync(serviceEnvPath, "");
-			}
+			writeFileSync(serviceEnvPath, "");
 		}
 
 		return { ok: true, source: "local", ref: name };

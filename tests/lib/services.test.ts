@@ -172,21 +172,21 @@ describe("loadServiceCatalog", () => {
 			join(catalogDir, "catalog.yaml"),
 			[
 				"services:",
-				"  element:",
+				"  app-frontend:",
 				"    version: '0.1.0'",
-				"    category: communication",
-				"    image: localhost/bloom-element:latest",
-				"    depends: [matrix]",
-				"  matrix:",
+				"    category: development",
+				"    image: localhost/bloom-app-frontend:latest",
+				"    depends: [app-backend]",
+				"  app-backend:",
 				"    version: '0.1.0'",
-				"    category: communication",
-				"    image: forgejo.ellis.link/continuwuation/continuwuity:0.5.0-rc.6",
+				"    category: development",
+				"    image: localhost/bloom-app-backend:latest",
 			].join("\n"),
 		);
 		const catalog = loadServiceCatalog(tempDir);
-		expect(catalog.element.depends).toEqual(["matrix"]);
-		expect(catalog.matrix).toBeDefined();
-		expect(catalog.matrix.version).toBe("0.1.0");
+		expect(catalog["app-frontend"].depends).toEqual(["app-backend"]);
+		expect(catalog["app-backend"]).toBeDefined();
+		expect(catalog["app-backend"].version).toBe("0.1.0");
 	});
 
 	it("skips catalog without services key and falls through", () => {

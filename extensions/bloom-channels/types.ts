@@ -1,44 +1,30 @@
-// Extension-specific types for bloom-channels
+/**
+ * Types for the Matrix-based channel bridge.
+ */
 
-import type { Socket } from "node:net";
-
-/** State tracking for a connected channel bridge socket. */
-export interface ChannelInfo {
-	socket: Socket;
+/** Stored connection state for the Matrix client. */
+export interface MatrixConnectionState {
 	connected: boolean;
-	missedPings: number;
-	pingTimer?: ReturnType<typeof setInterval>;
-	pendingCount: number;
-	rateBurst: number;
-	rateTimer?: ReturnType<typeof setInterval>;
+	userId: string | null;
+	homeserver: string;
+	roomId: string | null;
 }
 
-/** Context attached to a pending inbound channel message awaiting response. */
-export interface ChannelContext {
-	channel: string;
-	from: string;
-	createdAt: number;
+/** Inbound message from a Matrix room. */
+export interface MatrixInboundMessage {
+	roomId: string;
+	senderId: string;
+	body: string;
+	eventId: string;
+	timestamp: number;
+	media?: MatrixMediaInfo;
 }
 
-/** Media attachment info for incoming channel messages. */
-export interface MediaInfo {
-	kind: string;
+/** Media attachment from Matrix. */
+export interface MatrixMediaInfo {
+	kind: "image" | "audio" | "video" | "document";
 	mimetype: string;
-	filepath: string;
-	duration?: number;
+	url: string;
+	filename: string;
 	size: number;
-	caption?: string;
-}
-
-/** Parsed incoming message from a channel bridge socket. */
-export interface IncomingMessage {
-	type: "register" | "message" | "pong" | "pairing";
-	id?: string;
-	channel: string;
-	token?: string;
-	from?: string;
-	text?: string;
-	timestamp?: number;
-	media?: MediaInfo;
-	data?: string;
 }

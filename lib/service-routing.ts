@@ -26,8 +26,8 @@ export interface RoutingResult {
  */
 export async function ensureServiceRouting(
 	serviceName: string,
+	/** Reserved for future per-port access policies. */
 	_port: number,
-	_options?: { websocket?: boolean; maxBodySize?: string },
 	signal?: AbortSignal,
 ): Promise<RoutingResult> {
 	const guard = validateServiceName(serviceName);

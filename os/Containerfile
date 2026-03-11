@@ -133,6 +133,12 @@ COPY os/sysconfig/bloom-matrix.toml /etc/bloom/matrix.toml
 COPY os/sysconfig/bloom-matrix.service /usr/lib/systemd/system/bloom-matrix.service
 RUN systemctl enable bloom-matrix.service
 
+# ── Cinny web client (static files) ─────────────────────────────────────
+ARG CINNY_VERSION=4.3.0
+RUN curl -fsSL "https://github.com/cinnyapp/cinny/releases/download/v${CINNY_VERSION}/cinny-v${CINNY_VERSION}.tar.gz" \
+    | tar -xz -C /usr/share/ && mv /usr/share/dist /usr/share/cinny
+COPY os/sysconfig/cinny-config.json /usr/share/cinny/config.json
+
 # Boot to multi-user target — getty handles login
 RUN systemctl set-default multi-user.target
 

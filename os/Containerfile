@@ -49,6 +49,8 @@ RUN printf '[netbird]\nname=netbird\nbaseurl=https://pkgs.netbird.io/yum/\nenabl
     dnf install -y netbird && \
     dnf clean all && \
     rm -rf /var/cache/libdnf5 /var/lib/dnf /var/log/dnf5.log /var/log/dnf.log /var/cache/ldconfig/aux-cache
+# Remove empty state files left by post-install scriptlet (causes JSON parse crash on boot)
+RUN rm -f /var/lib/netbird/active_profile.json /var/lib/netbird/default.json
 RUN systemctl enable netbird
 
 # Wheel group sudo (Anaconda creates user at install time)

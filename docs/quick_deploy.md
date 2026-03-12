@@ -53,7 +53,7 @@ Forwarded host ports:
 
 ### 5) Log in
 
-Default user comes from `os/bib-config.toml` (copied from `os/bib-config.example.toml`):
+Default user comes from `os/disk_config/bib-config.toml` (copied from `os/disk_config/bib-config.example.toml`):
 
 - username: `pi`
 - SSH key auth: from `customizations.user.key`

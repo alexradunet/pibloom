@@ -14,5 +14,7 @@ os/output
 
 # Keep OS build files in context explicitly (for CI/podman)
 !os/Containerfile
-!os/bootc/**
-!os/sysconfig/**
+!os/build_files/**
+!os/system_files/**
+!os/packages/**
+!os/disk_config/**

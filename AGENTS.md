@@ -293,11 +293,10 @@ See `ARCHITECTURE.md` for structural rules and enforcement checklist.
 | `git.ts` | `parseGithubSlugFromUrl`, `slugifyBranchPart` |
 | `repo.ts` | `getRemoteUrl`, `inferRepoUrl` |
 | `audit.ts` | `dayStamp`, `sanitize`, `summarizeInput` |
-| `services-catalog.ts` | `loadServiceCatalog`, `loadBridgeCatalog`, `servicePreflightErrors` |
-| `services-install.ts` | `findLocalServicePackage` |
+| `services-catalog.ts` | `loadServiceCatalog`, `loadBridgeCatalog`, `servicePreflightErrors`, `findLocalServicePackage` |
 | `services-manifest.ts` | `loadManifest`, `saveManifest` |
-| `services-validation.ts` | `validateServiceName`, `validatePinnedImage`, `commandExists`, `commandCheckArgs`, `hasSubidRange` |
-| `matrix.ts` | `extractResponseText`, `generatePassword`, `matrixCredentialsPath` |
+| `services-validation.ts` | `validateServiceName`, `validatePinnedImage`, `commandExists`, `hasSubidRange` |
+| `matrix.ts` | `extractResponseText`, `generatePassword`, `matrixCredentialsPath`, `registerMatrixAccount`, `MatrixCredentials` |
 | `setup.ts` | `STEP_ORDER`, `createInitialState`, `advanceStep`, `getNextStep`, `isSetupComplete`, `getStepsSummary` |
 
 ## 🚀 Install

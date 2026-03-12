@@ -165,4 +165,23 @@ ERROR: Failed to register @pi:bloom bot account.
 
 ---
 
+## Issue 10: Quadlet service install fails — "unit is transient or generated"
+
+**Phase:** `just vm` (first boot, setup wizard — Services step)
+**Severity:** HIGH
+**Log:**
+```
+Failed to enable unit: Unit /run/user/1000/systemd/generator/bloom-dufs.service is transient or generated
+  dufs installation failed.
+Failed to enable unit: Unit /run/user/1000/systemd/generator/bloom-gateway.service is transient or generated
+  Gateway installation failed.
+```
+
+**Analysis:** `install_service()` uses `systemctl --user enable --now` to start Quadlet services. But Quadlet `.container` files are processed by Podman's systemd generator, which creates transient units under `/run/user/1000/systemd/generator/`. Transient/generated units cannot be `enable`d — systemd rejects the operation. The `[Install] WantedBy=default.target` directive in the `.container` file already handles auto-start on boot via the generator. Only `systemctl --user start` is needed for immediate activation.
+**Fix (applied):** Changed `enable --now` to `start` in `install_service()`.
+**Files changed:**
+- `os/system_files/usr/local/bin/bloom-wizard.sh`
+
+---
+
 *More issues will be appended as the boot test progresses.*

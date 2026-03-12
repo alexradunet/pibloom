@@ -135,12 +135,13 @@ install_service() {
 	mkdir -p "$skill_dir"
 	[[ -f "$svc_dir/SKILL.md" ]] && cp "$svc_dir/SKILL.md" "$skill_dir/"
 
-	# Enable and start
+	# Reload and start — Quadlet units are auto-enabled via WantedBy in .container,
+	# so we only need to start (enable would fail on generator-created transient units)
 	systemctl --user daemon-reload
 	local target="bloom-${name}.service"
 	# Prefer socket activation if socket unit exists
 	[[ -f "$SYSTEMD_USER_DIR/bloom-${name}.socket" ]] && target="bloom-${name}.socket"
-	systemctl --user enable --now "$target"
+	systemctl --user start "$target"
 }
 
 # Build a localhost/* container image from a service's Containerfile

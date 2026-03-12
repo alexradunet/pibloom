@@ -104,19 +104,20 @@ Replace `/dev/sdX` with the target disk.
 
 ---
 
-## Remote access (SSH + tmux)
+## Remote access (SSH + Zellij)
 
-Bloom OS is accessed via SSH. tmux is pre-installed for persistent terminal sessions.
+Bloom OS is accessed via SSH. Zellij auto-launches on SSH login with a tab-based layout (Pi, Shell, Logs).
 
 ```bash
 # SSH into your Bloom (replace with your NetBird IP or hostname)
 ssh pi@<netbird-ip>
-
-# Start or attach to a persistent tmux session
-tmux new-session -A -s main
 ```
 
-Pi runs in the terminal.
+Zellij launches automatically — no manual setup needed. To skip Zellij:
+
+```bash
+BLOOM_NO_ZELLIJ=1 ssh pi@<netbird-ip>
+```
 
 ## Related
 

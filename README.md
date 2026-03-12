@@ -180,7 +180,7 @@ The Bloom OS image (`os/Containerfile`) is based on **Fedora bootc 42** and incl
 
 - **Runtime**: Node.js, Pi, Claude Code
 - **Containers**: Podman, Buildah, Skopeo, oras
-- **Tools**: tmux, git, gh, ripgrep, fd, bat, VS Code
+- **Tools**: zellij, git, gh, ripgrep, fd, bat, VS Code
 - **User**: `pi` with rootless Podman and passwordless sudo for first-boot
 
 Atomic updates via `bootc upgrade` with automatic rollback support.

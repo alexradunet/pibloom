@@ -309,9 +309,10 @@ export async function touchPersonaDone(): Promise<void> {
 }
 ```
 
-Update `handleSetupAdvance` to call `touchPersonaDone()` **when the "persona" step is advanced** (not when all steps are complete). This ensures re-login between persona and complete steps works correctly:
+Replace `handleSetupAdvance` entirely. The wizard now handles `.setup-complete`, linger, and pi-daemon — so the `isSetupComplete` / `touchSetupComplete` block is removed. The extension only writes the `persona-done` marker:
 
 ```typescript
+/** Handle setup_advance tool call. */
 export async function handleSetupAdvance(params: { step: StepName; result: "completed" | "skipped"; reason?: string }) {
 	let state = loadState();
 	const { step, result } = params;
@@ -323,10 +324,26 @@ export async function handleSetupAdvance(params: { step: StepName; result: "comp
 		await touchPersonaDone();
 	}
 
-	// ... rest of the function unchanged (next step guidance, etc.)
+	const next = getNextStep(state);
+	const lines: string[] = [];
+	lines.push(`Step "${step}" marked as ${result}.`);
+	if (next) {
+		lines.push(`Next step: **${next}**`);
+		lines.push("");
+		lines.push(`## Guidance for "${next}"`);
+		lines.push(STEP_GUIDANCE[next]);
+	} else {
+		lines.push("All setup steps complete! Persona customization is done.");
+	}
+
+	return {
+		content: [{ type: "text" as const, text: lines.join("\n") }],
+		details: {},
+	};
+}
 ```
 
-Remove the `run` import from `"../../lib/exec.js"` since it's no longer needed.
+Remove the `run` import from `"../../lib/exec.js"` and the `touchSetupComplete` function entirely — they are no longer needed.
 
 - [ ] **Step 2: Update `index.ts` — check for persona-done marker**
 

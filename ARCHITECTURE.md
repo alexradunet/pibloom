@@ -85,21 +85,38 @@ Capability-based organization means logic lands in the right place from the star
 
 ## Daemon
 
-The pi-daemon (`daemon/`) is an always-on systemd user service that listens for Matrix messages and routes them to per-room `AgentSession` instances via the Pi SDK.
+The pi-daemon (`daemon/`) is an always-on systemd user service that listens for Matrix messages and spawns on-demand RPC subprocesses per room. Each subprocess is a `pi --mode rpc` instance communicating via JSON lines over stdin/stdout. A Unix socket per room allows terminal clients to connect and interact with the running Pi instance.
 
 ```
 daemon/
-  index.ts            # entry point — wires listener, pool, registry; retry + shutdown
-  matrix-listener.ts  # Matrix bot-sdk client, event routing
-  session-pool.ts     # AgentSession lifecycle, LRU eviction, idle timeout
-  room-registry.ts    # room-to-session mapping, JSON persistence
+  index.ts              # entry point — wires Matrix listener and room manager
+  matrix-listener.ts    # Matrix bot-sdk client, event routing
+  room-process.ts       # spawns pi --mode rpc subprocess, manages Unix socket, fans out stdout to clients and Matrix
+  rpc-protocol.ts       # types for JSON-lines RPC protocol (commands, events, errors)
+cli/
+  bloom-attach.ts       # terminal client connecting to room's Unix socket for live interaction
 ```
+
+### Architecture
+
+1. **One subprocess per room.** The daemon spawns a `pi --mode rpc` subprocess on demand when a Matrix message arrives in a new room.
+2. **Unix socket per room.** Subprocess communicates with clients via `$XDG_RUNTIME_DIR/bloom/room-{alias}.sock`. Multiple clients can connect to the same socket.
+3. **Fan-out of stdout.** The daemon captures subprocess stdout (Pi events, command results, logs) and fans it out to:
+   - All connected socket clients (for terminal interaction)
+   - Matrix room (as formatted messages)
+4. **Fan-in of commands.** Commands arrive from:
+   - Matrix messages (routed by `matrix-listener.ts`)
+   - Socket clients (connected via `bloom-attach` CLI)
+   - Both are written to subprocess stdin as JSON-lines
+5. **Idle cleanup.** Subprocesses with no active clients and no recent Matrix messages are terminated after `BLOOM_DAEMON_IDLE_TIMEOUT_MS` (default 15 minutes). Configurable via environment variable.
+6. **No resource limits.** Hardware is the limit — no LRU eviction, no max sessions. Idle rooms are the only cleanup mechanism.
+7. **Terminal attachment.** The `bloom-attach` CLI connects to a room's socket for live terminal-style interaction, multiplexed with Matrix messages from the same subprocess.
 
 ### Rules
 
-1. **One session per room.** Each Matrix room gets its own `AgentSession` with independent history.
-2. **LRU eviction.** At most `MAX_SESSIONS` (default 3) loaded at once. Least-recently-used sessions are disposed and can be resumed from disk.
-3. **Idle timeout.** Sessions unused for 15 minutes are automatically disposed.
+1. **One subprocess per room.** Each Matrix room gets its own `pi --mode rpc` instance with independent history.
+2. **JSON-lines protocol.** All subprocess communication uses `rpc-protocol.ts` types — commands and events are newline-delimited JSON.
+3. **Idle timeout.** Subprocesses unused for 15 minutes (configurable) are terminated.
 4. **Independent of interactive terminal.** The daemon runs as `pi-daemon.service` (user unit). The interactive `pi` terminal is ephemeral and completely separate.
 
 ## Service Structure

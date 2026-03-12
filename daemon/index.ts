@@ -1,38 +1,38 @@
 /**
  * Pi Daemon — always-on Matrix room agent.
  *
- * Entry point: wires MatrixListener, SessionPool, and RoomRegistry,
- * then listens for Matrix messages and routes them to per-room AgentSessions.
+ * Entry point: wires MatrixListener to per-room pi --mode rpc subprocesses.
+ * Each room gets its own pi process, managed by RoomProcess.
  */
+import { mkdirSync } from "node:fs";
 import os from "node:os";
 import { join } from "node:path";
-import type { AgentSessionEvent } from "@mariozechner/pi-coding-agent";
-import { extractResponseText, matrixCredentialsPath } from "../lib/matrix.js";
+import { matrixCredentialsPath } from "../lib/matrix.js";
+import { sanitizeRoomAlias } from "../lib/room-alias.js";
 import { createLogger } from "../lib/shared.js";
 import { type IncomingMessage, MatrixListener } from "./matrix-listener.js";
-import { RoomRegistry } from "./room-registry.js";
-import { SessionPool } from "./session-pool.js";
+import { RoomProcess } from "./room-process.js";
 
 const log = createLogger("pi-daemon");
 
-const MAX_SESSIONS = Number.parseInt(process.env.BLOOM_DAEMON_MAX_SESSIONS ?? "3", 10);
-const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
-const REGISTRY_PATH = join(os.homedir(), ".pi", "pi-daemon", "rooms.json");
-const SESSION_DIR = join(os.homedir(), ".pi", "agent", "sessions", "bloom-rooms");
+const IDLE_TIMEOUT_MS = Number.parseInt(process.env.BLOOM_DAEMON_IDLE_TIMEOUT_MS ?? "", 10) || 15 * 60 * 1000;
+const SESSION_BASE = join(os.homedir(), ".pi", "agent", "sessions", "bloom-rooms");
 const STORAGE_PATH = join(os.homedir(), ".pi", "pi-daemon", "matrix-state.json");
+const SOCKET_DIR = join(process.env.XDG_RUNTIME_DIR ?? join(os.homedir(), ".run"), "bloom");
+
+// Track auth errors for cascading restart
+let authErrorCount = 0;
+let authErrorWindowStart = 0;
+const AUTH_ERROR_WINDOW_MS = 60_000;
+const AUTH_ERROR_THRESHOLD = 2;
 
 async function main(): Promise<void> {
-	log.info("starting pi-daemon", { maxSessions: MAX_SESSIONS, idleTimeoutMs: IDLE_TIMEOUT_MS });
+	log.info("starting pi-daemon", { idleTimeoutMs: IDLE_TIMEOUT_MS, socketDir: SOCKET_DIR });
 
-	const registry = new RoomRegistry(REGISTRY_PATH);
+	mkdirSync(SOCKET_DIR, { recursive: true });
 
-	const pool = new SessionPool({
-		registry,
-		maxSessions: MAX_SESSIONS,
-		idleTimeoutMs: IDLE_TIMEOUT_MS,
-		sessionDir: SESSION_DIR,
-		extensionFactories: [],
-	});
+	const rooms = new Map<string, RoomProcess>();
+	const preambleSent = new Set<string>(); // track which rooms have received system preamble
 
 	const listener = new MatrixListener({
 		credentialsPath: matrixCredentialsPath(),
@@ -42,62 +42,103 @@ async function main(): Promise<void> {
 		},
 	});
 
-	// Forward session events to Matrix rooms
-	pool.onEvent(async (roomId, event: AgentSessionEvent) => {
-		if ("type" in event && event.type === "agent_end" && "messages" in event) {
-			const text = extractResponseText((event as { messages: readonly unknown[] }).messages);
-			if (text) {
+	async function getOrSpawn(roomId: string, alias: string): Promise<RoomProcess> {
+		const existing = rooms.get(roomId);
+		if (existing?.alive) return existing;
+
+		// Clean up dead entry if present
+		if (existing) rooms.delete(roomId);
+
+		const sanitized = sanitizeRoomAlias(alias);
+		const sessionDir = join(SESSION_BASE, sanitized);
+
+		const rp = new RoomProcess({
+			roomId,
+			roomAlias: alias,
+			sanitizedAlias: sanitized,
+			socketDir: SOCKET_DIR,
+			sessionDir,
+			idleTimeoutMs: IDLE_TIMEOUT_MS,
+			onAgentEnd: async (text) => {
 				try {
 					await listener.sendText(roomId, text);
 				} catch (err) {
 					log.error("failed to send response to Matrix", { roomId, error: String(err) });
 				}
-			}
-		}
-	});
+			},
+			onEvent: () => {
+				// Events forwarded to socket clients inside RoomProcess
+			},
+			onExit: (_code) => {
+				rooms.delete(roomId);
+				preambleSent.delete(roomId);
+				if (_code !== 0 && _code !== null) {
+					handleProcessError(roomId, _code);
+				}
+			},
+		});
+
+		await rp.spawn();
+		rooms.set(roomId, rp);
+		return rp;
+	}
 
 	async function handleMessage(roomId: string, message: IncomingMessage): Promise<void> {
 		try {
 			const alias = await listener.getRoomAlias(roomId);
-			const session = await pool.getOrCreate(roomId, alias);
+			const rp = await getOrSpawn(roomId, alias);
 
-			log.info("routing message to session", { roomId, sender: message.sender });
-			await session.prompt(`[matrix: ${message.sender}] ${message.body}`);
+			log.info("routing message", { roomId, sender: message.sender });
+
+			// First message to a fresh process includes system preamble
+			const prefix = `[matrix: ${message.sender}] `;
+			if (!preambleSent.has(roomId)) {
+				const preamble = `[system] You are Pi in Matrix room ${alias}. Respond to messages from this room.\n\n`;
+				rp.sendMessage(preamble + prefix + message.body);
+				preambleSent.add(roomId);
+			} else {
+				rp.sendMessage(prefix + message.body);
+			}
 		} catch (err) {
 			const errStr = String(err);
 			log.error("failed to handle message", { roomId, error: errStr });
 
-			// Detect API key errors — exit so systemd restarts us (RestartSec=15 gives time for fixes)
-			if (errStr.includes("401") || errStr.includes("invalid_api_key") || errStr.includes("authentication")) {
-				log.error("API key error detected, exiting for systemd restart");
-				try {
-					await listener.sendText(roomId, "My API key needs attention. I'll restart and try again shortly.");
-				} catch {
-					/* best effort */
-				}
-				shutdown("API_KEY_ERROR");
-				return;
-			}
-
 			try {
 				await listener.sendText(roomId, "Sorry, I hit an error processing your message. Please try again.");
 			} catch {
-				// Best-effort error notification
+				/* best effort */
 			}
 		}
 	}
 
-	// Graceful shutdown
-	function shutdown(signal: string): void {
+	function handleProcessError(_roomId: string, _code: number): void {
+		const now = Date.now();
+		if (now - authErrorWindowStart > AUTH_ERROR_WINDOW_MS) {
+			authErrorCount = 0;
+			authErrorWindowStart = now;
+		}
+		authErrorCount++;
+
+		if (authErrorCount >= AUTH_ERROR_THRESHOLD) {
+			log.error("multiple process failures detected, exiting for systemd restart");
+			shutdown("PROCESS_FAILURES");
+		}
+	}
+
+	async function shutdown(signal: string): Promise<void> {
 		log.info("shutting down", { signal });
 		listener.stop();
-		pool.disposeAll();
-		registry.flushSync();
+		for (const rp of rooms.values()) {
+			rp.dispose();
+		}
+		rooms.clear();
+		// Wait up to 5 seconds for child processes to exit
+		await new Promise((r) => setTimeout(r, 5000));
 		process.exit(0);
 	}
 
-	process.on("SIGTERM", () => shutdown("SIGTERM"));
-	process.on("SIGINT", () => shutdown("SIGINT"));
+	process.on("SIGTERM", () => void shutdown("SIGTERM"));
+	process.on("SIGINT", () => void shutdown("SIGINT"));
 
 	// Start with retry
 	let retryDelay = 5000;

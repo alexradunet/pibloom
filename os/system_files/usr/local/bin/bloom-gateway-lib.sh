@@ -9,6 +9,7 @@ GATEWAY_CADDYFILE="${BLOOM_CONFIG:-$HOME/.config/bloom}/Caddyfile"
 # Usage: gateway_add_route <path> <port> <strip_prefix: true|false>
 gateway_add_route() {
 	local path="$1" port="$2" strip="$3"
+	mkdir -p "$(dirname "$GATEWAY_ROUTES")"
 	local routes="{}"
 	[[ -f "$GATEWAY_ROUTES" ]] && routes=$(cat "$GATEWAY_ROUTES")
 

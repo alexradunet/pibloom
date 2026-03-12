@@ -11,7 +11,7 @@ ContainerName=bloom-gateway
 Network=host
 
 # Dynamic Caddyfile — regenerated when services are added/removed
-Volume=%h/.config/bloom/Caddyfile:/etc/caddy/Caddyfile:ro,Z
+Volume=%h/.config/bloom/Caddyfile:/etc/caddy/Caddyfile:ro
 
 PodmanArgs=--memory=128m
 PodmanArgs=--security-opt label=disable

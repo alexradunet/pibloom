@@ -1,5 +1,5 @@
 /** Gateway route registry and Caddyfile generation. */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import { join } from "node:path";
 import { run } from "./exec.js";
@@ -35,6 +35,7 @@ export function readGatewayRoutes(): GatewayRoutes {
 
 /** Write the gateway route registry. */
 export function writeGatewayRoutes(routes: GatewayRoutes): void {
+	mkdirSync(configDir(), { recursive: true });
 	const routesPath = join(configDir(), GATEWAY_ROUTES_FILENAME);
 	writeFileSync(routesPath, `${JSON.stringify(routes, null, "\t")}\n`);
 }

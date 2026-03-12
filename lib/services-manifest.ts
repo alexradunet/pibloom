@@ -1,7 +1,7 @@
 /** Manifest I/O: loading, saving, and type definitions for Bloom service manifests. */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { yaml } from "./frontmatter.js";
+import jsYaml from "js-yaml";
 import { createLogger } from "./shared.js";
 
 const log = createLogger("manifest");
@@ -53,7 +53,7 @@ export function loadManifest(manifestPath: string): Manifest {
 	if (!existsSync(manifestPath)) return { services: {} };
 	try {
 		const raw = readFileSync(manifestPath, "utf-8");
-		const doc = yaml.load(raw) as Manifest | null;
+		const doc = jsYaml.load(raw) as Manifest | null;
 		return doc ?? { services: {} };
 	} catch (err) {
 		log.warn("failed to load manifest", { error: (err as Error).message });
@@ -64,5 +64,5 @@ export function loadManifest(manifestPath: string): Manifest {
 /** Write the manifest to disk, creating the parent directory if needed. */
 export function saveManifest(manifest: Manifest, manifestPath: string): void {
 	mkdirSync(dirname(manifestPath), { recursive: true });
-	writeFileSync(manifestPath, yaml.dump(manifest));
+	writeFileSync(manifestPath, jsYaml.dump(manifest));
 }

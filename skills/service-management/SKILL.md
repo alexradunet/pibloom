@@ -63,10 +63,7 @@ For socket-activated services, scaffold with `socket_activated=true` and a `port
 - `systemctl --user status bloom-{name}.socket`
 - `systemctl --user status bloom-{name}`
 
-Reference packages:
-- `services/examples/demo-api/`
-- `services/examples/demo-socket-echo/`
-- `services/examples/README.md` (copy/paste quickstart commands)
+Reference package:
 - `services/dufs/quadlet/` (production HTTP service reference)
 
 ## Install a Service
@@ -77,7 +74,6 @@ Services install from bundled local packages in `services/{name}/`:
 mkdir -p ~/.config/containers/systemd ~/.config/systemd/user
 find services/{name}/quadlet -maxdepth 1 -type f -name '*.socket' -exec cp {} ~/.config/systemd/user/ \;
 find services/{name}/quadlet -maxdepth 1 -type f ! -name '*.socket' -exec cp {} ~/.config/containers/systemd/ \;
-[ -f ~/.config/containers/systemd/bloom.network ] || cp /usr/local/share/bloom/os/sysconfig/bloom.network ~/.config/containers/systemd/bloom.network
 mkdir -p ~/Bloom/Skills/{name}
 cp services/{name}/SKILL.md ~/Bloom/Skills/{name}/SKILL.md
 systemctl --user daemon-reload

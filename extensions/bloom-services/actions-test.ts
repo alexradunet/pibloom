@@ -13,7 +13,7 @@ import { detectRunningServices } from "./service-io.js";
 
 const log = createLogger("bloom-services");
 
-export function sleep(ms: number): Promise<void> {
+function sleep(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 

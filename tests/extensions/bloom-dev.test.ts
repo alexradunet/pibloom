@@ -229,7 +229,7 @@ describe("bloom-dev registration", () => {
 // ---------------------------------------------------------------------------
 describe("handleDevCodeServer", () => {
 	it("status returns a result (not 'not yet implemented')", async () => {
-		const result = await handleDevCodeServer(temp.gardenDir, "status");
+		const result = await handleDevCodeServer("status");
 		const text = result.content[0].text;
 		expect(text).not.toContain("Not yet implemented");
 		expect(text).toMatch(/code-server is (running|stopped)/);
@@ -324,13 +324,13 @@ describe("handleDevInstallPackage", () => {
 // ---------------------------------------------------------------------------
 describe("handleDevSwitch validation", () => {
 	it("rejects image ref starting with '-'", async () => {
-		const result = await handleDevSwitch("", "--malicious-flag", undefined, {} as never);
+		const result = await handleDevSwitch("--malicious-flag", undefined, {} as never);
 		expect("isError" in result && result.isError).toBe(true);
 		expect(result.content[0].text).toContain("must not start with '-'");
 	});
 
 	it("rejects image ref starting with '--'", async () => {
-		const result = await handleDevSwitch("", "--rm", undefined, {} as never);
+		const result = await handleDevSwitch("--rm", undefined, {} as never);
 		expect("isError" in result && result.isError).toBe(true);
 		expect(result.content[0].text).toContain("must not start with '-'");
 	});
@@ -338,7 +338,7 @@ describe("handleDevSwitch validation", () => {
 
 describe("handleDevRollback", () => {
 	it("does not crash when called without UI context", async () => {
-		const result = await handleDevRollback("", undefined, {} as never);
+		const result = await handleDevRollback(undefined, {} as never);
 		// Without a real UI context, requireConfirmation should return an error string (no crash)
 		expect(result).toBeDefined();
 		expect(result.content).toBeDefined();

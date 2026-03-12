@@ -24,7 +24,7 @@ function templateCinnyConfig(raw: string): string {
 		const config = JSON.parse(raw);
 		if (Array.isArray(config.homeserverList)) {
 			const hostname = os.hostname();
-			config.homeserverList = [`http://${hostname}`];
+			config.homeserverList = [`http://${hostname}:6167`];
 		}
 		return JSON.stringify(config, null, "\t") + "\n";
 	} catch {
@@ -80,20 +80,6 @@ export async function installServicePackage(
 		mkdirSync(systemdDir, { recursive: true });
 		mkdirSync(userSystemdDir, { recursive: true });
 		mkdirSync(skillDir, { recursive: true });
-
-		const networkDest = join(systemdDir, "bloom.network");
-		if (!existsSync(networkDest)) {
-			const networkCandidates = [
-				"/usr/share/containers/systemd/bloom.network",
-				"/usr/local/share/bloom/os/sysconfig/bloom.network",
-				join(repoDir, "os", "sysconfig", "bloom.network"),
-			];
-			for (const candidate of networkCandidates) {
-				if (!existsSync(candidate)) continue;
-				writeFileSync(networkDest, readFileSync(candidate));
-				break;
-			}
-		}
 
 		for (const fileName of readdirSync(quadletSrc)) {
 			const src = join(quadletSrc, fileName);

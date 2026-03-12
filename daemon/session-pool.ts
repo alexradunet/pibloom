@@ -32,6 +32,7 @@ export type SessionEventHandler = (roomId: string, event: AgentSessionEvent) => 
 
 export class SessionPool {
 	private readonly loaded = new Map<string, AgentSession>();
+	private readonly inFlight = new Map<string, Promise<AgentSession>>();
 	private readonly unsubscribers = new Map<string, () => void>();
 	private readonly idleTimers = new Map<string, ReturnType<typeof setTimeout>>();
 	private readonly options: SessionPoolOptions;
@@ -46,7 +47,7 @@ export class SessionPool {
 		this.eventHandler = handler;
 	}
 
-	/** Get or create a session for a room. Creates new if needed, resumes if exists on disk. */
+	/** Get or create a session for a room. Deduplicates concurrent calls for the same room. */
 	async getOrCreate(roomId: string, roomAlias: string): Promise<AgentSession> {
 		const existing = this.loaded.get(roomId);
 		if (existing) {
@@ -55,6 +56,18 @@ export class SessionPool {
 			return existing;
 		}
 
+		// Deduplicate concurrent creates for the same room
+		const inflight = this.inFlight.get(roomId);
+		if (inflight) return inflight;
+
+		const promise = this.createSession(roomId, roomAlias).finally(() => {
+			this.inFlight.delete(roomId);
+		});
+		this.inFlight.set(roomId, promise);
+		return promise;
+	}
+
+	private async createSession(roomId: string, roomAlias: string): Promise<AgentSession> {
 		// Evict LRU if at capacity
 		if (this.loaded.size >= this.options.maxSessions) {
 			this.evictLRU();
@@ -137,8 +150,7 @@ export class SessionPool {
 
 		for (const roomId of this.loaded.keys()) {
 			const entry = this.options.registry.get(roomId);
-			if (!entry || entry.archived) continue;
-			const t = new Date(entry.lastActive).getTime();
+			const t = entry ? new Date(entry.lastActive).getTime() : 0;
 			if (t < oldestTime) {
 				oldestTime = t;
 				oldest = roomId;

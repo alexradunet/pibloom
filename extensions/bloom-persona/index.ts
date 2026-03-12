@@ -15,8 +15,6 @@ import {
 	saveContext,
 } from "./actions.js";
 
-export { normalizeCommand } from "./actions.js";
-
 export default function (pi: ExtensionAPI) {
 	let personaBlock: string | undefined;
 	let guardrails: ReturnType<typeof loadGuardrails> | undefined;

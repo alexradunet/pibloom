@@ -19,7 +19,7 @@ describe("RoomRegistry", () => {
 
 	it("creates empty registry if file does not exist", () => {
 		const reg = new RoomRegistry(registryPath);
-		expect(reg.getAll()).toEqual({});
+		expect(reg.get("!nonexistent:bloom")).toBeUndefined();
 	});
 
 	it("loads existing registry from disk", () => {
@@ -70,57 +70,5 @@ describe("RoomRegistry", () => {
 	it("returns undefined for unknown room", () => {
 		const reg = new RoomRegistry(registryPath);
 		expect(reg.get("!unknown:bloom")).toBeUndefined();
-	});
-
-	it("finds least recently used room", () => {
-		const reg = new RoomRegistry(registryPath);
-		reg.set("!a:bloom", {
-			roomAlias: "#a:bloom",
-			sessionPath: "/tmp/a.jsonl",
-			created: "2026-03-11T15:00:00Z",
-			lastActive: "2026-03-11T15:00:00Z",
-			archived: false,
-		});
-		reg.set("!b:bloom", {
-			roomAlias: "#b:bloom",
-			sessionPath: "/tmp/b.jsonl",
-			created: "2026-03-11T16:00:00Z",
-			lastActive: "2026-03-11T16:00:00Z",
-			archived: false,
-		});
-		expect(reg.leastRecentlyUsed()).toBe("!a:bloom");
-	});
-
-	it("archives a room", () => {
-		const reg = new RoomRegistry(registryPath);
-		reg.set("!a:bloom", {
-			roomAlias: "#a:bloom",
-			sessionPath: "/tmp/a.jsonl",
-			created: "2026-03-11T15:00:00Z",
-			lastActive: "2026-03-11T15:00:00Z",
-			archived: false,
-		});
-		reg.archive("!a:bloom");
-		expect(reg.get("!a:bloom")!.archived).toBe(true);
-	});
-
-	it("excludes archived rooms from LRU", () => {
-		const reg = new RoomRegistry(registryPath);
-		reg.set("!a:bloom", {
-			roomAlias: "#a:bloom",
-			sessionPath: "/tmp/a.jsonl",
-			created: "2026-03-11T15:00:00Z",
-			lastActive: "2026-03-11T15:00:00Z",
-			archived: false,
-		});
-		reg.set("!b:bloom", {
-			roomAlias: "#b:bloom",
-			sessionPath: "/tmp/b.jsonl",
-			created: "2026-03-11T16:00:00Z",
-			lastActive: "2026-03-11T16:00:00Z",
-			archived: false,
-		});
-		reg.archive("!a:bloom");
-		expect(reg.leastRecentlyUsed()).toBe("!b:bloom");
 	});
 });

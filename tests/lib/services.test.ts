@@ -6,7 +6,7 @@ import { buildLocalImage, downloadServiceModels } from "../../extensions/bloom-s
 import { loadServiceCatalog } from "../../lib/services-catalog.js";
 import { findLocalServicePackage } from "../../lib/services-install.js";
 import { loadManifest, saveManifest } from "../../lib/services-manifest.js";
-import { commandCheckArgs, hasSubidRange } from "../../lib/services-validation.js";
+import { hasSubidRange } from "../../lib/services-validation.js";
 
 describe("loadManifest", () => {
 	let tempDir: string;
@@ -98,20 +98,6 @@ describe("saveManifest + loadManifest roundtrip", () => {
 		saveManifest({ services: {} }, manifestPath);
 		const raw = readFileSync(manifestPath, "utf-8");
 		expect(raw).toContain("services");
-	});
-});
-
-describe("commandCheckArgs", () => {
-	it("returns ['--version'] for podman", () => {
-		expect(commandCheckArgs("podman")).toEqual(["--version"]);
-	});
-
-	it("returns ['--version'] for systemctl", () => {
-		expect(commandCheckArgs("systemctl")).toEqual(["--version"]);
-	});
-
-	it("returns ['--version'] for unknown commands", () => {
-		expect(commandCheckArgs("something-else")).toEqual(["--version"]);
 	});
 });
 

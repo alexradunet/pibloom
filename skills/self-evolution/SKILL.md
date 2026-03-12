@@ -135,7 +135,7 @@ services/{name}/
 ### Quadlet Conventions
 
 - Container name: `bloom-{name}`
-- Network: prefer `bloom.network` isolation (use `host` only when strictly required)
+- Network: host networking
 - Health checks: required (`HealthCmd`, `HealthInterval`, `HealthRetries`)
 - Logging: `LogDriver=journald`
 - Security: `NoNewPrivileges=true` minimum
@@ -165,10 +165,7 @@ systemctl --user start bloom-{name}
 2. Test locally: copy quadlet files to `~/.config/containers/systemd/`, run `systemctl --user daemon-reload && systemctl --user start bloom-{name}`
 3. Verify health: `systemctl --user status bloom-{name}`
 
-Reference example packages:
-- `services/examples/demo-api/`
-- `services/examples/demo-socket-echo/`
-- `services/examples/README.md` (copy/paste quickstart commands)
+Reference package:
 - `services/dufs/quadlet/` (production HTTP service reference)
 
 ### Tool-Driven Lifecycle (Recommended)

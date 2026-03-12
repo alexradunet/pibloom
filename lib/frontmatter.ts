@@ -1,8 +1,5 @@
 /** YAML frontmatter parsing and serialization for markdown files. */
-import matter from "@11ty/gray-matter";
 import jsYaml from "js-yaml";
-
-export const yaml: { load: (str: string) => unknown; dump: (obj: unknown) => string } = jsYaml;
 
 /** Result of parsing YAML frontmatter from a markdown string. */
 export interface ParsedFrontmatter<T> {
@@ -29,15 +26,26 @@ export function parseFrontmatter<T extends Record<string, unknown> = Record<stri
 ): ParsedFrontmatter<T> {
 	const empty: ParsedFrontmatter<T> = { attributes: {} as T, body: str, bodyBegin: 1, frontmatter: "" };
 	if (!str.startsWith("---\n")) return empty;
-	if (str.indexOf("\n---\n", 4) === -1 && !str.match(/\n---$/)) return empty;
 
-	let result: { data: Record<string, unknown>; content: string; matter: string };
+	const closingIdx = str.indexOf("\n---\n", 4);
+	const endsWithDelimiter = closingIdx === -1 && str.match(/\n---$/);
+
+	if (closingIdx === -1 && !endsWithDelimiter) return empty;
+
+	const fmEnd = closingIdx !== -1 ? closingIdx : str.length - 3;
+	const frontmatter = str.slice(4, fmEnd);
+	const body = closingIdx !== -1 ? str.slice(closingIdx + 5) : "";
+
+	let attributes: Record<string, unknown>;
 	try {
-		result = matter(str, { schema: jsYaml.JSON_SCHEMA } as Record<string, unknown>);
+		attributes = (jsYaml.load(frontmatter, { schema: jsYaml.JSON_SCHEMA }) as Record<string, unknown>) ?? {};
 	} catch {
 		return empty;
 	}
-	const attributes = result.data as Record<string, unknown>;
+
+	if (typeof attributes !== "object" || attributes === null) {
+		return empty;
+	}
 
 	// Compat layer: split comma-separated strings into arrays for known keys
 	for (const key of FRONTMATTER_ARRAY_KEYS) {
@@ -50,11 +58,10 @@ export function parseFrontmatter<T extends Record<string, unknown> = Record<stri
 		}
 	}
 
-	const frontmatter = result.matter.trimStart();
 	const bodyBegin = frontmatter.split("\n").length + 3;
 	return {
 		attributes: attributes as T,
-		body: result.content,
+		body,
 		bodyBegin,
 		frontmatter,
 	};

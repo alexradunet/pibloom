@@ -2,7 +2,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import os from "node:os";
 import { join } from "node:path";
-import { yaml } from "./frontmatter.js";
+import jsYaml from "js-yaml";
 import type { ServiceCatalogEntry } from "./services-manifest.js";
 import { commandExists, hasSubidRange } from "./services-validation.js";
 
@@ -33,7 +33,7 @@ export function loadBridgeCatalog(repoDir: string): Record<string, BridgeCatalog
 		if (!existsSync(candidate)) continue;
 		try {
 			const raw = readFileSync(candidate, "utf-8");
-			const doc = (yaml.load(raw) as { bridges?: Record<string, BridgeCatalogEntry> } | null) ?? {};
+			const doc = (jsYaml.load(raw) as { bridges?: Record<string, BridgeCatalogEntry> } | null) ?? {};
 			if (doc.bridges && typeof doc.bridges === "object") return doc.bridges;
 		} catch {
 			// ignore and continue
@@ -53,7 +53,7 @@ export function loadServiceCatalog(repoDir: string): Record<string, ServiceCatal
 		if (!existsSync(candidate)) continue;
 		try {
 			const raw = readFileSync(candidate, "utf-8");
-			const doc = (yaml.load(raw) as { services?: Record<string, ServiceCatalogEntry> } | null) ?? {};
+			const doc = (jsYaml.load(raw) as { services?: Record<string, ServiceCatalogEntry> } | null) ?? {};
 			if (doc.services && typeof doc.services === "object") return doc.services;
 		} catch {
 			// ignore and continue

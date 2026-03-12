@@ -104,4 +104,4 @@ deps:
 
 # Guard: ensure bib-config.toml exists before image generation
 _require-bib-config:
-	@test -f {{ bib_config }} || (echo "Error: {{ bib_config }} not found. Copy os/bib-config.toml.example and add your SSH key." && exit 1)
+	@test -f {{ bib_config }} || (echo "Error: {{ bib_config }} not found. Copy os/bib-config.example.toml to os/bib-config.toml and set your password." && exit 1)

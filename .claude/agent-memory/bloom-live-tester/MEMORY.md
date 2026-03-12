@@ -6,28 +6,30 @@
 - Must use `sshpass` for non-interactive SSH; `ssh-askpass` is not available in CI/headless.
 - Commands that return non-zero (e.g., systemctl status for missing units) will cancel parallel tool calls. Use `|| true` or chain commands in a single SSH session.
 
-## Known Issues (as of 2026-03-10)
+## Known Issues (as of 2026-03-12)
 - See `vm-diagnostics.md` for detailed findings.
-- **Chicken-and-egg**: Lemonade (local LLM) must be running before Pi can start, but Pi is supposed to install it during first-boot wizard.
-- **Port mismatch**: `.bash_profile` checks port 8080, lemonade Quadlet publishes port 8000.
-- **Service name mismatch**: `.bash_profile` references `bloom-llm-local`, actual unit is `bloom-lemonade`.
-- **No Quadlet pre-deployment**: `~/.config/containers/systemd/` is never created; services never start.
-- **Sway crash-loops in headless QEMU**: Expected but noisy. Restart counter hits 90+ quickly.
+- **pi-daemon missing peerDep**: `@mariozechner/pi-coding-agent` not in node_modules at `/usr/local/share/bloom/`; exists globally but NODE_PATH unset in service.
+- **ConditionPathExists in wrong section**: `pi-daemon.service` has it in `[Service]` instead of `[Unit]`; systemd ignores it silently.
+- **dufs healthcheck broken**: Uses `wget` in HealthCmd but dufs image has no `wget`. Container runs fine but reports unhealthy permanently.
+- **bloom.network unused**: Defined in Quadlet but no container references it. Never created by podman.
+- **First-boot incomplete**: 5/11 steps pending (git_identity, contributing, persona, test_message, complete).
+- **Cinny homeserver config**: Points to `http://fedora` instead of correct Matrix address.
+- **nginx removed**: No longer in image (was present previously). Port 80 unused.
 
 ## Boot Timing
 - VM boots and SSH available within ~30 seconds.
-- Auto-login on tty1/ttyS0 triggers `.bash_profile` which blocks for up to 120s waiting for LLM.
+- First-boot wizard starts ~1 min after boot.
+- Quadlet services deployed ~7 min after boot (after webdav setup step).
+- Auto-login on tty1/ttyS0 triggers `.bash_profile` which runs bloom-greeting then exec pi.
 
-## Service Architecture
-- Quadlet files live in `services/*/quadlet/` in the repo.
-- Must be copied to `~/.config/containers/systemd/` for podman to generate systemd units.
-- `bloom.network` Quadlet is at `/usr/share/containers/systemd/bloom.network` (system-wide in image).
-- Service catalog: `services/catalog.yaml`
-- Installation procedure documented in `skills/service-management/SKILL.md`
+## Service Architecture (confirmed in VM)
+- **System services**: bloom-matrix (continuwuity:6167), netbird, bloom-update-check.timer
+- **User services**: bloom-cinny (:18810), bloom-dufs (:5000), pi-daemon
+- Quadlet files at `~/.config/containers/systemd/` (deployed by setup wizard, not baked into image)
+- pi-daemon has override.conf drop-in at `~/.config/systemd/user/pi-daemon.service.d/`
 
-## Ports (from Quadlet definitions)
-- Lemonade: 8000
-- Element: 8080 (check quadlet)
-- Matrix: 8081 (check quadlet)
-- Dufs: 5000 (check quadlet)
-- nginx reverse proxy: 80
+## Ports (confirmed in live VM)
+- Matrix (continuwuity): 6167
+- Cinny: 18810 (host) -> 80 (container)
+- dufs: 5000 (host networking)
+- NetBird: wt0 interface, 100.109.x.x/16

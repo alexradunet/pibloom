@@ -85,7 +85,7 @@ export default function (pi: ExtensionAPI) {
 		async execute(_toolCallId, params, signal) {
 			const gate = devGate();
 			if (gate) return gate;
-			return handleDevCodeServer(bloomRuntime, params.action, signal);
+			return handleDevCodeServer(params.action, signal);
 		},
 	});
 
@@ -114,7 +114,7 @@ export default function (pi: ExtensionAPI) {
 		async execute(_toolCallId, params, signal, _onUpdate, ctx) {
 			const gate = devGate();
 			if (gate) return gate;
-			return handleDevSwitch(bloomRuntime, params.image_ref, signal, ctx);
+			return handleDevSwitch(params.image_ref, signal, ctx);
 		},
 	});
 
@@ -126,7 +126,7 @@ export default function (pi: ExtensionAPI) {
 		async execute(_toolCallId, _params, signal, _onUpdate, ctx) {
 			const gate = devGate();
 			if (gate) return gate;
-			return handleDevRollback(bloomRuntime, signal, ctx);
+			return handleDevRollback(signal, ctx);
 		},
 	});
 

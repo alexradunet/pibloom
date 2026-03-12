@@ -83,7 +83,7 @@ Use `audit_review` to inspect recent tool actions when you need to reconstruct w
 4. Common causes:
    - Health check endpoint not responding: check application inside container
    - Resource limits hit: check memory/CPU with `system_health`
-   - Network issue: verify bloom.network is configured
+   - Network issue: verify container has host network access
 5. Recovery: `systemd_control service=<name> action=restart`
 6. If persistent: `systemd_control service=<name> action=stop`, investigate, then start
 

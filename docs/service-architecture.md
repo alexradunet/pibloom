@@ -88,9 +88,10 @@ graph TB
 When a service is installed via `service_install`, Bloom automatically creates subdomain routing:
 
 1. **NetBird DNS** — Creates an A record `{name}.bloom.mesh` pointing to the device's mesh IP in a NetBird Custom DNS Zone. Requires `NETBIRD_API_TOKEN` in `~/.config/bloom/netbird.env`.
-2. **Nginx vhost** — Writes `/etc/nginx/conf.d/bloom-{name}.conf` with `server_name {name}.bloom.mesh` proxying to the service's port. Supports WebSocket upgrade and custom body size.
 
-**Graceful degradation**: If no NetBird token is configured, DNS is skipped but the nginx vhost is still created (usable with manual DNS or `/etc/hosts`). Path-based routing (`/cinny/`, `/_matrix/`) remains as fallback in the default server block.
+Services use host networking and are accessible directly at `http://{name}.bloom.mesh:{port}` from any mesh peer. No reverse proxy is needed.
+
+**Graceful degradation**: If no NetBird token is configured, DNS is skipped. Services remain accessible via the device's mesh IP and port directly.
 
 **Idempotency**: Zone and records are checked before creation. Zone ID is cached in `~/.config/bloom/netbird-zone.json` to avoid repeated API calls.
 
@@ -175,7 +176,7 @@ graph LR
         bloom_dir["~/Bloom/<br/>Persona, skills, objects"]
         skills["~/Bloom/Skills/<br/>Installed service skills"]
         pi_state["~/.pi/<br/>Pi agent state"]
-        matrix_creds["~/.config/bloom/<br/>Matrix credentials, service config"]
+        matrix_creds["~/.pi/<br/>Matrix credentials, daemon state"]
     end
 
     subgraph "System State"
@@ -207,7 +208,7 @@ graph LR
 ### Quadlet Conventions Checklist
 
 - [ ] Container name: `bloom-{name}`
-- [ ] Network: prefer `bloom.network` isolation (`host` only when required, e.g. VPN)
+- [ ] Network: host networking
 - [ ] Health check defined (`HealthCmd`, `HealthInterval`, `HealthRetries`)
 - [ ] Logging: `LogDriver=journald`
 - [ ] Security: `NoNewPrivileges=true`

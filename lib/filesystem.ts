@@ -19,3 +19,8 @@ export function safePath(root: string, ...segments: string[]): string {
 export function getBloomDir(): string {
 	return process.env.BLOOM_DIR ?? path.join(os.homedir(), "Bloom");
 }
+
+/** Path to the OS update status file written by the update-check timer. */
+export function getUpdateStatusPath(): string {
+	return path.join(os.homedir(), ".bloom", "update-status.json");
+}

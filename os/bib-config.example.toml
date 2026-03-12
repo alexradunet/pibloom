@@ -19,4 +19,4 @@ minsize = "40 GiB"
 [[customizations.user]]
 name = "pi"
 groups = ["wheel"]
-password = "PWGxN5CxyMpzMUze61oq"
+password = "CHANGE_ME"

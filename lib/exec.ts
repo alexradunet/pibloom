@@ -1,5 +1,8 @@
-/** Shell command execution via execa with signal/env support. */
-import { execa } from "execa";
+/** Shell command execution via node:child_process with signal/env support. */
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 /** Result of running a shell command via {@link run}. */
 export interface RunResult {
@@ -16,7 +19,7 @@ export interface RunResult {
  * @param args - Arguments passed to the executable.
  * @param signal - Optional AbortSignal to cancel the process.
  * @param cwd - Optional working directory for the child process.
- * @param env - Optional extra environment variables (merged with process.env by execa).
+ * @param env - Optional extra environment variables (merged with process.env).
  * @param input - Optional string to pipe to the process's stdin.
  */
 export async function run(
@@ -27,6 +30,18 @@ export async function run(
 	env?: Record<string, string>,
 	input?: string,
 ): Promise<RunResult> {
-	const result = await execa(cmd, args, { reject: false, cancelSignal: signal, cwd, env, input });
-	return { stdout: result.stdout ?? "", stderr: result.stderr ?? "", exitCode: result.exitCode ?? 1 };
+	try {
+		const result = await execFileAsync(cmd, args, {
+			signal,
+			cwd,
+			env: env ? { ...process.env, ...env } : undefined,
+			maxBuffer: 10 * 1024 * 1024,
+			...(input !== undefined ? { input } : {}),
+		});
+		return { stdout: result.stdout ?? "", stderr: result.stderr ?? "", exitCode: 0 };
+	} catch (err: unknown) {
+		const e = err as { code?: number | string; stdout?: string; stderr?: string };
+		const exitCode = typeof e.code === "number" ? e.code : 1;
+		return { stdout: e.stdout ?? "", stderr: e.stderr ?? "", exitCode };
+	}
 }

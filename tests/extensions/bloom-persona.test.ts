@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { normalizeCommand } from "../../extensions/bloom-persona/index.js";
+import { normalizeCommand } from "../../extensions/bloom-persona/actions.js";
 import { createMockExtensionAPI, type MockExtensionAPI } from "../helpers/mock-extension-api.js";
 import { createTempGarden, type TempGarden } from "../helpers/temp-garden.js";
 

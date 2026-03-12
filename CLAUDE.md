@@ -74,7 +74,7 @@ just clean                     # remove os/output/
 - **Extensions**: `export default function(pi: ExtensionAPI) { ... }` pattern
 - **Skills**: SKILL.md with frontmatter (name, description)
 - **Containers**: `Containerfile` (not Dockerfile), `podman` (not docker)
-- **Services**: Quadlet units named `bloom-{name}`, `bloom.network` isolation, health checks required
+- **Services**: Quadlet units named `bloom-{name}`, host networking, health checks required
 - **Objects**: Markdown files with YAML frontmatter in ~/Bloom/Objects/
 
 ## Documentation Workflow

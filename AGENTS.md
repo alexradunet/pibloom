@@ -71,7 +71,7 @@ Identity injection, safety guardrails, and compaction context.
 - `session_start` — Set session name to "Bloom"
 - `before_agent_start` — Inject 4-layer persona (SOUL/BODY/FACULTY/SKILL) + restored compaction context into system prompt
 - `tool_call` — Check bash commands against guardrails, block if pattern matches
-- `session_before_compact` — Save context (active topic, pending channels, update status) to `~/.pi/bloom-context.json`
+- `session_before_compact` — Save context (update status) to `~/.pi/bloom-context.json`
 
 ### 🔍 bloom-audit
 
@@ -233,9 +233,10 @@ Quick reference of every tool name available to Pi:
 Services get automatic subdomain access via `{name}.bloom.mesh` when a NetBird API token is configured:
 
 1. **DNS**: `ensureServiceRecord` creates an A record in the NetBird `bloom.mesh` custom DNS zone
-2. **Nginx**: `writeVhostConfig` creates `/etc/nginx/conf.d/bloom-{name}.conf` with a `server_name {name}.bloom.mesh` vhost
 
-Graceful degradation: no token = DNS skipped, nginx vhost still written. Path-based routing (`/cinny/`, `/_matrix/`) remains as fallback.
+Services use host networking and are accessible directly at `http://{name}.bloom.mesh:{port}` from any mesh peer. No reverse proxy is needed.
+
+Graceful degradation: no token = DNS skipped. Services remain accessible via the device's mesh IP and port directly.
 
 Token location: `~/.config/bloom/netbird.env` (`NETBIRD_API_TOKEN=nbp_...`)
 
@@ -254,7 +255,7 @@ Canonical metadata for automation lives in `services/catalog.yaml`.
 |--------|-------|-------------|
 | whatsapp | `dock.mau.dev/mautrix/whatsapp:latest` | 29318 |
 | telegram | `dock.mau.dev/mautrix/telegram:latest` | 29300 |
-| signal | `dock.mau.dev/mautrix/signal:latest` | 29320 |
+| signal | `dock.mau.dev/mautrix/signal:latest` | 29328 |
 
 ## 🪞 Persona
 
@@ -289,8 +290,7 @@ See `ARCHITECTURE.md` for structural rules and enforcement checklist.
 | `filesystem.ts` | `safePath`, `getBloomDir` |
 | `exec.ts` | `run` (command execution, supports stdin `input`) |
 | `netbird.ts` | `loadNetBirdToken`, `getLocalMeshIp`, `ensureBloomZone`, `ensureServiceRecord` |
-| `nginx.ts` | `generateVhostConfig`, `writeVhostConfig`, `reloadNginx`, `removeVhostConfig` |
-| `service-routing.ts` | `ensureServiceRouting` (orchestrates DNS + nginx for subdomain access) |
+| `service-routing.ts` | `ensureServiceRouting` (orchestrates DNS record creation) |
 | `git.ts` | `parseGithubSlugFromUrl`, `slugifyBranchPart` |
 | `repo.ts` | `getRemoteUrl`, `inferRepoUrl` |
 | `audit.ts` | `dayStamp`, `sanitize`, `summarizeInput` |

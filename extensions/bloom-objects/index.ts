@@ -9,8 +9,6 @@ import { Type } from "@sinclair/typebox";
 import { createObject, linkObjects, readObject } from "./actions.js";
 import { listObjects, searchObjects } from "./actions-query.js";
 
-export { parseRef } from "./actions.js";
-
 export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "memory_create",

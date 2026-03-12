@@ -46,7 +46,7 @@ Organized by capability, not by consumer:
 - `shared.ts` is last resort for truly generic utilities
 
 ### Service Convention
-Scaffolded from `services/_template/`, independent after generation. No shared runtime library. Health checks required. bloom.network isolation.
+Scaffolded from `services/_template/`, independent after generation. No shared runtime library. Health checks required. Host networking.
 
 ## Review Protocol
 

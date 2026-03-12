@@ -49,10 +49,6 @@ export class RoomRegistry {
 		return this.rooms[roomId];
 	}
 
-	getAll(): Record<string, RoomEntry> {
-		return { ...this.rooms };
-	}
-
 	set(roomId: string, entry: RoomEntry): void {
 		this.rooms[roomId] = entry;
 		this.flush();
@@ -63,28 +59,6 @@ export class RoomRegistry {
 		if (!entry) return;
 		entry.lastActive = new Date().toISOString();
 		this.flush();
-	}
-
-	archive(roomId: string): void {
-		const entry = this.rooms[roomId];
-		if (!entry) return;
-		entry.archived = true;
-		this.flush();
-	}
-
-	/** Find the non-archived room with the oldest lastActive timestamp. */
-	leastRecentlyUsed(): string | undefined {
-		let oldest: string | undefined;
-		let oldestTime = Number.POSITIVE_INFINITY;
-		for (const [roomId, entry] of Object.entries(this.rooms)) {
-			if (entry.archived) continue;
-			const t = new Date(entry.lastActive).getTime();
-			if (t < oldestTime) {
-				oldestTime = t;
-				oldest = roomId;
-			}
-		}
-		return oldest;
 	}
 
 	/** Flush to disk (for graceful shutdown). */

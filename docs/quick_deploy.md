@@ -53,7 +53,7 @@ Forwarded host ports:
 
 ### 5) Log in
 
-Default user comes from `os/bib-config.toml`:
+Default user comes from `os/bib-config.toml` (copied from `os/bib-config.example.toml`):
 
 - username: `pi`
 - SSH key auth: from `customizations.user.key`
@@ -116,8 +116,7 @@ ssh pi@<netbird-ip>
 tmux new-session -A -s main
 ```
 
-Pi runs in the terminal. The Sway Wayland display is available for AI computer use
-(screenshots, browser automation, GUI apps). Open http://<bloom-ip>:6080 for browser-based remote desktop.
+Pi runs in the terminal.
 
 ## Related
 

@@ -37,7 +37,7 @@ export default function (pi: ExtensionAPI) {
 			category: Type.Optional(Type.String({ description: "Category annotation (e.g. utility, media)" })),
 			port: Type.Optional(Type.Number({ description: "Exposed local port (if any)" })),
 			container_port: Type.Optional(Type.Number({ description: "Port inside container", default: 8000 })),
-			network: Type.Optional(Type.String({ description: "Podman network name", default: "bloom.network" })),
+			network: Type.Optional(Type.String({ description: "Podman network name", default: "host" })),
 			memory: Type.Optional(Type.String({ description: "Memory limit (e.g. 256m)", default: "256m" })),
 			socket_activated: Type.Optional(
 				Type.Boolean({ description: "Generate .socket activation unit", default: false }),

@@ -10,7 +10,7 @@ const log = createLogger("service-routing");
 // Types
 // ---------------------------------------------------------------------------
 
-export interface RoutingResult {
+interface RoutingResult {
 	dns: { ok: boolean; skipped?: boolean; error?: string };
 }
 
@@ -24,12 +24,7 @@ export interface RoutingResult {
  * If no NetBird token is available, DNS is skipped (reported as `skipped`).
  * Services are directly reachable on their native port via the mesh IP.
  */
-export async function ensureServiceRouting(
-	serviceName: string,
-	/** Reserved for future per-port access policies. */
-	_port: number,
-	signal?: AbortSignal,
-): Promise<RoutingResult> {
+export async function ensureServiceRouting(serviceName: string, signal?: AbortSignal): Promise<RoutingResult> {
 	const guard = validateServiceName(serviceName);
 	if (guard) {
 		return { dns: { ok: false, error: guard } };

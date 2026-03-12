@@ -11,8 +11,6 @@ import { handleStatus, handleSync } from "./actions.js";
 import { handleConfigure } from "./actions-configure.js";
 import { handleSubmitPr } from "./actions-submit-pr.js";
 
-export { parseGithubSlugFromUrl, slugifyBranchPart } from "../../lib/git.js";
-
 export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "bloom_repo",

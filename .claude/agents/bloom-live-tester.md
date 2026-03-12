@@ -45,7 +45,7 @@ When asked to test, consider these categories:
 - **Bloom Setup**: Is `~/Bloom/` created with proper structure? Are persona files seeded?
 - **Pi State**: Is `~/.pi/` initialized correctly?
 - **Services**: Do Quadlet units start? Are containers healthy? Do health checks pass?
-- **Network**: Is `bloom.network` created? Can services communicate?
+- **Network**: Can services communicate on the host network?
 - **Matrix**: Is `bloom-matrix.service` running? Is Cinny accessible via nginx? Can Pi connect as `@pi:bloom`?
 - **Guardrails**: Are dangerous commands blocked?
 - **dufs**: Is WebDAV access configured for home directory?

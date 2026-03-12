@@ -122,12 +122,12 @@ async function apiPost<T>(path: string, token: string, body: unknown): Promise<T
 // ---------------------------------------------------------------------------
 
 /** List all NetBird groups. */
-export async function listGroups(token: string): Promise<NetBirdGroup[]> {
+async function listGroups(token: string): Promise<NetBirdGroup[]> {
 	return apiGet<NetBirdGroup[]>("/api/groups", token);
 }
 
 /** Find the "All" group ID (used as default for DNS zones). */
-export async function findAllGroupId(token: string): Promise<string | null> {
+async function findAllGroupId(token: string): Promise<string | null> {
 	const groups = await listGroups(token);
 	const all = groups.find((g) => g.name === "All");
 	return all?.id ?? null;
@@ -137,16 +137,8 @@ export async function findAllGroupId(token: string): Promise<string | null> {
 // DNS Zones
 // ---------------------------------------------------------------------------
 
-/** List all DNS zones. */
-export async function listZones(token: string): Promise<NetBirdZone[]> {
-	return apiGet<NetBirdZone[]>("/api/dns/nameservers", token).catch(() => {
-		// The zones endpoint might differ — try the custom zones path
-		return apiGet<NetBirdZone[]>("/api/dns/settings", token).then(() => []);
-	});
-}
-
 /** Create a DNS zone. */
-export async function createZone(
+async function createZone(
 	token: string,
 	opts: { domain: string; name: string; groups: string[] },
 ): Promise<NetBirdZone> {
@@ -163,12 +155,12 @@ export async function createZone(
 // ---------------------------------------------------------------------------
 
 /** List records in a DNS zone. */
-export async function listRecords(token: string, zoneId: string): Promise<NetBirdRecord[]> {
+async function listRecords(token: string, zoneId: string): Promise<NetBirdRecord[]> {
 	return apiGet<NetBirdRecord[]>(`/api/dns/zones/${zoneId}/records`, token);
 }
 
 /** Create an A record in a DNS zone. */
-export async function createRecord(
+async function createRecord(
 	token: string,
 	zoneId: string,
 	opts: { name: string; type: string; value: string },

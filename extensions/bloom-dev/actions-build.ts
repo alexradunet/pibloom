@@ -51,7 +51,6 @@ export async function handleDevBuild(repoDir: string, signal?: AbortSignal, tag?
 
 /** Switch the running OS to a local or remote image. */
 export async function handleDevSwitch(
-	_bloomRuntime: string,
 	imageRef: string | undefined,
 	signal: AbortSignal | undefined,
 	ctx: ExtensionContext,
@@ -82,7 +81,7 @@ export async function handleDevSwitch(
 }
 
 /** Rollback to the previous OS deployment. */
-export async function handleDevRollback(_bloomRuntime: string, signal: AbortSignal | undefined, ctx: ExtensionContext) {
+export async function handleDevRollback(signal: AbortSignal | undefined, ctx: ExtensionContext) {
 	const denied = await requireConfirmation(ctx, "Rollback OS to previous deployment");
 	if (denied) return errorResult(denied);
 
@@ -117,7 +116,7 @@ export async function handleDevLoop(
 	if (!ctx) {
 		return errorResult("Cannot perform dev loop without an extension context for confirmation.");
 	}
-	const switchResult = await handleDevSwitch("", params.tag, signal, ctx);
+	const switchResult = await handleDevSwitch(params.tag, signal, ctx);
 	if ("isError" in switchResult && switchResult.isError) return switchResult;
 	steps.push(`Switch: ${switchResult.content[0].text}`);
 

@@ -90,7 +90,7 @@ export async function handleInstall(
 
 	// Set up DNS routing if port is defined
 	if (catalogEntry?.port) {
-		const routing = await ensureServiceRouting(params.name, catalogEntry.port, signal);
+		const routing = await ensureServiceRouting(params.name, signal);
 		if (!routing.dns.ok && !routing.dns.skipped)
 			log.warn("DNS record failed", { service: params.name, error: routing.dns.error });
 	}
@@ -152,7 +152,7 @@ export async function handleInstall(
 
 		// Set up DNS routing for dependency
 		if (depCatalog?.port) {
-			const depRouting = await ensureServiceRouting(dep, depCatalog.port, signal);
+			const depRouting = await ensureServiceRouting(dep, signal);
 			if (!depRouting.dns.ok && !depRouting.dns.skipped)
 				log.warn("dep DNS record failed", { dep, error: depRouting.dns.error });
 		}

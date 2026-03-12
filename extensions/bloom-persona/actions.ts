@@ -5,8 +5,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { getBloomDir } from "../../lib/filesystem.js";
-import { yaml } from "../../lib/frontmatter.js";
+import jsYaml from "js-yaml";
+import { getBloomDir, getUpdateStatusPath } from "../../lib/filesystem.js";
 import { createLogger } from "../../lib/shared.js";
 import type { BloomContext, GuardrailsConfig } from "./types.js";
 
@@ -31,7 +31,7 @@ export function loadGuardrails(): Array<{ tool: string; pattern: RegExp; label: 
 
 	try {
 		const raw = readFileSync(filePath, "utf-8");
-		const config = yaml.load(raw) as GuardrailsConfig;
+		const config = jsYaml.load(raw) as GuardrailsConfig;
 		if (!config?.rules) return [];
 
 		const compiled: Array<{ tool: string; pattern: RegExp; label: string }> = [];
@@ -83,7 +83,7 @@ export function loadContext(): BloomContext | null {
 /** Check if an OS update is available by reading the update-status file. */
 export function checkUpdateAvailable(): boolean {
 	try {
-		const statusFile = join(os.homedir(), ".bloom", "update-status.json");
+		const statusFile = getUpdateStatusPath();
 		if (!existsSync(statusFile)) return false;
 		const status = JSON.parse(readFileSync(statusFile, "utf-8"));
 		return status.available === true;

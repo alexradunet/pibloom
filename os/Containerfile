@@ -98,9 +98,6 @@ COPY os/sysconfig/bloom-tmpfiles.conf /usr/lib/tmpfiles.d/bloom.conf
 # Keep console output quiet so kernel/podman chatter does not overwrite Pi's TUI.
 COPY os/sysconfig/bloom-sysctl.conf /usr/lib/sysctl.d/60-bloom-console.conf
 
-# Default Quadlet network definition used by service packages
-COPY os/sysconfig/bloom.network /usr/share/containers/systemd/bloom.network
-
 # Install persona files
 RUN mkdir -p /usr/local/share/bloom/persona
 
@@ -128,6 +125,9 @@ RUN mkdir -p /etc/bloom/appservices
 COPY os/sysconfig/bloom-matrix.toml /etc/bloom/matrix.toml
 COPY os/sysconfig/bloom-matrix.service /usr/lib/systemd/system/bloom-matrix.service
 RUN systemctl enable bloom-matrix.service
+
+# Mask unused NFS services — Bloom doesn't use NFS; reduces boot error noise
+RUN systemctl mask rpcbind.service rpcbind.socket rpc-statd.service
 
 # Boot to multi-user target — getty handles login
 RUN systemctl set-default multi-user.target

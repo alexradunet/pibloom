@@ -6,7 +6,7 @@
  */
 import os from "node:os";
 import { join } from "node:path";
-import type { AgentSessionEvent, ExtensionFactory } from "@mariozechner/pi-coding-agent";
+import type { AgentSessionEvent } from "@mariozechner/pi-coding-agent";
 import { extractResponseText, matrixCredentialsPath } from "../lib/matrix.js";
 import { createLogger } from "../lib/shared.js";
 import { type IncomingMessage, MatrixListener } from "./matrix-listener.js";
@@ -21,28 +21,17 @@ const REGISTRY_PATH = join(os.homedir(), ".pi", "pi-daemon", "rooms.json");
 const SESSION_DIR = join(os.homedir(), ".pi", "agent", "sessions", "bloom-rooms");
 const STORAGE_PATH = join(os.homedir(), ".pi", "pi-daemon", "matrix-state.json");
 
-/** Build extension factories for daemon sessions. */
-function buildExtensionFactories(): ExtensionFactory[] {
-	const bloomRoomsFactory: ExtensionFactory = (_pi) => {
-		// Room tools will be registered here in a future iteration.
-		log.info("bloom-rooms extension loaded");
-	};
-
-	return [bloomRoomsFactory];
-}
-
 async function main(): Promise<void> {
 	log.info("starting pi-daemon", { maxSessions: MAX_SESSIONS, idleTimeoutMs: IDLE_TIMEOUT_MS });
 
 	const registry = new RoomRegistry(REGISTRY_PATH);
-	const extensionFactories = buildExtensionFactories();
 
 	const pool = new SessionPool({
 		registry,
 		maxSessions: MAX_SESSIONS,
 		idleTimeoutMs: IDLE_TIMEOUT_MS,
 		sessionDir: SESSION_DIR,
-		extensionFactories,
+		extensionFactories: [],
 	});
 
 	const listener = new MatrixListener({
@@ -52,9 +41,6 @@ async function main(): Promise<void> {
 			void handleMessage(roomId, message);
 		},
 	});
-
-	// Track API key state — stop prompting if key is bad
-	let apiKeyDisabled = false;
 
 	// Forward session events to Matrix rooms
 	pool.onEvent(async (roomId, event: AgentSessionEvent) => {
@@ -71,11 +57,6 @@ async function main(): Promise<void> {
 	});
 
 	async function handleMessage(roomId: string, message: IncomingMessage): Promise<void> {
-		if (apiKeyDisabled) {
-			log.warn("ignoring message — API key disabled", { roomId });
-			return;
-		}
-
 		try {
 			const alias = await listener.getRoomAlias(roomId);
 			const session = await pool.getOrCreate(roomId, alias);
@@ -86,20 +67,20 @@ async function main(): Promise<void> {
 			const errStr = String(err);
 			log.error("failed to handle message", { roomId, error: errStr });
 
-			// Detect API key errors — stop prompting and notify
+			// Detect API key errors — exit so systemd restarts us (RestartSec=15 gives time for fixes)
 			if (errStr.includes("401") || errStr.includes("invalid_api_key") || errStr.includes("authentication")) {
-				apiKeyDisabled = true;
-				log.error("API key error detected, disabling prompting");
+				log.error("API key error detected, exiting for systemd restart");
 				try {
-					await listener.sendText(roomId, "My API key needs attention. I'll stop responding until it's fixed.");
+					await listener.sendText(roomId, "My API key needs attention. I'll restart and try again shortly.");
 				} catch {
 					/* best effort */
 				}
+				shutdown("API_KEY_ERROR");
 				return;
 			}
 
 			try {
-				await listener.sendText(roomId, `Sorry, I hit an error: ${errStr}`);
+				await listener.sendText(roomId, "Sorry, I hit an error processing your message. Please try again.");
 			} catch {
 				// Best-effort error notification
 			}

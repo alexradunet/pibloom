@@ -1,7 +1,7 @@
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RoomRegistry } from "../../daemon/room-registry.js";
 import { SessionPool } from "../../daemon/session-pool.js";
 
@@ -29,14 +29,21 @@ describe("SessionPool", () => {
 	let dir: string;
 	let registry: RoomRegistry;
 
+	let pool: SessionPool | undefined;
+
 	beforeEach(() => {
 		dir = mkdtempSync(join(tmpdir(), "session-pool-"));
 		registry = new RoomRegistry(join(dir, "rooms.json"));
 		vi.clearAllMocks();
 	});
 
+	afterEach(() => {
+		pool?.disposeAll();
+		pool = undefined;
+	});
+
 	it("creates a new session for an unknown room", async () => {
-		const pool = new SessionPool({
+		pool = new SessionPool({
 			registry,
 			maxSessions: 3,
 			idleTimeoutMs: 15 * 60 * 1000,
@@ -51,7 +58,7 @@ describe("SessionPool", () => {
 	});
 
 	it("returns the same session for the same room", async () => {
-		const pool = new SessionPool({
+		pool = new SessionPool({
 			registry,
 			maxSessions: 3,
 			idleTimeoutMs: 15 * 60 * 1000,
@@ -65,7 +72,7 @@ describe("SessionPool", () => {
 	});
 
 	it("evicts LRU session when max reached", async () => {
-		const pool = new SessionPool({
+		pool = new SessionPool({
 			registry,
 			maxSessions: 2,
 			idleTimeoutMs: 15 * 60 * 1000,
@@ -81,7 +88,7 @@ describe("SessionPool", () => {
 	});
 
 	it("disposes all sessions on shutdown", async () => {
-		const pool = new SessionPool({
+		pool = new SessionPool({
 			registry,
 			maxSessions: 3,
 			idleTimeoutMs: 15 * 60 * 1000,

@@ -15,7 +15,7 @@ STORAGE="/var/lib/containers/storage"
 # Ensure bib-config.toml exists
 if [[ ! -f "$BIB_CONFIG" ]]; then
     echo "Creating $BIB_CONFIG from example..."
-    cp os/bib-config.toml.example "$BIB_CONFIG"
+    cp os/bib-config.example.toml "$BIB_CONFIG"
     echo "Edit $BIB_CONFIG to add your SSH key if needed, then re-run."
     exit 1
 fi

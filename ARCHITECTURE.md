@@ -70,6 +70,7 @@ lib/
   services-manifest.ts # Manifest types, loadManifest, saveManifest
   services-validation.ts # validateServiceName, validatePinnedImage, commandExists
   setup.ts         # first-boot setup wizard state machine (STEP_ORDER, advanceStep, getNextStep)
+  matrix.ts        # Matrix homeserver helpers (registerMatrixAccount, extractResponseText, credentials)
 ```
 
 ### Rules
@@ -82,6 +83,25 @@ lib/
 ### Why
 
 Capability-based organization means logic lands in the right place from the start, no reshuffling when a second extension needs it. New capability files (e.g., `containers.ts`, `networking.ts`) are created when logic warrants extraction — don't create empty placeholder files.
+
+## Daemon
+
+The pi-daemon (`daemon/`) is an always-on systemd user service that listens for Matrix messages and routes them to per-room `AgentSession` instances via the Pi SDK.
+
+```
+daemon/
+  index.ts            # entry point — wires listener, pool, registry; retry + shutdown
+  matrix-listener.ts  # Matrix bot-sdk client, event routing
+  session-pool.ts     # AgentSession lifecycle, LRU eviction, idle timeout
+  room-registry.ts    # room-to-session mapping, JSON persistence
+```
+
+### Rules
+
+1. **One session per room.** Each Matrix room gets its own `AgentSession` with independent history.
+2. **LRU eviction.** At most `MAX_SESSIONS` (default 3) loaded at once. Least-recently-used sessions are disposed and can be resumed from disk.
+3. **Idle timeout.** Sessions unused for 15 minutes are automatically disposed.
+4. **Independent of interactive terminal.** The daemon runs as `pi-daemon.service` (user unit). The interactive `pi` terminal is ephemeral and completely separate.
 
 ## Service Structure
 
@@ -99,7 +119,7 @@ services/{name}/
     transport.test.ts
     utils.test.ts
   quadlet/
-    bloom-{name}.container   # Quadlet unit, bloom.network, health check
+    bloom-{name}.container   # Quadlet unit, host networking, health check
 ```
 
 ### Rules
@@ -108,7 +128,7 @@ services/{name}/
 2. **Independent after generation.** No shared runtime dependency. Each service owns its code completely.
 3. **Template is source of truth.** Pattern improvements update the template. Backporting to existing services is deliberate and separate.
 4. **Health checks required.** Every service must expose a health endpoint.
-5. **bloom.network isolation.** Services bind to localhost or bloom.network, reachable only over NetBird mesh or local subnet.
+5. **Host networking.** Services use host networking, reachable over NetBird mesh or local subnet.
 6. **Quadlet naming.** `bloom-{name}` for the unit, consistent with all other services.
 
 ### Why
@@ -142,7 +162,7 @@ Used by humans, AI, and the bloom-architect agent when reviewing code:
 - [ ] No runtime system mutation — changes go through image builds
 - [ ] Containerfile, not Dockerfile. podman, not docker.
 - [ ] Services use Quadlet units with health checks
-- [ ] Network isolation on bloom.network
+- [ ] Services use host networking
 
 **Pi SDK:**
 - [ ] Pi SDK is a peerDependency — runtime VALUE imports (StringEnum, Type) are fine

@@ -81,11 +81,7 @@ export async function handleDevStatus(bloomRuntime: string, signal?: AbortSignal
 }
 
 /** Start, stop, restart, or check status of the code-server development environment. */
-export async function handleDevCodeServer(
-	_bloomRuntime: string,
-	action: "start" | "stop" | "restart" | "status",
-	signal?: AbortSignal,
-) {
+export async function handleDevCodeServer(action: "start" | "stop" | "restart" | "status", signal?: AbortSignal) {
 	const unit = "bloom-code-server";
 
 	if (action === "status") {

@@ -21,36 +21,28 @@ Services are installed from bundled local packages. The `service_install` tool o
 
 1. Copy quadlet files to `~/.config/containers/systemd/`
 2. Copy socket files to `~/.config/systemd/user/` (if present)
-3. Ensure `bloom.network` exists
-4. Copy SKILL.md to `~/Bloom/Skills/{name}/`
-5. `systemctl --user daemon-reload`
-6. Start the service unit
+3. Copy SKILL.md to `~/Bloom/Skills/{name}/`
+4. `systemctl --user daemon-reload`
+5. Start the service unit
 
 Manual install:
 
 ```bash
 cp services/{name}/quadlet/*.container ~/.config/containers/systemd/
 cp services/{name}/quadlet/*.socket ~/.config/systemd/user/ 2>/dev/null || true
-[ -f ~/.config/containers/systemd/bloom.network ] || cp os/sysconfig/bloom.network ~/.config/containers/systemd/bloom.network
 mkdir -p ~/Bloom/Skills/{name}
 cp services/{name}/SKILL.md ~/Bloom/Skills/{name}/SKILL.md
 systemctl --user daemon-reload
 systemctl --user start bloom-{name}.service
 ```
 
-## Worked Example Packages
-
-Reference packages are included at:
+## Reference Package
 
 | Path | Pattern | Notes |
 |------|---------|-------|
-| `services/examples/demo-api/` | Standard service (`PublishPort`) | Basic non-socket service package layout |
-| `services/examples/demo-socket-echo/` | Socket-activated (`.socket` + `.container`) | Reference wiring for on-demand activation |
 | `services/dufs/quadlet/` | Production HTTP service (`PublishPort`) | Real in-tree implementation |
 
-Use these as templates for frontmatter, Quadlet layout, health checks, and local install commands.
-
-Copy/paste quickstart commands are in `services/examples/README.md`.
+Use as a template for frontmatter, Quadlet layout, health checks, and local install commands.
 
 ## End-to-End Lifecycle Example
 
@@ -64,7 +56,7 @@ Copy/paste quickstart commands are in `services/examples/README.md`.
 ## Quadlet Conventions
 
 - Container name: `bloom-{name}`
-- Network: prefer isolated Podman network (`bloom.network`); use host only when required (e.g., VPN)
+- Network: host networking
 - Health checks: required (`HealthCmd`, `HealthInterval`, `HealthRetries`)
 - Logging: `LogDriver=journald`
 - Security: `NoNewPrivileges=true` minimum

@@ -2,15 +2,13 @@
  * Handler / business logic for bloom-os.
  */
 import { readFile, writeFile } from "node:fs/promises";
-import os from "node:os";
-import { join } from "node:path";
 import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { run } from "../../lib/exec.js";
+import { getUpdateStatusPath } from "../../lib/filesystem.js";
 import { errorResult, guardBloom, requireConfirmation, truncate } from "../../lib/shared.js";
 import type { ContainerInfo, UpdateStatus } from "./types.js";
 
-const bloomDir = join(os.homedir(), ".bloom");
-const statusFile = join(bloomDir, "update-status.json");
+const statusFile = getUpdateStatusPath();
 
 // --- Bootc handler ---
 

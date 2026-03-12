@@ -2,70 +2,60 @@
 
 ## Recurring Violations
 
-- **Empty/stub types.ts files**: 3 extensions have stub types.ts with only `export {};`: bloom-setup, bloom-repo, bloom-objects.
-  - bloom-services types.ts is also stub but its types live in lib/services-manifest.ts (correct per convention).
-- **Thin barrel files**: bloom-channels/actions.ts is a 4-line re-export passthrough.
-- **Oversized files**: bloom-channels/matrix-client.ts (306 lines), bloom-services/service-io.ts (267 lines), bloom-dev/index.ts (241 lines), bloom-os/actions.ts (235 lines).
-- **Dead types**: bloom-channels/types.ts exports MatrixConnectionState, MatrixInboundMessage, MatrixMediaInfo — none imported anywhere.
+- **Empty/stub types.ts files**: 4 extensions have stub types.ts with only `export {};`: bloom-setup, bloom-repo, bloom-objects, bloom-services.
+- **Oversized files**: service-io.ts (272), netbird.ts (269), bloom-dev/index.ts (241), bloom-os/actions.ts (235).
+- **High export count**: lib/netbird.ts has 19 exports, 10 of which are unused outside the file.
+- **Missing JSDoc**: 13 exported symbols across 5 lib/ files lack JSDoc.
 
-## Post-Migration Stale References (2026-03-11)
+## Stale References (verified 2026-03-12)
 
-Major migration moved Matrix/NetBird from containers to OS infrastructure. Unix socket channel architecture fully retired. Cinny added as Podman container proxied by nginx.
+### New since last audit:
+- AGENTS.md:292 — references lib/nginx.ts which does not exist
+- bloom.network deleted but referenced in 15+ files (CLAUDE.md, ARCHITECTURE.md, containers.md, services/README.md, skills/*, bloom-services/index.ts)
+- services/README.md:47-53 — references services/examples/ directory which does not exist
+- docs/service-architecture.md:91-93 — references nginx vhost functionality that no longer exists
 
-### Remaining stale references in main branch (verified 2026-03-11):
-- README.md:15 — "Unix socket IPC" description
-- README.md:59 — bloom-channels described as "Unix socket server"
-- README.md:204 — dead link to docs/channel-protocol.md (file deleted)
-- services/README.md:78 — lists element service (removed)
+### Carried from previous audit:
 - docs/quick_deploy.md:119-120 — Sway/Wayland references (removed from OS)
-- .claude/agents/bloom-live-tester.md — lemonade, element, channels.sock refs
-- .pi/AGENTS.md:55 — lists element as service package
-- CLAUDE.md:18 — references lib/containers.ts (does not exist)
 
-### Already fixed since last audit:
-- CLAUDE.md Key Paths table: channels.sock removed, matrix paths added
-- AGENTS.md: service_pair removed, bloom-channels description updated, lib table updated
-- docs/channel-protocol.md: deleted
-- docs/service-architecture.md: updated with correct architecture
-- docs/pibloom-setup.md: updated for Cinny/Matrix native
-- services/matrix/SKILL.md: updated correctly
-- ARCHITECTURE.md: references split lib files correctly
-- skills/: service_pair references cleaned up
+### Fixed since last audit:
+- README.md Unix socket/bloom-channels references: cleaned up
+- .claude/agents/bloom-live-tester.md stale refs: cleaned up
+- .pi/AGENTS.md element reference: cleaned up
+- CLAUDE.md lib/containers.ts reference: cleaned up
 
-### What replaced the old architecture:
-- bloom-channels uses matrix-bot-sdk directly (matrix-client.ts)
-- Matrix (Continuwuity) is native systemd service in os/Containerfile
-- Cinny served by nginx (static files from container)
-- External bridges via bridge_create/remove/status tools
+## Dead Code (verified 2026-03-12)
 
-## File Duplication
-
-- services/cinny/cinny-config.json and os/sysconfig/cinny-config.json are byte-identical
+- lib/netbird.ts: 10 exports never imported externally (netbirdEnvPath, listGroups, findAllGroupId, listZones, createZone, listRecords, createRecord, zoneCachePath, NetBirdGroup, NetBirdZone, NetBirdRecord, DnsResult)
+- lib/service-routing.ts: RoutingResult type never imported externally
 
 ## Security Concern
 
-- os/bib-config.toml is committed with a hardcoded password despite header saying "NEVER commit"
+- RESOLVED: os/bib-config.toml removed from tracking. Example file renamed to os/bib-config.example.toml with placeholder password. os/bib-config.toml is gitignored.
 
 ## CI/Workflow Notes
 
-- build-os.yml uses docker/login-action@v3 (no podman equivalent exists for GitHub Actions)
-- Template files (services/_template/) use console.log instead of createLogger
+- build-os.yml uses docker/login-action@v3 (no podman equivalent for GitHub Actions)
+- Template files (services/_template/) use console.log instead of createLogger (known exception)
 
 ## Resolved Issues (from previous audits)
 
 - lib/services.ts barrel: split into services-catalog, services-install, services-manifest, services-validation
 - bloom-services/actions.ts (760 lines): split into actions-apply, actions-bridges, etc.
 - bloom-display extension: removed entirely
-- build-iso.sh shebang: fixed to #!/usr/bin/env bash
-- bloom-greeting.sh: uses [[ ]] correctly
+- bloom-channels extension: removed entirely (replaced by pi-daemon)
+- build-iso.sh shebang: fixed
+- README.md: bloom-channels/unix socket refs cleaned up
 
 ## Last Audit
 
-- Date: 2026-03-11 (second pass, post-migration)
-- Files reviewed: ~90
-- Auto-fixes applied: 0 (report-only run)
-- Stale documentation: 8 remaining items (down from 11)
-- Convention violations: 6
+- Date: 2026-03-12
+- Files reviewed: ~118
+- Auto-fixes applied: 0 (report-only)
+- Critical: 1 (security — committed password)
+- Stale documentation: 5 remaining items
+- Dead code: 12 unused exports in lib/netbird.ts
+- Convention violations: 13 missing JSDoc, 51 code blocks without language specifiers
 - Oversized files: 4
-- Minor issues: 6
+- Stub files for deletion: 4
 - Clean files: ~65

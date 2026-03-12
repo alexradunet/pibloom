@@ -16,7 +16,7 @@ describe("ensureServiceRouting", () => {
 	});
 
 	it("rejects invalid service names", async () => {
-		const result = await ensureServiceRouting("INVALID NAME!", 8080);
+		const result = await ensureServiceRouting("INVALID NAME!");
 		expect(result.dns.ok).toBe(false);
 		expect(result.dns.error).toBeDefined();
 	});
@@ -24,7 +24,7 @@ describe("ensureServiceRouting", () => {
 	it("skips DNS when no token is available", async () => {
 		vi.mocked(loadNetBirdToken).mockReturnValue(null);
 
-		const result = await ensureServiceRouting("cinny", 18810);
+		const result = await ensureServiceRouting("cinny");
 		expect(result.dns.ok).toBe(false);
 		expect(result.dns.skipped).toBe(true);
 		expect(getLocalMeshIp).not.toHaveBeenCalled();
@@ -36,7 +36,7 @@ describe("ensureServiceRouting", () => {
 		vi.mocked(ensureBloomZone).mockResolvedValue({ ok: true, zoneId: "zone-1" });
 		vi.mocked(ensureServiceRecord).mockResolvedValue({ ok: true, recordId: "rec-1" });
 
-		const result = await ensureServiceRouting("dufs", 5000);
+		const result = await ensureServiceRouting("dufs");
 		expect(result.dns.ok).toBe(true);
 		expect(ensureBloomZone).toHaveBeenCalledWith("nbp_test");
 		expect(ensureServiceRecord).toHaveBeenCalledWith("nbp_test", "zone-1", "dufs", "100.119.45.12");
@@ -46,7 +46,7 @@ describe("ensureServiceRouting", () => {
 		vi.mocked(loadNetBirdToken).mockReturnValue("nbp_test");
 		vi.mocked(getLocalMeshIp).mockResolvedValue(null);
 
-		const result = await ensureServiceRouting("cinny", 18810);
+		const result = await ensureServiceRouting("cinny");
 		expect(result.dns.ok).toBe(false);
 		expect(result.dns.error).toContain("mesh IP");
 	});
@@ -56,7 +56,7 @@ describe("ensureServiceRouting", () => {
 		vi.mocked(getLocalMeshIp).mockResolvedValue("100.119.45.12");
 		vi.mocked(ensureBloomZone).mockResolvedValue({ ok: false, error: "API error" });
 
-		const result = await ensureServiceRouting("cinny", 18810);
+		const result = await ensureServiceRouting("cinny");
 		expect(result.dns.ok).toBe(false);
 		expect(result.dns.error).toContain("API error");
 	});
@@ -67,7 +67,7 @@ describe("ensureServiceRouting", () => {
 		vi.mocked(ensureBloomZone).mockResolvedValue({ ok: true, zoneId: "zone-1" });
 		vi.mocked(ensureServiceRecord).mockResolvedValue({ ok: false, error: "record limit reached" });
 
-		const result = await ensureServiceRouting("cinny", 18810);
+		const result = await ensureServiceRouting("cinny");
 		expect(result.dns.ok).toBe(false);
 		expect(result.dns.error).toContain("record limit reached");
 	});

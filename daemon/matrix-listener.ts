@@ -87,6 +87,12 @@ export class MatrixListener {
 		const sender = event.sender as string | undefined;
 		if (!sender || sender === this.botUserId) return;
 
+		// Validate Matrix user ID format to prevent prompt injection via crafted sender
+		if (!/^@[a-zA-Z0-9._=\-/]+:[a-zA-Z0-9.-]+$/.test(sender)) {
+			log.warn("ignoring event with invalid sender format", { roomId, sender });
+			return;
+		}
+
 		const content = event.content as Record<string, unknown> | undefined;
 		if (!content || content.msgtype !== "m.text") return;
 

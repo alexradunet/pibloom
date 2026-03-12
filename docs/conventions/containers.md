@@ -16,7 +16,7 @@ Rules for Containerfiles, Quadlet units (.container, .volume, .network), systemd
 
 ### Quadlet (.container, .volume, .network)
 9. **Naming**: `bloom-{name}` for ContainerName, unit file, and volume.
-10. **Network isolation**: Use `Network=bloom.network` unless the service specifically needs host networking (document why).
+10. **Host networking**: Use `Network=host` for all services.
 11. **Health checks required** on every container: `HealthCmd`, `HealthInterval`, `HealthRetries`, `HealthTimeout`, `HealthStartPeriod`.
 12. **Resource limits**: Set `PodmanArgs=--memory=` appropriate to the service.
 13. **Security**: `NoNewPrivileges=true`, `PodmanArgs=--security-opt label=disable` only when volume mounts require it.

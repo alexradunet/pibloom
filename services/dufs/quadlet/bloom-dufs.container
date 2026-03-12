@@ -21,7 +21,8 @@ PodmanArgs=--security-opt label=disable
 NoNewPrivileges=true
 LogDriver=journald
 
-HealthCmd=wget -qO- http://localhost:5000/ || exit 1
+# dufs minimal image has no wget/curl — check process is alive
+HealthCmd=kill -0 1
 HealthInterval=30s
 HealthRetries=3
 HealthStartPeriod=10s

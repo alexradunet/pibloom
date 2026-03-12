@@ -14,11 +14,11 @@ NetBird is installed as a native system service (not a container) because WireGu
 
 ## Setup
 
-NetBird authentication is handled automatically during Bloom's login flow (before Pi starts). If you need to re-authenticate:
+NetBird authentication is handled during Bloom's first-boot wizard using a setup key. If you need to re-authenticate:
 
-1. Check status: `sudo netbird status`
-2. Authenticate: `sudo netbird up`
-3. Follow the browser link to sign in at https://app.netbird.io
+1. Get a new setup key from https://app.netbird.io → Setup Keys
+2. Run: `sudo netbird up --setup-key <KEY>`
+3. Verify: `sudo netbird status`
 
 ## Adding Peers
 

@@ -19,29 +19,22 @@ describe("createInitialState", () => {
 		}
 	});
 
-	it("has exactly 11 steps", () => {
+	it("has exactly 2 steps", () => {
 		const state = createInitialState();
-		expect(Object.keys(state.steps)).toHaveLength(11);
+		expect(Object.keys(state.steps)).toHaveLength(2);
 	});
 });
 
 describe("getNextStep", () => {
-	it("returns 'welcome' for fresh state", () => {
+	it("returns 'persona' for fresh state", () => {
 		const state = createInitialState();
-		expect(getNextStep(state)).toBe("welcome");
+		expect(getNextStep(state)).toBe("persona");
 	});
 
-	it("returns second step when first is completed", () => {
+	it("returns 'complete' when persona is done", () => {
 		const state = createInitialState();
-		state.steps.welcome = { status: "completed", at: new Date().toISOString() };
-		expect(getNextStep(state)).toBe("network");
-	});
-
-	it("skips completed and skipped steps", () => {
-		const state = createInitialState();
-		state.steps.welcome = { status: "completed", at: new Date().toISOString() };
-		state.steps.network = { status: "skipped", at: new Date().toISOString(), reason: "has ethernet" };
-		expect(getNextStep(state)).toBe("netbird");
+		state.steps.persona = { status: "completed", at: new Date().toISOString() };
+		expect(getNextStep(state)).toBe("complete");
 	});
 
 	it("returns null when all steps are done", () => {
@@ -56,33 +49,30 @@ describe("getNextStep", () => {
 describe("advanceStep", () => {
 	it("marks step as completed", () => {
 		const state = createInitialState();
-		const next = advanceStep(state, "welcome", "completed");
-		expect(next.steps.welcome.status).toBe("completed");
-		expect(next.steps.welcome.at).toBeTruthy();
+		const next = advanceStep(state, "persona", "completed");
+		expect(next.steps.persona.status).toBe("completed");
+		expect(next.steps.persona.at).toBeTruthy();
 	});
 
 	it("marks step as skipped with reason", () => {
 		const state = createInitialState();
-		const next = advanceStep(state, "netbird", "skipped", "user declined");
-		expect(next.steps.netbird.status).toBe("skipped");
-		expect(next.steps.netbird.reason).toBe("user declined");
+		const next = advanceStep(state, "persona", "skipped", "user declined");
+		expect(next.steps.persona.status).toBe("skipped");
+		expect(next.steps.persona.reason).toBe("user declined");
 	});
 
 	it("sets completedAt when last step is completed", () => {
 		const state = createInitialState();
-		for (const step of STEP_ORDER.slice(0, -1)) {
-			state.steps[step] = { status: "completed", at: new Date().toISOString() };
-		}
-		const lastStep = STEP_ORDER[STEP_ORDER.length - 1];
-		const next = advanceStep(state, lastStep, "completed");
+		state.steps.persona = { status: "completed", at: new Date().toISOString() };
+		const next = advanceStep(state, "complete", "completed");
 		expect(next.completedAt).toBeTruthy();
 	});
 
 	it("does not mutate original state", () => {
 		const state = createInitialState();
-		const next = advanceStep(state, "welcome", "completed");
-		expect(state.steps.welcome.status).toBe("pending");
-		expect(next.steps.welcome.status).toBe("completed");
+		const next = advanceStep(state, "persona", "completed");
+		expect(state.steps.persona.status).toBe("pending");
+		expect(next.steps.persona.status).toBe("completed");
 	});
 });
 
@@ -101,10 +91,10 @@ describe("isSetupComplete", () => {
 describe("getStepsSummary", () => {
 	it("returns summary of all steps", () => {
 		const state = createInitialState();
-		state.steps.welcome = { status: "completed", at: new Date().toISOString() };
+		state.steps.persona = { status: "completed", at: new Date().toISOString() };
 		const summary = getStepsSummary(state);
-		expect(summary).toHaveLength(11);
-		expect(summary[0]).toEqual({ name: "welcome", status: "completed" });
-		expect(summary[1]).toEqual({ name: "network", status: "pending" });
+		expect(summary).toHaveLength(2);
+		expect(summary[0]).toEqual({ name: "persona", status: "completed" });
+		expect(summary[1]).toEqual({ name: "complete", status: "pending" });
 	});
 });

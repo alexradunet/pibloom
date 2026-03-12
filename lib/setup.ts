@@ -1,17 +1,5 @@
 /** Step names in execution order. */
-export const STEP_ORDER = [
-	"welcome",
-	"network",
-	"netbird",
-	"connectivity",
-	"webdav",
-	"matrix",
-	"git_identity",
-	"contributing",
-	"persona",
-	"test_message",
-	"complete",
-] as const;
+export const STEP_ORDER = ["persona", "complete"] as const;
 
 export type StepName = (typeof STEP_ORDER)[number];
 

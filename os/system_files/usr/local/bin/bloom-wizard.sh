@@ -1,0 +1,430 @@
+#!/usr/bin/env bash
+# bloom-wizard.sh — First-boot setup wizard for Bloom OS.
+# Runs on first login before Pi starts. Uses read -p prompts.
+# Each completed step writes a checkpoint to ~/.bloom/wizard-state/.
+# If interrupted (Ctrl+C), resumes from the last incomplete step on next login.
+set -euo pipefail
+
+WIZARD_STATE="$HOME/.bloom/wizard-state"
+SETUP_COMPLETE="$HOME/.bloom/.setup-complete"
+BLOOM_DIR="${BLOOM_DIR:-$HOME/Bloom}"
+BLOOM_SERVICES="/usr/local/share/bloom/services"
+QUADLET_DIR="$HOME/.config/containers/systemd"
+SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
+BLOOM_CONFIG="$HOME/.config/bloom"
+PI_DIR="$HOME/.pi"
+MATRIX_HOMESERVER="http://localhost:6167"
+
+# --- Checkpoint helpers ---
+
+step_done() { [[ -f "$WIZARD_STATE/$1" ]]; }
+
+mark_done() {
+	mkdir -p "$WIZARD_STATE"
+	echo "$(date -Iseconds)" > "$WIZARD_STATE/$1"
+}
+
+# Store data alongside a checkpoint (e.g., mesh IP)
+mark_done_with() {
+	mkdir -p "$WIZARD_STATE"
+	printf '%s\n%s\n' "$(date -Iseconds)" "$2" > "$WIZARD_STATE/$1"
+}
+
+# Read stored data from a checkpoint (line 2+)
+read_checkpoint_data() {
+	[[ -f "$WIZARD_STATE/$1" ]] && sed -n '2p' "$WIZARD_STATE/$1" || echo ""
+}
+
+# --- Matrix helpers ---
+
+# Generate a secure random password (base64url, 32 chars)
+generate_password() {
+	openssl rand -base64 24 | tr '+/' '-_'
+}
+
+# Extract a JSON string field value (simple — no jq dependency)
+# Usage: json_field '{"key":"value"}' "key" → value
+json_field() {
+	echo "$1" | sed -n "s/.*\"$2\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p"
+}
+
+# Register a Matrix account via the UIA flow.
+# Usage: matrix_register <username> <password> <registration_token>
+# Outputs: JSON with user_id and access_token on success, exits 1 on failure
+matrix_register() {
+	local username="$1" password="$2" reg_token="$3"
+	local url="${MATRIX_HOMESERVER}/_matrix/client/v3/register"
+
+	# Step 1: POST with empty auth — expect 401 with session ID (or 200 if no UIA)
+	local step1
+	step1=$(curl -s -X POST "$url" \
+		-H "Content-Type: application/json" \
+		-d "{\"username\":\"${username}\",\"password\":\"${password}\",\"auth\":{},\"inhibit_login\":false}")
+
+	# If step1 succeeded directly (no UIA needed), return it
+	if echo "$step1" | grep -q '"access_token"'; then
+		echo "$step1"
+		return 0
+	fi
+
+	# Extract session from 401 response body
+	local session
+	session=$(json_field "$step1" "session")
+
+	if [[ -z "$session" ]]; then
+		echo "ERROR: Failed to get session ID from Matrix server" >&2
+		return 1
+	fi
+
+	# Step 2: POST with registration token
+	local step2
+	step2=$(curl -s -X POST "$url" \
+		-H "Content-Type: application/json" \
+		-d "{\"username\":\"${username}\",\"password\":\"${password}\",\"inhibit_login\":false,\"auth\":{\"type\":\"m.login.registration_token\",\"token\":\"${reg_token}\",\"session\":\"${session}\"}}")
+
+	if ! echo "$step2" | grep -q '"access_token"'; then
+		echo "ERROR: Matrix registration failed for ${username}" >&2
+		return 1
+	fi
+
+	echo "$step2"
+	return 0
+}
+
+# --- Service install helper ---
+
+# Install a service from the bundled package.
+# Usage: install_service <name>
+install_service() {
+	local name="$1"
+	local svc_dir="${BLOOM_SERVICES}/${name}"
+
+	if [[ ! -d "$svc_dir" ]]; then
+		echo "  Service package not found: ${svc_dir}" >&2
+		return 1
+	fi
+
+	# Copy quadlet files (route .socket and .container to different dirs)
+	mkdir -p "$QUADLET_DIR" "$SYSTEMD_USER_DIR"
+	for f in "$svc_dir/quadlet/"*; do
+		[[ -f "$f" ]] || continue
+		case "$f" in
+			*.socket) cp "$f" "$SYSTEMD_USER_DIR/" ;;
+			*)        cp "$f" "$QUADLET_DIR/" ;;
+		esac
+	done
+
+	# Copy config files (.json, .toml)
+	mkdir -p "$BLOOM_CONFIG"
+	for f in "$svc_dir"/*.json "$svc_dir"/*.toml; do
+		[[ -f "$f" ]] || continue
+		local basename
+		basename=$(basename "$f")
+		[[ -f "$BLOOM_CONFIG/$basename" ]] && continue
+		cp "$f" "$BLOOM_CONFIG/$basename"
+	done
+
+	# Create empty env file if missing
+	[[ -f "$BLOOM_CONFIG/${name}.env" ]] || touch "$BLOOM_CONFIG/${name}.env"
+
+	# Copy SKILL.md
+	local skill_dir="$BLOOM_DIR/Skills/${name}"
+	mkdir -p "$skill_dir"
+	[[ -f "$svc_dir/SKILL.md" ]] && cp "$svc_dir/SKILL.md" "$skill_dir/"
+
+	# Enable and start
+	systemctl --user daemon-reload
+	local target="bloom-${name}.service"
+	# Prefer socket activation if socket unit exists
+	[[ -f "$SYSTEMD_USER_DIR/bloom-${name}.socket" ]] && target="bloom-${name}.socket"
+	systemctl --user enable --now "$target"
+}
+
+# --- Step functions ---
+
+step_welcome() {
+	echo ""
+	echo "Welcome to Bloom OS."
+	echo "Let's configure your device. This takes a few minutes."
+	echo "Press Ctrl+C at any time to abort — you'll resume where you left off next login."
+	echo ""
+	mark_done welcome
+}
+
+step_password() {
+	echo "--- Password ---"
+	echo "First, let's change the default password."
+	echo ""
+	while ! passwd; do
+		echo ""
+		echo "Password change failed. Please try again."
+	done
+	mark_done password
+}
+
+step_network() {
+	echo ""
+	echo "--- Network ---"
+	if ping -c1 -W5 1.1.1.1 &>/dev/null; then
+		echo "Network connected."
+		mark_done network
+		return
+	fi
+
+	echo "No network connection detected."
+	while true; do
+		read -rp "WiFi SSID: " ssid
+		read -rsp "WiFi password: " psk
+		echo ""
+		echo "Connecting to ${ssid}..."
+		if nmcli device wifi connect "$ssid" password "$psk" 2>/dev/null; then
+			if ping -c1 -W5 1.1.1.1 &>/dev/null; then
+				echo "Connected."
+				mark_done network
+				return
+			fi
+		fi
+		echo "Connection failed. Try again."
+	done
+}
+
+step_netbird() {
+	echo ""
+	echo "--- NetBird Mesh Network ---"
+	echo "NetBird creates a private mesh network so you can access this device from anywhere."
+	echo "You'll need a setup key from your NetBird dashboard (app.netbird.io → Setup Keys)."
+	echo ""
+
+	while true; do
+		read -rp "Setup key: " setup_key
+		if [[ -z "$setup_key" ]]; then
+			echo "Setup key cannot be empty."
+			continue
+		fi
+
+		echo "Connecting to NetBird..."
+		if sudo netbird up --setup-key "$setup_key" 2>&1; then
+			# Wait a moment for connection to establish
+			sleep 3
+			local status
+			status=$(netbird status 2>/dev/null || true)
+
+			if echo "$status" | grep -q "Connected"; then
+				local mesh_ip
+				mesh_ip=$(echo "$status" | grep -oP 'NetBird IP:\s+\K[\d.]+' || true)
+				if [[ -n "$mesh_ip" ]]; then
+					echo ""
+					echo "Connected! Mesh IP: ${mesh_ip}"
+					mark_done_with netbird "$mesh_ip"
+					return
+				fi
+			fi
+		fi
+
+		echo ""
+		echo "NetBird connection failed. Check your setup key and try again."
+	done
+}
+
+step_matrix() {
+	echo ""
+	echo "--- Matrix Messaging ---"
+	echo "Setting up Matrix messaging..."
+	echo ""
+
+	# Wait for Matrix homeserver
+	echo "Waiting for Matrix homeserver..."
+	local attempts=0
+	while ! systemctl is-active --quiet bloom-matrix.service; do
+		attempts=$((attempts + 1))
+		if [[ $attempts -ge 30 ]]; then
+			echo "ERROR: bloom-matrix.service did not start within 30 seconds." >&2
+			echo "Run 'systemctl status bloom-matrix' to debug." >&2
+			return 1
+		fi
+		sleep 1
+	done
+	echo "Matrix homeserver is running."
+
+	# Read registration token
+	local reg_token
+	reg_token=$(sudo cat /var/lib/continuwuity/registration_token 2>/dev/null || true)
+	if [[ -z "$reg_token" ]]; then
+		echo "ERROR: Could not read registration token." >&2
+		return 1
+	fi
+
+	# Prompt for username
+	local username
+	while true; do
+		read -rp "Choose a username for your Matrix account (cannot be changed later): " username
+		if [[ -z "$username" ]]; then
+			echo "Username cannot be empty."
+			continue
+		fi
+		if [[ ! "$username" =~ ^[a-z][a-z0-9._-]*$ ]]; then
+			echo "Username must start with a lowercase letter and contain only a-z, 0-9, '.', '_', '-'."
+			continue
+		fi
+		break
+	done
+
+	# Generate passwords
+	local bot_password user_password
+	bot_password=$(generate_password)
+	user_password=$(generate_password)
+
+	# Register bot account
+	echo "Creating Pi bot account..."
+	local bot_result
+	bot_result=$(matrix_register "pi" "$bot_password" "$reg_token") || {
+		echo "ERROR: Failed to register @pi:bloom bot account." >&2
+		return 1
+	}
+	local bot_token bot_user_id
+	bot_token=$(json_field "$bot_result" "access_token")
+	bot_user_id=$(json_field "$bot_result" "user_id")
+
+	# Register user account
+	echo "Creating your account (@${username}:bloom)..."
+	local user_result
+	user_result=$(matrix_register "$username" "$user_password" "$reg_token") || {
+		echo "ERROR: Failed to register @${username}:bloom account." >&2
+		return 1
+	}
+	local user_token user_user_id
+	user_token=$(json_field "$user_result" "access_token")
+	user_user_id=$(json_field "$user_result" "user_id")
+
+	# Store credentials
+	mkdir -p "$PI_DIR"
+	cat > "$PI_DIR/matrix-credentials.json" <<-CREDS
+	{
+	  "homeserver": "${MATRIX_HOMESERVER}",
+	  "botUserId": "${bot_user_id}",
+	  "botAccessToken": "${bot_token}",
+	  "botPassword": "${bot_password}",
+	  "userUserId": "${user_user_id}",
+	  "userPassword": "${user_password}",
+	  "registrationToken": "${reg_token}"
+	}
+	CREDS
+	chmod 600 "$PI_DIR/matrix-credentials.json"
+
+	# Create #general:bloom room (bot creates, invites user)
+	echo "Creating #general:bloom room..."
+	curl -sf -X POST "${MATRIX_HOMESERVER}/_matrix/client/v3/createRoom" \
+		-H "Authorization: Bearer ${bot_token}" \
+		-H "Content-Type: application/json" \
+		-d "{\"room_alias_name\":\"general\",\"invite\":[\"${user_user_id}\"]}" \
+		>/dev/null 2>&1 || echo "  (room may already exist)"
+
+	# User joins the room
+	curl -sf -X POST "${MATRIX_HOMESERVER}/_matrix/client/v3/join/%23general%3Abloom" \
+		-H "Authorization: Bearer ${user_token}" \
+		-H "Content-Type: application/json" \
+		-d '{}' \
+		>/dev/null 2>&1 || true
+
+	echo ""
+	echo "Matrix ready."
+	echo "  Username: ${username}"
+	echo "  Password: ${user_password}"
+	echo ""
+	mark_done_with matrix "$username"
+}
+
+step_git() {
+	echo ""
+	echo "--- Git Identity ---"
+	read -rp "Your name: " git_name
+	read -rp "Email: " git_email
+
+	[[ -n "$git_name" ]] && git config --global user.name "$git_name"
+	[[ -n "$git_email" ]] && git config --global user.email "$git_email"
+
+	echo "Git identity configured."
+	mark_done git
+}
+
+step_services() {
+	echo ""
+	echo "--- Optional Services ---"
+	local installed=""
+
+	read -rp "Install dufs file server? (access files from any device via WebDAV) [y/N]: " dufs_answer
+	if [[ "${dufs_answer,,}" == "y" ]]; then
+		echo "  Installing dufs..."
+		if install_service dufs; then
+			echo "  dufs installed."
+			installed="${installed} dufs"
+		else
+			echo "  dufs installation failed."
+		fi
+	fi
+
+	read -rp "Install Cinny Matrix client? (web-based Matrix chat) [y/N]: " cinny_answer
+	if [[ "${cinny_answer,,}" == "y" ]]; then
+		echo "  Installing Cinny..."
+		if install_service cinny; then
+			echo "  Cinny installed."
+			installed="${installed} cinny"
+		else
+			echo "  Cinny installation failed."
+		fi
+	fi
+
+	mark_done_with services "${installed:-none}"
+}
+
+# --- Finalization ---
+
+finalize() {
+	touch "$SETUP_COMPLETE"
+	loginctl enable-linger "$USER"
+	systemctl --user enable --now pi-daemon.service 2>/dev/null || true
+
+	local mesh_ip
+	mesh_ip=$(read_checkpoint_data netbird)
+	local matrix_user
+	matrix_user=$(read_checkpoint_data matrix)
+	local services
+	services=$(read_checkpoint_data services)
+
+	echo ""
+	echo "========================================="
+	echo "  Setup complete!"
+	echo ""
+	[[ -n "$mesh_ip" ]] && echo "  Mesh IP: ${mesh_ip} (access from any NetBird peer)"
+	[[ -n "$matrix_user" ]] && echo "  Matrix user: @${matrix_user}:bloom"
+	echo "  Services:${services:-none}"
+	echo ""
+	echo "  Starting Pi — your AI companion will"
+	echo "  help you personalize your experience."
+	echo "========================================="
+	echo ""
+}
+
+# --- Main ---
+
+main() {
+	if [[ -f "$SETUP_COMPLETE" ]]; then
+		return 0
+	fi
+
+	if [[ -d "$WIZARD_STATE" ]] && ls "$WIZARD_STATE"/* &>/dev/null; then
+		echo "Resuming setup..."
+	fi
+
+	step_done welcome  || step_welcome
+	step_done password || step_password
+	step_done network  || step_network
+	step_done netbird  || step_netbird
+	step_done matrix   || step_matrix
+	step_done git      || step_git
+	step_done services || step_services
+
+	finalize
+}
+
+main

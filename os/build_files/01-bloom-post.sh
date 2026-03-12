@@ -7,8 +7,14 @@ cd /usr/local/share/bloom
 npm run build
 npm prune --omit=dev
 
-# Symlink globally-installed Pi SDK into Bloom's node_modules
-ln -sf /usr/local/lib/node_modules/@mariozechner /usr/local/share/bloom/node_modules/@mariozechner
+# Wire globally-installed Pi SDK packages into Bloom's node_modules
+# NOTE: linking the namespace dir itself can create a nested
+# node_modules/@mariozechner/@mariozechner layout if the target exists.
+# Link concrete packages instead.
+rm -rf /usr/local/share/bloom/node_modules/@mariozechner
+mkdir -p /usr/local/share/bloom/node_modules/@mariozechner
+ln -s /usr/local/lib/node_modules/@mariozechner/pi-coding-agent /usr/local/share/bloom/node_modules/@mariozechner/pi-coding-agent
+ln -s /usr/local/lib/node_modules/@mariozechner/pi-coding-agent/node_modules/@mariozechner/pi-ai /usr/local/share/bloom/node_modules/@mariozechner/pi-ai
 
 # Configure Pi settings defaults (immutable layer)
 mkdir -p /usr/local/share/bloom/.pi/agent

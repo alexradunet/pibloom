@@ -9,6 +9,7 @@ jq
 # Development tools
 git
 git-lfs
+gh
 ripgrep
 fd-find
 bat

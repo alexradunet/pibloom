@@ -62,9 +62,11 @@ You'll need a setup key from your NetBird dashboard (app.netbird.io → Setup Ke
 
 Setup key:
 ```
-Runs `sudo netbird up --setup-key <KEY>`. Verifies with `netbird status` (checks for "Connected" and a mesh IP). On failure, prints the error and re-prompts.
+Runs `sudo netbird up --setup-key <KEY>`. Verifies with:
+- `netbird status | grep -q "Connected"` for connection state
+- `netbird status | grep -oP 'NetBird IP:\s+\K[\d.]+'` for mesh IP extraction
 
-Stores the mesh IP in the checkpoint file for later display.
+On failure, prints the error and re-prompts. Stores the mesh IP in the checkpoint file for later display.
 
 ### Step 5: Matrix Accounts
 
@@ -97,7 +99,21 @@ Then automatically:
 6. Creates `#general:bloom` room, invites + joins the user
 7. Prints: "Matrix ready. Your password: <password>"
 
-Generated passwords use `/dev/urandom | base64 | head -c 16`.
+Generated passwords use `openssl rand -base64url 24` (32 chars, base64url-safe — no `+` or `/` to cause shell quoting issues). Matches `lib/matrix.ts` which uses `randomBytes(24).toString("base64url")`.
+
+#### Matrix UIA Registration Flow
+
+Each account registration requires a two-step UIA (User-Interactive Authentication) flow (see `lib/matrix.ts` for the canonical TypeScript implementation):
+
+**Step 1** — POST to `/_matrix/client/v3/register` with `{"username": "<name>", "password": "<pw>", "auth": {}, "inhibit_login": false}`. This returns HTTP 401 with a `session` ID.
+
+**Step 2** — POST again to the same endpoint with `{"username": "<name>", "password": "<pw>", "inhibit_login": false, "auth": {"type": "m.login.registration_token", "token": "<reg_token>", "session": "<session>"}}`. This returns 200 with `user_id` and `access_token`.
+
+In bash, this is two `curl` calls per account. The wizard parses the session ID from the 401 JSON response using a simple `grep`/`sed` or lightweight JSON extraction.
+
+#### Room Creation
+
+The `@pi:bloom` bot creates the room via `POST /_matrix/client/v3/createRoom` with `{"room_alias_name": "general", "invite": ["@<username>:bloom"]}` using the bot's access token. The user then joins via `POST /_matrix/client/v3/join/%23general%3Abloom` using their access token.
 
 ### Step 6: Git Identity
 
@@ -118,14 +134,19 @@ Install dufs file server? (access files from any device via WebDAV) [y/N]:
 Install Cinny Matrix client? (web-based Matrix chat) [y/N]:
 ```
 
-For each "yes", the wizard:
-1. Copies the Quadlet `.container` file to `~/.config/containers/systemd/`
-2. Copies config files (e.g., `cinny-config.json`) to `~/.config/bloom/`
+For each "yes", the wizard replicates the install logic from `service-io.ts` `installServicePackage()`:
+
+1. Copies Quadlet files from the service's `quadlet/` directory to their correct destinations:
+   - `.container` files → `~/.config/containers/systemd/`
+   - `.socket` files → `~/.config/systemd/user/` (different destination — matches TypeScript routing)
+2. Copies config files (`.json`, `.toml`) to `~/.config/bloom/`
+   - For `cinny-config.json`: templates the homeserver list to `["http://localhost:6167"]` (replaces default)
 3. Creates empty env file at `~/.config/bloom/<name>.env` if missing
 4. Copies SKILL.md to `~/Bloom/Skills/<name>/`
-5. Runs `systemctl --user daemon-reload && systemctl --user enable --now bloom-<name>.service`
+5. Removes stale socket units if the package no longer includes one
+6. Runs `systemctl --user daemon-reload && systemctl --user enable --now bloom-<name>.service`
 
-This replicates what `installServicePackage()` does in TypeScript, but in bash.
+The source service packages are at `/usr/local/share/bloom/services/<name>/` (baked into the OS image).
 
 ### Finalization
 
@@ -171,18 +192,18 @@ Marker files contain the completion timestamp. Some also store output data (e.g.
 # Source .bashrc for env vars
 [ -f ~/.bashrc ] && . ~/.bashrc
 
-# Auto-launch Zellij on interactive SSH login
+# First-boot wizard (runs once, before Pi — must run BEFORE Zellij since exec replaces shell)
+if [ -t 0 ] && [ ! -f "$HOME/.bloom/.setup-complete" ]; then
+  /usr/local/bin/bloom-wizard.sh
+fi
+
+# Auto-launch Zellij on interactive SSH login (only after setup is complete)
 if [ -t 0 ] && [ -n "$SSH_CONNECTION" ] && [ -z "$ZELLIJ" ] && [ -z "$BLOOM_NO_ZELLIJ" ]; then
   if zellij list-sessions 2>/dev/null | grep -q '^bloom$'; then
     exec zellij attach bloom
   else
     exec zellij -s bloom -l bloom
   fi
-fi
-
-# First-boot wizard (runs once, before Pi)
-if [ -t 0 ] && [ ! -f "$HOME/.bloom/.setup-complete" ]; then
-  /usr/local/bin/bloom-wizard.sh
 fi
 
 # Start Pi on interactive login
@@ -219,11 +240,24 @@ The extension shrinks significantly:
 
 **`step-guidance.ts`**: Only persona and complete guidance remain.
 
+**`actions.ts`**: `touchSetupComplete()` is simplified — it no longer needs to touch the sentinel file, enable linger, or start pi-daemon (the wizard already did all of that). It only marks the `persona-done` checkpoint file.
+
+### Two State Systems
+
+The wizard and the bloom-setup extension use **independent state systems**:
+
+- **Wizard state**: `~/.bloom/wizard-state/` — bash checkpoint files, one per wizard step. Read only by the wizard for resume logic.
+- **Extension state**: `~/.bloom/setup-state.json` — JSON file tracking persona + complete steps. Created by the bloom-setup extension when Pi first starts (not by the wizard).
+
+The wizard does NOT write `setup-state.json`. The extension does NOT read `wizard-state/`. The only shared signal is `~/.bloom/.setup-complete` (written by wizard, read by extension and pi-daemon).
+
 ## Removals
 
 ### Files to Delete
 
 - `lib/netbird.ts` — NetBird DNS zone/record management (feature removed entirely)
+- `lib/service-routing.ts` — Orchestration layer built on `netbird.ts` (imports `ensureBloomZone`, `ensureServiceRecord`, etc.)
+- `tests/lib/service-routing.test.ts` — Tests for the removed module
 
 ### Code to Remove
 
@@ -232,6 +266,7 @@ The extension shrinks significantly:
 - NetBird DNS references in `services/netbird/SKILL.md`
 - Mechanical step guidance from `step-guidance.ts` (welcome, network, netbird, connectivity, webdav, matrix, git_identity, contributing, test_message)
 - Corresponding step definitions from `lib/setup.ts`
+- `ensureServiceRouting()` call from `extensions/bloom-services/actions-install.ts` (imports from deleted `lib/service-routing.ts`)
 
 ### Features Removed
 
@@ -253,7 +288,10 @@ The extension shrinks significantly:
 | `skills/first-boot/SKILL.md` | Rewrite | Cover only persona customization and welcome |
 | `lib/setup.ts` | Modify | Shrink STEP_ORDER to persona + complete |
 | `lib/netbird.ts` | **Delete** | DNS zone management removed |
-| `services/netbird/SKILL.md` | Modify | Remove DNS/API token section |
+| `lib/service-routing.ts` | **Delete** | Orchestration layer on netbird.ts — dead code |
+| `tests/lib/service-routing.test.ts` | **Delete** | Tests for removed module |
+| `extensions/bloom-services/actions-install.ts` | Modify | Remove `ensureServiceRouting()` import and call |
+| `services/netbird/SKILL.md` | Modify | Update auth to setup-key only (remove URL auth) |
 | `docs/pibloom-setup.md` | Modify | Reflect wizard + Pi split |
 | Tests for removed code | Modify/Delete | Update test coverage |
 

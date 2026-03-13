@@ -118,9 +118,9 @@ Flat-file object store with YAML frontmatter + Markdown in `~/Bloom/Objects/`.
 
 ### 🌿 bloom-garden
 
-Bloom directory management, blueprint seeding, skill creation, persona evolution.
+Bloom directory management, blueprint seeding, skill creation, Matrix agent provisioning, persona evolution.
 
-**Tools:** `garden_status`, `skill_create`, `skill_list`, `persona_evolve`
+**Tools:** `garden_status`, `skill_create`, `skill_list`, `agent_create`, `persona_evolve`
 **Commands:** `/bloom` (init | status | update-blueprints)
 **Hooks:**
 - `session_start` — Ensure Bloom directory structure, seed blueprints (hash-based change detection)
@@ -155,7 +155,7 @@ Always-on SDK-based daemon managing one `AgentSession` per Matrix room. Runs as 
 - `~/.pi/agent/sessions/bloom-rooms/` — daemon session files
 - `~/.pi/pi-daemon/matrix-state.json` — Matrix client state
 
-## 🧩 All Registered Tools (44)
+## 🧩 All Registered Tools (45)
 
 Quick reference of every tool name available to Pi:
 
@@ -188,6 +188,7 @@ Quick reference of every tool name available to Pi:
 | `garden_status` | bloom-garden | Show Bloom directory, file counts, blueprint state |
 | `skill_create` | bloom-garden | Create new SKILL.md in ~/Bloom/Skills/ |
 | `skill_list` | bloom-garden | List all skills in ~/Bloom/Skills/ |
+| `agent_create` | bloom-garden | Provision a new Bloom Matrix agent account and write its AGENTS.md |
 | `persona_evolve` | bloom-garden | Propose persona layer change |
 | `dev_enable` | bloom-dev | Enable on-device development mode |
 | `dev_disable` | bloom-dev | Disable on-device development mode |

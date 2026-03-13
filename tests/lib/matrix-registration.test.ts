@@ -35,6 +35,15 @@ describe("registerMatrixAccount", () => {
 
 		const result = await registerMatrixAccount("http://localhost:6167", "test", "pass", "token");
 		expect(result).toEqual({ ok: true, userId: "@test:bloom", accessToken: "tok456" });
+		expect(mockFetch).toHaveBeenNthCalledWith(
+			1,
+			"http://localhost:6167/_matrix/client/v3/register",
+			expect.objectContaining({
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ username: "test", password: "pass", inhibit_login: false }),
+			}),
+		);
 	});
 
 	it("returns error for M_USER_IN_USE", async () => {

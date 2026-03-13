@@ -1,12 +1,16 @@
 /**
- * Pi Daemon — always-on Matrix room agent.
+ * Pi Daemon — Matrix room agent supervisor.
  *
- * Entry point: wires MatrixListener to per-room pi --mode rpc subprocesses.
- * Each room gets its own pi process, managed by RoomProcess.
+ * Runs in two modes:
+ * - single-agent fallback: current `@pi:bloom` room daemon
+ * - multi-agent mode: one Matrix client per configured agent, one Pi session per `(room, agent)`
  */
 import { mkdirSync } from "node:fs";
 import os from "node:os";
 import { join } from "node:path";
+import { loadAgentDefinitions, type AgentDefinition } from "./agent-registry.js";
+import { AgentSupervisor } from "./agent-supervisor.js";
+import { MatrixClientPool } from "./matrix-client-pool.js";
 import { matrixCredentialsPath } from "../lib/matrix.js";
 import { sanitizeRoomAlias } from "../lib/room-alias.js";
 import { createLogger } from "../lib/shared.js";
@@ -19,11 +23,13 @@ const log = createLogger("pi-daemon");
 const IDLE_TIMEOUT_MS = Number.parseInt(process.env.BLOOM_DAEMON_IDLE_TIMEOUT_MS ?? "", 10) || 15 * 60 * 1000;
 const SESSION_BASE = join(os.homedir(), ".pi", "agent", "sessions", "bloom-rooms");
 const STORAGE_PATH = join(os.homedir(), ".pi", "pi-daemon", "matrix-state.json");
+const MATRIX_AGENT_CREDENTIALS_DIR = join(os.homedir(), ".pi", "matrix-agents");
+const MATRIX_AGENT_STORAGE_DIR = join(os.homedir(), ".pi", "pi-daemon", "matrix-agents");
 const SOCKET_DIR = join(process.env.XDG_RUNTIME_DIR ?? join(os.homedir(), ".run"), "bloom");
 const TYPING_TIMEOUT_MS = 30_000;
 const TYPING_REFRESH_MS = 20_000;
 
-// Track auth errors for cascading restart
+// Track auth/process errors for cascading restart in single-agent fallback mode
 let authErrorCount = 0;
 let authErrorWindowStart = 0;
 const AUTH_ERROR_WINDOW_MS = 60_000;
@@ -31,12 +37,60 @@ const AUTH_ERROR_THRESHOLD = 2;
 
 async function main(): Promise<void> {
 	log.info("starting pi-daemon", { idleTimeoutMs: IDLE_TIMEOUT_MS, socketDir: SOCKET_DIR });
-
 	mkdirSync(SOCKET_DIR, { recursive: true });
 
-	const rooms = new Map<string, RoomProcess>();
-	const preambleSent = new Set<string>(); // track which rooms have received system preamble
+	const agents = loadAgentDefinitions();
+	if (agents.length === 0) {
+		log.info("no multi-agent definitions found, using single-agent fallback");
+		await runSingleAgentDaemon();
+		return;
+	}
 
+	log.info("multi-agent definitions found, starting supervisor", {
+		agents: agents.map((agent) => agent.id),
+	});
+	await runMultiAgentDaemon(agents);
+}
+
+async function runMultiAgentDaemon(agents: readonly AgentDefinition[]): Promise<void> {
+	let supervisor: AgentSupervisor;
+	const pool = new MatrixClientPool({
+		agents,
+		credentialsDir: MATRIX_AGENT_CREDENTIALS_DIR,
+		storageDir: MATRIX_AGENT_STORAGE_DIR,
+		onEvent: (envelope) => {
+			void supervisor.handleEnvelope(envelope);
+		},
+	});
+	supervisor = new AgentSupervisor({
+		agents,
+		matrixPool: pool,
+		socketDir: SOCKET_DIR,
+		sessionBaseDir: SESSION_BASE,
+		idleTimeoutMs: IDLE_TIMEOUT_MS,
+	});
+
+	async function shutdown(signal: string): Promise<void> {
+		log.info("shutting down", { signal, mode: "multi-agent" });
+		await supervisor.shutdown();
+		await new Promise((r) => setTimeout(r, 100));
+		process.exit(0);
+	}
+
+	process.on("SIGTERM", () => void shutdown("SIGTERM"));
+	process.on("SIGINT", () => void shutdown("SIGINT"));
+
+	await startWithRetry(async () => {
+		await pool.start();
+		log.info("pi-daemon running", { mode: "multi-agent", agents: agents.map((agent) => agent.id) });
+	}, async () => {
+		await supervisor.shutdown();
+	});
+}
+
+async function runSingleAgentDaemon(): Promise<void> {
+	const rooms = new Map<string, RoomProcess>();
+	const preambleSent = new Set<string>();
 	const listener = new MatrixListener({
 		credentialsPath: matrixCredentialsPath(),
 		storagePath: STORAGE_PATH,
@@ -85,8 +139,6 @@ async function main(): Promise<void> {
 	async function getOrSpawn(roomId: string, alias: string): Promise<RoomProcess> {
 		const existing = rooms.get(roomId);
 		if (existing?.alive) return existing;
-
-		// Clean up dead entry if present
 		if (existing) rooms.delete(roomId);
 
 		const sanitized = sanitizeRoomAlias(alias);
@@ -114,7 +166,7 @@ async function main(): Promise<void> {
 				preambleSent.delete(roomId);
 				stopTyping(roomId);
 				if (_code !== 0 && _code !== null) {
-					handleProcessError(roomId, _code);
+					handleProcessError(_code);
 				}
 			},
 		});
@@ -129,9 +181,8 @@ async function main(): Promise<void> {
 			const alias = await listener.getRoomAlias(roomId);
 			const rp = await getOrSpawn(roomId, alias);
 
-			log.info("routing message", { roomId, sender: message.sender });
+			log.info("routing message", { roomId, sender: message.sender, mode: "single-agent" });
 
-			// First message to a fresh process includes system preamble
 			const prefix = `[matrix: ${message.sender}] `;
 			if (!preambleSent.has(roomId)) {
 				const preamble = `[system] You are Pi in Matrix room ${alias}. Respond to messages from this room.\n\n`;
@@ -142,7 +193,7 @@ async function main(): Promise<void> {
 			}
 		} catch (err) {
 			const errStr = String(err);
-			log.error("failed to handle message", { roomId, error: errStr });
+			log.error("failed to handle message", { roomId, error: errStr, mode: "single-agent" });
 			stopTyping(roomId);
 
 			try {
@@ -153,22 +204,8 @@ async function main(): Promise<void> {
 		}
 	}
 
-	function handleProcessError(_roomId: string, _code: number): void {
-		const now = Date.now();
-		if (now - authErrorWindowStart > AUTH_ERROR_WINDOW_MS) {
-			authErrorCount = 0;
-			authErrorWindowStart = now;
-		}
-		authErrorCount++;
-
-		if (authErrorCount >= AUTH_ERROR_THRESHOLD) {
-			log.error("multiple process failures detected, exiting for systemd restart");
-			shutdown("PROCESS_FAILURES");
-		}
-	}
-
 	async function shutdown(signal: string): Promise<void> {
-		log.info("shutting down", { signal });
+		log.info("shutting down", { signal, mode: "single-agent" });
 		for (const roomId of [...typingIntervals.keys()]) {
 			stopTyping(roomId);
 		}
@@ -177,7 +214,6 @@ async function main(): Promise<void> {
 			rp.dispose();
 		}
 		rooms.clear();
-		// Wait up to 5 seconds for child processes to exit
 		await new Promise((r) => setTimeout(r, 5000));
 		process.exit(0);
 	}
@@ -185,17 +221,37 @@ async function main(): Promise<void> {
 	process.on("SIGTERM", () => void shutdown("SIGTERM"));
 	process.on("SIGINT", () => void shutdown("SIGINT"));
 
-	// Start with retry
+	await startWithRetry(async () => {
+		await listener.start();
+		log.info("pi-daemon running", { mode: "single-agent" });
+	});
+}
+
+function handleProcessError(code: number): void {
+	const now = Date.now();
+	if (now - authErrorWindowStart > AUTH_ERROR_WINDOW_MS) {
+		authErrorCount = 0;
+		authErrorWindowStart = now;
+	}
+	authErrorCount++;
+
+	if (authErrorCount >= AUTH_ERROR_THRESHOLD) {
+		log.error("multiple process failures detected, exiting for systemd restart", { code });
+		process.exit(1);
+	}
+}
+
+async function startWithRetry(startFn: () => Promise<void>, onError?: () => Promise<void>): Promise<void> {
 	let retryDelay = 5000;
 	const maxDelay = 300_000;
 
 	while (true) {
 		try {
-			await listener.start();
-			log.info("pi-daemon running");
+			await startFn();
 			break;
 		} catch (err) {
-			log.error("failed to start Matrix listener, retrying", {
+			if (onError) await onError();
+			log.error("failed to start daemon transport, retrying", {
 				error: String(err),
 				retryMs: retryDelay,
 			});

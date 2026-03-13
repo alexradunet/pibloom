@@ -5,6 +5,7 @@
 import { randomBytes } from "node:crypto";
 import os from "node:os";
 import { join } from "node:path";
+import { stringifyFrontmatter } from "./frontmatter.js";
 
 /** Path to stored Matrix credentials. */
 export function matrixCredentialsPath(): string {
@@ -27,6 +28,25 @@ export interface MatrixCredentials {
 	registrationToken: string;
 }
 
+/** Credentials for one Bloom agent Matrix account. */
+export interface MatrixAgentCredentials {
+	homeserver: string;
+	userId: string;
+	accessToken: string;
+	password: string;
+	username: string;
+}
+
+/** Path to the per-agent Matrix credentials directory. */
+export function matrixAgentCredentialsDir(homeDir = os.homedir()): string {
+	return join(homeDir, ".pi", "matrix-agents");
+}
+
+/** Path to the per-agent Matrix credentials file. */
+export function matrixAgentCredentialsPath(agentId: string, homeDir = os.homedir()): string {
+	return join(matrixAgentCredentialsDir(homeDir), `${agentId}.json`);
+}
+
 /**
  * Register a new Matrix account via the UIA (User-Interactive Authentication) flow.
  * Uses a registration token to authorize the account creation.
@@ -38,7 +58,7 @@ export async function registerMatrixAccount(
 	registrationToken: string,
 ): Promise<{ ok: true; userId: string; accessToken: string } | { ok: false; error: string }> {
 	const url = `${homeserver}/_matrix/client/v3/register`;
-	const body = { username, password, auth: {}, inhibit_login: false };
+	const body = { username, password, inhibit_login: false };
 
 	const step1 = await fetch(url, {
 		method: "POST",
@@ -90,6 +110,70 @@ async function registerStep2(
 
 	if (step2.status === 401) return { ok: false, error: "Invalid registration token" };
 	return parseRegistrationError(await step2.json(), step2.status);
+}
+
+export interface ProvisionMatrixAgentAccountOptions {
+	homeserver: string;
+	username: string;
+	registrationToken: string;
+	password?: string;
+	register?: typeof registerMatrixAccount;
+}
+
+/** Register a new Matrix account for a Bloom agent and return the credential payload to persist. */
+export async function provisionMatrixAgentAccount(
+	options: ProvisionMatrixAgentAccountOptions,
+): Promise<{ ok: true; credentials: MatrixAgentCredentials } | { ok: false; error: string }> {
+	const password = options.password ?? generatePassword();
+	const register = options.register ?? registerMatrixAccount;
+	const result = await register(options.homeserver, options.username, password, options.registrationToken);
+	if (!result.ok) return result;
+
+	return {
+		ok: true,
+		credentials: {
+			homeserver: options.homeserver,
+			userId: result.userId,
+			accessToken: result.accessToken,
+			password,
+			username: options.username,
+		},
+	};
+}
+
+export interface GenerateAgentInstructionsMarkdownOptions {
+	id: string;
+	name: string;
+	username: string;
+	description: string;
+	rolePrompt: string;
+	model?: string;
+	thinking?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
+	respondMode?: "host" | "mentioned" | "silent";
+}
+
+/** Generate a starter `AGENTS.md` file for a Bloom Matrix agent. */
+export function generateAgentInstructionsMarkdown(options: GenerateAgentInstructionsMarkdownOptions): string {
+	const frontmatter: Record<string, unknown> = {
+		id: options.id,
+		name: options.name,
+		matrix: {
+			username: options.username,
+			autojoin: true,
+		},
+		...(options.model ? { model: options.model } : {}),
+		...(options.thinking ? { thinking: options.thinking } : {}),
+		respond: {
+			mode: options.respondMode ?? "mentioned",
+			allow_agent_mentions: true,
+			max_public_turns_per_root: 2,
+			cooldown_ms: 1500,
+		},
+		description: options.description,
+	};
+
+	const body = `# ${options.name}\n\n${options.rolePrompt}\n`;
+	return stringifyFrontmatter(frontmatter, body);
 }
 
 function parseRegistrationError(err: unknown, status: number): { ok: false; error: string } {

@@ -1,7 +1,7 @@
 /**
- * bloom-garden — Bloom directory management, blueprint seeding, skill creation, persona evolution.
+ * bloom-garden — Bloom directory management, blueprint seeding, skill creation, agent provisioning, persona evolution.
  *
- * @tools garden_status, skill_create, skill_list, persona_evolve
+ * @tools garden_status, skill_create, skill_list, agent_create, persona_evolve
  * @commands /bloom (init | status | update-blueprints)
  * @hooks session_start, resources_discover
  * @see {@link ../../AGENTS.md#bloom-garden} Extension reference
@@ -9,14 +9,17 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { getBloomDir } from "../../lib/filesystem.js";
+import { errorResult, requireConfirmation } from "../../lib/shared.js";
 import {
 	discoverSkillPaths,
 	ensureBloom,
 	getPackageDir,
+	handleAgentCreate,
 	handleGardenStatus,
 	handlePersonaEvolve,
 	handleSkillCreate,
 	handleSkillList,
+	type AgentCreateParams,
 } from "./actions.js";
 import { handleUpdateBlueprints, readBlueprintVersions, seedBlueprints } from "./actions-blueprints.js";
 
@@ -109,6 +112,33 @@ export default function (pi: ExtensionAPI) {
 		parameters: Type.Object({}),
 		async execute() {
 			return handleSkillList(bloomDir);
+		},
+	});
+
+	pi.registerTool({
+		name: "agent_create",
+		label: "Create Matrix Agent",
+		description: "Provision a new Bloom Matrix agent account and create its AGENTS.md overlay in the Bloom directory",
+		promptGuidelines: ["Changes require explicit user approval before applying."],
+		parameters: Type.Object({
+			id: Type.String({ description: "Agent id in kebab-case (e.g. planner)" }),
+			name: Type.String({ description: "Human-readable agent name (e.g. Planner)" }),
+			username: Type.Optional(Type.String({ description: "Matrix username (defaults to id)" })),
+			description: Type.String({ description: "One-line description of the agent's role" }),
+			role_prompt: Type.String({ description: "Starter role instructions to write into AGENTS.md" }),
+			model: Type.Optional(Type.String({ description: "Optional default model hint" })),
+			thinking: Type.Optional(
+				Type.String({ description: "Optional thinking level: off|minimal|low|medium|high|xhigh" }),
+			),
+			respond_mode: Type.Optional(
+				Type.String({ description: "Optional response mode: host|mentioned|silent" }),
+			),
+		}),
+		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+			const createParams = params as AgentCreateParams;
+			const denied = await requireConfirmation(ctx, `Create Matrix agent ${createParams.id}`);
+			if (denied) return errorResult(denied);
+			return handleAgentCreate(bloomDir, createParams);
 		},
 	});
 

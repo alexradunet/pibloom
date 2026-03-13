@@ -1,10 +1,11 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	ensureBloom,
 	getPackageDir,
+	handleAgentCreate,
 	handleGardenStatus,
 	handleSkillCreate,
 	handleSkillList,
@@ -118,6 +119,170 @@ describe("handleSkillCreate", () => {
 	it("blocks path traversal in skill name that escapes bloom dir", () => {
 		const result = handleSkillCreate(bloomDir, { name: "../../escape", description: "bad", content: "" });
 		expect(result.content[0].text).toContain("Path traversal blocked");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// handleAgentCreate
+// ---------------------------------------------------------------------------
+describe("handleAgentCreate", () => {
+	beforeEach(() => {
+		ensureBloom(bloomDir);
+	});
+
+	it("creates agent credentials and a starter AGENTS.md", async () => {
+		const result = await handleAgentCreate(
+			bloomDir,
+			{
+				id: "planner",
+				name: "Planner",
+				description: "Breaks problems into steps.",
+				role_prompt: "Focus on decomposition and sequencing.",
+				model: "anthropic/claude-sonnet-4-5",
+				thinking: "medium",
+				respond_mode: "mentioned",
+			},
+			{
+				homeDir: bloomDir,
+				loadPrimaryMatrixConfig: () => ({
+					homeserver: "http://localhost:6167",
+					registrationToken: "reg-token",
+				}),
+				provision: async () => ({
+					ok: true,
+					credentials: {
+						homeserver: "http://localhost:6167",
+						userId: "@planner:bloom",
+						accessToken: "planner-token",
+						password: "secret-pass",
+						username: "planner",
+					},
+				}),
+			},
+		);
+
+		expect(result.content[0].text).toContain("created agent: planner");
+		expect(fs.existsSync(path.join(bloomDir, ".pi", "matrix-agents", "planner.json"))).toBe(true);
+		expect(fs.existsSync(path.join(bloomDir, "Agents", "planner", "AGENTS.md"))).toBe(true);
+		const raw = fs.readFileSync(path.join(bloomDir, "Agents", "planner", "AGENTS.md"), "utf-8");
+		expect(raw).toContain("id: planner");
+		expect(raw).toContain("name: Planner");
+		expect(raw).toContain("username: planner");
+	});
+
+	it("defaults username to the agent id", async () => {
+		const provision = vi.fn().mockResolvedValue({
+			ok: true,
+			credentials: {
+				homeserver: "http://localhost:6167",
+				userId: "@critic:bloom",
+				accessToken: "critic-token",
+				password: "secret-pass",
+				username: "critic",
+			},
+		});
+
+		await handleAgentCreate(
+			bloomDir,
+			{
+				id: "critic",
+				name: "Critic",
+				description: "Challenges plans.",
+				role_prompt: "Look for flaws and missing assumptions.",
+			},
+			{
+				homeDir: bloomDir,
+				loadPrimaryMatrixConfig: () => ({
+					homeserver: "http://localhost:6167",
+					registrationToken: "reg-token",
+				}),
+				provision,
+			},
+		);
+
+		expect(provision).toHaveBeenCalledWith(
+			expect.objectContaining({ username: "critic", homeserver: "http://localhost:6167" }),
+		);
+	});
+
+	it("returns an error if the agent already exists", async () => {
+		await handleAgentCreate(
+			bloomDir,
+			{
+				id: "planner",
+				name: "Planner",
+				description: "Breaks problems into steps.",
+				role_prompt: "Focus on decomposition and sequencing.",
+			},
+			{
+				homeDir: bloomDir,
+				loadPrimaryMatrixConfig: () => ({
+					homeserver: "http://localhost:6167",
+					registrationToken: "reg-token",
+				}),
+				provision: async () => ({
+					ok: true,
+					credentials: {
+						homeserver: "http://localhost:6167",
+						userId: "@planner:bloom",
+						accessToken: "planner-token",
+						password: "secret-pass",
+						username: "planner",
+					},
+				}),
+			},
+		);
+
+		const result = await handleAgentCreate(
+			bloomDir,
+			{
+				id: "planner",
+				name: "Planner",
+				description: "Breaks problems into steps.",
+				role_prompt: "Focus on decomposition and sequencing.",
+			},
+			{
+				homeDir: bloomDir,
+				loadPrimaryMatrixConfig: () => ({
+					homeserver: "http://localhost:6167",
+					registrationToken: "reg-token",
+				}),
+				provision: async () => ({
+					ok: true,
+					credentials: {
+						homeserver: "http://localhost:6167",
+						userId: "@planner:bloom",
+						accessToken: "planner-token",
+						password: "secret-pass",
+						username: "planner",
+					},
+				}),
+			},
+		);
+
+		expect(result.content[0].text).toContain("agent already exists");
+	});
+
+	it("rejects invalid agent ids", async () => {
+		const result = await handleAgentCreate(
+			bloomDir,
+			{
+				id: "../../evil",
+				name: "Evil",
+				description: "Nope.",
+				role_prompt: "Nope.",
+			},
+			{
+				homeDir: bloomDir,
+				loadPrimaryMatrixConfig: () => ({
+					homeserver: "http://localhost:6167",
+					registrationToken: "reg-token",
+				}),
+				provision: async () => ({ ok: false, error: "should not be called" }),
+			},
+		);
+
+		expect(result.content[0].text).toContain("invalid agent id");
 	});
 });
 

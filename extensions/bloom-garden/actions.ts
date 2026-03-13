@@ -3,14 +3,22 @@
  * Package helpers, directory setup, and tool handlers.
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { safePath } from "../../lib/filesystem.js";
+import {
+	generateAgentInstructionsMarkdown,
+	matrixAgentCredentialsPath,
+	matrixCredentialsPath,
+	provisionMatrixAgentAccount,
+	type MatrixCredentials,
+} from "../../lib/matrix.js";
 import { stringifyFrontmatter } from "../../lib/frontmatter.js";
 import { errorResult, nowIso, truncate } from "../../lib/shared.js";
 import { readBlueprintVersions } from "./actions-blueprints.js";
 
-const BLOOM_DIRS = ["Persona", "Skills", "Evolutions", "Objects", "audit"];
+const BLOOM_DIRS = ["Persona", "Skills", "Evolutions", "Objects", "Agents", "audit"];
 
 // --- Package helpers ---
 
@@ -100,6 +108,107 @@ export function handleSkillList(bloomDir: string) {
 
 	const text = skills.length > 0 ? skills.join("\n") : "No skills found in Bloom.";
 	return { content: [{ type: "text" as const, text }], details: {} };
+}
+
+export interface AgentCreateParams {
+	id: string;
+	name: string;
+	username?: string;
+	description: string;
+	role_prompt: string;
+	model?: string;
+	thinking?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
+	respond_mode?: "host" | "mentioned" | "silent";
+}
+
+interface AgentCreateDeps {
+	homeDir?: string;
+	loadPrimaryMatrixConfig?: () => { homeserver: string; registrationToken: string };
+	provision?: typeof provisionMatrixAgentAccount;
+}
+
+function loadPrimaryMatrixConfigFromDisk(homeDir = os.homedir()): { homeserver: string; registrationToken: string } {
+	const pathToCreds = homeDir === os.homedir() ? matrixCredentialsPath() : path.join(homeDir, ".pi", "matrix-credentials.json");
+	try {
+		const raw = JSON.parse(fs.readFileSync(pathToCreds, "utf-8")) as MatrixCredentials;
+		if (!raw.homeserver || !raw.registrationToken) {
+			throw new Error("missing homeserver or registration token");
+		}
+		return { homeserver: raw.homeserver, registrationToken: raw.registrationToken };
+	} catch {
+		throw new Error(`No Matrix setup found at ${pathToCreds}`);
+	}
+}
+
+export async function handleAgentCreate(bloomDir: string, params: AgentCreateParams, deps: AgentCreateDeps = {}) {
+	if (!/^[a-z0-9][a-z0-9-]*$/.test(params.id)) {
+		return errorResult(`invalid agent id: ${params.id} (expected kebab-case)`);
+	}
+
+	const username = params.username ?? params.id;
+	if (!/^[a-z0-9][a-z0-9-]*$/.test(username)) {
+		return errorResult(`invalid username: ${username} (expected lowercase letters, numbers, hyphens)`);
+	}
+
+	let agentDir: string;
+	try {
+		agentDir = safePath(bloomDir, "Agents", params.id);
+	} catch {
+		return errorResult("Path traversal blocked: invalid agent id");
+	}
+
+	const instructionsPath = path.join(agentDir, "AGENTS.md");
+	const credentialsPath = matrixAgentCredentialsPath(params.id, deps.homeDir ?? os.homedir());
+	if (fs.existsSync(instructionsPath) || fs.existsSync(credentialsPath)) {
+		return errorResult(`agent already exists: ${params.id}`);
+	}
+
+	let setup: { homeserver: string; registrationToken: string };
+	try {
+		setup = deps.loadPrimaryMatrixConfig ? deps.loadPrimaryMatrixConfig() : loadPrimaryMatrixConfigFromDisk(deps.homeDir);
+	} catch (err) {
+		return errorResult(String(err));
+	}
+
+	const provision = deps.provision ?? provisionMatrixAgentAccount;
+	const result = await provision({
+		homeserver: setup.homeserver,
+		username,
+		registrationToken: setup.registrationToken,
+	});
+	if (!result.ok) return errorResult(result.error);
+
+	fs.mkdirSync(agentDir, { recursive: true });
+	fs.mkdirSync(path.dirname(credentialsPath), { recursive: true, mode: 0o700 });
+	fs.writeFileSync(credentialsPath, JSON.stringify(result.credentials, null, 2), { mode: 0o600 });
+	fs.writeFileSync(
+		instructionsPath,
+		generateAgentInstructionsMarkdown({
+			id: params.id,
+			name: params.name,
+			username,
+			description: params.description,
+			rolePrompt: params.role_prompt,
+			...(params.model ? { model: params.model } : {}),
+			...(params.thinking ? { thinking: params.thinking } : {}),
+			...(params.respond_mode ? { respondMode: params.respond_mode } : {}),
+		}),
+	);
+
+	return {
+		content: [
+			{
+				type: "text" as const,
+				text: `created agent: ${params.id}\nuser: ${result.credentials.userId}\ncredentials: ${credentialsPath}\ninstructions: ${instructionsPath}`,
+			},
+		],
+		details: {
+			agentId: params.id,
+			userId: result.credentials.userId,
+			credentialsPath,
+			instructionsPath,
+		},
+	};
 }
 
 export function handlePersonaEvolve(

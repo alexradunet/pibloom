@@ -18,15 +18,15 @@ import { sanitizeRoomAlias } from "../lib/room-alias.js";
 import { createLogger } from "../lib/shared.js";
 import { type AgentDefinition, loadAgentDefinitionsResult } from "./agent-registry.js";
 import { AgentSupervisor } from "./agent-supervisor.js";
+import { startWithRetry } from "./lifecycle.js";
+import { createMultiAgentRuntime } from "./multi-agent-runtime.js";
 import type { MatrixBridge } from "./contracts/matrix.js";
 import type { MatrixTextEvent } from "./contracts/matrix.js";
 import type { SessionEvent } from "./contracts/session.js";
 import type { BloomSessionLike } from "./contracts/session.js";
-import { classifySender, extractMentions } from "./router.js";
-import { collectScheduledJobs, loadSchedulerState, saveSchedulerState } from "./proactive.js";
 import { MatrixJsSdkBridge } from "./runtime/matrix-js-sdk-bridge.js";
 import { PiRoomSession, type PiRoomSessionOptions } from "./runtime/pi-room-session.js";
-import { Scheduler } from "./scheduler.js";
+import { loadSchedulerState, saveSchedulerState } from "./proactive.js";
 
 const log = createLogger("pi-daemon");
 
@@ -71,68 +71,33 @@ async function main(): Promise<void> {
 }
 
 async function runMultiAgentDaemon(agents: readonly AgentDefinition[]): Promise<void> {
-	const bridge = new MatrixJsSdkBridge({
-		identities: agents.map((agent) => {
-			const credentials = loadAgentMatrixCredentials(agent.id);
-			return {
-				id: agent.id,
-				userId: agent.matrix.userId,
-				homeserver: credentials.homeserver,
-				accessToken: credentials.accessToken,
-				storagePath: join(MATRIX_AGENT_STORAGE_DIR, `${agent.id}.json`),
-				autojoin: agent.matrix.autojoin,
-			};
-		}),
-	});
-	bridge.onTextEvent((_identityId, event) => {
-		const senderInfo = classifySender(event.senderUserId, "", agents);
-		if (senderInfo.senderKind === "self") return;
-		void supervisor.handleEnvelope({
-			roomId: event.roomId,
-			eventId: event.eventId,
-			senderUserId: event.senderUserId,
-			body: event.body,
-			senderKind: senderInfo.senderKind,
-			...(senderInfo.senderAgentId ? { senderAgentId: senderInfo.senderAgentId } : {}),
-			mentions: extractMentions(event.body, agents),
-			timestamp: event.timestamp,
-		});
-	});
-	const supervisor = new AgentSupervisor({
+	const runtime = createMultiAgentRuntime({
 		agents,
-		matrixBridge: bridge,
 		sessionBaseDir: SESSION_BASE,
 		idleTimeoutMs: IDLE_TIMEOUT_MS,
+		matrixAgentStorageDir: MATRIX_AGENT_STORAGE_DIR,
+		loadAgentCredentials: loadAgentMatrixCredentials,
+		loadSchedulerState: () => loadSchedulerState(SCHEDULER_STATE_PATH),
+		saveSchedulerState: (state) => {
+			try {
+				saveSchedulerState(SCHEDULER_STATE_PATH, state);
+			} catch (error) {
+				log.warn("failed to persist scheduler state", { error: String(error) });
+			}
+		},
+		onSchedulerError: (job, error) => {
+			log.warn("proactive job failed", {
+				jobId: job.jobId,
+				agentId: job.agentId,
+				roomId: job.roomId,
+				kind: job.kind,
+				error: String(error),
+			});
+		},
 	});
-	const scheduledJobs = collectScheduledJobs(agents);
-	const scheduler =
-		scheduledJobs.length > 0
-			? new Scheduler({
-					jobs: scheduledJobs,
-					onTrigger: (job) => supervisor.dispatchProactiveJob(job),
-					loadState: () => loadSchedulerState(SCHEDULER_STATE_PATH),
-					saveState: (state) => {
-						try {
-							saveSchedulerState(SCHEDULER_STATE_PATH, state);
-						} catch (error) {
-							log.warn("failed to persist scheduler state", { error: String(error) });
-						}
-					},
-					onError: (job, error) => {
-						log.warn("proactive job failed", {
-							jobId: job.jobId,
-							agentId: job.agentId,
-							roomId: job.roomId,
-							kind: job.kind,
-							error: String(error),
-						});
-					},
-				})
-			: null;
 	async function shutdown(signal: string): Promise<void> {
 		log.info("shutting down", { signal, mode: "multi-agent" });
-		scheduler?.stop();
-		await supervisor.shutdown();
+		await runtime.stop();
 		await new Promise((r) => setTimeout(r, 100));
 		process.exit(0);
 	}
@@ -142,17 +107,23 @@ async function runMultiAgentDaemon(agents: readonly AgentDefinition[]): Promise<
 
 	await startWithRetry(
 		async () => {
-			await bridge.start();
-			scheduler?.start();
+			await runtime.start();
 			log.info("pi-daemon running", {
 				mode: "multi-agent",
 				agents: agents.map((agent) => agent.id),
-				proactiveJobs: scheduledJobs.length,
+				proactiveJobs: runtime.proactiveJobs,
 			});
 		},
 		async () => {
-			scheduler?.stop();
-			await supervisor.shutdown();
+			await runtime.stop();
+		},
+		{
+			onRetry: (error, retryDelay) => {
+				log.error("failed to start daemon transport, retrying", {
+					error: String(error),
+					retryMs: retryDelay,
+				});
+			},
 		},
 	);
 }
@@ -337,26 +308,6 @@ function handleProcessError(codeRoomId: string, code: number, failures: Map<stri
 	}
 
 	failures.set(codeRoomId, next);
-}
-
-async function startWithRetry(startFn: () => Promise<void>, onError?: () => Promise<void>): Promise<void> {
-	let retryDelay = 5000;
-	const maxDelay = 300_000;
-
-	while (true) {
-		try {
-			await startFn();
-			break;
-		} catch (err) {
-			if (onError) await onError();
-			log.error("failed to start daemon transport, retrying", {
-				error: String(err),
-				retryMs: retryDelay,
-			});
-			await new Promise((r) => setTimeout(r, retryDelay));
-			retryDelay = Math.min(retryDelay * 3, maxDelay);
-		}
-	}
 }
 
 function loadPrimaryMatrixCredentials(): MatrixCredentials {

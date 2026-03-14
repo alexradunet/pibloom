@@ -27,6 +27,10 @@ class FakeSession {
 	triggerEvent(event: SessionEvent): void {
 		this.opts.onEvent(event);
 	}
+
+	async triggerAgentEnd(text: string): Promise<void> {
+		await this.opts.onAgentEnd(text);
+	}
 }
 
 describe("createSingleAgentRuntime", () => {
@@ -162,5 +166,51 @@ describe("createSingleAgentRuntime", () => {
 
 		expect(bridge.start).toHaveBeenCalledTimes(2);
 		expect(sleep).toHaveBeenCalledWith(100);
+	});
+
+	it("swallows send failures when forwarding the final agent reply", async () => {
+		const createdSessions: FakeSession[] = [];
+		const bridge = {
+			onTextEvent: vi.fn(),
+			start: vi.fn(async () => undefined),
+			stop: vi.fn(),
+			sendText: vi.fn(async () => {
+				throw new Error("send failed");
+			}),
+			setTyping: vi.fn(async () => undefined),
+			getRoomAlias: vi.fn(async () => "#general:bloom"),
+		};
+		const runtime = createSingleAgentRuntime({
+			storagePath: "/tmp/matrix-state.json",
+			sessionBaseDir: "/tmp/sessions",
+			idleTimeoutMs: 60_000,
+			roomFailureWindowMs: 60_000,
+			roomFailureThreshold: 3,
+			roomQuarantineMs: 300_000,
+			credentials: {
+				homeserver: "http://localhost:6167",
+				botUserId: "@pi:bloom",
+				botAccessToken: "token",
+				botPassword: "secret",
+				registrationToken: "reg-token",
+			},
+			createBridge: () => bridge,
+			createSession: (opts) => {
+				const session = new FakeSession(opts);
+				createdSessions.push(session);
+				return session;
+			},
+		});
+
+		await runtime.handleMessage({
+			roomId: "!room:bloom",
+			eventId: "$evt1",
+			senderUserId: "@alex:bloom",
+			body: "hello",
+			timestamp: 1_000,
+		});
+
+		await expect(createdSessions[0]?.triggerAgentEnd("reply")).resolves.toBeUndefined();
+		expect(bridge.sendText).toHaveBeenCalledWith("default", "!room:bloom", "reply");
 	});
 });

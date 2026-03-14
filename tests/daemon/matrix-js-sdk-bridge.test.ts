@@ -281,4 +281,30 @@ describe("MatrixJsSdkBridge", () => {
 		expect(mockClients[0]?.sendTyping).toHaveBeenCalledWith("!room:bloom", true, 15_000);
 		expect(alias).toBe("#general:bloom");
 	});
+
+	it("falls back from canonical alias to alt alias to room id", async () => {
+		const bridge = new MatrixJsSdkBridge({
+			identities: [
+				{
+					id: "host",
+					userId: "@pi:bloom",
+					homeserver: "http://localhost:6167",
+					accessToken: "host-token",
+					storagePath: "/tmp/host.json",
+				},
+			],
+		});
+
+		await bridge.start();
+
+		mockClients[0]?.getRoom.mockReturnValueOnce(new MockRoom("#canonical:bloom"));
+		await expect(bridge.getRoomAlias("host", "!room:bloom")).resolves.toBe("#canonical:bloom");
+
+		mockClients[0]?.getRoom.mockReturnValueOnce(new MockRoom(null, ["#alt:bloom"]));
+		await expect(bridge.getRoomAlias("host", "!room:bloom")).resolves.toBe("#alt:bloom");
+
+		mockClients[0]?.getRoom.mockReturnValueOnce(null);
+		mockClients[0]?.getLocalAliases.mockRejectedValueOnce(new Error("no aliases"));
+		await expect(bridge.getRoomAlias("host", "!room:bloom")).resolves.toBe("!room:bloom");
+	});
 });

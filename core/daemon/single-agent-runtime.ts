@@ -101,7 +101,11 @@ export function createSingleAgentRuntime(options: SingleAgentRuntimeOptions): Si
 			sessionDir: join(options.sessionBaseDir, sanitized),
 			idleTimeoutMs: options.idleTimeoutMs,
 			onAgentEnd: async (text) => {
-				await bridge.sendText(DEFAULT_MATRIX_IDENTITY, roomId, text);
+				try {
+					await bridge.sendText(DEFAULT_MATRIX_IDENTITY, roomId, text);
+				} catch {
+					/* best effort */
+				}
 			},
 			onEvent: (event) => {
 				handleRoomEvent(roomId, event);

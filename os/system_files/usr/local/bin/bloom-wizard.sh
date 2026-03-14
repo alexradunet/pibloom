@@ -36,6 +36,17 @@ read_checkpoint_data() {
 	[[ -f "$WIZARD_STATE/$1" ]] && sed -n '2p' "$WIZARD_STATE/$1" || echo ""
 }
 
+netbird_status_json() {
+	netbird status --json 2>/dev/null || true
+}
+
+netbird_fqdn() {
+	local status
+	status=$(netbird_status_json)
+	[[ -n "$status" ]] || return 0
+	echo "$status" | sed -n 's/.*"fqdn":"\([^"]*\)".*/\1/p' | head -n1
+}
+
 # --- Matrix state helpers ---
 
 matrix_state_get() {
@@ -200,6 +211,25 @@ pi_ai_ready() {
 	[[ -f "$PI_DIR/agent/settings.json" ]] || return 1
 	grep -q '"defaultProvider"[[:space:]]*:' "$PI_DIR/agent/settings.json" || return 1
 	grep -q '"defaultModel"[[:space:]]*:' "$PI_DIR/agent/settings.json" || return 1
+}
+
+print_service_access_summary() {
+	local installed_services="$1" mesh_ip="$2" mesh_fqdn="$3"
+	local mesh_host="${mesh_fqdn:-$mesh_ip}"
+
+	echo "  Service access:"
+	if [[ "$installed_services" == *"dufs"* ]]; then
+		if [[ -n "$mesh_host" ]]; then
+			echo "    dufs/WebDAV  — http://${mesh_host}:5000"
+		fi
+		if [[ -n "$mesh_ip" && "$mesh_ip" != "$mesh_host" ]]; then
+			echo "    dufs/WebDAV  — http://${mesh_ip}:5000"
+		fi
+		echo "    dufs path    — ~/Public/Bloom"
+	fi
+
+	echo "    Matrix       — bloom / http://localhost:6167 (local-only)"
+	echo "    Cinny        — not installed on this box"
 }
 
 # --- Service install helper ---
@@ -608,6 +638,8 @@ finalize() {
 
 	local mesh_ip
 	mesh_ip=$(read_checkpoint_data netbird)
+	local mesh_fqdn
+	mesh_fqdn=$(netbird_fqdn)
 	local matrix_user
 	matrix_user=$(read_checkpoint_data matrix)
 	local services
@@ -620,8 +652,11 @@ finalize() {
 	echo "  Setup complete!"
 	echo ""
 	[[ -n "$mesh_ip" ]] && echo "  Mesh IP: ${mesh_ip} (access from any NetBird peer)"
+	[[ -n "$mesh_fqdn" ]] && echo "  NetBird name: ${mesh_fqdn}"
 	[[ -n "$matrix_user" ]] && echo "  Matrix user: @${matrix_user}:bloom"
 	echo "  Services:${services:-none}"
+	echo ""
+	print_service_access_summary "$services" "$mesh_ip" "$mesh_fqdn"
 	echo ""
 	echo "  Starting Pi — your AI companion."
 	if [[ "$ai_provider" == "skipped" ]]; then

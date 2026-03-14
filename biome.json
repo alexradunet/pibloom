@@ -37,7 +37,7 @@
 		"defaultBranch": "main"
 	},
 	"files": {
-		"includes": [
+		"include": [
 			"**",
 			"!node_modules",
 			"!dist",
@@ -51,7 +51,7 @@
 	},
 	"overrides": [
 		{
-			"includes": ["tests/**/*.test.ts"],
+			"include": ["tests/**/*.test.ts"],
 			"linter": {
 				"rules": {
 					"suspicious": {

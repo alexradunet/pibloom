@@ -76,8 +76,8 @@ The daemon is a first-class part of the current architecture.
 | Path | Role |
 |------|------|
 | `core/daemon/index.ts` | daemon bootstrap and mode selection |
-| `core/daemon/matrix-listener.ts` | single-agent Matrix client |
-| `core/daemon/matrix-client-pool.ts` | per-agent Matrix clients for multi-agent mode |
+| `core/daemon/matrix-bridge.ts` | Bloom-owned Matrix bridge contract |
+| `core/daemon/matrix-js-sdk-bridge.ts` | official Matrix SDK bridge with per-identity clients |
 | `core/daemon/pi-room-session.ts` | Pi SDK-backed room session lifecycle |
 | `core/daemon/agent-supervisor.ts` | room routing, typing, session lifecycle, sequential handoff |
 
@@ -87,7 +87,7 @@ The daemon is a first-class part of the current architecture.
 2. The daemon starts in multi-agent mode when at least one `~/Bloom/Agents/*/AGENTS.md` parses successfully.
 3. Malformed agent overlays are skipped with warnings instead of aborting daemon startup.
 4. Duplicate-event, cooldown, and per-root reply state is bounded and pruned over time for long-lived daemon sessions.
-5. Pi SDK session events are fanned out to Matrix and Bloom routing logic.
+5. Matrix events are normalized by the official Matrix SDK bridge and handed to Bloom routing logic.
 6. Idle room sessions are disposed after `BLOOM_DAEMON_IDLE_TIMEOUT_MS` unless more traffic arrives.
 7. During supervisor shutdown, new sequential multi-agent handoffs are suppressed so room shutdown cannot enqueue fresh work.
 

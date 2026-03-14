@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 /**
  * Pi Daemon — Matrix room agent supervisor.
  *
@@ -7,14 +8,21 @@
  */
 import os from "node:os";
 import { join } from "node:path";
-import { matrixCredentialsPath } from "../lib/matrix.js";
+import {
+	type MatrixAgentCredentials,
+	type MatrixCredentials,
+	matrixAgentCredentialsPath,
+	matrixCredentialsPath,
+} from "../lib/matrix.js";
 import { sanitizeRoomAlias } from "../lib/room-alias.js";
 import { createLogger } from "../lib/shared.js";
 import { type AgentDefinition, loadAgentDefinitionsResult } from "./agent-registry.js";
 import { AgentSupervisor } from "./agent-supervisor.js";
-import { MatrixClientPool } from "./matrix-client-pool.js";
-import { type IncomingMessage, MatrixListener } from "./matrix-listener.js";
+import type { MatrixBridge } from "./matrix-bridge.js";
+import { MatrixJsSdkBridge } from "./matrix-js-sdk-bridge.js";
+import type { MatrixTextEvent } from "./matrix-types.js";
 import { PiRoomSession, type PiRoomSessionOptions } from "./pi-room-session.js";
+import { classifySender, extractMentions } from "./router.js";
 import type { SessionEvent } from "./session-events.js";
 import type { BloomSessionLike } from "./session-like.js";
 
@@ -23,8 +31,8 @@ const log = createLogger("pi-daemon");
 const IDLE_TIMEOUT_MS = Number.parseInt(process.env.BLOOM_DAEMON_IDLE_TIMEOUT_MS ?? "", 10) || 15 * 60 * 1000;
 const SESSION_BASE = join(os.homedir(), ".pi", "agent", "sessions", "bloom-rooms");
 const STORAGE_PATH = join(os.homedir(), ".pi", "pi-daemon", "matrix-state.json");
-const MATRIX_AGENT_CREDENTIALS_DIR = join(os.homedir(), ".pi", "matrix-agents");
 const MATRIX_AGENT_STORAGE_DIR = join(os.homedir(), ".pi", "pi-daemon", "matrix-agents");
+const DEFAULT_MATRIX_IDENTITY = "default";
 const TYPING_TIMEOUT_MS = 30_000;
 const TYPING_REFRESH_MS = 20_000;
 
@@ -60,22 +68,39 @@ async function main(): Promise<void> {
 }
 
 async function runMultiAgentDaemon(agents: readonly AgentDefinition[]): Promise<void> {
-	let supervisor: AgentSupervisor;
-	const pool = new MatrixClientPool({
-		agents,
-		credentialsDir: MATRIX_AGENT_CREDENTIALS_DIR,
-		storageDir: MATRIX_AGENT_STORAGE_DIR,
-		onEvent: (envelope) => {
-			void supervisor.handleEnvelope(envelope);
-		},
+	const bridge = new MatrixJsSdkBridge({
+		identities: agents.map((agent) => {
+			const credentials = loadAgentMatrixCredentials(agent.id);
+			return {
+				id: agent.id,
+				userId: agent.matrix.userId,
+				homeserver: credentials.homeserver,
+				accessToken: credentials.accessToken,
+				storagePath: join(MATRIX_AGENT_STORAGE_DIR, `${agent.id}.json`),
+				autojoin: agent.matrix.autojoin,
+			};
+		}),
 	});
-	supervisor = new AgentSupervisor({
+	bridge.onTextEvent((_identityId, event) => {
+		const senderInfo = classifySender(event.senderUserId, "", agents);
+		if (senderInfo.senderKind === "self") return;
+		void supervisor.handleEnvelope({
+			roomId: event.roomId,
+			eventId: event.eventId,
+			senderUserId: event.senderUserId,
+			body: event.body,
+			senderKind: senderInfo.senderKind,
+			...(senderInfo.senderAgentId ? { senderAgentId: senderInfo.senderAgentId } : {}),
+			mentions: extractMentions(event.body, agents),
+			timestamp: event.timestamp,
+		});
+	});
+	const supervisor = new AgentSupervisor({
 		agents,
-		matrixPool: pool,
+		matrixBridge: bridge,
 		sessionBaseDir: SESSION_BASE,
 		idleTimeoutMs: IDLE_TIMEOUT_MS,
 	});
-
 	async function shutdown(signal: string): Promise<void> {
 		log.info("shutting down", { signal, mode: "multi-agent" });
 		await supervisor.shutdown();
@@ -88,7 +113,7 @@ async function runMultiAgentDaemon(agents: readonly AgentDefinition[]): Promise<
 
 	await startWithRetry(
 		async () => {
-			await pool.start();
+			await bridge.start();
 			log.info("pi-daemon running", { mode: "multi-agent", agents: agents.map((agent) => agent.id) });
 		},
 		async () => {
@@ -101,12 +126,21 @@ async function runSingleAgentDaemon(): Promise<void> {
 	const rooms = new Map<string, BloomSessionLike>();
 	const preambleSent = new Set<string>();
 	const roomFailures = new Map<string, RoomFailureState>();
-	const listener = new MatrixListener({
-		credentialsPath: matrixCredentialsPath(),
-		storagePath: STORAGE_PATH,
-		onMessage: (roomId, message) => {
-			void handleMessage(roomId, message);
-		},
+	const credentials = loadPrimaryMatrixCredentials();
+	const bridge: MatrixBridge = new MatrixJsSdkBridge({
+		identities: [
+			{
+				id: DEFAULT_MATRIX_IDENTITY,
+				userId: credentials.botUserId,
+				homeserver: credentials.homeserver,
+				accessToken: credentials.botAccessToken,
+				storagePath: STORAGE_PATH,
+				autojoin: true,
+			},
+		],
+	});
+	bridge.onTextEvent((_identityId, event) => {
+		void handleMessage(event);
 	});
 	const typingIntervals = new Map<string, ReturnType<typeof setInterval>>();
 
@@ -115,12 +149,12 @@ async function runSingleAgentDaemon(): Promise<void> {
 	function startTyping(roomId: string): void {
 		if (typingIntervals.has(roomId)) return;
 
-		void listener.setTyping(roomId, true, TYPING_TIMEOUT_MS).catch((err) => {
+		void bridge.setTyping(DEFAULT_MATRIX_IDENTITY, roomId, true, TYPING_TIMEOUT_MS).catch((err) => {
 			log.warn("failed to set typing=true", { roomId, error: String(err) });
 		});
 
 		const interval = setInterval(() => {
-			void listener.setTyping(roomId, true, TYPING_TIMEOUT_MS).catch((err) => {
+			void bridge.setTyping(DEFAULT_MATRIX_IDENTITY, roomId, true, TYPING_TIMEOUT_MS).catch((err) => {
 				log.warn("failed to refresh typing state", { roomId, error: String(err) });
 			});
 		}, TYPING_REFRESH_MS);
@@ -135,7 +169,7 @@ async function runSingleAgentDaemon(): Promise<void> {
 		clearInterval(interval);
 		typingIntervals.delete(roomId);
 
-		void listener.setTyping(roomId, false).catch((err) => {
+		void bridge.setTyping(DEFAULT_MATRIX_IDENTITY, roomId, false).catch((err) => {
 			log.warn("failed to set typing=false", { roomId, error: String(err) });
 		});
 	}
@@ -169,7 +203,7 @@ async function runSingleAgentDaemon(): Promise<void> {
 			idleTimeoutMs: IDLE_TIMEOUT_MS,
 			onAgentEnd: async (text) => {
 				try {
-					await listener.sendText(roomId, text);
+					await bridge.sendText(DEFAULT_MATRIX_IDENTITY, roomId, text);
 				} catch (err) {
 					log.error("failed to send response to Matrix", { roomId, error: String(err) });
 				}
@@ -192,28 +226,32 @@ async function runSingleAgentDaemon(): Promise<void> {
 		return rp;
 	}
 
-	async function handleMessage(roomId: string, message: IncomingMessage): Promise<void> {
+	async function handleMessage(message: MatrixTextEvent): Promise<void> {
 		try {
-			const alias = await listener.getRoomAlias(roomId);
-			const rp = await getOrSpawn(roomId, alias);
+			const alias = await bridge.getRoomAlias(DEFAULT_MATRIX_IDENTITY, message.roomId);
+			const rp = await getOrSpawn(message.roomId, alias);
 
-			log.info("routing message", { roomId, sender: message.sender, mode: "single-agent" });
+			log.info("routing message", { roomId: message.roomId, sender: message.senderUserId, mode: "single-agent" });
 
-			const prefix = `[matrix: ${message.sender}] `;
-			if (!preambleSent.has(roomId)) {
+			const prefix = `[matrix: ${message.senderUserId}] `;
+			if (!preambleSent.has(message.roomId)) {
 				const preamble = `[system] You are Pi in Matrix room ${alias}. Respond to messages from this room.\n\n`;
 				await rp.sendMessage(preamble + prefix + message.body);
-				preambleSent.add(roomId);
+				preambleSent.add(message.roomId);
 			} else {
 				await rp.sendMessage(prefix + message.body);
 			}
 		} catch (err) {
 			const errStr = String(err);
-			log.error("failed to handle message", { roomId, error: errStr, mode: "single-agent" });
-			stopTyping(roomId);
+			log.error("failed to handle message", { roomId: message.roomId, error: errStr, mode: "single-agent" });
+			stopTyping(message.roomId);
 
 			try {
-				await listener.sendText(roomId, "Sorry, I hit an error processing your message. Please try again.");
+				await bridge.sendText(
+					DEFAULT_MATRIX_IDENTITY,
+					message.roomId,
+					"Sorry, I hit an error processing your message. Please try again.",
+				);
 			} catch {
 				/* best effort */
 			}
@@ -225,7 +263,7 @@ async function runSingleAgentDaemon(): Promise<void> {
 		for (const roomId of [...typingIntervals.keys()]) {
 			stopTyping(roomId);
 		}
-		listener.stop();
+		bridge.stop();
 		for (const rp of rooms.values()) {
 			rp.dispose();
 		}
@@ -238,7 +276,7 @@ async function runSingleAgentDaemon(): Promise<void> {
 	process.on("SIGINT", () => void shutdown("SIGINT"));
 
 	await startWithRetry(async () => {
-		await listener.start();
+		await bridge.start();
 		log.info("pi-daemon running", { mode: "single-agent" });
 	});
 }
@@ -283,6 +321,24 @@ async function startWithRetry(startFn: () => Promise<void>, onError?: () => Prom
 			await new Promise((r) => setTimeout(r, retryDelay));
 			retryDelay = Math.min(retryDelay * 3, maxDelay);
 		}
+	}
+}
+
+function loadPrimaryMatrixCredentials(): MatrixCredentials {
+	const path = matrixCredentialsPath();
+	try {
+		return JSON.parse(readFileSync(path, "utf-8")) as MatrixCredentials;
+	} catch {
+		throw new Error(`No credentials at ${path}`);
+	}
+}
+
+function loadAgentMatrixCredentials(agentId: string): MatrixAgentCredentials {
+	const path = matrixAgentCredentialsPath(agentId);
+	try {
+		return JSON.parse(readFileSync(path, "utf-8")) as MatrixAgentCredentials;
+	} catch {
+		throw new Error(`No Matrix credentials at ${path}`);
 	}
 }
 

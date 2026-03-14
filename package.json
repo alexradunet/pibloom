@@ -7,14 +7,9 @@
 	"engines": {
 		"node": ">=22"
 	},
-	"keywords": [
-		"pi-package"
-	],
+	"keywords": ["pi-package"],
 	"pi": {
-		"extensions": [
-			"./core/extensions",
-			"./extensions"
-		]
+		"extensions": ["./core/extensions", "./extensions"]
 	},
 	"peerDependencies": {
 		"@mariozechner/pi-ai": "*",
@@ -24,7 +19,7 @@
 	"dependencies": {
 		"hosted-git-info": "^9.0.2",
 		"js-yaml": "^4.1.0",
-		"matrix-bot-sdk": "^0.8.0"
+		"matrix-js-sdk": "^41.1.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",

@@ -7,7 +7,7 @@ This repository contains:
 
 - the Bloom core: OS image assets, Pi runtime integration, persona, skills, and built-in extensions
 - optional extensions and bundled service packages
-- the Matrix room daemon: a long-running service that bridges Matrix rooms to Pi SDK-backed sessions
+- the Matrix room daemon: a long-running service that bridges Matrix rooms to Pi SDK-backed sessions through the official Matrix JS SDK
 
 ## What Ships Today
 
@@ -20,7 +20,7 @@ Bloom currently provides:
 - repository bootstrap, sync, and PR submission helpers
 - service scaffolding, installation, smoke testing, manifest management, and bridge lifecycle tools
 - a flat-file object store in `~/Bloom/Objects/`
-- an optional multi-agent Matrix daemon with one Pi session per `(room, agent)` pair
+- an optional multi-agent Matrix daemon with one Pi session per `(room, agent)` pair and one Matrix SDK client per identity
 - a first-boot flow split between a bash wizard and a Pi-guided persona step
 
 ## Default Install
@@ -108,11 +108,11 @@ Reference material for OS-level infrastructure also lives under `services/`:
 `core/daemon/index.ts` starts the Bloom room daemon in one of two modes:
 
 - single-agent fallback when no valid agent definitions exist in `~/Bloom/Agents/*/AGENTS.md`
-- multi-agent mode when one or more agent overlays parse successfully, with one Matrix client per configured agent and
+- multi-agent mode when one or more agent overlays parse successfully, with one Matrix SDK client per configured agent and
   one Pi session per `(room, agent)` pair
 - malformed agent overlays are logged and skipped instead of aborting daemon startup
 
-Each room session is backed by Pi's in-process SDK session lifecycle.
+Each room session is backed by Pi's in-process SDK session lifecycle, and Matrix transport uses the official `matrix-js-sdk` with in-memory sync state.
 
 ## Build and Test
 

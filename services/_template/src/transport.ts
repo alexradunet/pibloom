@@ -10,7 +10,7 @@
  *   - onMessage callback: Called by the transport when an inbound message arrives
  *
  * Examples from existing services:
- *   - element/src/transport.ts: Matrix bot client via matrix-bot-sdk
+ *   - element/src/transport.ts: Matrix bot client via matrix-js-sdk
  */
 
 /** Options passed to connect() from the entry point. */

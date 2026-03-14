@@ -49,8 +49,6 @@ Related state outside `~/Bloom/`:
 | `~/.pi/bloom-context.json` | compacted Bloom context |
 | `~/.pi/matrix-credentials.json` | primary Matrix credentials |
 | `~/.pi/matrix-agents/` | per-agent Matrix credentials |
-| `~/.pi/pi-daemon/matrix-state.json` | single-agent Matrix sync state |
-| `~/.pi/pi-daemon/matrix-agents/` | multi-agent Matrix sync state |
 | `~/.pi/agent/sessions/bloom-rooms/` | daemon session directories |
 | `~/.config/containers/systemd/` | installed Quadlet units |
 | `~/.config/systemd/user/` | user socket units and user services |
@@ -257,6 +255,8 @@ Key daemon files:
 | Path | Purpose |
 |------|---------|
 | `core/daemon/index.ts` | bootstrap and mode selection |
+| `core/daemon/matrix-bridge.ts` | Bloom-owned Matrix bridge contract |
+| `core/daemon/matrix-js-sdk-bridge.ts` | official Matrix SDK bridge and per-identity client lifecycle |
 | `core/daemon/pi-room-session.ts` | Pi SDK-backed room session lifecycle |
 | `core/daemon/agent-supervisor.ts` | multi-agent routing and session orchestration |
 | `core/daemon/router.ts` | routing policy |

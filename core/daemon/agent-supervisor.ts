@@ -25,7 +25,7 @@ interface SequentialChain {
 	replies: SequentialChainReply[];
 }
 
-export interface MatrixPoolLike {
+export interface MatrixBridgeLike {
 	sendText(agentId: string, roomId: string, text: string): Promise<void>;
 	setTyping(agentId: string, roomId: string, typing: boolean, timeoutMs?: number): Promise<void>;
 	getRoomAlias(agentId: string, roomId: string): Promise<string>;
@@ -34,7 +34,8 @@ export interface MatrixPoolLike {
 
 export interface AgentSupervisorOptions {
 	agents: readonly AgentDefinition[];
-	matrixPool: MatrixPoolLike;
+	matrixBridge?: MatrixBridgeLike;
+	matrixPool?: MatrixBridgeLike;
 	sessionBaseDir: string;
 	idleTimeoutMs: number;
 	createSession?: (opts: AgentSessionOptions) => BloomSessionLike;
@@ -42,7 +43,7 @@ export interface AgentSupervisorOptions {
 
 export class AgentSupervisor {
 	private readonly agents: readonly AgentDefinition[];
-	private readonly matrixPool: MatrixPoolLike;
+	private readonly matrixBridge: MatrixBridgeLike;
 	private readonly sessionBaseDir: string;
 	private readonly idleTimeoutMs: number;
 	private readonly createSession: (opts: AgentSessionOptions) => BloomSessionLike;
@@ -56,7 +57,7 @@ export class AgentSupervisor {
 
 	constructor(options: AgentSupervisorOptions) {
 		this.agents = options.agents;
-		this.matrixPool = options.matrixPool;
+		this.matrixBridge = options.matrixBridge ?? options.matrixPool ?? missingMatrixBridge();
 		this.sessionBaseDir = options.sessionBaseDir;
 		this.idleTimeoutMs = options.idleTimeoutMs;
 		this.createSession = options.createSession ?? ((opts) => new AgentSession(opts));
@@ -109,7 +110,7 @@ export class AgentSupervisor {
 			session.dispose();
 		}
 		this.sessions.clear();
-		this.matrixPool.stop();
+		this.matrixBridge.stop();
 	}
 
 	private async dispatchMessageToAgent(roomId: string, agentId: string, message: string): Promise<void> {
@@ -117,7 +118,7 @@ export class AgentSupervisor {
 		this.startTyping(roomId, agentId);
 		try {
 			const agent = this.requireAgent(agentId);
-			const alias = await this.matrixPool.getRoomAlias(agentId, roomId);
+			const alias = await this.matrixBridge.getRoomAlias(agentId, roomId);
 			const session = await this.getOrSpawnSession(roomId, alias, agent);
 			const key = this.sessionKey(roomId, agentId);
 
@@ -162,7 +163,7 @@ export class AgentSupervisor {
 
 	private async handleAgentResponse(roomId: string, agentId: string, text: string): Promise<void> {
 		if (this.shuttingDown) return;
-		await this.matrixPool.sendText(agentId, roomId, text);
+		await this.matrixBridge.sendText(agentId, roomId, text);
 		if (this.shuttingDown) return;
 
 		const chainKey = this.dequeueWaitingChain(roomId, agentId);
@@ -236,9 +237,9 @@ export class AgentSupervisor {
 		const key = this.sessionKey(roomId, agentId);
 		if (this.typingIntervals.has(key)) return;
 
-		void this.matrixPool.setTyping(agentId, roomId, true, TYPING_TIMEOUT_MS);
+		void this.matrixBridge.setTyping(agentId, roomId, true, TYPING_TIMEOUT_MS);
 		const interval = setInterval(() => {
-			void this.matrixPool.setTyping(agentId, roomId, true, TYPING_TIMEOUT_MS);
+			void this.matrixBridge.setTyping(agentId, roomId, true, TYPING_TIMEOUT_MS);
 		}, TYPING_REFRESH_MS);
 		interval.unref();
 		this.typingIntervals.set(key, interval);
@@ -251,7 +252,7 @@ export class AgentSupervisor {
 			clearInterval(interval);
 			this.typingIntervals.delete(key);
 		}
-		void this.matrixPool.setTyping(agentId, roomId, false, TYPING_TIMEOUT_MS);
+		void this.matrixBridge.setTyping(agentId, roomId, false, TYPING_TIMEOUT_MS);
 	}
 
 	private buildPreamble(agent: AgentDefinition, roomAlias: string): string {
@@ -305,4 +306,8 @@ export class AgentSupervisor {
 		}
 		return chainKey;
 	}
+}
+
+function missingMatrixBridge(): never {
+	throw new Error("AgentSupervisor requires a Matrix bridge");
 }

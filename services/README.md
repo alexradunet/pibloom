@@ -6,6 +6,7 @@ Bundled service packages live in `services/`.
 
 | Path | Role |
 |------|------|
+| `services/cinny/` | packaged web chat client using a pinned upstream image |
 | `services/dufs/` | packaged service using a pinned upstream image |
 | `services/code-server/` | packaged service built as a local image when needed |
 | `services/_template/` | scaffold template for new packages |
@@ -32,7 +33,7 @@ services/{name}/
 
 ## Installation Flow
 
-`service_install` and `manifest_apply` operate on these packages.
+`service_install` and `manifest_apply` operate on these packages. Bridge tools use the `bridges:` section in `services/catalog.yaml` but do not require a per-bridge package directory under `services/`.
 
 Current install behavior:
 

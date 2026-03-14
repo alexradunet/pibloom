@@ -99,8 +99,9 @@ Fresh-image defaults:
 
 - installed by preset: SSH, NetBird, local Matrix homeserver
 - started after setup when AI defaults are ready: Pi daemon
-- optional: `cinny`, `dufs`, `code-server`, bridges
-- not included by default: Cinny, Caddy, hosted web proxy stack
+- optional later: `cinny`, `dufs`, `code-server`, bridges
+- offered directly by the first-boot wizard: `cinny`, `dufs`
+- not included by default: Cinny, hosted web proxy stack
 
 See [docs/pibloom-setup.md](pibloom-setup.md) for the full first-boot flow.
 Use [docs/live-testing-checklist.md](live-testing-checklist.md) as the acceptance checklist for a fresh device run.

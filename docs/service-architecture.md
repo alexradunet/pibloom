@@ -89,6 +89,7 @@ services/{name}/
 
 | Package | Image source | Notes |
 |---------|--------------|-------|
+| `cinny` | pinned upstream image | optional Bloom Web Chat client on port `8081` |
 | `dufs` | pinned upstream image | packaged network file server |
 | `code-server` | local image `localhost/bloom-code-server:latest` | built from `services/code-server/Containerfile` when needed |
 | `_template` | scaffold source | basis for new service packages |
@@ -119,6 +120,8 @@ Tools:
 Current behavior:
 
 - `manifest_apply` can install missing packaged services
+- `manifest_apply` prompts for confirmation before live changes
+- `manifest_apply(dry_run=true)` reports the planned installs and unit actions without mutating the host
 - service state is reconciled through user systemd / Quadlet units
 - manifest entries may be updated by service installation and dependency installation flows
 
@@ -134,6 +137,7 @@ Current supported bridge names from `services/catalog.yaml`:
 
 Bridge creation currently:
 
+- pulls the configured bridge image
 - writes a Quadlet unit
 - writes starter bridge config
 - points the bridge at the local Matrix homeserver

@@ -37,11 +37,15 @@ Optional packaged services are not installed automatically. Today that includes:
 - `cinny`
 - `dufs`
 - `code-server`
-- Matrix bridges
+
+Bridge workloads are available separately through `bridge_create` / `bridge_remove` / `bridge_status`:
+
+- `whatsapp`
+- `telegram`
+- `signal`
 
 Not installed by default:
 
-- `caddy`
 - `cinny`
 - any bundled web reverse proxy
 
@@ -94,6 +98,7 @@ Bundled skill directories in `core/pi-skills/`:
 
 | Package | Current role |
 |---------|--------------|
+| `cinny` | packaged web chat client exposed on port `8081` and preconfigured for the local Bloom Matrix server |
 | `dufs` | packaged Quadlet service exposed on port `5000` |
 | `code-server` | packaged service built locally as `localhost/bloom-code-server:latest` |
 | `_template` | scaffold template for new services |

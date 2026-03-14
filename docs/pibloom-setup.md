@@ -13,7 +13,7 @@ Current responsibilities:
 1. password change and basic connectivity checks
 2. NetBird enrollment
 3. primary Matrix account bootstrap
-4. Git identity setup
+4. AI provider defaults for Pi
 5. optional bundled service choices
 
 What the wizard leaves installed by default:
@@ -24,11 +24,15 @@ What the wizard leaves installed by default:
 
 What it does not install by default:
 
-- Cinny
-- Caddy
-- optional packaged services unless you explicitly choose them
+- Cinny unless you explicitly choose Bloom Web Chat
+- dufs unless you explicitly choose the file server
+- `code-server`
+- Matrix bridges
 
-The only client-facing web prompt in the wizard is optional Bloom Web Chat, which installs Cinny preconfigured for this Bloom node's Matrix server.
+The wizard currently offers two optional service prompts:
+
+- Bloom Web Chat, which installs Cinny preconfigured for this Bloom node's Matrix server
+- dufs, which serves `~/Public/Bloom` over WebDAV on port `5000`
 
 The wizard writes completion state under `~/.bloom/` and hands control back to Pi when finished.
 
@@ -60,6 +64,7 @@ Current behavior:
 
 - before the wizard completes, `setup_status` reports that Pi is waiting for the wizard
 - after the wizard completes, Pi injects persona-step guidance until the `persona` step is marked complete
+- the wizard enables `pi-daemon.service` only when both Pi auth and default model settings are present; otherwise it leaves the daemon disabled until AI setup is completed
 
 ## Recovery
 
@@ -83,6 +88,7 @@ Typical next actions:
 - inspect host status with `system_health`
 - inspect service state with `manifest_show`
 - install or apply services with `service_install` or `manifest_apply`
+- install `code-server` later with `service_install(name="code-server")` if you want the on-device editor
 - create additional Matrix agents with `agent_create`
 
 The setup completion summary now prints the current NetBird name, mesh IP, and any installed service URLs it can confirm, including Bloom Web Chat when Cinny is installed.

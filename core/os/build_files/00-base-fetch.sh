@@ -4,6 +4,7 @@ set -xeuo pipefail
 dnf -y install dnf5-plugins
 
 # Add third-party repositories
+# shellcheck source=../packages/repos.sh
 source /ctx/packages/repos.sh
 
 # Install all packages from the list

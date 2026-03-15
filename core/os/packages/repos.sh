@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Third-party repository setup — sourced by 00-base-fetch.sh
 
 # VS Code (Microsoft)

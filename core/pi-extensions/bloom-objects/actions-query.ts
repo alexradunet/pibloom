@@ -10,54 +10,54 @@ import { errorResult, truncate } from "../../lib/shared.js";
 import { walkMdFiles } from "./actions.js";
 import { type ScopePreference, readMemoryRecord, scoreRecord } from "./memory.js";
 
+function resolveObjectsDir(directory?: string) {
+	if (!directory) return { dir: path.join(getBloomDir(), "Objects") };
+	try {
+		return { dir: safePath(os.homedir(), directory) };
+	} catch {
+		return { error: errorResult("Path traversal blocked: invalid directory") };
+	}
+}
+
+function matchesObjectFilters(
+	attributes: Record<string, unknown>,
+	type: string | undefined,
+	filters: Record<string, string>,
+): boolean {
+	if (type && String(attributes.type ?? "note") !== type) return false;
+	return Object.entries(filters).every(([key, val]) => {
+		if (key === "tag") {
+			const tags = Array.isArray(attributes.tags) ? attributes.tags : [];
+			return (tags as string[]).includes(val);
+		}
+		return String(attributes[key] ?? "") === val;
+	});
+}
+
+function formatObjectListEntry(attributes: Record<string, unknown>): string {
+	const type = String(attributes.type ?? "note");
+	const slug = String(attributes.slug ?? "unknown");
+	const title = attributes.title ? ` — ${attributes.title}` : "";
+	return `${type}/${slug}${title}`;
+}
+
 /** List objects, optionally filtered by type or frontmatter fields. */
 export function listObjects(
 	params: { type?: string; directory?: string; filters?: Record<string, string> },
 	signal?: AbortSignal,
 ) {
-	const bloomDir = getBloomDir();
 	const filters = params.filters ?? {};
 	const results: string[] = [];
+	const resolved = resolveObjectsDir(params.directory);
+	if (resolved.error) return resolved.error;
 
-	let dir: string;
-	if (params.directory) {
-		try {
-			dir = safePath(os.homedir(), params.directory);
-		} catch {
-			return errorResult("Path traversal blocked: invalid directory");
-		}
-	} else {
-		dir = path.join(bloomDir, "Objects");
-	}
-
-	for (const filepath of walkMdFiles(dir)) {
+	for (const filepath of walkMdFiles(resolved.dir)) {
 		if (signal?.aborted) break;
 		try {
 			const raw = fs.readFileSync(filepath, "utf-8");
 			const { attributes } = parseFrontmatter<Record<string, unknown>>(raw);
-			const type = String(attributes.type ?? "note");
-			if (params.type && type !== params.type) continue;
-
-			let match = true;
-			for (const [key, val] of Object.entries(filters)) {
-				if (key === "tag") {
-					const tags = Array.isArray(attributes.tags) ? attributes.tags : [];
-					if (!(tags as string[]).includes(val)) {
-						match = false;
-						break;
-					}
-				} else {
-					if (String(attributes[key] ?? "") !== val) {
-						match = false;
-						break;
-					}
-				}
-			}
-			if (!match) continue;
-
-			const slug = String(attributes.slug ?? "unknown");
-			const title = attributes.title ? ` — ${attributes.title}` : "";
-			results.push(`${type}/${slug}${title}`);
+			if (!matchesObjectFilters(attributes, params.type, filters)) continue;
+			results.push(formatObjectListEntry(attributes));
 		} catch {
 			// Skip unreadable files
 		}

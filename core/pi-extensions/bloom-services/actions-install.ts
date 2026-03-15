@@ -184,19 +184,10 @@ export async function handleInstall(
 	const { catalogEntry, depsInstalled } = installResult;
 	const catalogImage = catalogEntry?.image ?? "";
 
-	const daemonReload = await run("systemctl", ["--user", "daemon-reload"], signal);
-	if (daemonReload.exitCode !== 0) return errorResult(`daemon-reload failed:\n${daemonReload.stderr}`);
-
-	const userSystemdDir = join(os.homedir(), ".config", "systemd", "user");
-	const socketUnit = join(userSystemdDir, `bloom-${params.name}.socket`);
-	if (start) {
-		const target = existsSync(socketUnit) ? `bloom-${params.name}.socket` : `bloom-${params.name}.service`;
-		const enableRes = await run("systemctl", ["--user", "enable", "--now", target], signal);
-		const startRes = enableRes.exitCode === 0 ? enableRes : await run("systemctl", ["--user", "start", target], signal);
-		if (startRes.exitCode !== 0) {
-			return errorResult(`Failed to start ${target}:\n${startRes.stderr || enableRes.stderr}`);
-		}
-	}
+	const reloadError = await reloadUserSystemd(signal);
+	if (reloadError) return reloadError;
+	const startError = await maybeStartInstalledService(params.name, start, signal);
+	if (startError) return startError;
 
 	const skillDir = join(bloomDir, "Skills", params.name);
 	const meta = extractSkillMetadata(join(skillDir, "SKILL.md"));
@@ -227,4 +218,21 @@ export async function handleInstall(
 			depsInstalled,
 		},
 	};
+}
+
+async function reloadUserSystemd(signal: AbortSignal | undefined) {
+	const daemonReload = await run("systemctl", ["--user", "daemon-reload"], signal);
+	return daemonReload.exitCode === 0 ? null : errorResult(`daemon-reload failed:\n${daemonReload.stderr}`);
+}
+
+async function maybeStartInstalledService(name: string, start: boolean, signal: AbortSignal | undefined) {
+	if (!start) return null;
+	const userSystemdDir = join(os.homedir(), ".config", "systemd", "user");
+	const socketUnit = join(userSystemdDir, `bloom-${name}.socket`);
+	const target = existsSync(socketUnit) ? `bloom-${name}.socket` : `bloom-${name}.service`;
+	const enableRes = await run("systemctl", ["--user", "enable", "--now", target], signal);
+	const startRes = enableRes.exitCode === 0 ? enableRes : await run("systemctl", ["--user", "start", target], signal);
+	return startRes.exitCode === 0
+		? null
+		: errorResult(`Failed to start ${target}:\n${startRes.stderr || enableRes.stderr}`);
 }

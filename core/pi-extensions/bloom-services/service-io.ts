@@ -16,6 +16,62 @@ import { getQuadletDir } from "../../lib/filesystem.js";
 import { writeServiceHomeRuntime } from "../../lib/service-home.js";
 import { findLocalServicePackage } from "../../lib/services-catalog.js";
 
+function prepareInstallDirs(bloomDir: string, name: string) {
+	const systemdDir = getQuadletDir();
+	const userSystemdDir = join(os.homedir(), ".config", "systemd", "user");
+	const skillDir = join(bloomDir, "Skills", name);
+	mkdirSync(systemdDir, { recursive: true });
+	mkdirSync(userSystemdDir, { recursive: true });
+	mkdirSync(skillDir, { recursive: true });
+	return { systemdDir, userSystemdDir, skillDir };
+}
+
+function copyQuadletFiles(quadletDir: string, systemdDir: string, userSystemdDir: string) {
+	for (const fileName of readdirSync(quadletDir)) {
+		const src = join(quadletDir, fileName);
+		if (!statSync(src).isFile()) continue;
+		const destDir = fileName.endsWith(".socket") ? userSystemdDir : systemdDir;
+		writeFileSync(join(destDir, fileName), readFileSync(src));
+	}
+}
+
+async function removeStaleSocket(name: string, quadletDir: string, userSystemdDir: string, signal?: AbortSignal) {
+	const expectedSocket = join(quadletDir, `bloom-${name}.socket`);
+	const installedSocket = join(userSystemdDir, `bloom-${name}.socket`);
+	if (!existsSync(expectedSocket) || !existsSync(installedSocket)) return;
+	await run("systemctl", ["--user", "disable", "--now", `bloom-${name}.socket`], signal);
+	rmSync(installedSocket, { force: true });
+}
+
+function ensureServiceEnv(configDir: string, name: string) {
+	mkdirSync(configDir, { recursive: true });
+	const serviceEnvPath = join(configDir, `${name}.env`);
+	if (!existsSync(serviceEnvPath)) {
+		writeFileSync(serviceEnvPath, "");
+	}
+}
+
+async function installServiceRuntimeExtras(name: string, configDir: string, signal?: AbortSignal) {
+	if (name === "dufs") {
+		mkdirSync(join(os.homedir(), "Public", "Bloom"), { recursive: true });
+	}
+	if (name === "cinny") {
+		await writeCinnyRuntimeConfig(configDir, signal);
+	}
+}
+
+function copyExtraConfigFiles(serviceDir: string, configDir: string) {
+	for (const fileName of readdirSync(serviceDir)) {
+		if (!fileName.endsWith(".json") && !fileName.endsWith(".toml")) continue;
+		const src = join(serviceDir, fileName);
+		if (!statSync(src).isFile()) continue;
+		const dest = join(configDir, fileName);
+		if (!existsSync(dest)) {
+			writeFileSync(dest, readFileSync(src));
+		}
+	}
+}
+
 /** Install a service from a bundled local package. Copies Quadlet files, SKILL.md, and config files. */
 export async function installServicePackage(
 	name: string,
@@ -33,57 +89,14 @@ export async function installServicePackage(
 		};
 	}
 
-	const systemdDir = getQuadletDir();
-	const userSystemdDir = join(os.homedir(), ".config", "systemd", "user");
-	const skillDir = join(bloomDir, "Skills", name);
-	mkdirSync(systemdDir, { recursive: true });
-	mkdirSync(userSystemdDir, { recursive: true });
-	mkdirSync(skillDir, { recursive: true });
-
-	// Copy quadlet files directly to their destinations
-	for (const fileName of readdirSync(localPackage.quadletDir)) {
-		const src = join(localPackage.quadletDir, fileName);
-		if (!statSync(src).isFile()) continue;
-		const destDir = fileName.endsWith(".socket") ? userSystemdDir : systemdDir;
-		writeFileSync(join(destDir, fileName), readFileSync(src));
-	}
-
-	// Copy skill file
+	const { systemdDir, userSystemdDir, skillDir } = prepareInstallDirs(bloomDir, name);
+	copyQuadletFiles(localPackage.quadletDir, systemdDir, userSystemdDir);
 	writeFileSync(join(skillDir, "SKILL.md"), readFileSync(localPackage.skillPath));
-
-	// Clean up stale socket unit if package no longer includes one
-	const expectedSocket = join(localPackage.quadletDir, `bloom-${name}.socket`);
-	const installedSocket = join(userSystemdDir, `bloom-${name}.socket`);
-	if (!existsSync(expectedSocket) && existsSync(installedSocket)) {
-		await run("systemctl", ["--user", "disable", "--now", `bloom-${name}.socket`], signal);
-		rmSync(installedSocket, { force: true });
-	}
-
-	// Ensure service-specific env file exists so the container can start
 	const configDir = join(os.homedir(), ".config", "bloom");
-	mkdirSync(configDir, { recursive: true });
-	const serviceEnvPath = join(configDir, `${name}.env`);
-	if (!existsSync(serviceEnvPath)) {
-		writeFileSync(serviceEnvPath, "");
-	}
-
-	if (name === "dufs") {
-		mkdirSync(join(os.homedir(), "Public", "Bloom"), { recursive: true });
-	}
-	if (name === "cinny") {
-		await writeCinnyRuntimeConfig(configDir, signal);
-	}
-
-	// Copy extra config files (e.g., cinny-config.json) from service package
-	for (const fileName of readdirSync(localPackage.serviceDir)) {
-		if (!fileName.endsWith(".json") && !fileName.endsWith(".toml")) continue;
-		const src = join(localPackage.serviceDir, fileName);
-		if (!statSync(src).isFile()) continue;
-		const dest = join(configDir, fileName);
-		if (!existsSync(dest)) {
-			writeFileSync(dest, readFileSync(src));
-		}
-	}
+	await removeStaleSocket(name, localPackage.quadletDir, userSystemdDir, signal);
+	ensureServiceEnv(configDir, name);
+	await installServiceRuntimeExtras(name, configDir, signal);
+	copyExtraConfigFiles(localPackage.serviceDir, configDir);
 
 	await writeServiceHomeRuntime(configDir, repoDir, signal);
 

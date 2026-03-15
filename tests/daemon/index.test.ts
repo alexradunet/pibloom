@@ -66,7 +66,9 @@ describe("daemon bootstrap", () => {
 		saveSchedulerStateMock.mockImplementation(() => undefined);
 		matrixCredentialsPathMock.mockReturnValue("/tmp/matrix.json");
 		matrixAgentCredentialsPathMock.mockImplementation((agentId: string) => `/tmp/${agentId}.json`);
-		readFileSyncMock.mockReturnValue(JSON.stringify({ homeserver: "http://matrix", accessToken: "token", userId: "@pi:bloom" }));
+		readFileSyncMock.mockReturnValue(
+			JSON.stringify({ homeserver: "http://matrix", accessToken: "token", userId: "@pi:bloom" }),
+		);
 		startWithRetryMock.mockImplementation(async (start: () => Promise<void>) => {
 			await start();
 		});

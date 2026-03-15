@@ -53,29 +53,24 @@ export async function handleScaffold(
 	const socketPath = join(quadletDir, `bloom-${params.name}.socket`);
 
 	const overwrite = params.overwrite ?? false;
-	if (existsSync(serviceDir) && !overwrite) {
-		return errorResult(`Service directory already exists: ${serviceDir}. Use overwrite=true to replace files.`);
-	}
+	const existingError = ensureScaffoldTargetAvailable(serviceDir, overwrite);
+	if (existingError) return existingError;
 
 	mkdirSync(quadletDir, { recursive: true });
-
-	const version = params.version ?? "0.1.0";
-	const network = params.network ?? "host";
-	const memory = params.memory ?? "256m";
-	const enableSocket = params.socket_activated ?? false;
-	const maybeSocketArgs = enableSocket ? "PodmanArgs=--preserve-fds=1\n" : "";
-	const installBlock = enableSocket ? "" : "\n[Install]\nWantedBy=default.target\n";
-
-	const containerUnit = `[Unit]\nDescription=Bloom ${params.name} — ${params.description}\nAfter=network-online.target\nWants=network-online.target\n${enableSocket ? "StopWhenUnneeded=true\n" : ""}\n[Container]\nImage=${params.image}\nContainerName=bloom-${params.name}\nNetwork=${network}\n${maybeSocketArgs}PodmanArgs=--memory=${memory}\nNoNewPrivileges=true\nLogDriver=journald\n\n[Service]\nRestart=on-failure\nRestartSec=10\nTimeoutStartSec=300\n${installBlock}`;
-	writeFileSync(containerPath, containerUnit);
-
-	if (enableSocket && params.port) {
-		const socketUnit = `[Unit]\nDescription=Bloom ${params.name} — Socket activation listener\n\n[Socket]\nListenStream=${Math.round(params.port)}\nAccept=no\nService=bloom-${params.name}.service\nSocketMode=0660\n\n[Install]\nWantedBy=sockets.target\n`;
-		writeFileSync(socketPath, socketUnit);
+	const scaffoldDefaults = {
+		version: params.version ?? "0.1.0",
+		network: params.network ?? "host",
+		memory: params.memory ?? "256m",
+		enableSocket: params.socket_activated ?? false,
+	};
+	writeFileSync(
+		containerPath,
+		buildContainerUnit(params, scaffoldDefaults.network, scaffoldDefaults.memory, scaffoldDefaults.enableSocket),
+	);
+	if (scaffoldDefaults.enableSocket && params.port) {
+		writeFileSync(socketPath, buildSocketUnit(params.name, params.port));
 	}
-
-	const skill = `---\nname: ${params.name}\nversion: ${version}\ndescription: ${params.description}\nimage: ${params.image}\n---\n\n# ${params.name}\n\nDescribe how to use this service.\n\n## API\n\nDocument endpoints, commands, and examples here.\n\n## Operations\n\n- Install: \`systemctl --user start bloom-${params.name}\`\n- Logs: \`journalctl --user -u bloom-${params.name} -n 100\`\n`;
-	writeFileSync(skillPath, skill);
+	writeFileSync(skillPath, buildSkillTemplate(params.name, params.description, params.image, scaffoldDefaults.version));
 
 	const created = [containerPath, skillPath];
 	if (existsSync(socketPath)) created.push(socketPath);
@@ -89,4 +84,29 @@ export async function handleScaffold(
 			files: created,
 		},
 	};
+}
+
+function ensureScaffoldTargetAvailable(serviceDir: string, overwrite: boolean) {
+	return existsSync(serviceDir) && !overwrite
+		? errorResult(`Service directory already exists: ${serviceDir}. Use overwrite=true to replace files.`)
+		: null;
+}
+
+function buildContainerUnit(
+	params: { name: string; description: string; image: string },
+	network: string,
+	memory: string,
+	enableSocket: boolean,
+) {
+	const maybeSocketArgs = enableSocket ? "PodmanArgs=--preserve-fds=1\n" : "";
+	const installBlock = enableSocket ? "" : "\n[Install]\nWantedBy=default.target\n";
+	return `[Unit]\nDescription=Bloom ${params.name} — ${params.description}\nAfter=network-online.target\nWants=network-online.target\n${enableSocket ? "StopWhenUnneeded=true\n" : ""}\n[Container]\nImage=${params.image}\nContainerName=bloom-${params.name}\nNetwork=${network}\n${maybeSocketArgs}PodmanArgs=--memory=${memory}\nNoNewPrivileges=true\nLogDriver=journald\n\n[Service]\nRestart=on-failure\nRestartSec=10\nTimeoutStartSec=300\n${installBlock}`;
+}
+
+function buildSocketUnit(name: string, port: number) {
+	return `[Unit]\nDescription=Bloom ${name} — Socket activation listener\n\n[Socket]\nListenStream=${Math.round(port)}\nAccept=no\nService=bloom-${name}.service\nSocketMode=0660\n\n[Install]\nWantedBy=sockets.target\n`;
+}
+
+function buildSkillTemplate(name: string, description: string, image: string, version: string) {
+	return `---\nname: ${name}\nversion: ${version}\ndescription: ${description}\nimage: ${image}\n---\n\n# ${name}\n\nDescribe how to use this service.\n\n## API\n\nDocument endpoints, commands, and examples here.\n\n## Operations\n\n- Install: \`systemctl --user start bloom-${name}\`\n- Logs: \`journalctl --user -u bloom-${name} -n 100\`\n`;
 }

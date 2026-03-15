@@ -137,18 +137,42 @@ function updateEpisodeDerivedObjects(filepath: string, ref: string) {
 	}
 }
 
+function episodeKind(episode: Record<string, unknown>): string {
+	return typeof episode.kind === "string" ? episode.kind : "observation";
+}
+
+function episodeImportance(episode: Record<string, unknown>): string {
+	return typeof episode.importance === "string" ? episode.importance : "medium";
+}
+
+function episodeRoom(episode: Record<string, unknown>): string {
+	return typeof episode.room === "string" ? episode.room : "";
+}
+
+function episodeTags(episode: Record<string, unknown>): string[] {
+	return Array.isArray(episode.tags) ? (episode.tags as string[]) : [];
+}
+
+function defaultConfidence(importance: string): string {
+	return importance === "high" ? "high" : "medium";
+}
+
+function defaultSalience(importance: string): number {
+	return importance === "high" ? 0.9 : 0.7;
+}
+
 function conservativeDefaults(target: PromotionTarget, episode: Record<string, unknown>): PromotionTarget {
-	const kind = typeof episode.kind === "string" ? episode.kind : "observation";
-	const importance = typeof episode.importance === "string" ? episode.importance : "medium";
-	const room = typeof episode.room === "string" ? episode.room : "";
+	const kind = episodeKind(episode);
+	const importance = episodeImportance(episode);
+	const room = episodeRoom(episode);
 	return {
 		...target,
 		scope: target.scope ?? (room ? "room" : "global"),
 		scope_value: target.scope_value ?? (room ? room : undefined),
-		confidence: target.confidence ?? (importance === "high" ? "high" : "medium"),
+		confidence: target.confidence ?? defaultConfidence(importance),
 		status: target.status ?? "active",
-		salience: target.salience ?? (importance === "high" ? 0.9 : 0.7),
-		tags: target.tags ?? (Array.isArray(episode.tags) ? (episode.tags as string[]) : []),
+		salience: target.salience ?? defaultSalience(importance),
+		tags: target.tags ?? episodeTags(episode),
 		summary: target.summary ?? (typeof episode.title === "string" ? `${kind}: ${episode.title}` : kind),
 	};
 }
@@ -165,55 +189,58 @@ function episodeAlreadyPromoted(attributes: Record<string, unknown>): boolean {
 	return Array.isArray(attributes.derived_objects) && attributes.derived_objects.length > 0;
 }
 
+function inferPromotionType(kind: string, tags: string[], haystack: string): string | null {
+	if (tags.includes("preference") || /\bprefer(s|red)?\b/.test(haystack)) return "preference";
+	if (kind === "resolution" || tags.includes("procedure") || /\brestart\b|\bsteps?\b|\bverify\b/.test(haystack)) {
+		return "procedure";
+	}
+	if (kind === "decision-point" || tags.includes("decision") || /\bdecided\b|\bdecision\b|\bchose\b/.test(haystack)) {
+		return "decision";
+	}
+	if (tags.includes("fact") || /\bhost\b|\bservice\b|\buser\b|\bidentity\b/.test(haystack)) return "fact";
+	return null;
+}
+
+function buildPromotionTarget(
+	episode: EpisodeRecord,
+	type: string,
+	title: string,
+	importance: string,
+	tags: string[],
+): PromotionTarget | null {
+	const derivedTitle = title || `${type} from ${String(episode.attributes.id ?? "episode")}`;
+	const slug = normalizeSlug(derivedTitle);
+	if (!slug) return null;
+	const room = episodeRoom(episode.attributes);
+
+	return {
+		type,
+		slug,
+		title: derivedTitle,
+		summary: typeof episode.attributes.title === "string" ? `${type}: ${episode.attributes.title}` : type,
+		tags,
+		confidence: defaultConfidence(importance),
+		scope: room ? "room" : "global",
+		scope_value: room || undefined,
+		status: "active",
+		salience: defaultSalience(importance),
+	};
+}
+
 function inferTargetFromEpisode(episode: EpisodeRecord): PromotionTarget | null {
 	const title = typeof episode.attributes.title === "string" ? episode.attributes.title : "";
 	const kind = String(episode.attributes.kind ?? "observation").toLowerCase();
 	const importance = String(episode.attributes.importance ?? "medium").toLowerCase();
-	const tags = Array.isArray(episode.attributes.tags) ? (episode.attributes.tags as string[]) : [];
+	const tags = episodeTags(episode.attributes);
 	const haystack = `${title}\n${episode.body}\n${tags.join(" ")}`.toLowerCase();
 
 	if (episodeAlreadyPromoted(episode.attributes)) return null;
 	if (importance !== "high" && kind !== "resolution" && kind !== "decision-point") return null;
 	if (/\bmaybe\b|\bperhaps\b|\bguess\b|\bunclear\b|\bspeculat/i.test(haystack)) return null;
 
-	let type: string | null = null;
-	if (tags.includes("preference") || /\bprefer(s|red)?\b/.test(haystack)) {
-		type = "preference";
-	} else if (
-		kind === "resolution" ||
-		tags.includes("procedure") ||
-		/\brestart\b|\bsteps?\b|\bverify\b/.test(haystack)
-	) {
-		type = "procedure";
-	} else if (
-		kind === "decision-point" ||
-		tags.includes("decision") ||
-		/\bdecided\b|\bdecision\b|\bchose\b/.test(haystack)
-	) {
-		type = "decision";
-	} else if (tags.includes("fact") || /\bhost\b|\bservice\b|\buser\b|\bidentity\b/.test(haystack)) {
-		type = "fact";
-	}
+	const type = inferPromotionType(kind, tags, haystack);
 	if (!type) return null;
-
-	const summary = typeof episode.attributes.title === "string" ? `${type}: ${episode.attributes.title}` : type;
-	const derivedTitle = title || `${type} from ${String(episode.attributes.id ?? "episode")}`;
-	const slug = normalizeSlug(derivedTitle);
-	if (!slug) return null;
-	const room = typeof episode.attributes.room === "string" ? episode.attributes.room : "";
-
-	return {
-		type,
-		slug,
-		title: derivedTitle,
-		summary,
-		tags,
-		confidence: importance === "high" ? "high" : "medium",
-		scope: room ? "room" : "global",
-		scope_value: room || undefined,
-		status: "active",
-		salience: importance === "high" ? 0.9 : 0.7,
-	};
+	return buildPromotionTarget(episode, type, title, importance, tags);
 }
 
 export function consolidateEpisodes(params: {

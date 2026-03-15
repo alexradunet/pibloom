@@ -18,6 +18,71 @@ function sleep(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function ensureInstalledService(name: string) {
+	const containerDef = join(getQuadletDir(), `bloom-${name}.container`);
+	return existsSync(containerDef)
+		? { containerDef }
+		: { error: errorResult(`Service not installed: ${containerDef} not found.`) };
+}
+
+function resolveTestUnits(name: string) {
+	const userSystemdDir = join(os.homedir(), ".config", "systemd", "user");
+	const socketDef = join(userSystemdDir, `bloom-${name}.socket`);
+	const socketMode = existsSync(socketDef);
+	const serviceUnit = `bloom-${name}`;
+	return {
+		socketMode,
+		serviceUnit,
+		startUnit: socketMode ? `${serviceUnit}.socket` : `${serviceUnit}.service`,
+	};
+}
+
+async function reloadAndStartTestUnit(startUnit: string, signal: AbortSignal | undefined) {
+	const reload = await run("systemctl", ["--user", "daemon-reload"], signal);
+	if (reload.exitCode !== 0) return errorResult(`daemon-reload failed:\n${reload.stderr}`);
+	const startResult = await run("systemctl", ["--user", "start", startUnit], signal);
+	return startResult.exitCode === 0 ? null : errorResult(`Failed to start ${startUnit}:\n${startResult.stderr}`);
+}
+
+async function waitForServiceActivation(
+	serviceUnit: string,
+	socketMode: boolean,
+	timeoutSec: number,
+	signal: AbortSignal | undefined,
+) {
+	const waitUntil = Date.now() + timeoutSec * 1000;
+	while (Date.now() < waitUntil) {
+		const check = await run("systemctl", ["--user", "is-active", serviceUnit], signal);
+		if (check.exitCode === 0 && check.stdout.trim() === "active") return true;
+		if (socketMode) {
+			const socketActive = await run("systemctl", ["--user", "is-active", `${serviceUnit}.socket`], signal);
+			if (socketActive.exitCode === 0 && socketActive.stdout.trim() === "active") return true;
+		}
+		await sleep(2000);
+	}
+	return false;
+}
+
+async function collectServiceDiagnostics(serviceUnit: string, socketMode: boolean, signal: AbortSignal | undefined) {
+	const status = await run("systemctl", ["--user", "status", serviceUnit, "--no-pager"], signal);
+	const logs = await run("journalctl", ["--user", "-u", serviceUnit, "-n", "80", "--no-pager"], signal);
+	const socketStatus = socketMode
+		? await run("systemctl", ["--user", "status", `${serviceUnit}.socket`, "--no-pager"], signal)
+		: null;
+	return { status, logs, socketStatus };
+}
+
+async function maybeCleanupTestUnits(
+	serviceUnit: string,
+	socketMode: boolean,
+	cleanup: boolean,
+	signal: AbortSignal | undefined,
+) {
+	if (!cleanup) return;
+	await run("systemctl", ["--user", "stop", serviceUnit], signal);
+	if (socketMode) await run("systemctl", ["--user", "stop", `${serviceUnit}.socket`], signal);
+}
+
 export async function handleTest(
 	params: {
 		name: string;
@@ -31,52 +96,14 @@ export async function handleTest(
 
 	const timeoutSec = Math.max(10, Math.round(params.start_timeout_sec ?? 120));
 	const cleanup = params.cleanup ?? false;
-	const systemdDir = getQuadletDir();
-	const userSystemdDir = join(os.homedir(), ".config", "systemd", "user");
-	const containerDef = join(systemdDir, `bloom-${params.name}.container`);
-	const socketDef = join(userSystemdDir, `bloom-${params.name}.socket`);
-	if (!existsSync(containerDef)) {
-		return errorResult(`Service not installed: ${containerDef} not found.`);
-	}
-
-	const socketMode = existsSync(socketDef);
-	const serviceUnit = `bloom-${params.name}`;
-	const startUnit = socketMode ? `${serviceUnit}.socket` : `${serviceUnit}.service`;
-
-	const reload = await run("systemctl", ["--user", "daemon-reload"], signal);
-	if (reload.exitCode !== 0) return errorResult(`daemon-reload failed:\n${reload.stderr}`);
-
-	const startResult = await run("systemctl", ["--user", "start", startUnit], signal);
-	if (startResult.exitCode !== 0) return errorResult(`Failed to start ${startUnit}:\n${startResult.stderr}`);
-
-	let active = false;
-	const waitUntil = Date.now() + timeoutSec * 1000;
-	while (Date.now() < waitUntil) {
-		const check = await run("systemctl", ["--user", "is-active", serviceUnit], signal);
-		if (check.exitCode === 0 && check.stdout.trim() === "active") {
-			active = true;
-			break;
-		}
-		if (socketMode) {
-			const socketActive = await run("systemctl", ["--user", "is-active", `${serviceUnit}.socket`], signal);
-			if (socketActive.exitCode === 0 && socketActive.stdout.trim() === "active") {
-				active = true;
-				break;
-			}
-		}
-		await sleep(2000);
-	}
-
-	const status = await run("systemctl", ["--user", "status", serviceUnit, "--no-pager"], signal);
-	const logs = await run("journalctl", ["--user", "-u", serviceUnit, "-n", "80", "--no-pager"], signal);
-	const socketStatus = socketMode
-		? await run("systemctl", ["--user", "status", `${serviceUnit}.socket`, "--no-pager"], signal)
-		: null;
-
-	if (cleanup) {
-		await run("systemctl", ["--user", "stop", serviceUnit], signal);
-		if (socketMode) await run("systemctl", ["--user", "stop", `${serviceUnit}.socket`], signal);
-	}
+	const installState = await ensureInstalledService(params.name);
+	if ("error" in installState) return installState.error;
+	const { socketMode, serviceUnit, startUnit } = resolveTestUnits(params.name);
+	const startError = await reloadAndStartTestUnit(startUnit, signal);
+	if (startError) return startError;
+	const active = await waitForServiceActivation(serviceUnit, socketMode, timeoutSec, signal);
+	const { status, logs, socketStatus } = await collectServiceDiagnostics(serviceUnit, socketMode, signal);
+	await maybeCleanupTestUnits(serviceUnit, socketMode, cleanup, signal);
 
 	const resultText = [
 		`Service test: ${params.name}`,

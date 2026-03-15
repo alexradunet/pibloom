@@ -50,65 +50,11 @@ export async function handleManifestSync(
 	const mode = params.mode ?? "detect";
 	const manifest = loadManifest(manifestPath);
 	const running = await detectRunningServices(signal);
-
-	const bootcResult = await run("bootc", ["status", "--format=json"], signal);
-	let osImage = manifest.os_image;
-	if (bootcResult.exitCode === 0) {
-		try {
-			const status = JSON.parse(bootcResult.stdout) as {
-				status?: { booted?: { image?: { image?: { image?: string } } } };
-			};
-			osImage = status?.status?.booted?.image?.image?.image ?? osImage;
-		} catch {
-			// keep existing
-		}
-	}
-
-	const drifts: string[] = [];
-
-	for (const [name, svc] of Object.entries(manifest.services)) {
-		if (svc.enabled && !running.has(name)) {
-			drifts.push(`- ${name}: manifest says enabled, but not running`);
-		} else if (!svc.enabled && running.has(name)) {
-			drifts.push(`- ${name}: manifest says disabled, but it is running`);
-		}
-	}
-
-	for (const [name, info] of running) {
-		if (!manifest.services[name]) {
-			drifts.push(`- ${name}: running (${info.image}) but not in manifest`);
-		} else if (manifest.services[name].image !== info.image) {
-			drifts.push(`- ${name}: image mismatch — manifest: ${manifest.services[name].image}, actual: ${info.image}`);
-		}
-	}
-
-	if (osImage && manifest.os_image && osImage !== manifest.os_image) {
-		drifts.push(`- OS image: manifest: ${manifest.os_image}, actual: ${osImage}`);
-	}
+	const osImage = await detectBootedImage(manifest.os_image, signal);
+	const drifts = collectManifestDrifts(manifest, running, osImage);
 
 	if (mode === "update") {
-		const hostname = os.hostname();
-		const updated: Manifest = {
-			device: manifest.device || hostname,
-			os_image: osImage,
-			services: { ...manifest.services },
-		};
-
-		for (const [name, info] of running) {
-			if (!updated.services[name]) {
-				updated.services[name] = { image: info.image, enabled: true };
-			} else {
-				updated.services[name].image = info.image;
-				updated.services[name].enabled = true;
-			}
-		}
-
-		for (const [name, svc] of Object.entries(updated.services)) {
-			if (!running.has(name)) {
-				updated.services[name] = { ...svc, enabled: false };
-			}
-		}
-
+		const updated = buildUpdatedManifest(manifest, running, osImage);
 		saveManifest(updated, manifestPath);
 		await writeServiceHomeRuntime(join(os.homedir(), ".config", "bloom"), repoDir, signal);
 		const text =
@@ -133,6 +79,73 @@ export async function handleManifestSync(
 		],
 		details: { services: {}, drifts },
 	};
+}
+
+async function detectBootedImage(currentImage: string | undefined, signal: AbortSignal | undefined) {
+	const bootcResult = await run("bootc", ["status", "--format=json"], signal);
+	if (bootcResult.exitCode !== 0) return currentImage;
+	try {
+		const status = JSON.parse(bootcResult.stdout) as {
+			status?: { booted?: { image?: { image?: { image?: string } } } };
+		};
+		return status?.status?.booted?.image?.image?.image ?? currentImage;
+	} catch {
+		return currentImage;
+	}
+}
+
+function collectManifestDrifts(
+	manifest: Manifest,
+	running: Awaited<ReturnType<typeof detectRunningServices>>,
+	osImage: string | undefined,
+) {
+	const drifts: string[] = [];
+	for (const [name, svc] of Object.entries(manifest.services)) {
+		if (svc.enabled && !running.has(name)) {
+			drifts.push(`- ${name}: manifest says enabled, but not running`);
+		} else if (!svc.enabled && running.has(name)) {
+			drifts.push(`- ${name}: manifest says disabled, but it is running`);
+		}
+	}
+	for (const [name, info] of running) {
+		if (!manifest.services[name]) {
+			drifts.push(`- ${name}: running (${info.image}) but not in manifest`);
+			continue;
+		}
+		if (manifest.services[name].image !== info.image) {
+			drifts.push(`- ${name}: image mismatch — manifest: ${manifest.services[name].image}, actual: ${info.image}`);
+		}
+	}
+	if (osImage && manifest.os_image && osImage !== manifest.os_image) {
+		drifts.push(`- OS image: manifest: ${manifest.os_image}, actual: ${osImage}`);
+	}
+	return drifts;
+}
+
+function buildUpdatedManifest(
+	manifest: Manifest,
+	running: Awaited<ReturnType<typeof detectRunningServices>>,
+	osImage: string | undefined,
+): Manifest {
+	const updated: Manifest = {
+		device: manifest.device || os.hostname(),
+		os_image: osImage,
+		services: { ...manifest.services },
+	};
+	for (const [name, info] of running) {
+		if (!updated.services[name]) {
+			updated.services[name] = { image: info.image, enabled: true };
+			continue;
+		}
+		updated.services[name].image = info.image;
+		updated.services[name].enabled = true;
+	}
+	for (const [name, svc] of Object.entries(updated.services)) {
+		if (!running.has(name)) {
+			updated.services[name] = { ...svc, enabled: false };
+		}
+	}
+	return updated;
 }
 
 export async function handleManifestSetService(

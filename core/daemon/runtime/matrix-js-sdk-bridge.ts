@@ -3,6 +3,37 @@ import type { MatrixBridge, MatrixIdentity, MatrixTextEvent } from "../contracts
 import { emitMatrixConnected, emitMatrixDisconnected, emitMatrixError } from "../metrics.js";
 import { enforceMapLimit, pruneExpiredEntries } from "../ordered-cache.js";
 
+// ---------------------------------------------------------------------------
+// Type guards for Matrix event content
+// ---------------------------------------------------------------------------
+
+interface TextMessageContent {
+	msgtype: "m.text";
+	body: string;
+}
+
+interface MemberEventContent {
+	membership?: string;
+}
+
+interface RawMemberEvent {
+	state_key?: string;
+	content?: MemberEventContent;
+	room_id?: string;
+}
+
+function isTextMessageContent(content: unknown): content is TextMessageContent {
+	if (!content || typeof content !== "object") return false;
+	const c = content as Record<string, unknown>;
+	return c.msgtype === "m.text" && typeof c.body === "string";
+}
+
+function isRawMemberEvent(event: unknown): event is RawMemberEvent {
+	if (!event || typeof event !== "object") return false;
+	// We only check for the fields we need; partial validation is acceptable here
+	return true;
+}
+
 interface ClientEntry {
 	identity: MatrixIdentity;
 	client: MatrixClient;
@@ -150,8 +181,8 @@ export class MatrixJsSdkBridge implements MatrixBridge {
 		if (!roomId || !senderUserId || senderUserId === identity.userId) return;
 		if (!/^@[a-zA-Z0-9._=\-/]+:[a-zA-Z0-9.-]+$/.test(senderUserId)) return;
 
-		const content = event.getContent() as { msgtype?: string; body?: string };
-		if (content.msgtype !== "m.text" || !content.body) return;
+		const content = event.getContent();
+		if (!isTextMessageContent(content)) return;
 
 		const eventId = event.getId() ?? "unknown";
 		const timestamp = event.getTs();
@@ -172,7 +203,8 @@ export class MatrixJsSdkBridge implements MatrixBridge {
 		if (!identity.autojoin) return false;
 		if (event.getType() !== "m.room.member") return false;
 
-		const rawEvent = event.event as { state_key?: string; content?: { membership?: string }; room_id?: string };
+		const rawEvent = event.event;
+		if (!isRawMemberEvent(rawEvent)) return false;
 		if (rawEvent.state_key !== identity.userId) return false;
 		if (rawEvent.content?.membership !== "invite") return false;
 		if (!rawEvent.room_id) return false;

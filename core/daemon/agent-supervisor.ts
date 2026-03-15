@@ -13,6 +13,7 @@ import {
 	emitSessionExit,
 	emitSessionSpawned,
 } from "./metrics.js";
+import { ProactiveJobRateLimiter } from "./rate-limiter.js";
 import { createRoomState } from "./room-state.js";
 import { type RoomEnvelope, routeRoomEnvelope } from "./router.js";
 import { PiRoomSession, type PiRoomSessionOptions } from "./runtime/pi-room-session.js";
@@ -34,6 +35,7 @@ export interface AgentSupervisorOptions {
 	idleTimeoutMs: number;
 	createSession?: (opts: AgentSessionOptions) => BloomSessionLike;
 	config?: DaemonConfig;
+	rateLimiter?: ProactiveJobRateLimiter;
 }
 
 export interface AgentSessionOptions {
@@ -60,6 +62,7 @@ export class AgentSupervisor {
 	private readonly sessionBaseDir: string;
 	private readonly idleTimeoutMs: number;
 	private readonly config: DaemonConfig;
+	private readonly rateLimiter: ProactiveJobRateLimiter;
 	private readonly createSession: (opts: AgentSessionOptions) => BloomSessionLike;
 	private readonly roomState: ReturnType<typeof createRoomState>;
 	private readonly pendingProactiveJobs = new Map<string, PendingProactiveJob[]>();
@@ -74,6 +77,7 @@ export class AgentSupervisor {
 		this.sessionBaseDir = options.sessionBaseDir;
 		this.idleTimeoutMs = options.idleTimeoutMs;
 		this.config = options.config ?? getDefaultConfig();
+		this.rateLimiter = options.rateLimiter ?? new ProactiveJobRateLimiter();
 		this.roomState = createRoomState({
 			processedEventTtlMs: this.config.processedEventTtlMs,
 			rootReplyTtlMs: this.config.rootReplyTtlMs,
@@ -126,6 +130,20 @@ export class AgentSupervisor {
 
 	async dispatchProactiveJob(job: TriggeredJob): Promise<void> {
 		if (this.shuttingDown) return;
+
+		// Check rate limiter
+		const rateCheck = this.rateLimiter.canExecute(job.agentId);
+		if (!rateCheck.allowed) {
+			log.warn("proactive job blocked by rate limiter", {
+				jobId: job.jobId,
+				agentId: job.agentId,
+				reason: rateCheck.reason,
+			});
+			emitProactiveJobFailed(job.agentId, job.roomId, job.jobId, rateCheck.reason);
+			return;
+		}
+
+		this.rateLimiter.recordExecution(job.agentId);
 		const startTime = Date.now();
 		emitProactiveJobStarted(job.agentId, job.roomId, job.jobId);
 		const message = [
@@ -135,8 +153,10 @@ export class AgentSupervisor {
 		].join("\n\n");
 		try {
 			await this.dispatchMessageToAgent(job.roomId, job.agentId, message);
+			this.rateLimiter.recordSuccess(job.agentId);
 			emitProactiveJobCompleted(job.agentId, job.roomId, job.jobId, Date.now() - startTime);
 		} catch (error) {
+			this.rateLimiter.recordFailure(job.agentId);
 			emitProactiveJobFailed(job.agentId, job.roomId, job.jobId, String(error));
 			throw error;
 		}

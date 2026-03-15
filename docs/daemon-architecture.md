@@ -128,6 +128,25 @@ cron: "*/5 * * * *"  # Every 5 minutes
 
 All cron jobs run in UTC time.
 
+### Rate Limiting and Circuit Breaker
+
+Proactive jobs are protected by rate limiting and circuit breaker patterns:
+
+| Feature | Default | Environment Variable |
+|---------|---------|---------------------|
+| Max jobs per hour per agent | 60 | `BLOOM_PROACTIVE_MAX_JOBS_PER_HOUR` |
+| Circuit breaker threshold | 5 failures | `BLOOM_CIRCUIT_BREAKER_THRESHOLD` |
+| Circuit breaker reset time | 60 seconds | `BLOOM_CIRCUIT_BREAKER_RESET_MS` |
+
+**Rate limiting**: Each agent can execute at most N proactive jobs per hour. Excess jobs are dropped and logged.
+
+**Circuit breaker**: If a proactive job fails 5 times consecutively, the circuit opens and no more proactive jobs run for that agent until the reset timeout expires. This prevents tight-loop retrying when a job is consistently failing.
+
+States:
+- `closed`: Normal operation, jobs execute
+- `open`: Circuit is tripped, jobs are rejected
+- `half-open`: After reset timeout, one job is allowed to test if the issue is resolved
+
 ## 📚 Reference
 
 Important implementation files:

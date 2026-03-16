@@ -679,13 +679,24 @@ step_welcome() {
 }
 
 step_password() {
-	echo "--- Password ---"
-	echo "First, let's change the default password."
-	echo ""
-	while ! passwd; do
+	echo "--- Password Setup ---"
+	# Check if user has no password (NP = No Password)
+	if passwd -S 2>/dev/null | grep -q ' NP '; then
+		echo "Welcome! Let's set up a password for your account."
 		echo ""
-		echo "Password change failed. Please try again."
-	done
+		# Use sudo to set password directly without prompting for old one
+		while ! sudo passwd "$(whoami)" 2>/dev/null; do
+			echo ""
+			echo "Password setup failed. Please try again."
+		done
+	else
+		echo "Let's change your password."
+		echo ""
+		while ! passwd; do
+			echo ""
+			echo "Password change failed. Please try again."
+		done
+	fi
 	mark_done password
 }
 

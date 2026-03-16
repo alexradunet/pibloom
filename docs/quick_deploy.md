@@ -47,7 +47,7 @@ Forwarded ports in `just vm`:
 - `8081` -> `fluffychat`
 - `8888` -> guest port `80`
 
-Default SSH credentials: `pi` / `bloom` (setup wizard prompts to change password on first login).
+Default user: `pi` (no initial password; TTY auto-login prompts for password creation on first boot).
 
 Access the VM:
 

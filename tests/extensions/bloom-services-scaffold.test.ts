@@ -13,7 +13,9 @@ describe("handleScaffold", () => {
 		fs.writeFileSync(path.join(repoDir, "package.json"), "{}\n");
 		fs.writeFileSync(
 			path.join(repoDir, "services", "catalog.yaml"),
-			["version: 1", "source_repo: https://github.com/alexradunet/piBloom", "services: {}", "bridges: {}", ""].join("\n"),
+			["version: 1", "source_repo: https://github.com/alexradunet/piBloom", "services: {}", "bridges: {}", ""].join(
+				"\n",
+			),
 		);
 	});
 

@@ -145,21 +145,11 @@ export function isSupportedCronExpression(expression: string): boolean {
 	}
 }
 
-function normalizeSupportedCronExpression(expression: string): string {
-	const trimmed = expression.trim();
-	if (trimmed === "@daily") return "0 0 * * *";
-	if (trimmed === "@hourly") return "0 * * * *";
-	if (trimmed === "@weekly") return "0 0 * * 0";
-
+function parseCronParts(expression: string, trimmed: string): [number, number, string] {
 	const parts = trimmed.split(/\s+/);
-	if (parts.length !== 5) {
+	if (parts.length !== 5 || parts[2] !== "*" || parts[3] !== "*") {
 		throw new Error(`Unsupported cron expression: ${expression}`);
 	}
-	// Only support day-of-week scheduling in addition to daily
-	if (parts[2] !== "*" || parts[3] !== "*") {
-		throw new Error(`Unsupported cron expression: ${expression}`);
-	}
-
 	const minute = Number.parseInt(parts[0] ?? "", 10);
 	const hour = Number.parseInt(parts[1] ?? "", 10);
 	if (!Number.isInteger(minute) || minute < 0 || minute > 59) {
@@ -168,16 +158,22 @@ function normalizeSupportedCronExpression(expression: string): string {
 	if (!Number.isInteger(hour) || hour < 0 || hour > 23) {
 		throw new Error(`Unsupported cron expression: ${expression}`);
 	}
-
-	// Validate day of week if specified (0-6, where 0 is Sunday)
-	const dayOfWeek = parts[4];
+	const dayOfWeek = parts[4] ?? "*";
 	if (dayOfWeek !== "*") {
-		const dow = Number.parseInt(dayOfWeek ?? "", 10);
+		const dow = Number.parseInt(dayOfWeek, 10);
 		if (!Number.isInteger(dow) || dow < 0 || dow > 6) {
 			throw new Error(`Unsupported cron expression: ${expression}`);
 		}
 	}
+	return [minute, hour, dayOfWeek];
+}
 
+function normalizeSupportedCronExpression(expression: string): string {
+	const trimmed = expression.trim();
+	if (trimmed === "@daily") return "0 0 * * *";
+	if (trimmed === "@hourly") return "0 * * * *";
+	if (trimmed === "@weekly") return "0 0 * * 0";
+	const [minute, hour, dayOfWeek] = parseCronParts(expression, trimmed);
 	return `${minute} ${hour} * * ${dayOfWeek}`;
 }
 

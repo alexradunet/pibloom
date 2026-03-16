@@ -8,10 +8,10 @@ export interface ContainerInfo {
 	Image?: string;
 }
 
-/** Update status persisted to disk by the update check timer. */
+/** Update status persisted to /home/pi/.bloom/update-status.json by the bloom-update.service. */
 export interface UpdateStatus {
 	available: boolean;
 	checked: string;
-	version?: string;
+	generation?: string;   // NixOS generation number
 	notified?: boolean;
 }

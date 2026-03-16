@@ -11,39 +11,41 @@ import { getUpdateStatusPath } from "../../lib/filesystem.js";
 import { errorResult, guardBloom, requireConfirmation, truncate } from "../../lib/shared.js";
 import type { ContainerInfo, UpdateStatus } from "./types.js";
 
-// --- Bootc handler ---
+// --- NixOS update handler ---
 
-export async function handleBootc(
-	action: "status" | "check" | "download" | "apply" | "rollback",
+export async function handleNixosUpdate(
+	action: "status" | "apply" | "rollback",
 	signal: AbortSignal | undefined,
 	ctx: ExtensionContext,
 ) {
-	if (action === "download" || action === "apply" || action === "rollback") {
+	if (action === "apply" || action === "rollback") {
 		const denied = await requireConfirmation(ctx, `OS ${action}`);
 		if (denied) return errorResult(denied);
 	}
-	const commands = {
-		status: ["bootc", "status"],
-		check: ["bootc", "upgrade", "--check"],
-		download: ["sudo", "bootc", "upgrade"],
-		apply: ["sudo", "bootc", "upgrade", "--apply"],
-		rollback: ["sudo", "bootc", "rollback"],
-	} as const;
-	const [cmd, ...args] = commands[action];
-	const result = await run(cmd, args, signal);
-	let text: string;
-	if (result.exitCode !== 0) {
-		text = action === "status" ? `Error running bootc status:\n${result.stderr}` : `Error:\n${result.stderr}`;
-	} else if (action === "rollback") {
-		text = result.stdout || "Rollback staged. Reboot to apply.";
-	} else {
-		text = result.stdout || "No output.";
+
+	if (action === "status") {
+		const gen = await run("nixos-rebuild", ["list-generations"], signal);
+		const text = gen.exitCode === 0
+			? gen.stdout.trim() || "No generation info available."
+			: `Error: ${gen.stderr}`;
+		return { content: [{ type: "text" as const, text: truncate(text) }], details: { exitCode: gen.exitCode } };
 	}
-	return {
-		content: [{ type: "text" as const, text: truncate(text) }],
-		details: { exitCode: result.exitCode, action },
-		isError: result.exitCode !== 0,
-	};
+
+	if (action === "rollback") {
+		const result = await run("sudo", ["nixos-rebuild", "switch", "--rollback"], signal);
+		const text = result.exitCode === 0
+			? "Rolled back to previous generation. Reboot to complete."
+			: `Rollback failed: ${result.stderr}`;
+		return { content: [{ type: "text" as const, text }], details: { exitCode: result.exitCode }, isError: result.exitCode !== 0 };
+	}
+
+	// apply
+	const flake = "github:alexradunet/piBloom#bloom-x86_64";
+	const result = await run("sudo", ["nixos-rebuild", "switch", "--flake", flake], signal);
+	const text = result.exitCode === 0
+		? "Update applied successfully. New generation is active."
+		: `Update failed: ${result.stderr}`;
+	return { content: [{ type: "text" as const, text: truncate(text) }], details: { exitCode: result.exitCode }, isError: result.exitCode !== 0 };
 }
 
 // --- Container routing handler ---
@@ -172,11 +174,11 @@ export async function handleUpdateStatus() {
 		const raw = await readFile(getUpdateStatusPath(), "utf-8");
 		const status = JSON.parse(raw) as UpdateStatus;
 		const text = status.available
-			? `Update available (checked ${status.checked}). Version: ${status.version || "unknown"}`
-			: `System is up to date (checked ${status.checked}).`;
+			? `Update available (checked ${status.checked}). Current generation: ${status.generation ?? "unknown"}`
+			: `System is up to date (checked ${status.checked}). Generation: ${status.generation ?? "unknown"}`;
 		return { content: [{ type: "text" as const, text }], details: status };
 	} catch {
-		return errorResult("No update status available. The update check timer may not have run yet.");
+		return errorResult("No update status available. The update timer may not have run yet.");
 	}
 }
 

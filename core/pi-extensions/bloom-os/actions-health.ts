@@ -4,20 +4,11 @@
 import { run } from "../../lib/exec.js";
 import { truncate } from "../../lib/shared.js";
 
-function parseBootcSection(stdout: string): string {
-	try {
-		const status = JSON.parse(stdout) as {
-			status?: { booted?: { image?: { image?: { image?: string; version?: string } } } };
-		};
-		const img = status?.status?.booted?.image?.image;
-		return `## OS Image\n- Image: ${img?.image ?? "unknown"}\n- Version: ${img?.version ?? "unknown"}`;
-	} catch {
-		return `## OS Image\n${stdout.slice(0, 200)}`;
-	}
-}
-
-function bootcSection(result: Awaited<ReturnType<typeof run>>): string {
-	return result.exitCode === 0 ? parseBootcSection(result.stdout) : "## OS Image\n(bootc status unavailable)";
+function nixosSection(result: Awaited<ReturnType<typeof run>>): string {
+	if (result.exitCode !== 0) return "## OS\n(nixos-rebuild unavailable)";
+	const lines = result.stdout.trim().split("\n");
+	const current = lines.find(l => l.includes("current")) ?? lines.at(-1) ?? "";
+	return `## OS\nNixOS — ${current.trim()}`;
 }
 
 function containersSection(result: Awaited<ReturnType<typeof run>>): string | null {
@@ -66,7 +57,7 @@ function systemSection(
 
 export async function handleSystemHealth(signal: AbortSignal | undefined) {
 	const [bootc, ps, df, loadavg, meminfo, uptime] = await Promise.all([
-		run("bootc", ["status", "--format=json"], signal),
+		run("nixos-rebuild", ["list-generations"], signal),
 		run("podman", ["ps", "--format", "json", "--filter", "name=bloom-"], signal),
 		run("df", ["-h", "/", "/var", "/home"], signal),
 		run("cat", ["/proc/loadavg"], signal),
@@ -75,7 +66,7 @@ export async function handleSystemHealth(signal: AbortSignal | undefined) {
 	]);
 
 	const sections: string[] = [];
-	sections.push(bootcSection(bootc));
+	sections.push(nixosSection(bootc));
 	const containers = containersSection(ps);
 	if (containers) sections.push(containers);
 	const disk = diskSection(df);

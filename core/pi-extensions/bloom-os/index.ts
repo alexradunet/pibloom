@@ -1,7 +1,7 @@
 /**
- * bloom-os — OS management: bootc lifecycle, containers, systemd, health, updates.
+ * bloom-os — OS management: NixOS lifecycle, containers, systemd, health, updates.
  *
- * @tools bootc, container, systemd_control, system_health, update_status, schedule_reboot
+ * @tools nixos_update, container, systemd_control, system_health, update_status, schedule_reboot
  * @hooks before_agent_start
  * @see {@link ../../AGENTS.md#bloom-os} Extension reference
  */
@@ -12,7 +12,7 @@ import { type RegisteredExtensionTool, defineTool, registerTools } from "../../l
 import { handleSystemHealth } from "./actions-health.js";
 import {
 	checkPendingUpdates,
-	handleBootc,
+	handleNixosUpdate,
 	handleContainer,
 	handleScheduleReboot,
 	handleSystemdControl,
@@ -22,18 +22,17 @@ import {
 export default function (pi: ExtensionAPI) {
 	const tools: RegisteredExtensionTool[] = [
 		defineTool({
-			name: "bootc",
-			label: "Bootc Management",
-			description: "Manage Fedora bootc OS image: status, check/download/apply updates, or rollback.",
+			name: "nixos_update",
+			label: "NixOS Update Management",
+			description: "Manage NixOS OS updates: view generation history, apply a pending update, or rollback to the previous generation.",
 			parameters: Type.Object({
-				action: StringEnum(["status", "check", "download", "apply", "rollback"] as const, {
-					description:
-						"status: show image. check/download/apply: staged update workflow. rollback: revert to previous image.",
+				action: StringEnum(["status", "apply", "rollback"] as const, {
+					description: "status: list NixOS generations. apply: run nixos-rebuild switch. rollback: revert to previous generation.",
 				}),
 			}),
 			async execute(_toolCallId, params, signal, _onUpdate, ctx) {
-				const typedParams = params as { action: "status" | "check" | "download" | "apply" | "rollback" };
-				return handleBootc(typedParams.action, signal, ctx);
+				const typedParams = params as { action: "status" | "apply" | "rollback" };
+				return handleNixosUpdate(typedParams.action, signal, ctx);
 			},
 		}),
 		defineTool({

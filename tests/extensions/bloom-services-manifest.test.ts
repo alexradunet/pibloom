@@ -55,21 +55,8 @@ describe("bloom-services manifest handlers", () => {
 				["newsvc", { image: "ghcr.io/bloom/newsvc:1" }],
 			]),
 		);
-		runMock.mockResolvedValue({
-			exitCode: 0,
-			stdout: JSON.stringify({
-				status: {
-					booted: {
-						image: {
-							image: {
-								image: "ghcr.io/bloom/os:2",
-							},
-						},
-					},
-				},
-			}),
-			stderr: "",
-		});
+		// NixOS: no bootc, os_image is preserved from manifest as-is
+		runMock.mockResolvedValue({ exitCode: 0, stdout: "", stderr: "" });
 		writeServiceHomeRuntimeMock.mockResolvedValue(undefined);
 	});
 
@@ -81,7 +68,7 @@ describe("bloom-services manifest handlers", () => {
 		expect(saveManifestMock).toHaveBeenCalledWith(
 			{
 				device: "bloom-box",
-				os_image: "ghcr.io/bloom/os:2",
+				os_image: "ghcr.io/bloom/old:1",
 				services: {
 					app: { image: "ghcr.io/bloom/app:2", enabled: true },
 					idle: { image: "ghcr.io/bloom/idle:1", enabled: false },

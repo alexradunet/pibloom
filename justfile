@@ -35,17 +35,48 @@ update:
 rollback:
     sudo nixos-rebuild switch --rollback
 
-# Boot qcow2 in QEMU headless (serial console + SSH on :2222)
-vm:
+# Build qcow2 and run VM (fresh build from current codebase)
+vm: qcow2
     #!/usr/bin/env bash
     set -euo pipefail
     disk="/tmp/bloom-vm-disk.qcow2"
     vars="/tmp/bloom-ovmf-vars.fd"
+    # Find the actual qcow2 file in the result directory (follow symlinks)
+    qcow2_src=$(find -L {{ output }} -name "*.qcow2" -type f | head -1)
+    if [ -z "$qcow2_src" ]; then
+        echo "Error: No qcow2 found in {{ output }}"
+        exit 1
+    fi
+    echo "Found qcow2: $qcow2_src"
     # Nix store images are read-only; copy to /tmp so QEMU can write
-    if [ ! -f "$disk" ] || [ "{{ output }}/nixos.qcow2" -nt "$disk" ]; then
-        echo "Copying disk image to $disk..."
-        cp "{{ output }}/nixos.qcow2" "$disk"
-        chmod 644 "$disk"
+    echo "Copying disk image to $disk..."
+    cp -f "$qcow2_src" "$disk"
+    chmod 644 "$disk"
+    cp "{{ ovmf_vars }}" "$vars"
+    echo "Starting VM... Press Ctrl+A X to exit"
+    qemu-system-x86_64 \
+        -machine q35 \
+        -cpu host \
+        -enable-kvm \
+        -m 4096 \
+        -smp 2 \
+        -drive if=pflash,format=raw,readonly=on,file={{ ovmf }} \
+        -drive if=pflash,format=raw,file="$vars" \
+        -drive file="$disk",format=qcow2,if=virtio \
+        -netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::5000-:5000,hostfwd=tcp::8080-:8080,hostfwd=tcp::8081-:8081,hostfwd=tcp::8888-:80 \
+        -device virtio-net-pci,netdev=net0 \
+        -nographic \
+        -serial mon:stdio
+
+# Run VM with existing qcow2 (no rebuild)
+vm-run:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    disk="/tmp/bloom-vm-disk.qcow2"
+    vars="/tmp/bloom-ovmf-vars.fd"
+    if [ ! -f "$disk" ]; then
+        echo "Error: No VM disk found at $disk. Run 'just vm' first."
+        exit 1
     fi
     cp "{{ ovmf_vars }}" "$vars"
     echo "Starting VM... Press Ctrl+A X to exit"
@@ -53,7 +84,7 @@ vm:
         -machine q35 \
         -cpu host \
         -enable-kvm \
-        -m 12G \
+        -m 4096 \
         -smp 2 \
         -drive if=pflash,format=raw,readonly=on,file={{ ovmf }} \
         -drive if=pflash,format=raw,file="$vars" \
@@ -101,9 +132,10 @@ vm-ssh:
 vm-kill:
     pkill -f "[q]emu-system-x86_64.*bloom-vm-disk" || true
 
-# Remove build results
+# Remove build results and VM disk
 clean:
     rm -f result result-*
+    rm -f /tmp/bloom-vm-disk.qcow2 /tmp/bloom-ovmf-vars.fd
 
 # Install host dependencies (Fedora build host; NixOS devs use nix develop)
 deps:

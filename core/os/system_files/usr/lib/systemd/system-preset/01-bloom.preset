@@ -1,6 +1,0 @@
-# Bloom OS service presets
-enable sshd.service
-enable netbird.service
-enable bloom-matrix.service
-enable bloom-update-check.timer
-enable bloom-hostname.service

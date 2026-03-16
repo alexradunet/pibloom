@@ -1,6 +1,0 @@
-# Bloom OS bootc configuration
-# See: https://docs.fedoraproject.org/en-US/bootc/
-
-[install]
-# Default filesystem for root
-root-fs-type = "btrfs"

@@ -1,2 +1,0 @@
-# Bloom: allow wheel group members passwordless sudo
-%wheel ALL=(ALL) NOPASSWD:ALL

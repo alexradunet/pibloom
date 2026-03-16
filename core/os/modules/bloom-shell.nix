@@ -34,6 +34,8 @@ in
     extraGroups = [ "wheel" "networkmanager" "podman" ];
     home = "/home/pi";
     shell = pkgs.bash;
+    # Default password for first-boot SSH access; setup wizard prompts to change it.
+    initialPassword = "bloom";
   };
   users.groups.pi = {};
 

@@ -144,12 +144,10 @@ Machine-specific overrides written to `/mnt/etc/nixos/host-config.nix`:
   services.xserver.xkb = { layout = "@@kblayout@@"; variant = "@@kbvariant@@"; };
   console.keyMap = "@@vconsole@@";
   networking.networkmanager.enable = true;
-  users.users.pi = {
-    isNormalUser = true;
-    extraGroups = [ "networkmanager" "wheel" ];
-    # No initialPassword here — Calamares users exec module sets the password
-    # directly via chpasswd on the mounted target after nixos-install completes.
-  };
+  # NOTE: users.users.pi is NOT defined here. bloom-shell.nix (included via
+  # nixosModules.bloom) already defines the pi user with group, shell, home,
+  # and autologin. Calamares users exec module sets the password directly via
+  # chpasswd on the mounted target — no initialPassword needed.
   system.stateVersion = "25.05";
 }
 ```
@@ -292,6 +290,11 @@ The target directory is created before the copy. If no `.nmconnection` files exi
       ];
     }
   ];
+
+  # Enable linger for pi statically via tmpfiles rather than loginctl at runtime.
+  # loginctl enable-linger from a non-interactive systemd service (User = "pi")
+  # requires polkit; writing the linger file directly avoids that dependency.
+  systemd.tmpfiles.rules = [ "f+ /var/lib/systemd/linger/pi - - - -" ];
 }
 ```
 
@@ -299,19 +302,20 @@ The `wants = [ "bloom-matrix.service" "netbird.service" ]` ensures those service
 
 ### `bloom-firstboot.sh`
 
-A stripped, non-interactive version of `bloom-wizard.sh`. Reads `~/.bloom/prefill.env`. Execution order:
+A stripped, non-interactive version of `bloom-wizard.sh`. Reads `~/.bloom/prefill.env`. Linger for `pi` is enabled statically via `systemd.tmpfiles.rules` in `bloom-firstboot.nix` — no `loginctl` call is needed in the script. Execution order:
 
-1. **`loginctl enable-linger pi`** — run unconditionally at startup, before any steps, so that `systemctl --user` commands in subsequent steps work correctly (user services require linger to be active).
-2. **`step_netbird`** — starts netbird daemon via `sudo systemctl start netbird.service`, then connects with `sudo netbird up --setup-key $PREFILL_NETBIRD_KEY`; skipped if `PREFILL_NETBIRD_KEY` is empty.
-3. **`step_matrix`** — polls `http://localhost:6167/_matrix/client/versions` in a retry loop (up to 60s, 1s interval). Once the homeserver is accepting connections, reads the registration token via `sudo cat /var/lib/continuwuity/registration_token` and registers bot + user accounts using `PREFILL_USERNAME`. Skipped if `PREFILL_USERNAME` is empty.
-4. **`step_services`** — iterates `PREFILL_SERVICES` (comma-separated, e.g. `"fluffychat,dufs"`), calling `install_service <name>` for each. Also calls `install_home_infrastructure` unconditionally to set up the Bloom Home landing page. `$BLOOM_SERVICES` resolves to `/usr/local/share/bloom/services`, populated by `bloomApp` which is installed as part of `nixosModules.bloom`. Skipped entirely if `PREFILL_SERVICES` is empty (Bloom Home is still installed).
-5. **`finalize`** — starts `pi-daemon.service` via `systemctl --user`, writes `~/.bloom/.setup-complete`.
+1. **`step_netbird`** — starts netbird daemon via `sudo systemctl start netbird.service`, then connects with `sudo netbird up --setup-key $PREFILL_NETBIRD_KEY`; skipped if `PREFILL_NETBIRD_KEY` is empty.
+2. **`step_matrix`** — polls `http://localhost:6167/_matrix/client/versions` in a retry loop (up to 60s, 1s interval). Once the homeserver is accepting connections, reads the registration token via `sudo cat /var/lib/continuwuity/registration_token` and registers bot + user accounts using `PREFILL_USERNAME`. Skipped if `PREFILL_USERNAME` is empty.
+3. **`step_services`** — always calls `install_home_infrastructure` (Bloom Home, unconditional). If `PREFILL_SERVICES` is non-empty, also iterates the comma-separated list and calls `install_service <name>` for each. `$BLOOM_SERVICES` resolves to `/usr/local/share/bloom/services`, populated by `bloomApp` via tmpfiles symlink at system activation.
+4. **`finalize`** — starts `pi-daemon.service` via `systemctl --user`, writes `~/.bloom/.setup-complete`.
 
-`settings.json` (AI provider config) is written by the `bloom_prefill` Calamares module at install time, so `step_ai` is not needed in this script — `pi-daemon` has its configuration before first boot.
+`settings.json` (AI provider config) is written by `bloom_prefill` at install time — `step_ai` is not needed here.
 
-All interactive prompts from `bloom-wizard.sh` are removed. Non-fatal failures are logged to the journal and do not block subsequent steps or login.
+All interactive prompts are removed. Non-fatal failures are logged to the journal and do not block subsequent steps or login.
 
-`bloom-wizard.sh` is updated to recognise `PREFILL_SERVICES` (iterates it in `step_services` instead of prompting, when set) and continues to work as a recovery mechanism: if `.setup-complete` is absent it re-runs from the last incomplete checkpoint.
+**`bloom-wizard.sh` `step_services` change:** When `PREFILL_SERVICES` is set and non-empty, skip the interactive `read -rp` prompts and iterate the comma-separated list to auto-install services. When unset or empty, preserve existing interactive behavior. `install_home_infrastructure` is always called regardless of `PREFILL_SERVICES`.
+
+`bloom-wizard.sh` continues to work as a recovery mechanism: if `.setup-complete` is absent it re-runs from the last incomplete checkpoint using the same prefill logic.
 
 ## File Changes Summary
 

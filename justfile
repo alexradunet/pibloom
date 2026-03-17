@@ -54,6 +54,8 @@ vm: qcow2
     echo "Copying disk image to $disk..."
     cp -f "$qcow2_src" "$disk"
     chmod 644 "$disk"
+    # Expand virtual disk so growPartition has room for user data (model is ~6GB)
+    qemu-img resize "$disk" 24G
     cp "{{ ovmf_vars }}" "$vars"
     echo "Starting VM... Press Ctrl+A X to exit"
     qemu-system-x86_64 \
@@ -92,6 +94,7 @@ vm-gui: qcow2
     echo "Copying disk image to $disk..."
     cp -f "$qcow2_src" "$disk"
     chmod 644 "$disk"
+    qemu-img resize "$disk" 24G
     cp "{{ ovmf_vars }}" "$vars"
     echo "Starting VM with GUI... Close window to exit"
     qemu-system-x86_64 \
@@ -185,8 +188,9 @@ vm-daemon: qcow2
     echo "Copying disk image to $disk..."
     cp -f "$qcow2_src" "$disk"
     chmod 644 "$disk"
+    qemu-img resize "$disk" 24G
     cp "{{ ovmf_vars }}" "$vars"
-    
+
     # Check if VM is already running
     if pgrep -f "[q]emu-system-x86_64.*bloom-vm-disk" > /dev/null; then
         echo "VM already running. Use 'just vm-ssh' to connect or 'just vm-stop' to stop."

@@ -270,6 +270,10 @@ The target directory is created before the copy. If no `.nmconnection` files exi
       User = "pi";
       ExecStart = "${pkgs.bash}/bin/bash ${./bloom-firstboot.sh}";
       StandardOutput = "journal+console";
+      # systemctl --user requires XDG_RUNTIME_DIR to reach the user bus socket.
+      # When a system service runs as User="pi" outside a PAM session, this env var
+      # is not set automatically. UID 1000 is hardcoded (same rationale as bloom_prefill).
+      Environment = "XDG_RUNTIME_DIR=/run/user/1000";
       # Do not fail the boot if setup fails — user can recover via bloom-wizard.sh
       SuccessExitStatus = "0 1";
     };
@@ -336,11 +340,16 @@ else
   # Interactive: existing read -rp prompts unchanged
   ...
 fi
-write_service_home_runtime "$installed"
-mark_done_with "step_services"
+# Both paths call these — mesh context is read from prior checkpoint data
+mesh_ip=$(read_checkpoint_data netbird)
+mesh_fqdn=$(netbird_fqdn)
+write_service_home_runtime "$installed" "$mesh_ip" "$mesh_fqdn"
+mark_done_with services "${installed:-none}"
 ```
 
-`write_service_home_runtime` and `mark_done_with` are called in both paths. The interactive path is unchanged when `PREFILL_SERVICES` is unset or empty.
+`write_service_home_runtime` takes three args: installed services string, mesh IP, mesh FQDN. `mark_done_with` takes two args: step name and data string (matches its actual signature). Both are called in both the interactive and non-interactive paths.
+
+**`step_ai` in `bloom-wizard.sh`:** `step_ai` is kept in the wizard's recovery sequence. `bloom_prefill` writes `settings.json` at install time, so on the recovery path `step_ai` encounters an already-existing file and the `jq` merge branch is taken (idempotent). No change to `bloom-wizard.sh`'s `step_ai` or its place in `main()`.
 
 `bloom-wizard.sh` continues to work as a recovery mechanism: if `.setup-complete` is absent it re-runs from the last incomplete checkpoint using the same prefill logic.
 

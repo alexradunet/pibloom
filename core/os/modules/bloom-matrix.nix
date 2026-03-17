@@ -10,7 +10,7 @@
     address = "0.0.0.0"
     allow_federation = false
     allow_registration = true
-    registration_token_file = "/var/lib/continuwuity/registration_token"
+    # registration_token is injected at startup via -O flag (see ExecStart)
     max_request_size = 20000000
     allow_check_for_updates = false
   '';
@@ -28,10 +28,13 @@
       ExecStart   = pkgs.writeShellScript "bloom-matrix-start" ''
         TOKEN_FILE=/var/lib/continuwuity/registration_token
         if [ ! -f "$TOKEN_FILE" ]; then
-          openssl rand -base64 32 > "$TOKEN_FILE"
+          openssl rand -hex 32 > "$TOKEN_FILE"
           chmod 640 "$TOKEN_FILE"
         fi
-        exec ${pkgs.matrix-continuwuity}/bin/conduwuit
+        TOKEN=$(cat "$TOKEN_FILE")
+        exec ${pkgs.matrix-continuwuity}/bin/conduwuit \
+          -c /etc/bloom/matrix.toml \
+          -O "registration_token=\"''${TOKEN}\""
       '';
       Environment = "CONTINUWUITY_CONFIG=/etc/bloom/matrix.toml";
       Restart     = "on-failure";

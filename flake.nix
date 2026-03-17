@@ -97,12 +97,21 @@
           ];
         }).config.system.build.image;
 
-        # Installer ISO
+        # Minimal installer ISO (CLI only, for headless installs)
         iso = (nixpkgs.lib.nixosSystem {
           inherit system specialArgs;
           modules = [
             ./core/os/hosts/x86_64.nix
             "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+          ];
+        }).config.system.build.isoImage;
+
+        # Graphical installer ISO (Calamares + LXQt desktop)
+        # Provides GUI installation with point-and-click disk partitioning
+        iso-gui = (nixpkgs.lib.nixosSystem {
+          inherit system specialArgs;
+          modules = [
+            ./core/os/hosts/x86_64-installer.nix
           ];
         }).config.system.build.isoImage;
       };

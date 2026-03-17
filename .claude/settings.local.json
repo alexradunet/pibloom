@@ -52,7 +52,13 @@
       "Bash(xargs cat:*)",
       "Bash(node:*)",
       "WebFetch(domain:search.nixos.org)",
-      "WebFetch(domain:www.freedesktop.org)"
+      "WebFetch(domain:www.freedesktop.org)",
+      "Bash(npm test:*)",
+      "Bash(npx biome:*)",
+      "Bash(qemu-img info:*)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(bash -c '\n  if [[ -f \"core/scripts/prefill.env\" ]]; then\n    mkdir -p \"$HOME/.bloom\"\n    cp \"core/scripts/prefill.env\" \"$HOME/.bloom/prefill.env\"\n    echo \"Staged core/scripts/prefill.env → ~/.bloom/prefill.env\"\n  fi\n')",
+      "Bash(xxd)"
     ]
   }
 }

@@ -19,9 +19,22 @@ qcow2:
 raw:
     nix build {{ flake }}#raw
 
-# Generate installer ISO
+# Generate minimal installer ISO (CLI only)
 iso:
     nix build {{ flake }}#iso
+
+# Generate graphical installer ISO (Calamares + LXQt)
+iso-gui:
+    nix build {{ flake }}#iso-gui
+    
+    @echo ""
+    @echo "Graphical installer ISO built: result/iso/"
+    @echo ""
+    @echo "To flash to USB:"
+    @echo "  sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress conv=fsync"
+    @echo ""
+    @echo "To test in QEMU:"
+    @echo "  just test-iso-gui"
 
 # Apply current flake config to the running system (local dev iteration)
 switch:
@@ -181,6 +194,55 @@ test-iso:
         -device virtio-net-pci,netdev=net0 \
         -nographic \
         -serial mon:stdio
+
+# Test graphical ISO installation in QEMU with GUI display
+# This allows testing the Calamares GUI installer
+# Note: Uses SPICE for better GUI performance
+# Requires: spicy (SPICE client) - install with: sudo dnf install spice-gtk-tools
+test-iso-gui:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    disk="/tmp/bloom-test-disk-gui.qcow2"
+    vars="/tmp/bloom-ovmf-vars-gui.fd"
+    ISO="{{ output }}/iso/bloom-os-installer.iso"
+    
+    # Check if ISO exists, fallback to any ISO in result
+    if [ ! -f "$ISO" ]; then
+        ISO=$(find {{ output }} -name "*.iso" | head -1)
+        if [ -z "$ISO" ]; then
+            echo "Error: No ISO found. Run 'just iso-gui' first."
+            exit 1
+        fi
+    fi
+    
+    echo "Found ISO: $ISO"
+    rm -f "$disk" "$vars"
+    qemu-img create -f qcow2 "$disk" 40G
+    cp "{{ ovmf_vars }}" "$vars"
+    
+    echo ""
+    echo "Starting graphical ISO test..."
+    echo "  - ISO: $ISO"
+    echo "  - Disk: $disk (40GB)"
+    echo "  - RAM: 4GB"
+    echo ""
+    echo "Close the QEMU window to exit"
+    echo ""
+    
+    qemu-system-x86_64 \
+        -machine q35 \
+        -cpu host \
+        -enable-kvm \
+        -m 4096 \
+        -smp 2 \
+        -drive if=pflash,format=raw,readonly=on,file={{ ovmf }} \
+        -drive if=pflash,format=raw,file="$vars" \
+        -drive file="$disk",format=qcow2,if=virtio \
+        -cdrom "$ISO" \
+        -netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::5900-:5900 \
+        -device virtio-net-pci,netdev=net0 \
+        -vga virtio \
+        -display gtk
 
 # Run VM in background daemon mode (detached, no terminal attached)
 # Use this when you want to run the VM and still use your shell

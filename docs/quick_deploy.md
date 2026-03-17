@@ -71,15 +71,76 @@ Stop it:
 just vm-kill
 ```
 
-### ISO Build
+## 💿 Installer ISO Options
+
+Bloom provides two installer ISO variants:
+
+| Variant | Desktop | Size | Best For |
+|---------|---------|------|----------|
+| **Graphical** (`iso-gui`) | LXQt + Calamares | ~2GB | Mini PCs, GUI installation, disk partitioning |
+| **Minimal** (`iso`) | None (CLI) | ~500MB | Headless servers, advanced users, automation |
+
+### Graphical Installer (Recommended for Mini PCs)
+
+The graphical installer provides a point-and-click installation experience with:
+- **Calamares** GUI installer (partitioning, user creation, locale/timezone selection)
+- **LXQt** lightweight desktop (~400MB RAM)
+- **Firefox** for documentation
+- **GParted** for disk management
+
+#### Build Graphical ISO
+
+```bash
+just iso-gui
+```
+
+#### Flash to USB
+
+```bash
+sudo dd if=result/iso/bloom-os-installer.iso of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+Replace `/dev/sdX` with your USB device (check with `lsblk`).
+
+#### Installation Steps
+
+1. **Boot from USB** on your mini PC
+2. **LXQt desktop loads** (auto-login as `nixos`)
+3. **Double-click "Install NixOS"** on the desktop
+4. **Complete Calamares wizard:**
+   - Welcome → Location → Keyboard → Partitions → Users → Summary
+   - Choose "Erase disk" for automatic partitioning or manual setup
+   - Set your username, password, hostname
+5. **Reboot** when installation completes
+6. **Convert to Bloom OS:**
+   - Login to the installed system
+   - Open a terminal
+   - Run: `bloom-convert`
+   - This switches the system to Bloom configuration and reboots
+7. **Complete Bloom setup:**
+   - After reboot, `bloom-wizard.sh` runs automatically
+   - Set password, WiFi, NetBird, Matrix, AI provider
+8. **Done!** Pi agent starts
+
+#### Test in QEMU (with GUI)
+
+```bash
+just test-iso-gui
+```
+
+This opens a QEMU window with the graphical installer for testing.
+
+### Minimal Installer (Headless/CLI)
+
+The minimal installer is a command-line only ISO for advanced users or headless installations.
+
+#### Build Minimal ISO
 
 ```bash
 just iso
 ```
 
-Output: `result/` symlink pointing to the ISO in the Nix store.
-
-### Bare-Metal Install (disko)
+#### Bare-Metal Install (disko)
 
 Boot from the installer ISO, then:
 
@@ -88,7 +149,7 @@ sudo nix run github:nix-community/disko -- --mode disko /path/to/x86_64-disk.nix
 sudo nixos-install --flake github:alexradunet/piBloom#bloom-x86_64
 ```
 
-### OTA Updates
+## 🔄 OTA Updates
 
 The `bloom-update` timer checks for updates every 6 hours automatically. To apply manually:
 
@@ -101,17 +162,33 @@ just rollback        # revert to previous generation
 
 Important outputs (all via `result` symlink):
 
-- qcow2: `result/nixos.qcow2`
-- ISO: `result/iso/`
-- Raw disk: `result/`
+| Output | Path | Description |
+|--------|------|-------------|
+| qcow2 | `result/nixos.qcow2` | VM disk image |
+| ISO (GUI) | `result/iso/bloom-os-installer.iso` | Graphical installer |
+| ISO (minimal) | `result/iso/nixos.iso` | CLI-only installer |
+| Raw disk | `result/` | Raw disk image for `dd` |
 
 Related `just` commands:
 
 ```bash
-just deps
-just clean
-just lint
-just fmt
+just deps            # Install build dependencies
+just clean           # Remove build artifacts
+just lint            # Run nix flake check
+just fmt             # Format Nix files
+
+# ISO commands
+just iso             # Build minimal CLI ISO
+just iso-gui         # Build graphical ISO
+just test-iso        # Test CLI ISO in QEMU (headless)
+just test-iso-gui    # Test graphical ISO in QEMU (with GUI)
+
+# VM commands
+just qcow2           # Build qcow2 image
+just vm              # Run VM (headless)
+just vm-gui          # Run VM with GUI display
+just vm-ssh          # SSH into running VM
+just vm-kill         # Stop running VM
 ```
 
 After first login:

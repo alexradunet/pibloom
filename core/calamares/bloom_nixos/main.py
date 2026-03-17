@@ -134,22 +134,48 @@ def _run():
     with open(os.path.join(nixos_dir, "flake.nix"), "w") as f:
         f.write(flake_nix)
 
-    # ── Step 4: Run nixos-install ─────────────────────────────────────────────
-    libcalamares.utils.debug("bloom_nixos: running nixos-install")
-    result = subprocess.run(
+    # ── Step 4: Build system closure on the host store ───────────────────────
+    # nixos-install --flake --store <target> triggers a Nix assertion failure:
+    # narHash mismatch when copyInputToStore runs against the non-default store.
+    # Workaround: build the closure on the host store first, then pass the
+    # pre-built path to nixos-install --system (which just copies the closure).
+    libcalamares.utils.debug("bloom_nixos: building system closure on host store")
+    flake_attr = (
+        root + "/etc/nixos#nixosConfigurations.bloom.config.system.build.toplevel"
+    )
+    build = subprocess.run(
+        [
+            "/run/current-system/sw/bin/nix", "build",
+            "--no-link", "--print-out-paths",
+            "--extra-experimental-features", "nix-command flakes",
+            flake_attr,
+        ],
+        capture_output=True, text=True,
+    )
+    libcalamares.utils.debug("bloom_nixos: nix build stdout: " + build.stdout[-2000:])
+    libcalamares.utils.debug("bloom_nixos: nix build stderr: " + build.stderr[-2000:])
+    if build.returncode != 0:
+        detail = (build.stderr or build.stdout or "no output")[-3000:]
+        return ("System build failed", detail)
+
+    system = build.stdout.strip().splitlines()[0]
+    libcalamares.utils.debug(f"bloom_nixos: system closure: {system}")
+
+    # ── Step 5: Install pre-built closure ────────────────────────────────────
+    libcalamares.utils.debug("bloom_nixos: running nixos-install --system")
+    install = subprocess.run(
         [
             NIXOS_INSTALL,
             "--root", root,
             "--no-root-passwd",
-            "--flake", root + "/etc/nixos#bloom",
+            "--system", system,
         ],
-        capture_output=True,
-        text=True,
+        capture_output=True, text=True,
     )
-    libcalamares.utils.debug("bloom_nixos: nixos-install stdout: " + result.stdout[-2000:])
-    libcalamares.utils.debug("bloom_nixos: nixos-install stderr: " + result.stderr[-2000:])
-    if result.returncode != 0:
-        detail = (result.stderr or result.stdout or "no output captured")[-3000:]
+    libcalamares.utils.debug("bloom_nixos: nixos-install stdout: " + install.stdout[-2000:])
+    libcalamares.utils.debug("bloom_nixos: nixos-install stderr: " + install.stderr[-2000:])
+    if install.returncode != 0:
+        detail = (install.stderr or install.stdout or "no output")[-3000:]
         return ("nixos-install failed", detail)
 
     return None

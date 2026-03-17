@@ -229,7 +229,7 @@ test-iso-gui:
         -machine q35 \
         -cpu host \
         -enable-kvm \
-        -m 4096 \
+        -m 16384 \
         -smp 2 \
         -drive if=pflash,format=raw,readonly=on,file={{ ovmf }} \
         -drive if=pflash,format=raw,file="$vars" \

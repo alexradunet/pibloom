@@ -134,19 +134,27 @@ def _run():
     with open(os.path.join(nixos_dir, "flake.nix"), "w") as f:
         f.write(flake_nix)
 
-    # ── Step 4: Build system closure on the host store ───────────────────────
-    # nixos-install --flake --store <target> triggers a Nix assertion failure:
-    # narHash mismatch when copyInputToStore runs against the non-default store.
-    # Workaround: build the closure on the host store first, then pass the
-    # pre-built path to nixos-install --system (which just copies the closure).
-    libcalamares.utils.debug("bloom_nixos: building system closure on host store")
+    # ── Step 4: Build system closure directly onto the target disk ───────────
+    # Two problems to avoid:
+    # 1. narHash assertion crash: nixos-install --flake --store <target> uses
+    #    a non-standard store URL, making computeStorePath() return a different
+    #    hash than what was recorded → Nix assertion fails.
+    # 2. RAM space exhaustion: building on the host/live store (tmpfs) runs out
+    #    of space for large closures (bloom-app + Rust toolchain etc.).
+    #
+    # Fix: use --store "local?real-root=<target>&store=/nix/store"
+    # • real-root=<target> → packages land on the target disk (40 GB, not RAM)
+    # • store=/nix/store   → store path format stays standard, narHash passes
+    store_uri = f"local?real-root={root}&store=/nix/store"
     flake_attr = (
         root + "/etc/nixos#nixosConfigurations.bloom.config.system.build.toplevel"
     )
+    libcalamares.utils.debug(f"bloom_nixos: building system closure to {store_uri}")
     build = subprocess.run(
         [
             "/run/current-system/sw/bin/nix", "build",
             "--no-link", "--print-out-paths",
+            "--store", store_uri,
             "--extra-experimental-features", "nix-command flakes",
             flake_attr,
         ],
@@ -161,7 +169,9 @@ def _run():
     system = build.stdout.strip().splitlines()[0]
     libcalamares.utils.debug(f"bloom_nixos: system closure: {system}")
 
-    # ── Step 5: Install pre-built closure ────────────────────────────────────
+    # ── Step 5: Set up bootloader via nixos-install --system ─────────────────
+    # The closure is already on the target store; nixos-install --system
+    # handles profile registration and bootloader installation.
     libcalamares.utils.debug("bloom_nixos: running nixos-install --system")
     install = subprocess.run(
         [

@@ -1,0 +1,144 @@
+name: NixOS Integration Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'core/os/**'
+      - 'tests/nixos/**'
+      - 'flake.nix'
+      - 'flake.lock'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'core/os/**'
+      - 'tests/nixos/**'
+      - 'flake.nix'
+      - 'flake.lock'
+  workflow_dispatch:
+    inputs:
+      test:
+        description: 'Specific test to run (leave empty for all)'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - 'bloom-config'
+          - 'bloom-boot'
+          - 'bloom-matrix'
+          - 'bloom-firstboot'
+          - 'bloom-localai'
+          - 'bloom-network'
+          - 'bloom-daemon'
+          - 'bloom-e2e'
+
+permissions:
+  contents: read
+
+jobs:
+  # Fast checks that don't require KVM
+  nixos-fast-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v26
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check flake
+        run: nix flake check --no-build
+
+      - name: Bloom config check (fast)
+        run: nix build .#checks.x86_64-linux.bloom-config --no-link
+
+  # Full NixOS VM tests (require KVM)
+  # These only run on self-hosted runners with KVM support
+  nixos-vm-tests:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Run on self-hosted runner if available, otherwise skip
+          - runner: ${{ vars.NIXOS_TEST_RUNNER || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for KVM support
+        id: kvm-check
+        run: |
+          if [ -e /dev/kvm ]; then
+            echo "has_kvm=true" >> $GITHUB_OUTPUT
+            echo "KVM is available"
+          else
+            echo "has_kvm=false" >> $GITHUB_OUTPUT
+            echo "KVM is not available - skipping VM tests"
+          fi
+
+      - name: Install Nix
+        if: steps.kvm-check.outputs.has_kvm == 'true'
+        uses: cachix/install-nix-action@v26
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Cachix
+        if: steps.kvm-check.outputs.has_kvm == 'true' && vars.CACHIX_CACHE
+        uses: cachix/cachix-action@v14
+        with:
+          name: ${{ vars.CACHIX_CACHE }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Run specific test
+        if: steps.kvm-check.outputs.has_kvm == 'true' && github.event.inputs.test != ''
+        run: |
+          echo "Running test: ${{ github.event.inputs.test }}"
+          nix build .#checks.x86_64-linux.${{ github.event.inputs.test }} --no-link -L
+
+      - name: Run bloom-matrix test
+        if: steps.kvm-check.outputs.has_kvm == 'true' && github.event.inputs.test == ''
+        run: nix build .#checks.x86_64-linux.bloom-matrix --no-link -L
+        timeout-minutes: 10
+
+      - name: Run bloom-firstboot test
+        if: steps.kvm-check.outputs.has_kvm == 'true' && github.event.inputs.test == ''
+        run: nix build .#checks.x86_64-linux.bloom-firstboot --no-link -L
+        timeout-minutes: 10
+
+      - name: Run bloom-boot test
+        if: steps.kvm-check.outputs.has_kvm == 'true' && github.event.inputs.test == ''
+        run: nix build .#checks.x86_64-linux.bloom-boot --no-link -L
+        timeout-minutes: 15
+
+      - name: Run bloom-daemon test
+        if: steps.kvm-check.outputs.has_kvm == 'true' && github.event.inputs.test == ''
+        run: nix build .#checks.x86_64-linux.bloom-daemon --no-link -L
+        timeout-minutes: 10
+
+      - name: Run bloom-network test
+        if: steps.kvm-check.outputs.has_kvm == 'true' && github.event.inputs.test == ''
+        run: nix build .#checks.x86_64-linux.bloom-network --no-link -L
+        timeout-minutes: 10
+
+      - name: Run bloom-localai test
+        if: steps.kvm-check.outputs.has_kvm == 'true' && github.event.inputs.test == ''
+        run: nix build .#checks.x86_64-linux.bloom-localai --no-link -L
+        timeout-minutes: 30
+
+      - name: Run bloom-e2e test
+        if: steps.kvm-check.outputs.has_kvm == 'true' && github.event.inputs.test == ''
+        run: nix build .#checks.x86_64-linux.bloom-e2e --no-link -L
+        timeout-minutes: 20
+
+      - name: Summary (skipped)
+        if: steps.kvm-check.outputs.has_kvm == 'false'
+        run: |
+          echo "## VM Tests Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "NixOS VM tests were skipped because KVM is not available on this runner." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To run VM tests:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Use a self-hosted runner with KVM support, or" >> $GITHUB_STEP_SUMMARY
+          echo "2. Run locally: \`nix flake check\`" >> $GITHUB_STEP_SUMMARY

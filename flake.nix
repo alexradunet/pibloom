@@ -14,6 +14,7 @@
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
+      lib = nixpkgs.lib;
       # pkgsUnfree is used only for bloom-boot nixosTest.  pkgs.testers.nixosTest
       # injects its own pkgs as nixpkgs.pkgs for test nodes, which means modules
       # cannot set nixpkgs.config (NixOS assertion).  Using a pkgs already created
@@ -139,51 +140,61 @@
         ];
       };
 
-      checks.${system} = {
-        # Fast: build the installed system closure locally — catches locale errors,
-        # module conflicts, bad package references, and NixOS evaluation failures
-        # without touching QEMU.  Run with: nix build .#checks.x86_64-linux.bloom-config
-        bloom-config = self.nixosConfigurations.bloom-installed-test.config.system.build.toplevel;
-
-        # Thorough: boot the installed system in a NixOS test VM and verify that
-        # critical services come up.  Run with: nix build .#checks.x86_64-linux.bloom-boot
-        bloom-boot = pkgsUnfree.testers.nixosTest {
-          name = "bloom-boot";
-
-          nodes.bloom = { ... }: {
-            imports = [
-              self.nixosModules.bloom
-              self.nixosModules.bloom-firstboot
-            ];
-            _module.args = { inherit piAgent bloomApp; };
-
-            boot.loader.systemd-boot.enable = true;
-            boot.loader.efi.canTouchEfiVariables = true;
-            networking.hostName = "bloom";
-            time.timeZone = "UTC";
-            i18n.defaultLocale = "en_US.UTF-8";
-            networking.networkmanager.enable = true;
-            system.stateVersion = "25.05";
-
-            # Give the VM enough disk for the bloom closure
-            virtualisation.diskSize = 20480;  # 20 GB
-            virtualisation.memorySize = 4096;
+      checks.${system} = 
+        let
+          # Import the NixOS integration test suite
+          # Using pkgsUnfree so tests can use packages that require allowUnfree
+          nixosTests = import ./tests/nixos { 
+            pkgs = pkgsUnfree;
+            inherit lib piAgent bloomApp; 
           };
+        in
+        {
+          # Fast: build the installed system closure locally — catches locale errors,
+          # module conflicts, bad package references, and NixOS evaluation failures
+          # without touching QEMU.  Run with: nix build .#checks.x86_64-linux.bloom-config
+          bloom-config = self.nixosConfigurations.bloom-installed-test.config.system.build.toplevel;
 
-          testScript = ''
-            bloom.start()
-            bloom.wait_for_unit("multi-user.target", timeout=300)
+          # Thorough: boot the installed system in a NixOS test VM and verify that
+          # critical services come up.  Run with: nix build .#checks.x86_64-linux.bloom-boot
+          bloom-boot = pkgsUnfree.testers.nixosTest {
+            name = "bloom-boot";
 
-            # Basic sanity: the pi user exists
-            bloom.succeed("id pi")
+            nodes.bloom = { ... }: {
+              imports = [
+                self.nixosModules.bloom
+                self.nixosModules.bloom-firstboot
+              ];
+              _module.args = { inherit piAgent bloomApp; };
 
-            # bloom-firstboot was attempted (exit 0 or 1 both accepted by unit)
-            bloom.wait_for_unit("bloom-firstboot.service", timeout=60)
+              boot.loader.systemd-boot.enable = true;
+              boot.loader.efi.canTouchEfiVariables = true;
+              networking.hostName = "bloom";
+              time.timeZone = "UTC";
+              i18n.defaultLocale = "en_US.UTF-8";
+              networking.networkmanager.enable = true;
+              system.stateVersion = "25.05";
 
-            # NetworkManager is running
-            bloom.succeed("systemctl is-active NetworkManager")
-          '';
-        };
-      };
+              # Give the VM enough disk for the bloom closure
+              virtualisation.diskSize = 20480;  # 20 GB
+              virtualisation.memorySize = 4096;
+            };
+
+            testScript = ''
+              bloom.start()
+              bloom.wait_for_unit("multi-user.target", timeout=300)
+
+              # Basic sanity: the pi user exists
+              bloom.succeed("id pi")
+
+              # bloom-firstboot was attempted (exit 0 or 1 both accepted by unit)
+              bloom.wait_for_unit("bloom-firstboot.service", timeout=60)
+
+              # NetworkManager is running
+              bloom.succeed("systemctl is-active NetworkManager")
+            '';
+          };
+        } 
+        // nixosTests;  # Merge in the new test suite
     };
 }

@@ -18,6 +18,11 @@
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
+      # pkgsUnfree is used only for bloom-boot nixosTest.  pkgs.testers.nixosTest
+      # injects its own pkgs as nixpkgs.pkgs for test nodes, which means modules
+      # cannot set nixpkgs.config (NixOS assertion).  Using a pkgs already created
+      # with allowUnfree = true sidesteps the issue without touching any module.
+      pkgsUnfree = import nixpkgs { inherit system; config.allowUnfree = true; };
       piAgent = llm-agents-nix.packages.${system}.pi;
       bloomApp = pkgs.callPackage ./core/os/pkgs/bloom-app { inherit piAgent; };
 
@@ -186,7 +191,7 @@
 
         # Thorough: boot the installed system in a NixOS test VM and verify that
         # critical services come up.  Run with: nix build .#checks.x86_64-linux.bloom-boot
-        bloom-boot = pkgs.testers.nixosTest {
+        bloom-boot = pkgsUnfree.testers.nixosTest {
           name = "bloom-boot";
 
           nodes.bloom = { ... }: {

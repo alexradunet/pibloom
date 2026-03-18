@@ -729,6 +729,12 @@ step_welcome() {
 
 step_password() {
 	echo "--- Password Setup ---"
+	echo ""
+	if [[ -n "${PREFILL_PASSWORD_DONE:-}" ]]; then
+		echo "Password was already set during installation."
+		mark_done password
+		return
+	fi
 	echo "Welcome! Let's set up a password for your account."
 	echo ""
 	if [[ -n "${PREFILL_PI_PASSWORD:-}" ]]; then

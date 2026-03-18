@@ -64,22 +64,49 @@ def run():
     # Home directory matches the username the installer will create.
     user_home = os.path.join(root, "home", username)
 
+    def _shell_quote(value: str) -> str:
+        """Wrap value in single quotes for safe shell sourcing; escape embedded single quotes."""
+        return "'" + value.replace("'", "'\\''") + "'"
+
+    # ── User password ─────────────────────────────────────────────────────────
+    # Extract the password from GS early so we can include PREFILL_MATRIX_PASSWORD
+    # in prefill.env when Calamares stored a plaintext password.
+    # The Calamares users exec module is NOT in the sequence (it would call
+    # `usermod <typed-username>` which fails because only "pi" exists).
+    # We set the password directly using the value the users view module stored.
+    users_list = gs.value("users") or []
+    password_value = ""
+    if users_list and isinstance(users_list, list):
+        first = users_list[0]
+        if isinstance(first, dict):
+            password_value = first.get("password", "")
+
+    # Calamares may store the password as plaintext or as a crypt hash.
+    # Hashes always start with '$' (e.g. $6$..., $y$..., $2b$...).
+    password_is_hash = password_value.startswith("$") if password_value else False
+
     # ── prefill.env ──────────────────────────────────────────────────────────
     prefill_dir  = os.path.join(user_home, ".bloom")
     prefill_path = os.path.join(prefill_dir, "prefill.env")
     _makedirs_owned(prefill_dir)
 
-    def _shell_quote(value: str) -> str:
-        """Wrap value in single quotes for safe shell sourcing; escape embedded single quotes."""
-        return "'" + value.replace("'", "'\\''") + "'"
+    # Use username as fallback for git name if fullName was not entered.
+    prefill_name = git_name or username
 
     prefill_content = (
         f"PREFILL_NETBIRD_KEY={_shell_quote(netbird_key)}\n"
         f"PREFILL_USERNAME={_shell_quote(matrix_user)}\n"
-        f"PREFILL_NAME={_shell_quote(git_name)}\n"
+        f"PREFILL_NAME={_shell_quote(prefill_name)}\n"
         f"PREFILL_EMAIL={_shell_quote(git_email)}\n"
         f"PREFILL_SERVICES={_shell_quote(services)}\n"
+        # Password was set in Calamares — tell the wizard to skip the password step.
+        "PREFILL_PASSWORD_DONE='1'\n"
     )
+    # If plaintext is available, pre-fill the Matrix password with the same value
+    # so the user's Matrix account uses the same password as their login.
+    if password_value and not password_is_hash:
+        prefill_content += f"PREFILL_MATRIX_PASSWORD={_shell_quote(password_value)}\n"
+
     _write_owned(prefill_path, prefill_content, mode=0o600)
     libcalamares.utils.debug(f"bloom_prefill: wrote {prefill_path}")
 
@@ -104,22 +131,14 @@ def run():
         _write_owned(gitconfig_path, gitconfig, mode=0o644)
         libcalamares.utils.debug(f"bloom_prefill: wrote {gitconfig_path}")
 
-    # ── pi user password ─────────────────────────────────────────────────────
-    # The Calamares users exec module is NOT in the sequence (it would call
-    # `usermod <typed-username>` which fails because only "pi" exists).
-    # We set the pi user password directly using the pre-hashed value that
-    # the users view module stored in globalstorage, regardless of what
-    # username the user typed on the users page.
-    users_list = gs.value("users") or []
-    password_hash = ""
-    if users_list and isinstance(users_list, list):
-        first = users_list[0]
-        if isinstance(first, dict):
-            password_hash = first.get("password", "")
-    if password_hash:
+    # ── Apply user password ───────────────────────────────────────────────────
+    if password_value:
+        cmd = ["chpasswd", "--root", root]
+        if password_is_hash:
+            cmd.append("--encrypted")
         chpasswd = subprocess.run(
-            ["chpasswd", "--root", root, "--encrypted"],
-            input=f"pi:{password_hash}\n",
+            cmd,
+            input=f"{username}:{password_value}\n",
             capture_output=True, text=True,
         )
         if chpasswd.returncode != 0:
@@ -127,9 +146,9 @@ def run():
                 f"bloom_prefill: chpasswd failed (exit {chpasswd.returncode}): {chpasswd.stderr.strip()}"
             )
         else:
-            libcalamares.utils.debug("bloom_prefill: set pi user password")
+            libcalamares.utils.debug(f"bloom_prefill: set {username} password")
     else:
-        libcalamares.utils.warning("bloom_prefill: no password hash in globalstorage — pi will have no password")
+        libcalamares.utils.warning(f"bloom_prefill: no password in globalstorage — {username} will have no password")
 
     # ── NetworkManager WiFi connections (best-effort) ────────────────────────
     src_nm = "/etc/NetworkManager/system-connections"

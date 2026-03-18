@@ -8,6 +8,8 @@
   };
 
   config = {
+    # Enable firmware for WiFi devices (Intel AX101, etc.)
+    hardware.enableRedistributableFirmware = true;
     services.netbird.enable = true;
 
     services.openssh = {

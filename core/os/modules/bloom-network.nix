@@ -8,8 +8,10 @@
   };
 
   config = {
-    # Enable firmware for WiFi devices (Intel AX101, etc.)
-    hardware.enableRedistributableFirmware = true;
+    # Enable all firmware for maximum hardware compatibility.
+    # This ensures WiFi, Bluetooth, and other hardware works out of the box
+    # on the widest range of devices (Intel, Broadcom, Realtek, Atheros, etc.)
+    hardware.enableAllFirmware = true;
     services.netbird.enable = true;
 
     services.openssh = {

@@ -6,7 +6,6 @@ let
 
   bashrc = pkgs.writeText "bloom-bashrc" ''
     export BLOOM_DIR="$HOME/Bloom"
-    export XDG_RUNTIME_DIR="/run/user/$(id -u)"
     export BROWSER="chromium"
     export PATH="/usr/local/share/bloom/node_modules/.bin:$PATH"
   '';
@@ -28,114 +27,7 @@ let
       export QT_QPA_PLATFORM=wayland
       export SDL_VIDEODRIVER=wayland
       export _JAVA_AWT_WM_NONREPARENTING=1
-      
-      # Create minimal Sway config if none exists
-      if [ ! -f "$HOME/.config/sway/config" ]; then
-        mkdir -p "$HOME/.config/sway"
-        cat > "$HOME/.config/sway/config" <<'SWAYCFG'
-# Bloom OS Sway Configuration
-set $mod Mod4
-set $term foot
-set $menu wmenu-run
 
-# Font for window titles
-font pango:monospace 10
-
-# Use Mouse+$mod to drag floating windows
-floating_modifier $mod normal
-
-# Start terminal
-bindsym $mod+Return exec $term
-
-# Kill focused window
-bindsym $mod+Shift+q kill
-
-# Start launcher
-bindsym $mod+d exec $menu
-
-# Reload configuration
-bindsym $mod+Shift+c reload
-
-# Exit Sway
-bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit Sway?' -B 'Yes' 'swaymsg exit'
-
-# Move focus
-bindsym $mod+h focus left
-bindsym $mod+j focus down
-bindsym $mod+k focus up
-bindsym $mod+l focus right
-
-# Move windows
-bindsym $mod+Shift+h move left
-bindsym $mod+Shift+j move down
-bindsym $mod+Shift+k move up
-bindsym $mod+Shift+l move right
-
-# Workspaces
-bindsym $mod+1 workspace number 1
-bindsym $mod+2 workspace number 2
-bindsym $mod+3 workspace number 3
-bindsym $mod+4 workspace number 4
-bindsym $mod+5 workspace number 5
-
-# Move to workspace
-bindsym $mod+Shift+1 move container to workspace number 1
-bindsym $mod+Shift+2 move container to workspace number 2
-bindsym $mod+Shift+3 move container to workspace number 3
-bindsym $mod+Shift+4 move container to workspace number 4
-bindsym $mod+Shift+5 move container to workspace number 5
-
-# Layout
-bindsym $mod+b splith
-bindsym $mod+v splitv
-bindsym $mod+s layout stacking
-bindsym $mod+w layout tabbed
-bindsym $mod+e layout toggle split
-
-# Fullscreen
-bindsym $mod+f fullscreen toggle
-
-# Floating
-bindsym $mod+Shift+space floating toggle
-bindsym $mod+space focus mode_toggle
-
-# Resize mode
-mode "resize" {
-    bindsym h resize shrink width 10px
-    bindsym j resize grow height 10px
-    bindsym k resize shrink height 10px
-    bindsym l resize grow width 10px
-    bindsym Return mode "default"
-    bindsym Escape mode "default"
-}
-bindsym $mod+r mode "resize"
-
-# Brightness and volume keys
-bindsym XF86MonBrightnessUp exec brightnessctl set +5%
-bindsym XF86MonBrightnessDown exec brightnessctl set 5%-
-bindsym XF86AudioRaiseVolume exec pamixer -i 5
-bindsym XF86AudioLowerVolume exec pamixer -d 5
-bindsym XF86AudioMute exec pamixer -t
-
-# Status bar
-bar {
-    position top
-    status_command while date +'%Y-%m-%d %H:%M:%S'; do sleep 1; done
-    colors {
-        statusline #ffffff
-        background #323232
-    }
-}
-
-# Window borders
-default_border pixel 2
-default_floating_border pixel 2
-
-# Autostart Pi in a terminal
-exec $term -e bash -c 'bloom-greeting.sh && exec pi'
-SWAYCFG
-      fi
-      
       exec sway
     fi
 
@@ -182,6 +74,108 @@ in
     "skel/.bashrc".source       = bashrc;
     "skel/.bash_profile".source = bashProfile;
     "issue".text = "Bloom OS\n";
+    "xdg/sway/config".text = ''
+      # Bloom OS Sway Configuration
+      set $mod Mod4
+      set $term foot
+      set $menu wmenu-run
+
+      # Font for window titles
+      font pango:monospace 10
+
+      # Use Mouse+$mod to drag floating windows
+      floating_modifier $mod normal
+
+      # Start terminal
+      bindsym $mod+Return exec $term
+
+      # Kill focused window
+      bindsym $mod+Shift+q kill
+
+      # Start launcher
+      bindsym $mod+d exec $menu
+
+      # Reload configuration
+      bindsym $mod+Shift+c reload
+
+      # Exit Sway
+      bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit Sway?' -B 'Yes' 'swaymsg exit'
+
+      # Move focus
+      bindsym $mod+h focus left
+      bindsym $mod+j focus down
+      bindsym $mod+k focus up
+      bindsym $mod+l focus right
+
+      # Move windows
+      bindsym $mod+Shift+h move left
+      bindsym $mod+Shift+j move down
+      bindsym $mod+Shift+k move up
+      bindsym $mod+Shift+l move right
+
+      # Workspaces
+      bindsym $mod+1 workspace number 1
+      bindsym $mod+2 workspace number 2
+      bindsym $mod+3 workspace number 3
+      bindsym $mod+4 workspace number 4
+      bindsym $mod+5 workspace number 5
+
+      # Move to workspace
+      bindsym $mod+Shift+1 move container to workspace number 1
+      bindsym $mod+Shift+2 move container to workspace number 2
+      bindsym $mod+Shift+3 move container to workspace number 3
+      bindsym $mod+Shift+4 move container to workspace number 4
+      bindsym $mod+Shift+5 move container to workspace number 5
+
+      # Layout
+      bindsym $mod+b splith
+      bindsym $mod+v splitv
+      bindsym $mod+s layout stacking
+      bindsym $mod+w layout tabbed
+      bindsym $mod+e layout toggle split
+
+      # Fullscreen
+      bindsym $mod+f fullscreen toggle
+
+      # Floating
+      bindsym $mod+Shift+space floating toggle
+      bindsym $mod+space focus mode_toggle
+
+      # Resize mode
+      mode "resize" {
+          bindsym h resize shrink width 10px
+          bindsym j resize grow height 10px
+          bindsym k resize shrink height 10px
+          bindsym l resize grow width 10px
+          bindsym Return mode "default"
+          bindsym Escape mode "default"
+      }
+      bindsym $mod+r mode "resize"
+
+      # Brightness and volume keys
+      bindsym XF86MonBrightnessUp exec brightnessctl set +5%
+      bindsym XF86MonBrightnessDown exec brightnessctl set 5%-
+      bindsym XF86AudioRaiseVolume exec pamixer -i 5
+      bindsym XF86AudioLowerVolume exec pamixer -d 5
+      bindsym XF86AudioMute exec pamixer -t
+
+      # Status bar
+      bar {
+          position top
+          status_command while date +'%Y-%m-%d %H:%M:%S'; do sleep 1; done
+          colors {
+              statusline #ffffff
+              background #323232
+          }
+      }
+
+      # Window borders
+      default_border pixel 2
+      default_floating_border pixel 2
+
+      # Autostart Pi in a terminal
+      exec $term -e bash -c 'bloom-greeting.sh && exec pi'
+    '';
   };
 
   systemd.tmpfiles.rules = [

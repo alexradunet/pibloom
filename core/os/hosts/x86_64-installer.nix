@@ -2,7 +2,7 @@
 # Graphical installer ISO configuration for Bloom OS.
 # Uses Calamares GUI installer with GNOME desktop (auto-starts Calamares via GDM).
 # Custom calamares-nixos-extensions override provides Bloom-specific wizard pages.
-{ lib, pkgs, modulesPath, ... }:
+{ lib, pkgs, modulesPath, bloomApp, piAgent, ... }:
 
 {
   imports = [
@@ -25,9 +25,16 @@
   # Support all locales (Calamares needs this for the locale selection step)
   i18n.supportedLocales = [ "all" ];
 
-  # Extra tools available in the live environment
+  # Extra tools available in the live environment.
+  # bloomApp and piAgent are included here so their store paths are already in
+  # the ISO squashfs.  The installer's `nix build` step (which evaluates the
+  # same flake.lock pinned at ISO build time) then reuses these paths from the
+  # host store instead of building piAgent from source (Rust toolchain), which
+  # would exhaust the live ISO's tmpfs.
   environment.systemPackages = with pkgs; [
     gparted
+    bloomApp
+    piAgent
   ];
 
   # ISO-specific settings

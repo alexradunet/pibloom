@@ -161,6 +161,22 @@ def _run():
     with open(os.path.join(nixos_dir, "flake.nix"), "w") as f:
         f.write(flake_nix)
 
+    # ── Step 3b: Copy bundled flake.lock to target ───────────────────────────
+    # The calamares package bundles the repo's flake.lock (built in alongside
+    # this module at package time).  Copying it here pins nix build to the
+    # exact flake input commits used when the ISO itself was built.  This
+    # ensures bloom-app and piAgent resolve to the same store paths already
+    # present in the ISO squashfs — no Rust-toolchain download required.
+    import shutil as _shutil
+    _flake_lock_src = os.path.join(os.path.dirname(__file__), "flake.lock")
+    if os.path.exists(_flake_lock_src):
+        _shutil.copy(_flake_lock_src, os.path.join(nixos_dir, "flake.lock"))
+        libcalamares.utils.debug("bloom_nixos: copied bundled flake.lock to target")
+    else:
+        libcalamares.utils.warning(
+            "bloom_nixos: bundled flake.lock not found — nix will resolve latest inputs"
+        )
+
     # ── Step 4: Build system closure on the HOST nix store ───────────────────
     # Problem with --store "local?real-root=<target>": Nix must substitute ALL
     # dependencies (including build-time deps) to the target disk.  piAgent is
@@ -185,8 +201,8 @@ def _run():
             "--no-link", "--print-out-paths",
             "--extra-experimental-features", "nix-command flakes",
             "--option", "sandbox", "false",
-            # Don't write a lock file back to /mnt/etc/nixos.
-            "--no-write-lock-file",
+            # Use the bundled flake.lock we just wrote; don't update it.
+            "--no-update-lock-file",
             flake_attr,
         ],
         capture_output=True, text=True,

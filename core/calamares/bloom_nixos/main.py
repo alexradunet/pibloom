@@ -131,17 +131,13 @@ def _run():
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     bloom.url = "github:alexradunet/piBloom";
-    llm-agents-nix = {
-      url = "github:numtide/llm-agents.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
-  outputs = { self, nixpkgs, bloom, llm-agents-nix, ... }:
+  outputs = { self, nixpkgs, bloom, ... }:
   let
     system = "x86_64-linux";
     pkgs = nixpkgs.legacyPackages.${system};
-    piAgent = llm-agents-nix.packages.${system}.pi;
+    piAgent = pkgs.callPackage (bloom + "/core/os/pkgs/pi") {};
     bloomApp = pkgs.callPackage (bloom + "/core/os/pkgs/bloom-app") { inherit piAgent; };
   in {
     nixosConfigurations.bloom = nixpkgs.lib.nixosSystem {
@@ -167,7 +163,7 @@ def _run():
     # closure to the target disk (no build-time deps like rustc).
     #
     # Offline support: the ISO embeds flake input source trees under
-    # /etc/bloom/offline/{nixpkgs,bloom,llm-agents-nix}.  We pass each as
+    # /etc/bloom/offline/{nixpkgs,bloom}.  We pass each as
     # --override-input so Nix uses the local path instead of fetching from
     # GitHub.  --no-write-lock-file prevents writing a path:-based lock file
     # to the target (the installed system generates its own lock on first
@@ -180,9 +176,8 @@ def _run():
     # Build --override-input flags from offline sources embedded in the ISO.
     _offline_base = "/etc/bloom/offline"
     _input_names = {
-        "nixpkgs":       "nixpkgs",
-        "bloom":         "bloom",
-        "llm-agents-nix": "llm-agents-nix",
+        "nixpkgs": "nixpkgs",
+        "bloom":   "bloom",
     }
     _overrides = []
     for dir_name, input_name in _input_names.items():

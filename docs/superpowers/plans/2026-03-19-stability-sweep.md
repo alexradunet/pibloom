@@ -496,13 +496,17 @@ describe("setup actions", () => {
 
   it("setup_advance marks a step done", async () => {
     const { handleSetupAdvance } = await import("../../core/pi-extensions/bloom-setup/actions.js")
-    const result = await handleSetupAdvance({ step: "test-step" })
+    // Read the actual handleSetupAdvance signature before calling — it requires
+    // both a valid StepName and a result field (e.g. { step: "persona", result: "completed" }).
+    // Adjust the call below to match the real signature.
+    const result = await handleSetupAdvance({ step: "persona", result: "completed" } as never)
     expect(result.isError).toBeFalsy()
   })
 
   it("setup_reset clears state", async () => {
     const { handleSetupReset } = await import("../../core/pi-extensions/bloom-setup/actions.js")
-    const result = await handleSetupReset()
+    // handleSetupReset takes an optional params object — pass {} even if all fields are optional.
+    const result = await handleSetupReset({})
     expect(result).toHaveProperty("content")
   })
 })

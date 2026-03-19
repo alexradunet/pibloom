@@ -24,11 +24,13 @@ const NixosUpdateParams = Type.Object({
 		description:
 			"status: list NixOS generations. apply: run nixos-rebuild switch from the selected source. rollback: revert to previous generation.",
 	}),
-	source: StringEnum(["remote", "local"] as const, {
-		description:
-			"Which flake source to use for apply. remote uses the GitHub flake. local uses ~/.bloom/pi-bloom. Ignored for status and rollback.",
-		default: "remote",
-	}),
+	source: Type.Optional(
+		StringEnum(["remote", "local"] as const, {
+			description:
+				"Which flake source to use for apply. remote uses the GitHub flake. local uses ~/.bloom/pi-bloom. Ignored for status and rollback.",
+			default: "remote",
+		}),
+	),
 });
 
 const NixConfigProposalParams = Type.Object({

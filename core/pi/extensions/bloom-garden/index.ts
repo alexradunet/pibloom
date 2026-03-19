@@ -8,8 +8,8 @@
  */
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
-import { defineTool, type RegisteredExtensionTool, registerTools } from "../../lib/extension-tools.js";
-import { getBloomDir } from "../../lib/filesystem.js";
+import { defineTool, type RegisteredExtensionTool, registerTools } from "../../../lib/extension-tools.js";
+import { getBloomDir } from "../../../lib/filesystem.js";
 import { discoverSkillPaths, ensureBloom, getPackageDir, handleGardenStatus } from "./actions.js";
 import { handleUpdateBlueprints, readBlueprintVersions, seedBlueprints } from "./actions-blueprints.js";
 

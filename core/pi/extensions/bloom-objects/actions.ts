@@ -4,9 +4,9 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { getBloomDir, safePath } from "../../lib/filesystem.js";
-import { parseFrontmatter, stringifyFrontmatter } from "../../lib/frontmatter.js";
-import { errorResult, nowIso, truncate } from "../../lib/shared.js";
+import { getBloomDir, safePath } from "../../../lib/filesystem.js";
+import { parseFrontmatter, stringifyFrontmatter } from "../../../lib/frontmatter.js";
+import { errorResult, nowIso, truncate } from "../../../lib/shared.js";
 import { defaultObjectBody, mergeObjectState, readMemoryRecord, writeMemoryRecord } from "./memory.js";
 
 /** Parse a `type/slug` reference string into its components. Throws if format is invalid. */

@@ -1,8 +1,8 @@
 /**
  * System health handler for bloom-os.
  */
-import { run } from "../../lib/exec.js";
-import { truncate } from "../../lib/shared.js";
+import { run } from "../../../lib/exec.js";
+import { truncate } from "../../../lib/shared.js";
 
 function nixosSection(result: Awaited<ReturnType<typeof run>>): string {
 	if (result.exitCode !== 0) return "## OS\n(nixos-rebuild unavailable)";

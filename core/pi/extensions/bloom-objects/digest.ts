@@ -1,5 +1,5 @@
 import path from "node:path";
-import { getBloomDir } from "../../lib/filesystem.js";
+import { getBloomDir } from "../../../lib/filesystem.js";
 import { walkMdFiles } from "./actions.js";
 import { readMemoryRecord } from "./memory.js";
 

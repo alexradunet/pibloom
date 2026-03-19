@@ -4,9 +4,9 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { getBloomDir, safePath } from "../../lib/filesystem.js";
-import { parseFrontmatter } from "../../lib/frontmatter.js";
-import { errorResult, truncate } from "../../lib/shared.js";
+import { getBloomDir, safePath } from "../../../lib/filesystem.js";
+import { parseFrontmatter } from "../../../lib/frontmatter.js";
+import { errorResult, truncate } from "../../../lib/shared.js";
 import { walkMdFiles } from "./actions.js";
 import { readMemoryRecord, type ScopePreference, scoreRecord } from "./memory.js";
 

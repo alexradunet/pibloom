@@ -6,17 +6,17 @@ import fs from "node:fs";
 import os from "node:os";
 import path, { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { run } from "../../lib/exec.js";
-import { safePath } from "../../lib/filesystem.js";
-import { stringifyFrontmatter } from "../../lib/frontmatter.js";
+import { run } from "../../../lib/exec.js";
+import { safePath } from "../../../lib/filesystem.js";
+import { stringifyFrontmatter } from "../../../lib/frontmatter.js";
 import {
 	generateAgentInstructionsMarkdown,
 	type MatrixCredentials,
 	matrixAgentCredentialsPath,
 	matrixCredentialsPath,
 	provisionMatrixAgentAccount,
-} from "../../lib/matrix.js";
-import { errorResult, nowIso, truncate } from "../../lib/shared.js";
+} from "../../../lib/matrix.js";
+import { errorResult, nowIso, truncate } from "../../../lib/shared.js";
 import { readBlueprintVersions } from "./actions-blueprints.js";
 
 const BLOOM_DIRS = ["Persona", "Skills", "Evolutions", "Objects", "Episodes", "Agents", "audit"];

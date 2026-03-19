@@ -2,7 +2,7 @@
  * Step guidance constants for bloom-setup.
  * Defines what Pi should say/do at each first-boot setup step.
  */
-import type { StepName } from "../../lib/setup.js";
+import type { StepName } from "../../../lib/setup.js";
 
 /** Step guidance — what Pi should say/do at each step. */
 export const STEP_GUIDANCE: Record<StepName, string> = {

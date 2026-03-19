@@ -7,8 +7,8 @@ import path from "node:path";
  */
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
-import { defineTool, type RegisteredExtensionTool, registerTools } from "../../lib/extension-tools.js";
-import { truncate } from "../../lib/shared.js";
+import { defineTool, type RegisteredExtensionTool, registerTools } from "../../../lib/extension-tools.js";
+import { truncate } from "../../../lib/shared.js";
 import { consolidateEpisodes, createEpisode, listEpisodes, promoteEpisode } from "./actions.js";
 
 type EpisodeCreateParams = Parameters<typeof createEpisode>[0] & {

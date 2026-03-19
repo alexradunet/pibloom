@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getBloomDir, safePath } from "../../lib/filesystem.js";
-import { parseFrontmatter, stringifyFrontmatter } from "../../lib/frontmatter.js";
-import { errorResult, nowIso } from "../../lib/shared.js";
+import { getBloomDir, safePath } from "../../../lib/filesystem.js";
+import { parseFrontmatter, stringifyFrontmatter } from "../../../lib/frontmatter.js";
+import { errorResult, nowIso } from "../../../lib/shared.js";
 import { defaultObjectBody, mergeObjectState, readMemoryRecord, writeMemoryRecord } from "../bloom-objects/memory.js";
 
 export interface PromotionTarget {

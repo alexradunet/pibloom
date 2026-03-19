@@ -6,7 +6,7 @@
  */
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
-import { defineTool, type RegisteredExtensionTool, registerTools } from "../../lib/extension-tools.js";
+import { defineTool, type RegisteredExtensionTool, registerTools } from "../../../lib/extension-tools.js";
 import { createObject, linkObjects, readObject, updateObject, upsertObject } from "./actions.js";
 import { listObjects, queryObjects, searchObjects } from "./actions-query.js";
 

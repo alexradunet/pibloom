@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
-import { run } from "../../lib/exec.js";
-import { getBloomRepoDir } from "../../lib/filesystem.js";
-import { errorResult, requireConfirmation, truncate } from "../../lib/shared.js";
+import { run } from "../../../lib/exec.js";
+import { getBloomRepoDir } from "../../../lib/filesystem.js";
+import { errorResult, requireConfirmation, truncate } from "../../../lib/shared.js";
 
 export type NixConfigProposalAction = "status" | "validate" | "update_flake_lock";
 

@@ -6,8 +6,8 @@ import os from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import jsYaml from "js-yaml";
-import { getBloomDir, getUpdateStatusPath } from "../../lib/filesystem.js";
-import { createLogger } from "../../lib/shared.js";
+import { getBloomDir, getUpdateStatusPath } from "../../../lib/filesystem.js";
+import { createLogger } from "../../../lib/shared.js";
 import type { BloomContext, GuardrailsConfig } from "./types.js";
 
 const log = createLogger("bloom-persona");

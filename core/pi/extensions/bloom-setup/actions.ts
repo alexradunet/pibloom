@@ -4,8 +4,8 @@
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import { dirname, join } from "node:path";
-import { run } from "../../lib/exec.js";
-import { atomicWriteFile, ensureDir } from "../../lib/fs-utils.js";
+import { run } from "../../../lib/exec.js";
+import { atomicWriteFile, ensureDir } from "../../../lib/fs-utils.js";
 import {
 	advanceStep,
 	createInitialState,
@@ -15,8 +15,8 @@ import {
 	parseSetupState,
 	type SetupState,
 	type StepName,
-} from "../../lib/setup.js";
-import { createLogger } from "../../lib/shared.js";
+} from "../../../lib/setup.js";
+import { createLogger } from "../../../lib/shared.js";
 import { STEP_GUIDANCE } from "./step-guidance.js";
 
 const log = createLogger("bloom-setup");

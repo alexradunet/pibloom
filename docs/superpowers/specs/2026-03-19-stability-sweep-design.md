@@ -66,9 +66,9 @@ Rationale: bloom-setup and bloom-localai are the simplest/most isolated; bloom-p
 ### 1. Tooling
 
 **Biome:**
-- Upgrade from v1.9.4 → v2 (latest stable)
-- Enable `nursery.noFloatingPromises: "error"` — catches unhandled promises that produce silent failures and defensive downstream code
-- Keep existing rules; review any rules promoted from nursery to stable in v2 and enable recommended ones
+- `biome.json` already references a v2 schema URL but `package.json` still pins `@biomejs/biome: ^1.9.4`. The first step is to align: update `package.json` to the current Biome 2.x stable release and verify the schema URL in `biome.json` matches.
+- Enable `noFloatingPromises: "error"` — catches unhandled promises that produce silent failures and defensive downstream code. **Before writing the config key:** check the Biome v2 release notes to confirm whether this rule was promoted out of `nursery` into a stable group (e.g. `correctness`). Write the key under whichever group owns it in the installed version; writing it under the wrong group silently no-ops.
+- Keep existing rules; review any rules promoted from nursery to stable in v2 and enable recommended ones.
 
 **Vitest (`vitest.config.ts`):**
 - Add `clearMocks: true` and `restoreMocks: true` globally — prevents mock state leaking between tests
@@ -113,7 +113,7 @@ Rationale: bloom-setup and bloom-localai are the simplest/most isolated; bloom-p
 - Defensive null-checks on values TypeScript's strict mode already guarantees
 - `try/catch` blocks that catch `unknown` and return `undefined` — convert to explicit error types or let errors propagate
 - Any helpers that exist only because a caller upstream had bad types (fix the caller, remove the helper)
-- Replace `Value.Check(T, x)` + manual guard with `Value.Parse(T, x)` at external data boundaries (filesystem reads, Matrix event payloads)
+- Replace `Value.Check(T, x)` + manual guard with `Value.Parse(T, x)` at network/tool-input boundaries (Matrix event payloads, tool inputs); for filesystem reads, wrap `Value.Parse` in a typed catch and return a structured error — file corruption is operator-recoverable and should not crash the caller silently
 
 **Done when:** Coverage ≥ 85% (statements, functions, lines); `npm run check` clean; no `// @ts-ignore` or `as unknown as` casts.
 
@@ -128,7 +128,7 @@ Rationale: bloom-setup and bloom-localai are the simplest/most isolated; bloom-p
 - Silent error swallowing in event handlers (Matrix SDK callbacks that `catch` and log but never propagate)
 - Over-wide `catch (e: unknown)` that discard error context
 
-**Done when:** Coverage ≥ 85% (already at 83%, minimal work); no new `// eslint-disable` or Biome suppression comments added during cleanup.
+**Done when:** Coverage ≥ 85% (observed actual coverage from `npm run test:coverage` is already ~83% — the current threshold in `vitest.config.ts` is a conservative floor of 40%, not a reflection of actual coverage; this step raises the enforced threshold to match observed reality); no new `// eslint-disable` or Biome suppression comments added during cleanup.
 
 ---
 
@@ -171,13 +171,11 @@ This does not require a running Matrix server — it should use the existing moc
 
 **NixOS CI gate:**
 
-In `.github/workflows/build-os.yml`, promote two checks to required (non-optional) steps:
-- `nix build .#checks.x86_64-linux.bloom-boot` — first-boot smoke test
-- `nix build .#checks.x86_64-linux.bloom-daemon` — daemon startup smoke test
+`bloom-boot` and `bloom-daemon` are full NixOS VM tests (`pkgs.testers.nixosTest`) that require KVM. GitHub-hosted `ubuntu-latest` runners do not expose `/dev/kvm`, so these tests cannot run in `build-os.yml`. The correct target is `.github/workflows/nixos-tests.yml`, which already handles KVM detection. Promote them there to required (non-skippable) steps — either by removing the KVM skip guard and requiring a self-hosted runner with `${{ vars.NIXOS_TEST_RUNNER }}`, or by keeping the KVM guard but marking the job as required so the workflow fails loudly when KVM is absent rather than silently passing.
 
-These are currently available but not enforced. They become required gates before merge.
+`build-os.yml` already gates on `bloom-config` (fast, no-VM NixOS eval check) — keep that as-is.
 
-**Done when:** `tests/e2e/` contains at least one real workflow test; CI workflow enforces `bloom-boot` and `bloom-daemon`; all existing tests still pass.
+**Done when:** `tests/e2e/` contains at least one real workflow test; `nixos-tests.yml` enforces `bloom-boot` and `bloom-daemon` as non-skippable; all existing tests still pass.
 
 ---
 
@@ -219,19 +217,30 @@ restoreMocks: true
 
 ### TypeBox usage standard
 
-At all external data boundaries (tool inputs, filesystem reads, Matrix event payloads):
+Two patterns depending on the trust boundary:
 
-**Before (current pattern):**
+**Network/tool-input boundaries** (Matrix event payloads, tool inputs from the Pi agent): a `ValueError` throw is appropriate — callers have error-handling infrastructure and invalid input is a programming error, not an operator condition.
+
 ```typescript
+// Before (current):
 if (!Value.Check(T, data)) {
   return { error: 'invalid input' }
 }
 const typed = data as Static<typeof T>
+
+// After:
+const typed = Value.Parse(T, data) // throws ValueError on invalid input
 ```
 
-**After (target pattern):**
+**Filesystem read boundaries** (stored state files, config files): file corruption or schema evolution is an operator-recoverable condition. Wrap in a typed catch:
+
 ```typescript
-const typed = Value.Parse(T, data) // throws Value.ParseError on invalid input
+let typed: Static<typeof T>
+try {
+  typed = Value.Parse(T, data)
+} catch (e) {
+  return { error: `state file corrupt or incompatible: ${e instanceof Error ? e.message : String(e)}` }
+}
 ```
 
 Internal functions that receive already-validated data do not need re-validation.
@@ -267,4 +276,4 @@ npm run test:ci                                              # full suite + cove
 | `core/daemon/*.ts` | Remove silent error swallowing; no restructuring |
 | `core/pi-extensions/**/*.ts` | Convert tool input validation to `Value.Parse`; raise coverage |
 | `tests/e2e/` | Add real operator journey test |
-| `.github/workflows/build-os.yml` | Promote `bloom-boot` and `bloom-daemon` to required gates |
+| `.github/workflows/nixos-tests.yml` | Promote `bloom-boot` and `bloom-daemon` to non-skippable required gates |

@@ -53,7 +53,9 @@ pkgs.testers.runNixOSTest {
     };
   };
 
-  testScript = { nodes, ... }: ''
+  testScript = ''
+    server = machines[0]
+
     # Start the server
     server.start()
     

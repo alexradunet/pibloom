@@ -73,15 +73,33 @@
       local username="$1"
       local password="$2"
       local homeserver="''${3:-http://localhost:6167}"
-      
-      curl -sf -X POST "''${homeserver}/_matrix/client/v3/register" \
+
+      local step1
+      step1=$(curl -s -X POST "''${homeserver}/_matrix/client/v3/register" \
         -H "Content-Type: application/json" \
-        -d "{\"username\":\"$username\",\"password\":\"$password\",\"type\":\"m.login.dummy\"}"
+        -d "{\"username\":\"$username\",\"password\":\"$password\",\"inhibit_login\":false}")
+
+      if echo "$step1" | grep -q '"access_token"'; then
+        echo "$step1"
+        return 0
+      fi
+
+      local session
+      session=$(printf '%s' "$step1" | sed -n 's/.*"session"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+      if [ -n "$session" ]; then
+        curl -sf -X POST "''${homeserver}/_matrix/client/v3/register" \
+          -H "Content-Type: application/json" \
+          -d "{\"username\":\"$username\",\"password\":\"$password\",\"inhibit_login\":false,\"auth\":{\"type\":\"m.login.dummy\",\"session\":\"$session\"}}"
+        return 0
+      fi
+
+      printf '%s\n' "$step1" >&2
+      return 1
     }
     
     # Get Matrix registration token from file
     get_matrix_token() {
-      local token_file="/var/lib/continuwuity/registration_token"
+      local token_file="/var/lib/matrix-synapse/registration_shared_secret"
       if [ -f "$token_file" ]; then
         cat "$token_file"
       else

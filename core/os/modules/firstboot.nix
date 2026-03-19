@@ -47,7 +47,7 @@ in
     {
       users = [ u ];
       commands = [
-        { command = "/run/current-system/sw/bin/cat /var/lib/continuwuity/registration_token"; options = [ "NOPASSWD" ]; }
+        { command = "/run/current-system/sw/bin/cat /var/lib/matrix-synapse/registration_shared_secret"; options = [ "NOPASSWD" ]; }
         { command = "/run/current-system/sw/bin/journalctl -u matrix-synapse --no-pager"; options = [ "NOPASSWD" ]; }
         { command = "/run/current-system/sw/bin/netbird up --setup-key *"; options = [ "NOPASSWD" ]; }
         { command = "/run/current-system/sw/bin/systemctl start netbird.service"; options = [ "NOPASSWD" ]; }

@@ -128,6 +128,8 @@
             };
 
             testScript = ''
+              nixpi = machines[0]
+
               nixpi.start()
               nixpi.wait_for_unit("multi-user.target", timeout=300)
 

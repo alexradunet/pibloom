@@ -25,7 +25,7 @@ export interface MatrixCredentials {
 	botPassword: string;
 	userUserId?: string;
 	userPassword?: string;
-	registrationToken: string;
+	registrationToken?: string;
 }
 
 /** Credentials for one agent-specific Matrix account. */
@@ -55,7 +55,7 @@ export async function registerMatrixAccount(
 	homeserver: string,
 	username: string,
 	password: string,
-	registrationToken: string,
+	_registrationToken?: string,
 ): Promise<{ ok: true; userId: string; accessToken: string } | { ok: false; error: string }> {
 	const url = `${homeserver}/_matrix/client/v3/register`;
 	const body = { username, password, inhibit_login: false };
@@ -72,7 +72,6 @@ export async function registerMatrixAccount(
 	}
 
 	const step1Body = (await step1.json()) as { session?: string; errcode?: string; error?: string };
-
 	if (step1.status !== 401) {
 		return parseRegistrationError(step1Body, step1.status);
 	}
@@ -80,27 +79,15 @@ export async function registerMatrixAccount(
 	const session = step1Body.session;
 	if (!session) return { ok: false, error: "No session ID in 401 response" };
 
-	return registerStep2(url, username, password, registrationToken, session);
-}
-
-async function registerStep2(
-	url: string,
-	username: string,
-	password: string,
-	registrationToken: string,
-	session: string,
-): Promise<{ ok: true; userId: string; accessToken: string } | { ok: false; error: string }> {
-	const step2Body = {
-		username,
-		password,
-		inhibit_login: false,
-		auth: { type: "m.login.registration_token", token: registrationToken, session },
-	};
-
 	const step2 = await fetch(url, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(step2Body),
+		body: JSON.stringify({
+			username,
+			password,
+			inhibit_login: false,
+			auth: { type: "m.login.dummy", session },
+		}),
 	});
 
 	if (step2.ok) {
@@ -108,14 +95,13 @@ async function registerStep2(
 		return { ok: true, userId: data.user_id, accessToken: data.access_token };
 	}
 
-	if (step2.status === 401) return { ok: false, error: "Invalid registration token" };
-	return parseRegistrationError(await step2.json(), step2.status);
+	return parseRegistrationError((await step2.json()) as { errcode?: string; error?: string }, step2.status);
 }
 
 export interface ProvisionMatrixAgentAccountOptions {
 	homeserver: string;
 	username: string;
-	registrationToken: string;
+	registrationToken?: string;
 	password?: string;
 	register?: typeof registerMatrixAccount;
 }

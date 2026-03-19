@@ -78,46 +78,43 @@ json_field() {
 	echo "$1" | sed -n "s/.*\"$2\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p"
 }
 
-# Register a Matrix account via the UIA flow.
-# Usage: matrix_register <username> <password> <registration_token>
+# Register a Matrix account.
+# Usage: matrix_register <username> <password>
 # Outputs: JSON with user_id and access_token on success, exits 1 on failure
 matrix_register() {
-	local username="$1" password="$2" reg_token="$3"
+	local username="$1" password="$2"
 	local url="${MATRIX_HOMESERVER}/_matrix/client/v3/register"
-
-	# Step 1: POST without auth — expect 401 with session ID and UIA flows
 	local step1
 	step1=$(curl -s -X POST "$url" \
 		-H "Content-Type: application/json" \
 		-d "{\"username\":\"${username}\",\"password\":\"${password}\",\"inhibit_login\":false}")
 
-	# If step1 succeeded directly (no UIA needed), return it
 	if echo "$step1" | grep -q '"access_token"'; then
 		echo "$step1"
 		return 0
 	fi
 
-	# Extract session from 401 response body
 	local session
 	session=$(json_field "$step1" "session")
-
-	if [[ -z "$session" ]]; then
-		echo "ERROR: Failed to get session ID from Matrix server" >&2
-		return 1
+	if [[ -n "$session" ]]; then
+		local step2
+		step2=$(curl -s -X POST "$url" \
+			-H "Content-Type: application/json" \
+			-d "{\"username\":\"${username}\",\"password\":\"${password}\",\"inhibit_login\":false,\"auth\":{\"type\":\"m.login.dummy\",\"session\":\"${session}\"}}")
+		if echo "$step2" | grep -q '"access_token"'; then
+			echo "$step2"
+			return 0
+		fi
+		echo "$step2"
+		return 0
 	fi
 
-	# Step 2: POST with registration token
-	local step2
-	step2=$(curl -s -X POST "$url" \
-		-H "Content-Type: application/json" \
-		-d "{\"username\":\"${username}\",\"password\":\"${password}\",\"inhibit_login\":false,\"auth\":{\"type\":\"m.login.registration_token\",\"token\":\"${reg_token}\",\"session\":\"${session}\"}}")
-
-	if ! echo "$step2" | grep -q '"access_token"'; then
+	if ! echo "$step1" | grep -q '"errcode"'; then
 		echo "ERROR: Matrix registration failed for ${username}" >&2
 		return 1
 	fi
 
-	echo "$step2"
+	echo "$step1"
 	return 0
 }
 
@@ -146,21 +143,17 @@ load_existing_matrix_credentials() {
 	raw=$(cat "$PI_DIR/matrix-credentials.json" 2>/dev/null || true)
 	[[ -n "$raw" ]] || return 0
 
-	local bot_token bot_user_id bot_password user_user_id user_password username reg_token
+	local bot_token bot_user_id bot_password user_user_id user_password username
 	bot_token=$(json_field "$raw" "botAccessToken")
 	bot_user_id=$(json_field "$raw" "botUserId")
 	bot_password=$(json_field "$raw" "botPassword")
 	user_user_id=$(json_field "$raw" "userUserId")
 	user_password=$(json_field "$raw" "userPassword")
-	reg_token=$(json_field "$raw" "registrationToken")
-
 	if [[ -n "$bot_token" ]]; then matrix_state_set bot_token "$bot_token"; fi
 	if [[ -n "$bot_user_id" ]]; then matrix_state_set bot_user_id "$bot_user_id"; fi
 	if [[ -n "$bot_password" ]]; then matrix_state_set bot_password "$bot_password"; fi
 	if [[ -n "$user_user_id" ]]; then matrix_state_set user_user_id "$user_user_id"; fi
 	if [[ -n "$user_password" ]]; then matrix_state_set user_password "$user_password"; fi
-	if [[ -n "$reg_token" ]]; then matrix_state_set reg_token "$reg_token"; fi
-
 	if [[ "$user_user_id" =~ ^@([^:]+): ]]; then
 		username="${BASH_REMATCH[1]}"
 		matrix_state_set username "$username"
@@ -510,13 +503,6 @@ step_matrix() {
 	echo "Matrix homeserver is running."
 
 	# Read registration token
-	local reg_token
-	reg_token=$(sudo cat /var/lib/continuwuity/registration_token 2>/dev/null || true)
-	if [[ -z "$reg_token" ]]; then
-		echo "ERROR: Could not read registration token." >&2
-		return 1
-	fi
-	matrix_state_set reg_token "$reg_token"
 	load_existing_matrix_credentials
 
 	# Prompt for username
@@ -559,18 +545,10 @@ step_matrix() {
 		echo "Creating or resuming Pi bot account..."
 		bot_result=$(matrix_login "pi" "$bot_password" 2>/dev/null || true)
 		if [[ -z "$bot_result" ]]; then
-			# On a fresh database, continuwuity generates a one-time first-user token and
-			# blocks the configured registration_token until the first account is created.
-			# Extract that token from the journal and use it for the first registration.
-			local first_boot_token
-			first_boot_token=$(sudo journalctl -u matrix-synapse --no-pager 2>/dev/null | \
-				sed -n 's/.*registration token \([A-Za-z0-9]*\) .*/\1/p' | head -1 || true)
-			if [[ -n "$first_boot_token" ]]; then
-				bot_result=$(matrix_register "pi" "$bot_password" "$first_boot_token" 2>/dev/null || true)
-			fi
+			bot_result=$(matrix_register "pi" "$bot_password" 2>/dev/null || true)
 		fi
 		if [[ -z "$bot_result" ]]; then
-			bot_result=$(matrix_register "pi" "$bot_password" "$reg_token") || {
+			bot_result=$(matrix_register "pi" "$bot_password") || {
 				echo "ERROR: Failed to register or recover @pi:nixpi bot account." >&2
 				return 1
 			}
@@ -598,7 +576,7 @@ step_matrix() {
 		echo "Creating or resuming your account (@${username}:nixpi)..."
 		user_result=$(matrix_login "$username" "$user_password" 2>/dev/null || true)
 		if [[ -z "$user_result" ]]; then
-			user_result=$(matrix_register "$username" "$user_password" "$reg_token") || {
+			user_result=$(matrix_register "$username" "$user_password") || {
 				echo "ERROR: Failed to register or recover @${username}:nixpi account." >&2
 				return 1
 			}
@@ -618,8 +596,7 @@ step_matrix() {
 	  "botAccessToken": "${bot_token}",
 	  "botPassword": "${bot_password}",
 	  "userUserId": "${user_user_id}",
-	  "userPassword": "${user_password}",
-	  "registrationToken": "${reg_token}"
+	  "userPassword": "${user_password}"
 	}
 	CREDS
 	chmod 600 "$PI_DIR/matrix-credentials.json"

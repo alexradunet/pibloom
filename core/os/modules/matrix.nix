@@ -2,6 +2,11 @@
 { pkgs, config, ... }:
 
 {
+  systemd.tmpfiles.rules = [
+    "d /var/lib/matrix-synapse 0750 matrix-synapse matrix-synapse -"
+    "d /var/lib/matrix-synapse/media_store 0750 matrix-synapse matrix-synapse -"
+  ];
+
   services.matrix-synapse = {
     enable = true;
     
@@ -33,6 +38,8 @@
       
       # Registration settings
       enable_registration = true;
+      enable_registration_without_verification = true;
+      suppress_key_server_warning = true;
       
       # Don't require email verification
       registrations_require_3pid = [];
@@ -64,19 +71,26 @@
     preStart = ''
       # Bootstrap registration shared secret if not exists
       TOKEN_FILE=/var/lib/matrix-synapse/registration_shared_secret
+      MACAROON_FILE=/var/lib/matrix-synapse/macaroon_secret_key
       if [ ! -f "$TOKEN_FILE" ]; then
-        mkdir -p /var/lib/matrix-synapse
         ${pkgs.openssl}/bin/openssl rand -hex 32 > "$TOKEN_FILE"
         chmod 640 "$TOKEN_FILE"
-        chown matrix-synapse:matrix-synapse "$TOKEN_FILE" 2>/dev/null || true
+      fi
+
+      if [ ! -f "$MACAROON_FILE" ]; then
+        ${pkgs.openssl}/bin/openssl rand -hex 32 > "$MACAROON_FILE"
+        chmod 640 "$MACAROON_FILE"
       fi
       
-      # Append the registration_shared_secret to the config
-      if [ -f "$TOKEN_FILE" ]; then
+      # Append generated secrets to the config.
+      if [ -f "$TOKEN_FILE" ] && [ -f "$MACAROON_FILE" ]; then
         SECRET=$(cat "$TOKEN_FILE")
-        echo "registration_shared_secret: \"$SECRET\"" > /var/lib/matrix-synapse/extra.yaml
+        MACAROON_SECRET=$(cat "$MACAROON_FILE")
+        cat > /var/lib/matrix-synapse/extra.yaml <<EOF
+registration_shared_secret: "$SECRET"
+macaroon_secret_key: "$MACAROON_SECRET"
+EOF
         chmod 640 /var/lib/matrix-synapse/extra.yaml
-        chown matrix-synapse:matrix-synapse /var/lib/matrix-synapse/extra.yaml 2>/dev/null || true
       fi
     '';
   };

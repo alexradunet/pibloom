@@ -185,60 +185,97 @@ confirm_install() {
 
 run_install() {
     echo ""
-    echo "Preparing offline sources (resolving symlinks)..."
+    echo "Preparing disk configuration..."
     
-    # Copy nixpkgs and disko to /tmp to resolve symlinks
-    # This avoids the "path is a symlink" error
-    local real_nixpkgs="/tmp/bloom-nixpkgs-real"
-    local real_disko="/tmp/bloom-disko-real"
-    
-    rm -rf "$real_nixpkgs" "$real_disko"
-    cp -rL "$OFFLINE_BASE/nixpkgs" "$real_nixpkgs"
-    cp -rL "$OFFLINE_BASE/disko" "$real_disko"
-    
-    # Rewrite flake.nix to use the real paths
-    cat > "$TARGET_FLAKE" <<EOF
+    # Generate a disk config with the correct device
+    cat > "$WORKDIR/disk-config.nix" <<EOF
 {
-  inputs = {
-    nixpkgs.url = "path:${real_nixpkgs}";
-    disko = {
-      url = "path:${real_disko}";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-  };
-
-  outputs = { self, nixpkgs, disko, ... }:
-    let
-      system = "x86_64-linux";
-      bloomSrc = /etc/bloom/offline/bloom;
-      pkgs = import nixpkgs { inherit system; };
-      piAgent = pkgs.callPackage (bloomSrc + "/core/os/pkgs/pi") {};
-      bloomApp = pkgs.callPackage (bloomSrc + "/core/os/pkgs/bloom-app") { inherit piAgent; };
-    in {
-      nixosConfigurations.bloom = nixpkgs.lib.nixosSystem {
-        inherit system;
-        specialArgs = { inherit piAgent bloomApp; };
-        modules = [
-          (bloomSrc + "/core/os/hosts/x86_64.nix")
-          disko.nixosModules.disko
-          (bloomSrc + "/core/os/hosts/x86_64-disk.nix")
-          ./machine-config.nix
-        ];
+  disk = {
+    main = {
+      type = "disk";
+      device = "${TARGET_DISK}";
+      content = {
+        type = "gpt";
+        partitions = {
+          ESP = {
+            size = "512M";
+            type = "EF00";
+            content = {
+              type = "filesystem";
+              format = "vfat";
+              mountpoint = "/boot";
+              mountOptions = [ "defaults" ];
+            };
+          };
+          root = {
+            size = "100%";
+            content = {
+              type = "filesystem";
+              format = "btrfs";
+              mountpoint = "/";
+              mountOptions = [ "defaults" "compress=zstd" ];
+            };
+          };
+        };
       };
     };
+  };
 }
 EOF
+    
+    # Ensure mountpoint exists
+    mkdir -p /mnt
     
     echo ""
     echo "Partitioning disk with disko..."
     
-    # Run disko to partition and mount the disk
-    # Use --disk to override the hardcoded device in the config
+    # Run disko directly on the config file
     nix --extra-experimental-features "nix-command flakes" run \
-        "${real_disko}#disko" -- \
+        "$OFFLINE_BASE/disko#disko" -- \
         --mode destroy,format,mount \
-        --flake "$WORKDIR#bloom" \
-        --disk main "$TARGET_DISK"
+        "$WORKDIR/disk-config.nix"
+    
+    echo ""
+    echo "Generating NixOS configuration..."
+    
+    # Generate a minimal configuration.nix for nixos-install
+    # The real config will be managed by the flake after first boot
+    cat > /mnt/etc/nixos/configuration.nix <<EOF
+{ config, pkgs, ... }: {
+  imports = [ ];
+  
+  # Boot loader
+  boot.loader.grub = {
+    enable = true;
+    efiSupport = true;
+    efiInstallAsRemovable = true;
+    device = "nodev";
+  };
+  
+  # Filesystems
+  fileSystems."/" = {
+    device = "/dev/disk/by-label/root";
+    fsType = "btrfs";
+    options = [ "defaults" "compress=zstd" ];
+  };
+  
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-label/ESP";
+    fsType = "vfat";
+  };
+  
+  # Basic system
+  networking.hostName = "${HOSTNAME_VALUE}";
+  time.timeZone = "${TIMEZONE_VALUE}";
+  i18n.defaultLocale = "${LOCALE_VALUE}";
+  console.keyMap = "${KEYBOARD_LAYOUT}";
+  
+  # Essential packages
+  environment.systemPackages = with pkgs; [ vim ];
+  
+  system.stateVersion = "24.11";
+}
+EOF
     
     echo ""
     echo "Installing NixOS..."
@@ -247,10 +284,12 @@ EOF
     nixos-install \
         --no-channel-copy \
         --root /mnt \
-        --flake "$WORKDIR#bloom"
+        --configuration-file /mnt/etc/nixos/configuration.nix
     
     echo ""
     echo "Installation complete!"
+    echo "NOTE: This is a minimal install. Run 'just switch' after first boot"
+    echo "      to apply the full Bloom configuration from the flake."
 }
 
 main() {

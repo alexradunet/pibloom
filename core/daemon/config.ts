@@ -1,6 +1,6 @@
 /**
  * Daemon configuration loaded from environment variables.
- * All values have sensible defaults for backward compatibility.
+ * All values have sensible defaults.
  */
 
 function parseIntEnv(value: string | undefined, defaultValue: number): number {
@@ -42,19 +42,19 @@ export interface DaemonConfig {
 
 export function loadDaemonConfig(): DaemonConfig {
 	return {
-		idleTimeoutMs: parseIntEnv(process.env.BLOOM_DAEMON_IDLE_TIMEOUT_MS, 15 * 60 * 1000),
-		typingTimeoutMs: parseIntEnv(process.env.BLOOM_TYPING_TIMEOUT_MS, 30_000),
-		typingRefreshMs: parseIntEnv(process.env.BLOOM_TYPING_REFRESH_MS, 20_000),
-		totalReplyBudget: parseIntEnv(process.env.BLOOM_REPLY_BUDGET, 4),
-		processedEventTtlMs: parseIntEnv(process.env.BLOOM_PROCESSED_EVENT_TTL_MS, 5 * 60 * 1000),
-		rootReplyTtlMs: parseIntEnv(process.env.BLOOM_ROOT_REPLY_TTL_MS, 60 * 60 * 1000),
-		roomAgentTtlMs: parseIntEnv(process.env.BLOOM_ROOM_AGENT_TTL_MS, 60 * 60 * 1000),
-		maxProcessedEvents: parseIntEnv(process.env.BLOOM_MAX_PROCESSED_EVENTS, 10_000),
-		maxRootReplies: parseIntEnv(process.env.BLOOM_MAX_ROOT_REPLIES, 2_000),
-		maxRoomAgentEntries: parseIntEnv(process.env.BLOOM_MAX_ROOM_AGENT_ENTRIES, 2_000),
-		seenEventTtlMs: parseIntEnv(process.env.BLOOM_SEEN_EVENT_TTL_MS, 10 * 60 * 1000),
-		maxSeenEventIds: parseIntEnv(process.env.BLOOM_MAX_SEEN_EVENT_IDS, 10_000),
-		initialRetryDelayMs: parseIntEnv(process.env.BLOOM_INITIAL_RETRY_DELAY_MS, 5_000),
-		maxRetryDelayMs: parseIntEnv(process.env.BLOOM_MAX_RETRY_DELAY_MS, 300_000),
+		idleTimeoutMs: parseIntEnv(process.env.NIXPI_DAEMON_IDLE_TIMEOUT_MS, 15 * 60 * 1000),
+		typingTimeoutMs: parseIntEnv(process.env.NIXPI_TYPING_TIMEOUT_MS, 30_000),
+		typingRefreshMs: parseIntEnv(process.env.NIXPI_TYPING_REFRESH_MS, 20_000),
+		totalReplyBudget: parseIntEnv(process.env.NIXPI_REPLY_BUDGET, 4),
+		processedEventTtlMs: parseIntEnv(process.env.NIXPI_PROCESSED_EVENT_TTL_MS, 5 * 60 * 1000),
+		rootReplyTtlMs: parseIntEnv(process.env.NIXPI_ROOT_REPLY_TTL_MS, 60 * 60 * 1000),
+		roomAgentTtlMs: parseIntEnv(process.env.NIXPI_ROOM_AGENT_TTL_MS, 60 * 60 * 1000),
+		maxProcessedEvents: parseIntEnv(process.env.NIXPI_MAX_PROCESSED_EVENTS, 10_000),
+		maxRootReplies: parseIntEnv(process.env.NIXPI_MAX_ROOT_REPLIES, 2_000),
+		maxRoomAgentEntries: parseIntEnv(process.env.NIXPI_MAX_ROOM_AGENT_ENTRIES, 2_000),
+		seenEventTtlMs: parseIntEnv(process.env.NIXPI_SEEN_EVENT_TTL_MS, 10 * 60 * 1000),
+		maxSeenEventIds: parseIntEnv(process.env.NIXPI_MAX_SEEN_EVENT_IDS, 10_000),
+		initialRetryDelayMs: parseIntEnv(process.env.NIXPI_INITIAL_RETRY_DELAY_MS, 5_000),
+		maxRetryDelayMs: parseIntEnv(process.env.NIXPI_MAX_RETRY_DELAY_MS, 300_000),
 	};
 }

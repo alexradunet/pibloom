@@ -52,7 +52,7 @@
 
       # NixOS configuration for the nixPI desktop/workstation install.
       # Use this after installing standard NixOS:
-      #   sudo nixos-rebuild switch --flake github:alexradunet/piBloom#desktop
+      #   sudo nixos-rebuild switch --flake github:alexradunet/nixPI#desktop
       nixosConfigurations.desktop = nixpkgs.lib.nixosSystem {
         inherit system specialArgs;
         modules = [

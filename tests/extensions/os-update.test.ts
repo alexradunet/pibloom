@@ -40,7 +40,7 @@ describe("os nixos_update handler", () => {
 		expect(ctx.ui.confirm).toHaveBeenCalled();
 		expect(runMock).toHaveBeenCalledWith(
 			"sudo",
-			["nixos-rebuild", "switch", "--flake", "github:alexradunet/piBloom#desktop"],
+			["nixos-rebuild", "switch", "--flake", "github:alexradunet/nixPI#desktop"],
 			undefined,
 		);
 		expect(result.isError).toBe(false);

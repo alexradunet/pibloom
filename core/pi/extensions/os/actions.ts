@@ -44,7 +44,7 @@ export async function handleNixosUpdate(
 	}
 
 	// apply
-	const flake = source === "local" ? `${getNixpiRepoDir()}#desktop` : "github:alexradunet/piBloom#desktop";
+	const flake = source === "local" ? `${getNixpiRepoDir()}#desktop` : "github:alexradunet/nixPI#desktop";
 	if (source === "local" && !existsSync(getNixpiRepoDir())) {
 		return errorResult(`Local nixPI repo not found at ${getNixpiRepoDir()}. Cannot switch the local flake.`);
 	}

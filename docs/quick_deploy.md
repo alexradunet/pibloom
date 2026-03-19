@@ -25,7 +25,7 @@ nixPI is installed on top of a standard NixOS system:
 
 2. **Switch to the nixPI flake** after first boot:
    ```bash
-   sudo nixos-rebuild switch --flake github:alexradunet/piBloom#desktop
+   sudo nixos-rebuild switch --flake github:alexradunet/nixPI#desktop
    ```
 
 3. **Complete first-boot setup** — the `setup-wizard.sh` runs automatically on first login
@@ -80,7 +80,7 @@ just rollback        # revert to previous generation
 Or directly:
 
 ```bash
-sudo nixos-rebuild switch --flake github:alexradunet/piBloom#desktop
+sudo nixos-rebuild switch --flake github:alexradunet/nixPI#desktop
 ```
 
 ## 📚 Reference

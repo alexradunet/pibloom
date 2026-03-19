@@ -37,12 +37,12 @@ if [[ -f "$PREFILL_FILE" ]]; then
 fi
 
 # Load shared function library.
-BLOOM_LIB="$(dirname "$0")/setup-lib.sh"
-if [[ ! -f "$BLOOM_LIB" ]]; then
-	BLOOM_LIB="/run/current-system/sw/bin/setup-lib.sh"
+SETUP_LIB="$(dirname "$0")/setup-lib.sh"
+if [[ ! -f "$SETUP_LIB" ]]; then
+	SETUP_LIB="/run/current-system/sw/bin/setup-lib.sh"
 fi
 # shellcheck source=setup-lib.sh
-source "$BLOOM_LIB"
+source "$SETUP_LIB"
 
 # --- Checkpoint helpers ---
 
@@ -351,7 +351,7 @@ step_bootc_switch() {
 	echo "nixPI uses NixOS with automatic OTA updates."
 	echo "The nixpi-update timer checks for updates every 6 hours."
 	echo ""
-	echo "To update manually at any time: sudo nixos-rebuild switch --flake github:alexradunet/piBloom#nixpi-x86_64"
+	echo "To update manually at any time: sudo nixos-rebuild switch --flake github:alexradunet/nixPI#desktop"
 	echo "To roll back:                   sudo nixos-rebuild switch --rollback"
 	echo ""
 	mark_done bootc_switch

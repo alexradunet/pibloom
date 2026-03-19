@@ -39,12 +39,12 @@ fi
 # so $(dirname "$0") points into the source store, not app's $out/bin/.
 # The dirname probe is kept for pattern consistency but will always fall through
 # to the /run/current-system/sw/bin fallback at runtime.
-BLOOM_LIB="$(dirname "$0")/setup-lib.sh"
-if [[ ! -f "$BLOOM_LIB" ]]; then
-    BLOOM_LIB="/run/current-system/sw/bin/setup-lib.sh"
+SETUP_LIB="$(dirname "$0")/setup-lib.sh"
+if [[ ! -f "$SETUP_LIB" ]]; then
+    SETUP_LIB="/run/current-system/sw/bin/setup-lib.sh"
 fi
 # shellcheck source=setup-lib.sh
-source "$BLOOM_LIB"
+source "$SETUP_LIB"
 
 step_done() { [[ -f "$WIZARD_STATE/$1" ]]; }
 
@@ -155,7 +155,7 @@ firstboot_repo_clone() {
         echo "nixpi-firstboot: skipping repo clone until network is available"
         return 0
     fi
-    if timeout 30 git clone --depth 1 https://github.com/alexradunet/piBloom.git "$repo_dir"; then
+    if timeout 30 git clone --depth 1 https://github.com/alexradunet/nixPI.git "$repo_dir"; then
         echo "nixpi-firstboot: cloned pi-nixpi repo"
     else
         echo "nixpi-firstboot: repo clone failed (non-fatal)" >&2

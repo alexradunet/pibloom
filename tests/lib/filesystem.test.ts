@@ -37,15 +37,15 @@ describe("safePath", () => {
 // getNixpiDir
 // ---------------------------------------------------------------------------
 describe("getNixpiDir", () => {
-	let origBloomDir: string | undefined;
+	let origNixpiDir: string | undefined;
 
 	beforeEach(() => {
-		origBloomDir = process.env.NIXPI_DIR;
+		origNixpiDir = process.env.NIXPI_DIR;
 	});
 
 	afterEach(() => {
-		if (origBloomDir !== undefined) {
-			process.env.NIXPI_DIR = origBloomDir;
+		if (origNixpiDir !== undefined) {
+			process.env.NIXPI_DIR = origNixpiDir;
 		} else {
 			delete process.env.NIXPI_DIR;
 		}

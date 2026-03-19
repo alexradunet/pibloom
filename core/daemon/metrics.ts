@@ -72,7 +72,7 @@ class MetricsCollector {
 const collector = new MetricsCollector();
 
 // Default JSONL handler writes to stdout
-if (process.env.BLOOM_METRICS_ENABLED === "1") {
+if (process.env.NIXPI_METRICS_ENABLED === "1") {
 	collector.addHandler((event) => {
 		// eslint-disable-next-line no-console
 		console.log(`[METRIC] ${JSON.stringify(event)}`);

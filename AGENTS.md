@@ -2,11 +2,11 @@
 
 > 📖 [Emoji Legend](docs/LEGEND.md)
 
-This file is the Bloom reference index for current tools, hooks, runtime paths, and packaged capabilities.
+This file is the nixPI reference index for current tools, hooks, runtime paths, and packaged capabilities.
 
 ## 🌱 Current Model
 
-Bloom extends Pi through two runtime mechanisms, with built-in user services supplied directly by the base NixOS system.
+nixPI extends Pi through two runtime mechanisms, with built-in user services supplied directly by the base NixOS system.
 
 | Layer | What | Current use |
 |------|------|-------------|
@@ -15,51 +15,51 @@ Bloom extends Pi through two runtime mechanisms, with built-in user services sup
 
 Built-in service surface:
 
-- `Bloom Home` on `:8080`
-- `Bloom Web Chat` on `:8081`
-- `Bloom Files` on `:5000`
+- `nixPI Home` on `:8080`
+- `nixPI Chat` on `:8081`
+- `nixPI Files` on `:5000`
 - `code-server` on `:8443`
 
 OS-level infrastructure:
 
-- `bloom-matrix.service`
+- `matrix-synapse.service`
 - `netbird.service`
 - `pi-daemon.service`
 
-## 🌿 Bloom Directory
+## 🌿 nixPI Directory
 
-Default Bloom home is `~/Bloom/` unless `BLOOM_DIR` is set.
+Default nixPI home is `~/nixPI/` unless `NIXPI_DIR` is set.
 
 | Path | Purpose |
 |------|---------|
-| `~/Bloom/Persona/` | active persona files |
-| `~/Bloom/Skills/` | installed and seeded skills |
-| `~/Bloom/Evolutions/` | proposed persona / system evolutions |
-| `~/Bloom/Objects/` | flat-file object store |
-| `~/Bloom/Episodes/` | append-only episodic memory |
-| `~/Bloom/Agents/` | multi-agent overlays (`AGENTS.md`) |
-| `~/Bloom/guardrails.yaml` | command-block policy override |
-| `~/Bloom/blueprint-versions.json` | blueprint seeding state |
+| `~/nixPI/Persona/` | active persona files |
+| `~/nixPI/Skills/` | installed and seeded skills |
+| `~/nixPI/Evolutions/` | proposed persona / system evolutions |
+| `~/nixPI/Objects/` | flat-file object store |
+| `~/nixPI/Episodes/` | append-only episodic memory |
+| `~/nixPI/Agents/` | multi-agent overlays (`AGENTS.md`) |
+| `~/nixPI/guardrails.yaml` | command-block policy override |
+| `~/nixPI/blueprint-versions.json` | blueprint seeding state |
 
-Related state outside `~/Bloom/`:
+Related state outside `~/nixPI/`:
 
 | Path | Purpose |
 |------|---------|
 | `~/.pi/` | Pi runtime state |
-| `~/.pi/bloom-context.json` | compacted Bloom context |
+| `~/.pi/nixpi-context.json` | compacted nixPI context |
 | `~/.pi/matrix-credentials.json` | primary Matrix credentials |
 | `~/.pi/matrix-agents/` | per-agent Matrix credentials |
-| `~/.pi/agent/sessions/bloom-rooms/` | daemon session directories |
-| `~/.bloom/pi-bloom/` | local repo clone used for human-reviewed proposal work |
-| `~/.config/bloom/` | generated runtime config for built-in services |
+| `~/.pi/agent/sessions/nixpi-rooms/` | daemon session directories |
+| `~/.nixpi/pi-nixpi/` | local repo clone used for human-reviewed proposal work |
+| `~/.config/nixpi/` | generated runtime config for built-in services |
 
 ## 🧩 Extensions
 
-### `bloom-persona`
+### `persona`
 
 Purpose:
 
-- seed Bloom identity into Pi
+- seed nixPI identity into Pi
 - enforce shell guardrails
 - inject a compact durable-memory digest at session start
 - persist compacted context
@@ -71,13 +71,13 @@ Hooks:
 - `tool_call`
 - `session_before_compact`
 
-### `bloom-localai`
+### `localai`
 
 Purpose:
 
 - register LocalAI as a Pi provider for local LLM inference
 
-### `bloom-os`
+### `os`
 
 Purpose:
 
@@ -92,7 +92,7 @@ Tools:
 - `update_status`
 - `schedule_reboot`
 
-### `bloom-episodes`
+### `episodes`
 
 Tools:
 
@@ -101,7 +101,7 @@ Tools:
 - `episode_promote`
 - `episode_consolidate`
 
-### `bloom-objects`
+### `objects`
 
 Tools:
 
@@ -114,7 +114,7 @@ Tools:
 - `memory_link`
 - `memory_list`
 
-### `bloom-garden`
+### `nixpi`
 
 Tools:
 
@@ -124,9 +124,9 @@ Hooks / commands:
 
 - `session_start`
 - `resources_discover`
-- `/bloom` with `init`, `status`, `update-blueprints`
+- `/nixpi` with `init`, `status`, `update-blueprints`
 
-### `bloom-setup`
+### `setup`
 
 Tools:
 
@@ -136,7 +136,7 @@ Tools:
 
 ## 📜 Bundled Skills
 
-Bundled skill directories seeded into `~/Bloom/Skills/`:
+Bundled skill directories seeded into `~/nixPI/Skills/`:
 
 - `builtin-services`
 - `first-boot`
@@ -152,10 +152,10 @@ Current built-in user-facing services:
 
 | Unit | Purpose |
 |------|---------|
-| `bloom-home` | landing page with service links |
-| `bloom-fluffychat` | web Matrix client |
-| `bloom-dufs` | WebDAV and file browser for `~/Public/Bloom` |
-| `bloom-code-server` | browser IDE |
+| `nixpi-home` | landing page with service links |
+| `nixpi-chat` | web Matrix client |
+| `nixpi-files` | WebDAV and file browser for `~/Public/nixPI` |
+| `nixpi-code` | browser IDE |
 
 ## 📡 Daemon
 
@@ -172,7 +172,7 @@ Current behavior:
 
 ## 🛡️ Safety And Trust
 
-- shell command guardrails are loaded from `~/Bloom/guardrails.yaml` if present, else from the packaged default
+- shell command guardrails are loaded from `~/nixPI/guardrails.yaml` if present, else from the packaged default
 - local proposal workflow is documented in [docs/fleet-pr-workflow.md](docs/fleet-pr-workflow.md)
 - the built-in web services should be treated as part of the base host surface, not as optional packages
 

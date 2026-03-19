@@ -4,16 +4,16 @@
 # ~/.nixpi/update-status.json path.
 set -euo pipefail
 
-FLAKE_REF="github:alexradunet/piBloom"
-HOST="nixpi-x86_64"
+FLAKE_REF="github:alexradunet/nixPI"
+HOST="desktop"
 FLAKE="${FLAKE_REF}#${HOST}"
-BLOOM_USERNAME="${BLOOM_USERNAME:-pi}"
-STATUS_DIR="/home/${BLOOM_USERNAME}/.nixpi"
+NIXPI_USERNAME="${NIXPI_USERNAME:-pi}"
+STATUS_DIR="/home/${NIXPI_USERNAME}/.nixpi"
 STATUS_FILE="$STATUS_DIR/update-status.json"
 CHECKED=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 mkdir -p "$STATUS_DIR"
-chown "${BLOOM_USERNAME}:${BLOOM_USERNAME}" "$STATUS_DIR" 2>/dev/null || true
+chown "${NIXPI_USERNAME}:${NIXPI_USERNAME}" "$STATUS_DIR" 2>/dev/null || true
 
 # Current generation number
 CURRENT_GEN=$(nix-env --list-generations -p /nix/var/nix/profiles/system 2>/dev/null | grep current | awk '{print $1}' || echo "0")
@@ -43,7 +43,7 @@ jq -n \
   --argjson notified "$NOTIFIED" \
   '{"checked": $checked, "available": $available, "generation": $generation, "notified": $notified}' \
   > "$STATUS_FILE"
-chown "${BLOOM_USERNAME}:${BLOOM_USERNAME}" "$STATUS_FILE"
+chown "${NIXPI_USERNAME}:${NIXPI_USERNAME}" "$STATUS_FILE"
 
 # Apply if available
 if [[ "$AVAILABLE" = "true" ]]; then
@@ -54,6 +54,6 @@ if [[ "$AVAILABLE" = "true" ]]; then
       --arg generation "$NEW_GEN" \
       '{"checked": $checked, "available": false, "generation": $generation, "notified": false}' \
       > "$STATUS_FILE"
-    chown "${BLOOM_USERNAME}:${BLOOM_USERNAME}" "$STATUS_FILE"
+    chown "${NIXPI_USERNAME}:${NIXPI_USERNAME}" "$STATUS_FILE"
   fi
 fi

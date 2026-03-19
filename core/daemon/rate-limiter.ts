@@ -129,9 +129,9 @@ export class ProactiveJobRateLimiter {
 
 // Singleton instance for daemon-wide rate limiting
 const defaultLimiter = new ProactiveJobRateLimiter({
-	maxJobsPerHour: Number.parseInt(process.env.BLOOM_PROACTIVE_MAX_JOBS_PER_HOUR ?? "60", 10),
-	circuitBreakerThreshold: Number.parseInt(process.env.BLOOM_CIRCUIT_BREAKER_THRESHOLD ?? "5", 10),
-	circuitBreakerResetMs: Number.parseInt(process.env.BLOOM_CIRCUIT_BREAKER_RESET_MS ?? "60000", 10),
+	maxJobsPerHour: Number.parseInt(process.env.NIXPI_PROACTIVE_MAX_JOBS_PER_HOUR ?? "60", 10),
+	circuitBreakerThreshold: Number.parseInt(process.env.NIXPI_CIRCUIT_BREAKER_THRESHOLD ?? "5", 10),
+	circuitBreakerResetMs: Number.parseInt(process.env.NIXPI_CIRCUIT_BREAKER_RESET_MS ?? "60000", 10),
 });
 
 export function getDefaultRateLimiter(): ProactiveJobRateLimiter {

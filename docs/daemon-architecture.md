@@ -134,9 +134,9 @@ Proactive jobs are protected by rate limiting and circuit breaker patterns:
 
 | Feature | Default | Environment Variable |
 |---------|---------|---------------------|
-| Max jobs per hour per agent | 60 | `BLOOM_PROACTIVE_MAX_JOBS_PER_HOUR` |
-| Circuit breaker threshold | 5 failures | `BLOOM_CIRCUIT_BREAKER_THRESHOLD` |
-| Circuit breaker reset time | 60 seconds | `BLOOM_CIRCUIT_BREAKER_RESET_MS` |
+| Max jobs per hour per agent | 60 | `NIXPI_PROACTIVE_MAX_JOBS_PER_HOUR` |
+| Circuit breaker threshold | 5 failures | `NIXPI_CIRCUIT_BREAKER_THRESHOLD` |
+| Circuit breaker reset time | 60 seconds | `NIXPI_CIRCUIT_BREAKER_RESET_MS` |
 
 **Rate limiting**: Each agent can execute at most N proactive jobs per hour. Excess jobs are dropped and logged.
 

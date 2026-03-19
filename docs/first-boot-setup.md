@@ -11,7 +11,7 @@ Before first-boot setup, you need a NixOS system with nixPI applied:
 1. Install NixOS using the [official ISO](https://nixos.org/download.html)
 2. After first boot, apply the nixPI configuration:
    ```bash
-   sudo nixos-rebuild switch --flake github:alexradunet/piBloom#desktop
+   sudo nixos-rebuild switch --flake github:alexradunet/nixPI#desktop
    ```
 3. Reboot or log out/in, then the first-boot wizard will start automatically
 

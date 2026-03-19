@@ -424,9 +424,9 @@ write_service_home_runtime() {
 	      <p class="service-meta"><span class="service-label">URL</span><a class="service-link" href="http://${mesh_host}:8443">http://${mesh_host}:8443</a></p>
 	    </article>
 	HTML
-	} >> "$BLOOM_CONFIG/home/index.html"
+	} >> "$NIXPI_CONFIG/home/index.html"
 
-	cat >> "$BLOOM_CONFIG/home/index.html" <<-HTML
+	cat >> "$NIXPI_CONFIG/home/index.html" <<-HTML
 	    </section>
 	    <section class="footer-note">
 	      Generated ${generated_at}. URLs prefer the current NetBird FQDN when available, then fall back to the mesh IP.

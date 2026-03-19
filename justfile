@@ -17,7 +17,7 @@ switch:
 
 # Apply config from the remote GitHub flake
 update:
-    sudo nixos-rebuild switch --flake github:alexradunet/piBloom#{{ host }}
+    sudo nixos-rebuild switch --flake github:alexradunet/nixPI#{{ host }}
 
 # Roll back to the previous NixOS generation
 rollback:

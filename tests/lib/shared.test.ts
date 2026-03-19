@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getBloomDir, safePath } from "../../core/lib/filesystem.js";
+import { getGardenDir, safePath } from "../../core/lib/filesystem.js";
 import { parseFrontmatter, stringifyFrontmatter } from "../../core/lib/frontmatter.js";
 import {
 	createLogger,
@@ -204,24 +204,24 @@ describe("nowIso", () => {
 });
 
 // ---------------------------------------------------------------------------
-// getBloomDir
+// getGardenDir
 // ---------------------------------------------------------------------------
-describe("getBloomDir", () => {
+describe("getGardenDir", () => {
 	const origEnv = { ...process.env };
 
 	afterEach(() => {
 		process.env = { ...origEnv };
 	});
 
-	it("returns BLOOM_DIR when set", () => {
-		process.env.BLOOM_DIR = "/custom";
-		expect(getBloomDir()).toBe("/custom");
+	it("returns GARDEN_DIR when set", () => {
+		process.env.GARDEN_DIR = "/custom";
+		expect(getGardenDir()).toBe("/custom");
 	});
 
-	it("defaults to ~/Bloom when BLOOM_DIR is not set", () => {
-		delete process.env.BLOOM_DIR;
-		const result = getBloomDir();
-		expect(result).toMatch(/\/Bloom$/);
+	it("defaults to ~/Garden when GARDEN_DIR is not set", () => {
+		delete process.env.GARDEN_DIR;
+		const result = getGardenDir();
+		expect(result).toMatch(/\/Garden$/);
 	});
 });
 
@@ -334,7 +334,7 @@ describe("requireConfirmation", () => {
 		const second = await requireConfirmation(ctx, "delete file");
 
 		expect(first).toBe(second);
-		const saved = JSON.parse(fs.readFileSync(`${sessionFile}.bloom-interactions.json`, "utf-8")) as {
+		const saved = JSON.parse(fs.readFileSync(`${sessionFile}.garden-interactions.json`, "utf-8")) as {
 			records: Array<{ token: string; status: string; kind: string }>;
 		};
 		expect(saved.records).toHaveLength(1);
@@ -360,7 +360,7 @@ describe("requireConfirmation", () => {
 		const sessionFile = path.join(dir, "session.jsonl");
 		const token = "abc123";
 		fs.writeFileSync(
-			`${sessionFile}.bloom-interactions.json`,
+			`${sessionFile}.garden-interactions.json`,
 			JSON.stringify({
 				records: [
 					{
@@ -388,7 +388,7 @@ describe("requireConfirmation", () => {
 		const result = await requireConfirmation(ctx, "delete file");
 
 		expect(result).toBeNull();
-		const saved = JSON.parse(fs.readFileSync(`${sessionFile}.bloom-interactions.json`, "utf-8")) as {
+		const saved = JSON.parse(fs.readFileSync(`${sessionFile}.garden-interactions.json`, "utf-8")) as {
 			records: Array<{ token: string; status: string }>;
 		};
 		expect(saved.records[0]?.token).toBe(token);
@@ -400,7 +400,7 @@ describe("requireConfirmation", () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "shared-confirm-"));
 		const sessionFile = path.join(dir, "session.jsonl");
 		fs.writeFileSync(
-			`${sessionFile}.bloom-interactions.json`,
+			`${sessionFile}.garden-interactions.json`,
 			JSON.stringify({
 				records: [
 					{
@@ -428,7 +428,7 @@ describe("requireConfirmation", () => {
 		const result = await requireConfirmation(ctx, "delete file");
 
 		expect(result).toBe("User declined: delete file");
-		const saved = JSON.parse(fs.readFileSync(`${sessionFile}.bloom-interactions.json`, "utf-8")) as {
+		const saved = JSON.parse(fs.readFileSync(`${sessionFile}.garden-interactions.json`, "utf-8")) as {
 			records: Array<{ status: string }>;
 		};
 		expect(saved.records[0]?.status).toBe("consumed");
@@ -455,7 +455,7 @@ describe("requestSelection", () => {
 		expect(first.prompt).toContain("2. status");
 
 		fs.writeFileSync(
-			`${sessionFile}.bloom-interactions.json`,
+			`${sessionFile}.garden-interactions.json`,
 			JSON.stringify({
 				records: [
 					{
@@ -497,7 +497,7 @@ describe("requestTextInput", () => {
 		expect(first.prompt).toContain("Enter a short note");
 
 		fs.writeFileSync(
-			`${sessionFile}.bloom-interactions.json`,
+			`${sessionFile}.garden-interactions.json`,
 			JSON.stringify({
 				records: [
 					{
@@ -524,18 +524,18 @@ describe("requestTextInput", () => {
 // guardServiceName
 // ---------------------------------------------------------------------------
 describe("guardServiceName", () => {
-	it("returns null for bloom- prefixed names", () => {
-		expect(guardServiceName("bloom-os")).toBeNull();
-		expect(guardServiceName("bloom-test")).toBeNull();
+	it("returns null for garden- prefixed names", () => {
+		expect(guardServiceName("garden-os")).toBeNull();
+		expect(guardServiceName("garden-test")).toBeNull();
 	});
 
-	it("returns null for bloom names with numbers", () => {
-		expect(guardServiceName("bloom-svc1")).toBeNull();
-		expect(guardServiceName("bloom-v2-api")).toBeNull();
+	it("returns null for garden names with numbers", () => {
+		expect(guardServiceName("garden-svc1")).toBeNull();
+		expect(guardServiceName("garden-v2-api")).toBeNull();
 	});
 
-	it("returns error for non-bloom names", () => {
-		const result = guardServiceName("not-bloom");
+	it("returns error for non-garden names", () => {
+		const result = guardServiceName("not-garden");
 		expect(result).toContain("Security error");
 	});
 
@@ -544,30 +544,30 @@ describe("guardServiceName", () => {
 	});
 
 	it("rejects shell metacharacters", () => {
-		expect(guardServiceName("bloom-;rm -rf /")).not.toBeNull();
-		expect(guardServiceName("bloom-$(whoami)")).not.toBeNull();
-		expect(guardServiceName("bloom-`id`")).not.toBeNull();
+		expect(guardServiceName("garden-;rm -rf /")).not.toBeNull();
+		expect(guardServiceName("garden-$(whoami)")).not.toBeNull();
+		expect(guardServiceName("garden-`id`")).not.toBeNull();
 	});
 
 	it("rejects path separators", () => {
-		expect(guardServiceName("bloom-../../etc")).not.toBeNull();
-		expect(guardServiceName("bloom-foo/bar")).not.toBeNull();
+		expect(guardServiceName("garden-../../etc")).not.toBeNull();
+		expect(guardServiceName("garden-foo/bar")).not.toBeNull();
 	});
 
 	it("rejects spaces", () => {
-		expect(guardServiceName("bloom- evil")).not.toBeNull();
+		expect(guardServiceName("garden- evil")).not.toBeNull();
 	});
 
 	it("rejects uppercase letters", () => {
-		expect(guardServiceName("bloom-Foo")).not.toBeNull();
+		expect(guardServiceName("garden-Foo")).not.toBeNull();
 	});
 
-	it("rejects bloom- with nothing after it", () => {
-		expect(guardServiceName("bloom-")).not.toBeNull();
+	it("rejects garden- with nothing after it", () => {
+		expect(guardServiceName("garden-")).not.toBeNull();
 	});
 
-	it("rejects bloom- starting with hyphen", () => {
-		expect(guardServiceName("bloom--double")).not.toBeNull();
+	it("rejects garden- starting with hyphen", () => {
+		expect(guardServiceName("garden--double")).not.toBeNull();
 	});
 
 	it("accepts alternate prefixes when requested", () => {

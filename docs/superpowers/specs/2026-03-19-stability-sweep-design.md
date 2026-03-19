@@ -13,7 +13,7 @@ A methodical, subsystem-by-subsystem cleanup of the Bloom OS codebase. The goal 
 
 - Remove Bash/Nix workarounds: fragile path-probe fallback chains, sourcing guards, conditionals that exist because structure is wrong
 - Remove TypeScript defensive code: silent `try/catch` that returns `undefined`, defensive null-checks on values the type system already guarantees, over-wide guards at internal boundaries
-- Raise test coverage in weak areas (bloom-os, bloom-garden, bloom-episodes, bloom-objects)
+- Raise test coverage in weak areas (os, garden, episodes, objects)
 - Upgrade Biome to v2 and enable `noFloatingPromises` (catches unhandled async failures that generate defensive downstream fixes)
 - Add one real operator e2e journey (setup → daemon start → first tool call)
 - Promote two NixOS smoke tests to required CI gates
@@ -21,7 +21,7 @@ A methodical, subsystem-by-subsystem cleanup of the Bloom OS codebase. The goal 
 
 ### Out of scope
 
-- No extension removals (all 7 stay: bloom-persona, bloom-localai, bloom-os, bloom-episodes, bloom-objects, bloom-garden, bloom-setup)
+- No extension removals (all 7 stay: persona, localai, os, episodes, objects, garden, setup)
 - No new features
 - No architectural rewrites of the daemon (already at 83% coverage and internally coherent)
 - No changes to Pi/Matrix protocol behavior
@@ -55,9 +55,9 @@ Work from fewest dependencies to most. Each subsystem is complete when: workarou
 | 7 | Tests (e2e + CI gate) | Cross-cutting, done last once all subsystems are clean |
 
 Extension sweep order within step 6:
-`bloom-setup` → `bloom-localai` → `bloom-os` → `bloom-garden` → `bloom-episodes` → `bloom-objects` → `bloom-persona`
+`setup` → `localai` → `os` → `garden` → `episodes` → `objects` → `persona`
 
-Rationale: bloom-setup and bloom-localai are the simplest/most isolated; bloom-persona last as it touches guardrails and session hooks.
+Rationale: setup and localai are the simplest/most isolated; persona last as it touches guardrails and session hooks.
 
 ---
 
@@ -81,14 +81,14 @@ Rationale: bloom-setup and bloom-localai are the simplest/most isolated; bloom-p
 
 ### 2. `core/scripts`
 
-**Files:** `bloom-lib.sh`, `bloom-wizard.sh`, `bloom-firstboot.sh`, `bloom-update.sh`, `bloom-greeting.sh`, `run-qemu.sh`
+**Files:** `setup-lib.sh`, `setup-wizard.sh`, `firstboot.sh`, `system-update.sh`, `login-greeting.sh`, `run-qemu.sh`
 
 **Audit targets:**
 - Any remaining dead fallback paths (probe → fallback where the probe is structurally guaranteed to fail)
 - Any implicit execution guards (`if [[ -z "$SOURCING" ]]` patterns)
-- Duplicated logic not yet consolidated into `bloom-lib.sh`
+- Duplicated logic not yet consolidated into `setup-lib.sh`
 
-**Done when:** All scripts pass `bash -n`; no dead sourcing guards; `bloom-lib.sh` is the single home for shared functions.
+**Done when:** All scripts pass `bash -n`; no dead sourcing guards; `setup-lib.sh` is the single home for shared functions.
 
 ---
 
@@ -146,13 +146,13 @@ For each extension, the contract is identical:
 
 | Extension | Current | Target |
 |---|---|---|
-| bloom-setup | ~moderate | ≥ 60% |
-| bloom-localai | unknown | ≥ 60% |
-| bloom-os | ~10% | ≥ 60% |
-| bloom-garden | ~moderate | ≥ 60% |
-| bloom-episodes | ~good | ≥ 60% |
-| bloom-objects | ~good | ≥ 60% |
-| bloom-persona | ~good | ≥ 60% |
+| setup | ~moderate | ≥ 60% |
+| localai | unknown | ≥ 60% |
+| os | ~10% | ≥ 60% |
+| garden | ~moderate | ≥ 60% |
+| episodes | ~good | ≥ 60% |
+| objects | ~good | ≥ 60% |
+| persona | ~good | ≥ 60% |
 
 **Done when:** All extensions at ≥ 60% coverage; `Value.Parse` used at all tool input boundaries; no silent error swallowing.
 
@@ -171,11 +171,11 @@ This does not require a running Matrix server — it should use the existing moc
 
 **NixOS CI gate:**
 
-`bloom-boot` and `bloom-daemon` are full NixOS VM tests (`pkgs.testers.nixosTest`) that require KVM. GitHub-hosted `ubuntu-latest` runners do not expose `/dev/kvm`, so these tests cannot run in `build-os.yml`. The correct target is `.github/workflows/nixos-tests.yml`, which already handles KVM detection. Promote them there to required (non-skippable) steps — either by removing the KVM skip guard and requiring a self-hosted runner with `${{ vars.NIXOS_TEST_RUNNER }}`, or by keeping the KVM guard but marking the job as required so the workflow fails loudly when KVM is absent rather than silently passing.
+`boot` and `bloom-daemon` are full NixOS VM tests (`pkgs.testers.nixosTest`) that require KVM. GitHub-hosted `ubuntu-latest` runners do not expose `/dev/kvm`, so these tests cannot run in `build-os.yml`. The correct target is `.github/workflows/nixos-tests.yml`, which already handles KVM detection. Promote them there to required (non-skippable) steps — either by removing the KVM skip guard and requiring a self-hosted runner with `${{ vars.NIXOS_TEST_RUNNER }}`, or by keeping the KVM guard but marking the job as required so the workflow fails loudly when KVM is absent rather than silently passing.
 
-`build-os.yml` already gates on `bloom-config` (fast, no-VM NixOS eval check) — keep that as-is.
+`build-os.yml` already gates on `config` (fast, no-VM NixOS eval check) — keep that as-is.
 
-**Done when:** `tests/e2e/` contains at least one real workflow test; `nixos-tests.yml` enforces `bloom-boot` and `bloom-daemon` as non-skippable; all existing tests still pass.
+**Done when:** `tests/e2e/` contains at least one real workflow test; `nixos-tests.yml` enforces `boot` and `bloom-daemon` as non-skippable; all existing tests still pass.
 
 ---
 
@@ -270,10 +270,10 @@ npm run test:ci                                              # full suite + cove
 | `biome.json` | Update schema version; enable `noFloatingPromises` |
 | `vitest.config.ts` | Add `clearMocks`, `restoreMocks`; raise coverage thresholds per glob |
 | `core/scripts/*.sh` | Remove dead fallback paths and sourcing guards |
-| `core/os/modules/bloom-update.nix` | Remove Cachix placeholder TODO or implement |
+| `core/os/modules/update.nix` | Remove Cachix placeholder TODO or implement |
 | `flake.nix` | Verify deduplication complete; remove any remaining dead outputs |
 | `core/lib/*.ts` | Remove defensive null-checks; convert `Value.Check` guards to `Value.Parse` |
 | `core/daemon/*.ts` | Remove silent error swallowing; no restructuring |
 | `core/pi/extensions/**/*.ts` | Convert tool input validation to `Value.Parse`; raise coverage |
 | `tests/e2e/` | Add real operator journey test |
-| `.github/workflows/nixos-tests.yml` | Promote `bloom-boot` and `bloom-daemon` to non-skippable required gates |
+| `.github/workflows/nixos-tests.yml` | Promote `boot` and `bloom-daemon` to non-skippable required gates |

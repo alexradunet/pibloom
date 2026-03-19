@@ -6,7 +6,7 @@ description: Secure mesh networking via NetBird (system service)
 
 # NetBird
 
-EU-hosted mesh networking for secure remote access to your Bloom device. Uses NetBird cloud management (free tier, up to 5 peers).
+EU-hosted mesh networking for secure remote access to your Garden device. Uses NetBird cloud management (free tier, up to 5 peers).
 
 NetBird provides the security layer for SSH remote access and file access (dufs).
 
@@ -14,7 +14,7 @@ NetBird is installed as a native system service (not a container) because WireGu
 
 ## Setup
 
-NetBird authentication is handled during Bloom's first-boot wizard using a setup key. If you need to re-authenticate:
+NetBird authentication is handled during Garden's first-boot wizard using a setup key. If you need to re-authenticate:
 
 1. Get a new setup key from https://app.netbird.io -> Setup Keys
 2. Run: `sudo netbird up --setup-key <KEY>`

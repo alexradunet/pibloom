@@ -119,56 +119,56 @@ vm-run:
     core/scripts/run-qemu.sh --mode headless --skip-setup
 ```
 
-`run-qemu.sh` is **not** added to `bloom-app/default.nix` — it is a developer workflow tool, not a system component.
+`run-qemu.sh` is **not** added to `app/default.nix` — it is a developer workflow tool, not a system component.
 
 ---
 
-## 4. Scripts: Extract bloom-lib.sh, Remove Implicit Sourcing
+## 4. Scripts: Extract setup-lib.sh, Remove Implicit Sourcing
 
 ### Problem
 
-`bloom-firstboot.sh` sources `bloom-wizard.sh` at runtime to reuse helper functions. This creates an implicit, fragile dependency:
+`firstboot.sh` sources `setup-wizard.sh` at runtime to reuse helper functions. This creates an implicit, fragile dependency:
 - A `BLOOM_FIRSTBOOT_SOURCING=1` guard is required to prevent `main()` from executing when sourced.
-- The sourcing requires brittle path fallback logic (`dirname "$0"` → `/run/current-system/sw/bin/bloom-wizard.sh`).
-- Any function moved or renamed in `bloom-wizard.sh` silently breaks `bloom-firstboot.sh`.
+- The sourcing requires brittle path fallback logic (`dirname "$0"` → `/run/current-system/sw/bin/setup-wizard.sh`).
+- Any function moved or renamed in `setup-wizard.sh` silently breaks `firstboot.sh`.
 
 ### Changes
 
-**New file: `core/scripts/bloom-lib.sh`**
+**New file: `core/scripts/setup-lib.sh`**
 
-Contains all functions used by both `bloom-wizard.sh` and `bloom-firstboot.sh`:
+Contains all functions used by both `setup-wizard.sh` and `firstboot.sh`:
 
 - Checkpoint management: `mark_done`, `mark_done_with`, `read_checkpoint_data`
 - Utilities: `json_field`, `generate_password`
 - Matrix API + state: `matrix_register`, `matrix_login`, `matrix_state_get`, `matrix_state_set`, `matrix_state_clear`, `load_existing_matrix_credentials`
 - Service management: `install_service`, `install_home_infrastructure`, `write_service_home_runtime`
 - NetBird utilities: `netbird_status_json`, `netbird_fqdn` (`netbird_fqdn` calls `netbird_status_json` internally — both must move together)
-- `step_matrix` — works non-interactively when `PREFILL_USERNAME` is set; called directly by `firstboot_matrix` in `bloom-firstboot.sh`
+- `step_matrix` — works non-interactively when `PREFILL_USERNAME` is set; called directly by `firstboot_matrix` in `firstboot.sh`
 
-**`bloom-wizard.sh`:**
-- Sources `bloom-lib.sh` at the top.
+**`setup-wizard.sh`:**
+- Sources `setup-lib.sh` at the top.
 - Retains only interactive-only step functions: `step_welcome`, `step_password`, `step_network`, `step_git`, `step_ai`, `step_services`, `step_netbird`.
 - Retains `main()` orchestrator.
 
-**`bloom-firstboot.sh`:**
-- Sources `bloom-lib.sh` using the same two-step fallback pattern it currently uses for `bloom-wizard.sh`: try `$(dirname "$0")/bloom-lib.sh` first, then fall back to `/run/current-system/sw/bin/bloom-lib.sh`.
-- No longer sources `bloom-wizard.sh`.
+**`firstboot.sh`:**
+- Sources `setup-lib.sh` using the same two-step fallback pattern it currently uses for `setup-wizard.sh`: try `$(dirname "$0")/setup-lib.sh` first, then fall back to `/run/current-system/sw/bin/setup-lib.sh`.
+- No longer sources `setup-wizard.sh`.
 - `BLOOM_FIRSTBOOT_SOURCING` guard and `unset` removed entirely.
 
-**`core/os/pkgs/bloom-app/default.nix`:**
-- Add `bloom-lib.sh` to the install phase using the Nix store-path interpolation form, matching how `bloom-wizard.sh` and `bloom-greeting.sh` are currently installed:
+**`core/os/pkgs/app/default.nix`:**
+- Add `setup-lib.sh` to the install phase using the Nix store-path interpolation form, matching how `setup-wizard.sh` and `login-greeting.sh` are currently installed:
   ```nix
-  install -m 755 ${../../../scripts/bloom-lib.sh} $out/bin/bloom-lib.sh
+  install -m 755 ${../../../scripts/setup-lib.sh} $out/bin/setup-lib.sh
   ```
-  Do **not** use a plain `cp core/scripts/bloom-lib.sh` — the `cleanSourceWith` filter in `default.nix` may exclude it. Store-path interpolation bypasses the filter and is the established pattern.
+  Do **not** use a plain `cp core/scripts/setup-lib.sh` — the `cleanSourceWith` filter in `default.nix` may exclude it. Store-path interpolation bypasses the filter and is the established pattern.
 
 ### Runtime path
 
 Two scripts, two different resolution paths:
 
-**`bloom-wizard.sh`** is installed into `bloom-app`'s `$out/bin/`. When it runs, `$(dirname "$0")` resolves to that same `$out/bin/` directory. A sibling `bloom-lib.sh` installed there will be found on the first probe. Primary working path: `$(dirname "$0")/bloom-lib.sh`.
+**`setup-wizard.sh`** is installed into `app`'s `$out/bin/`. When it runs, `$(dirname "$0")` resolves to that same `$out/bin/` directory. A sibling `setup-lib.sh` installed there will be found on the first probe. Primary working path: `$(dirname "$0")/setup-lib.sh`.
 
-**`bloom-firstboot.sh`** is **not** installed via `bloom-app`. It is referenced directly from the Nix source tree by `bloom-firstboot.nix` (`ExecStart = "${pkgs.bash}/bin/bash ${../../scripts/bloom-firstboot.sh}"`). Its `$0` resolves to a raw source store path, not `bloom-app`'s `$out/bin/`. The `$(dirname "$0")/bloom-lib.sh` probe will always fail — it is structurally dead code, included only for pattern consistency. The reliable path is the fallback: `/run/current-system/sw/bin/bloom-lib.sh`. This mirrors exactly how `bloom-firstboot.sh` currently finds `bloom-wizard.sh`.
+**`firstboot.sh`** is **not** installed via `app`. It is referenced directly from the Nix source tree by `bloom-firstboot.nix` (`ExecStart = "${pkgs.bash}/bin/bash ${../../scripts/firstboot.sh}"`). Its `$0` resolves to a raw source store path, not `app`'s `$out/bin/`. The `$(dirname "$0")/setup-lib.sh` probe will always fail — it is structurally dead code, included only for pattern consistency. The reliable path is the fallback: `/run/current-system/sw/bin/setup-lib.sh`. This mirrors exactly how `firstboot.sh` currently finds `setup-wizard.sh`.
 
 ---
 
@@ -188,7 +188,7 @@ The following known issues are intentionally deferred to the separate production
 | `flake.nix` | Remove `iso`; rename `iso-gui` → `iso`; add `mkDiskImage`; collapse `qcow2`/`raw` |
 | `justfile` | Remove `iso`, `test-iso` (CLI); rename `iso-gui` → `iso`, `test-iso-gui` → `test-iso`; vm recipes → thin wrappers |
 | `core/scripts/run-qemu.sh` | New file — shared QEMU setup + launch logic |
-| `core/scripts/bloom-lib.sh` | New file — shared shell function library |
-| `core/scripts/bloom-wizard.sh` | Sources `bloom-lib.sh`; shared functions moved out |
-| `core/scripts/bloom-firstboot.sh` | Sources `bloom-lib.sh` directly; remove wizard sourcing + guard |
-| `core/os/pkgs/bloom-app/default.nix` | Install `bloom-lib.sh` |
+| `core/scripts/setup-lib.sh` | New file — shared shell function library |
+| `core/scripts/setup-wizard.sh` | Sources `setup-lib.sh`; shared functions moved out |
+| `core/scripts/firstboot.sh` | Sources `setup-lib.sh` directly; remove wizard sourcing + guard |
+| `core/os/pkgs/app/default.nix` | Install `setup-lib.sh` |

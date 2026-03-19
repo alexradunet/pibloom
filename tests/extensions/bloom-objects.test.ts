@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { parseRef } from "../../core/pi/extensions/bloom-objects/actions.js";
+import { parseRef } from "../../core/pi/extensions/objects/actions.js";
 import { createMockExtensionAPI, type MockExtensionAPI } from "../helpers/mock-extension-api.js";
 import { createTempGarden, type TempGarden } from "../helpers/temp-garden.js";
 
@@ -13,7 +13,7 @@ beforeEach(async () => {
 	// Create Objects directory
 	fs.mkdirSync(path.join(temp.gardenDir, "Objects"), { recursive: true });
 	api = createMockExtensionAPI();
-	const mod = await import("../../core/pi/extensions/bloom-objects/index.js");
+	const mod = await import("../../core/pi/extensions/objects/index.js");
 	mod.default(api as never);
 });
 
@@ -42,7 +42,7 @@ function getExecute(name: string): ToolExecute {
 // ---------------------------------------------------------------------------
 // Registration
 // ---------------------------------------------------------------------------
-describe("bloom-objects registration", () => {
+describe("objects registration", () => {
 	it("registers exactly 8 tools", () => {
 		expect(api._registeredTools).toHaveLength(8);
 	});
@@ -209,7 +209,7 @@ describe("memory_create and memory_read execution", () => {
 				title: "Recovery Procedure Project",
 				summary: "Project-specific recovery procedure",
 				scope: "project",
-				scope_value: "pi-bloom",
+				scope_value: "pi-garden",
 				salience: 0.5,
 			},
 		});
@@ -217,7 +217,7 @@ describe("memory_create and memory_read execution", () => {
 		const queryResult = await query("call-3", {
 			type: "procedure",
 			text: "recovery",
-			preferred_scopes: [{ scope: "project", value: "pi-bloom" }, { scope: "global" }],
+			preferred_scopes: [{ scope: "project", value: "pi-garden" }, { scope: "global" }],
 		});
 
 		const lines = queryResult.content[0].text.split("\n");

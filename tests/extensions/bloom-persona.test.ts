@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { stringifyFrontmatter } from "../../core/lib/frontmatter.js";
-import { normalizeCommand } from "../../core/pi/extensions/bloom-persona/actions.js";
+import { normalizeCommand } from "../../core/pi/extensions/persona/actions.js";
 import { createMockExtensionAPI, type MockExtensionAPI } from "../helpers/mock-extension-api.js";
 import { createMockExtensionContext } from "../helpers/mock-extension-context.js";
 import { createTempGarden, type TempGarden } from "../helpers/temp-garden.js";
@@ -13,7 +13,7 @@ let api: MockExtensionAPI;
 beforeEach(async () => {
 	temp = createTempGarden();
 	api = createMockExtensionAPI();
-	const mod = await import("../../core/pi/extensions/bloom-persona/index.js");
+	const mod = await import("../../core/pi/extensions/persona/index.js");
 	mod.default(api as never);
 });
 
@@ -24,7 +24,7 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 // Registration
 // ---------------------------------------------------------------------------
-describe("bloom-persona registration", () => {
+describe("persona registration", () => {
 	it("registers 0 tools", () => {
 		expect(api._registeredTools).toHaveLength(0);
 	});
@@ -46,10 +46,10 @@ describe("bloom-persona registration", () => {
 // ---------------------------------------------------------------------------
 // session_start sets session name
 // ---------------------------------------------------------------------------
-describe("bloom-persona session_start", () => {
-	it("sets session name to 'Bloom'", async () => {
+describe("persona session_start", () => {
+	it("sets session name to 'Garden'", async () => {
 		await api.fireEvent("session_start");
-		expect(api._sessionName).toBe("Bloom");
+		expect(api._sessionName).toBe("Garden");
 	});
 
 	it("injects a durable memory digest into the system prompt", async () => {
@@ -76,7 +76,7 @@ describe("bloom-persona session_start", () => {
 					type: "procedure",
 					slug: "matrix-recovery",
 					title: "Matrix Recovery",
-					summary: "Restart bloom-matrix.service, then verify recovery.",
+					summary: "Restart garden-matrix.service, then verify recovery.",
 					status: "active",
 					salience: 0.8,
 				},
@@ -93,7 +93,7 @@ describe("bloom-persona session_start", () => {
 					summary: "Project-specific recovery path.",
 					status: "active",
 					scope: "project",
-					scope_value: "pi-bloom",
+					scope_value: "pi-garden",
 					salience: 0.4,
 				},
 				"# Project Recovery\n",
@@ -105,10 +105,10 @@ describe("bloom-persona session_start", () => {
 			{
 				systemPrompt: "BASE",
 			},
-			createMockExtensionContext({ cwd: "/tmp/pi-bloom" }),
+			createMockExtensionContext({ cwd: "/tmp/pi-garden" }),
 		)) as { systemPrompt: string };
 
-		expect(result.systemPrompt).toContain("[BLOOM MEMORY DIGEST]");
+		expect(result.systemPrompt).toContain("[GARDEN MEMORY DIGEST]");
 		expect(result.systemPrompt).toContain("preference/ts-style");
 		const procedureIndex = result.systemPrompt.indexOf("procedure/project-recovery");
 		const globalProcedureIndex = result.systemPrompt.indexOf("procedure/matrix-recovery");
@@ -121,7 +121,7 @@ describe("bloom-persona session_start", () => {
 // ---------------------------------------------------------------------------
 // tool_call guardrails
 // ---------------------------------------------------------------------------
-describe("bloom-persona guardrails", () => {
+describe("persona guardrails", () => {
 	it("blocks rm -rf /", async () => {
 		const result = await api.fireEvent("tool_call", {
 			toolName: "bash",
@@ -215,14 +215,14 @@ describe("bloom-persona guardrails", () => {
 // ---------------------------------------------------------------------------
 // session_before_compact
 // ---------------------------------------------------------------------------
-describe("bloom-persona session_before_compact", () => {
+describe("persona session_before_compact", () => {
 	it("returns compaction guidance with update available status", async () => {
 		const result = (await api.fireEvent("session_before_compact", {
 			preparation: { firstKeptEntryId: 42, tokensBefore: 15000 },
 		})) as { compaction: { summary: string; firstKeptEntryId: number; tokensBefore: number } };
 
 		expect(result.compaction.summary).toContain("COMPACTION GUIDANCE");
-		expect(result.compaction.summary).toContain("Bloom persona identity");
+		expect(result.compaction.summary).toContain("Garden persona identity");
 		expect(result.compaction.summary).toContain("Tokens before compaction: 15000");
 		expect(result.compaction.firstKeptEntryId).toBe(42);
 		expect(result.compaction.tokensBefore).toBe(15000);

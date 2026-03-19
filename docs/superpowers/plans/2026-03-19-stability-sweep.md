@@ -24,31 +24,31 @@
 | `package.json` | Modify | Bump `@biomejs/biome` to v2 stable |
 | `biome.json` | Modify | Enable `noFloatingPromises` in correct v2 group |
 | `vitest.config.ts` | Modify | Add `clearMocks`, `restoreMocks`; raise thresholds |
-| `core/scripts/bloom-wizard.sh` | Audit/modify | Remove dead guards/duplicates if found |
-| `core/scripts/bloom-firstboot.sh` | Audit/modify | Verify fallback comment accuracy |
-| `core/scripts/bloom-lib.sh` | Audit | Verify no unreachable functions |
+| `core/scripts/setup-wizard.sh` | Audit/modify | Remove dead guards/duplicates if found |
+| `core/scripts/firstboot.sh` | Audit/modify | Verify fallback comment accuracy |
+| `core/scripts/setup-lib.sh` | Audit | Verify no unreachable functions |
 | `core/scripts/run-qemu.sh` | Audit | Confirm clean |
-| `core/os/modules/bloom-update.nix` | Modify | Remove Cachix TODO placeholder (lines 7-10) |
+| `core/os/modules/update.nix` | Modify | Remove Cachix TODO placeholder (lines 7-10) |
 | `flake.nix` | Audit | Verify outputs list is clean |
 | `core/lib/*.ts` | Audit/modify | Remove `as unknown as`, unsafe casts at fs boundaries |
 | `core/daemon/*.ts` | Audit/modify | Remove silent error swallowing only |
-| `core/pi/extensions/bloom-setup/` | Modify | Extract param schemas; add tests |
-| `core/pi/extensions/bloom-localai/` | Audit | Confirm coverage at threshold |
-| `core/pi/extensions/bloom-os/` | Modify | Extract param schemas; add action tests |
-| `core/pi/extensions/bloom-garden/` | Modify | Extract param schemas; add command tests |
-| `core/pi/extensions/bloom-episodes/` | Modify | Extract param schemas; add action tests |
-| `core/pi/extensions/bloom-objects/` | Modify | Extract param schemas; add action tests |
-| `core/pi/extensions/bloom-persona/` | Audit/modify | Check for defensive casts |
-| `tests/extensions/bloom-setup.test.ts` | Modify | Add action-level tests |
-| `tests/extensions/bloom-localai.test.ts` | Audit | Confirm at threshold |
-| `tests/extensions/bloom-os.test.ts` | Modify | Add action tests (mock `run`) |
-| `tests/extensions/bloom-os-update.test.ts` | Audit/modify | Review and add missing action tests |
-| `tests/extensions/bloom-os-proposal.test.ts` | Audit/modify | Review and add missing action tests |
-| `tests/extensions/bloom-garden.test.ts` | Modify | Add command handler tests |
-| `tests/extensions/bloom-episodes.test.ts` | Modify | Add action tests |
-| `tests/extensions/bloom-objects.test.ts` | Modify | Add action tests |
+| `core/pi/extensions/setup/` | Modify | Extract param schemas; add tests |
+| `core/pi/extensions/localai/` | Audit | Confirm coverage at threshold |
+| `core/pi/extensions/os/` | Modify | Extract param schemas; add action tests |
+| `core/pi/extensions/garden/` | Modify | Extract param schemas; add command tests |
+| `core/pi/extensions/episodes/` | Modify | Extract param schemas; add action tests |
+| `core/pi/extensions/objects/` | Modify | Extract param schemas; add action tests |
+| `core/pi/extensions/persona/` | Audit/modify | Check for defensive casts |
+| `tests/extensions/setup.test.ts` | Modify | Add action-level tests |
+| `tests/extensions/localai.test.ts` | Audit | Confirm at threshold |
+| `tests/extensions/os.test.ts` | Modify | Add action tests (mock `run`) |
+| `tests/extensions/os-update.test.ts` | Audit/modify | Review and add missing action tests |
+| `tests/extensions/os-proposal.test.ts` | Audit/modify | Review and add missing action tests |
+| `tests/extensions/garden.test.ts` | Modify | Add command handler tests |
+| `tests/extensions/episodes.test.ts` | Modify | Add action tests |
+| `tests/extensions/objects.test.ts` | Modify | Add action tests |
 | `tests/e2e/operator-journey.test.ts` | Create | Real operator e2e test |
-| `.github/workflows/nixos-tests.yml` | Modify | Make bloom-boot + bloom-daemon non-skippable |
+| `.github/workflows/nixos-tests.yml` | Modify | Make boot + bloom-daemon non-skippable |
 
 ---
 
@@ -207,7 +207,7 @@ export default defineConfig({
 ## Task 3: Audit and clean `core/scripts`
 
 **Files:**
-- Audit/modify: `core/scripts/bloom-wizard.sh`, `bloom-firstboot.sh`, `bloom-lib.sh`, `run-qemu.sh`, `bloom-update.sh`, `bloom-greeting.sh`
+- Audit/modify: `core/scripts/setup-wizard.sh`, `firstboot.sh`, `setup-lib.sh`, `run-qemu.sh`, `system-update.sh`, `login-greeting.sh`
 
 ### Step 3.1 — Syntax-check all scripts
 
@@ -217,28 +217,28 @@ export default defineConfig({
   ```
   Expected: all print `OK`. Fix any syntax errors before continuing.
 
-### Step 3.2 — Audit bloom-wizard.sh
+### Step 3.2 — Audit setup-wizard.sh
 
-- [ ] Read `core/scripts/bloom-wizard.sh` fully. Check for:
+- [ ] Read `core/scripts/setup-wizard.sh` fully. Check for:
   - Guard variables like `if [[ -z "$SOME_SOURCING_VAR" ]]` preventing double-execution — remove if found (the old `BLOOM_FIRSTBOOT_SOURCING` pattern was removed; it must not have returned)
   - Functions defined but never called from `main()` — remove if found
-  - Logic duplicated in `bloom-lib.sh` — remove from wizard, use lib version
+  - Logic duplicated in `setup-lib.sh` — remove from wizard, use lib version
 
-### Step 3.3 — Audit bloom-firstboot.sh
+### Step 3.3 — Audit firstboot.sh
 
-- [ ] Read `core/scripts/bloom-firstboot.sh` lines 31-41. The `$(dirname "$0")/bloom-lib.sh` probe is documented as always falling through at runtime (firstboot runs from the Nix source tree). Confirm the comment accurately explains this. If the comment is absent or misleading, fix it. The probe itself stays for pattern consistency.
+- [ ] Read `core/scripts/firstboot.sh` lines 31-41. The `$(dirname "$0")/setup-lib.sh` probe is documented as always falling through at runtime (firstboot runs from the Nix source tree). Confirm the comment accurately explains this. If the comment is absent or misleading, fix it. The probe itself stays for pattern consistency.
 
-- [ ] Confirm `write_fluffychat_runtime_config` (called at line 91) is defined in `bloom-lib.sh`. If not defined anywhere, this is a missing function — investigate and fix.
+- [ ] Confirm `write_fluffychat_runtime_config` (called at line 91) is defined in `setup-lib.sh`. If not defined anywhere, this is a missing function — investigate and fix.
 
-### Step 3.4 — Audit bloom-lib.sh for unreachable functions
+### Step 3.4 — Audit setup-lib.sh for unreachable functions
 
 - [ ] Run:
   ```bash
-  grep -n "^[a-z_]*() {" core/scripts/bloom-lib.sh
+  grep -n "^[a-z_]*() {" core/scripts/setup-lib.sh
   ```
-  List all defined functions. Cross-check each one is called from either `bloom-wizard.sh` or `bloom-firstboot.sh`. Remove any that are unreachable dead code.
+  List all defined functions. Cross-check each one is called from either `setup-wizard.sh` or `firstboot.sh`. Remove any that are unreachable dead code.
 
-### Step 3.5 — Audit run-qemu.sh and bloom-update.sh
+### Step 3.5 — Audit run-qemu.sh and system-update.sh
 
 - [ ] Scan for guard patterns or dead branches. No changes expected. If clean, note "no changes required."
 
@@ -263,12 +263,12 @@ export default defineConfig({
 ## Task 4: Clean `core/os` Nix files
 
 **Files:**
-- Modify: `core/os/modules/bloom-update.nix:7-10`
+- Modify: `core/os/modules/update.nix:7-10`
 - Audit: `flake.nix`
 
 ### Step 4.1 — Remove the Cachix TODO placeholder
 
-Lines 7-10 of `core/os/modules/bloom-update.nix`:
+Lines 7-10 of `core/os/modules/update.nix`:
 ```nix
 # Cachix substituter (pre-built closures; avoids on-device compilation during updates)
 # TODO: replace <cachix-url> and <cachix-pubkey> with real Cachix cache values
@@ -278,7 +278,7 @@ Lines 7-10 of `core/os/modules/bloom-update.nix`:
 
 Delete all four lines entirely.
 
-- [ ] Delete lines 7-10 from `core/os/modules/bloom-update.nix`
+- [ ] Delete lines 7-10 from `core/os/modules/update.nix`
 
 ### Step 4.2 — Audit flake.nix for dead outputs
 
@@ -286,7 +286,7 @@ Delete all four lines entirely.
   ```bash
   nix eval .#packages.x86_64-linux --apply builtins.attrNames --no-write-lock-file
   ```
-  Expected: `[ "bloom-app" "iso" "qcow2" "raw" ]`. If `iso-gui` or other unexpected outputs appear, remove them from `flake.nix`.
+  Expected: `[ "app" "iso" "qcow2" "raw" ]`. If `iso-gui` or other unexpected outputs appear, remove them from `flake.nix`.
 
 ### Step 4.3 — Verify NixOS config evaluates cleanly
 
@@ -301,7 +301,7 @@ Delete all four lines entirely.
 
 - [ ] Run:
   ```bash
-  git add core/os/modules/bloom-update.nix
+  git add core/os/modules/update.nix
   git commit -m "chore(nix): remove Cachix TODO placeholder"
   ```
 
@@ -432,15 +432,15 @@ The daemon is at ~83% actual coverage. Raise threshold enforcement to 85%; remov
 
 ---
 
-## Task 7: bloom-setup — add action tests
+## Task 7: setup — add action tests
 
 **Files:**
-- Audit/modify: `core/pi/extensions/bloom-setup/index.ts`, `core/pi/extensions/bloom-setup/actions.ts`
-- Modify: `tests/extensions/bloom-setup.test.ts`
+- Audit/modify: `core/pi/extensions/setup/index.ts`, `core/pi/extensions/setup/actions.ts`
+- Modify: `tests/extensions/setup.test.ts`
 
 ### Step 7.1 — Audit for Value.Check patterns and unsafe casts
 
-- [ ] Read `core/pi/extensions/bloom-setup/actions.ts` and `index.ts`. Check for:
+- [ ] Read `core/pi/extensions/setup/actions.ts` and `index.ts`. Check for:
   - `Value.Check(T, x)` + manual guard → replace with `Value.Parse(T, x)` at tool input boundaries
   - `params as { ... }` unsafe casts → replace with `params as Static<typeof ParamsSchema>` where `ParamsSchema` is extracted as a named const before `defineTool`
 
@@ -463,14 +463,14 @@ async execute(_id, params, ...) {
 
 ### Step 7.2 — Read current test file
 
-- [ ] Read `tests/extensions/bloom-setup.test.ts`. Identify which action handlers are already tested.
+- [ ] Read `tests/extensions/setup.test.ts`. Identify which action handlers are already tested.
 
 ### Step 7.3 — Add missing action tests
 
 `createTempGarden()` automatically sets `BLOOM_DIR` and provides `gardenDir`. Use it:
 
 ```typescript
-// Add this to tests/extensions/bloom-setup.test.ts
+// Add this to tests/extensions/setup.test.ts
 // (do not duplicate existing imports — add only what is missing)
 import { describe, it, expect, beforeEach, afterEach } from "vitest"
 import { createTempGarden, type TempGarden } from "../helpers/temp-garden.js"
@@ -488,14 +488,14 @@ describe("setup actions", () => {
   })
 
   it("setup_status returns current state when no steps are done", async () => {
-    const { handleSetupStatus } = await import("../../core/pi/extensions/bloom-setup/actions.js")
+    const { handleSetupStatus } = await import("../../core/pi/extensions/setup/actions.js")
     const result = await handleSetupStatus()
     expect(result).toHaveProperty("content")
     expect(result.content[0]).toHaveProperty("type", "text")
   })
 
   it("setup_advance marks a step done", async () => {
-    const { handleSetupAdvance } = await import("../../core/pi/extensions/bloom-setup/actions.js")
+    const { handleSetupAdvance } = await import("../../core/pi/extensions/setup/actions.js")
     // Read the actual handleSetupAdvance signature before calling — it requires
     // both a valid StepName and a result field (e.g. { step: "persona", result: "completed" }).
     // Adjust the call below to match the real signature.
@@ -504,7 +504,7 @@ describe("setup actions", () => {
   })
 
   it("setup_reset clears state", async () => {
-    const { handleSetupReset } = await import("../../core/pi/extensions/bloom-setup/actions.js")
+    const { handleSetupReset } = await import("../../core/pi/extensions/setup/actions.js")
     // handleSetupReset takes an optional params object — pass {} even if all fields are optional.
     const result = await handleSetupReset({})
     expect(result).toHaveProperty("content")
@@ -518,7 +518,7 @@ Adjust function names to match the actual exports from `actions.ts` after readin
 
 - [ ] Run:
   ```bash
-  npx vitest run tests/extensions/bloom-setup.test.ts
+  npx vitest run tests/extensions/setup.test.ts
   ```
   Expected: all tests pass.
 
@@ -526,7 +526,7 @@ Adjust function names to match the actual exports from `actions.ts` after readin
 
 - [ ] Run:
   ```bash
-  npm run test:coverage 2>&1 | grep "bloom-setup"
+  npm run test:coverage 2>&1 | grep "setup"
   ```
   Confirm ≥ 60% statements.
 
@@ -541,57 +541,57 @@ Adjust function names to match the actual exports from `actions.ts` after readin
 
 - [ ] Run:
   ```bash
-  git add core/pi/extensions/bloom-setup/ tests/extensions/bloom-setup.test.ts
-  git commit -m "test(bloom-setup): add action tests; extract typed param schemas"
+  git add core/pi/extensions/setup/ tests/extensions/setup.test.ts
+  git commit -m "test(setup): add action tests; extract typed param schemas"
   ```
 
 ---
 
-## Task 8: bloom-localai — confirm coverage
+## Task 8: localai — confirm coverage
 
 **Files:**
-- Audit: `core/pi/extensions/bloom-localai/index.ts`
-- Audit: `tests/extensions/bloom-localai.test.ts`
+- Audit: `core/pi/extensions/localai/index.ts`
+- Audit: `tests/extensions/localai.test.ts`
 
 ### Step 8.1 — Check current coverage
 
 - [ ] Run:
   ```bash
-  npm run test:coverage 2>&1 | grep "bloom-localai"
+  npm run test:coverage 2>&1 | grep "localai"
   ```
 
 ### Step 8.2 — If coverage ≥ 60%, audit for unsafe casts only
 
-- [ ] Read `core/pi/extensions/bloom-localai/index.ts`. If there are `params as { ... }` casts, replace with `as Static<typeof ParamsSchema>`. If the file is tiny and has no such patterns, note "no changes required."
+- [ ] Read `core/pi/extensions/localai/index.ts`. If there are `params as { ... }` casts, replace with `as Static<typeof ParamsSchema>`. If the file is tiny and has no such patterns, note "no changes required."
 
 ### Step 8.3 — If coverage < 60%, add a registration + behaviour test
 
-bloom-localai registers a LocalAI provider. Add a test that calls the registration function and asserts the provider was registered with the expected name/config.
+localai registers a LocalAI provider. Add a test that calls the registration function and asserts the provider was registered with the expected name/config.
 
 ### Step 8.4 — Commit if changes were made
 
 - [ ] Run:
   ```bash
-  git add core/pi/extensions/bloom-localai/ tests/extensions/bloom-localai.test.ts
-  git commit -m "test(bloom-localai): confirm coverage at threshold"
+  git add core/pi/extensions/localai/ tests/extensions/localai.test.ts
+  git commit -m "test(localai): confirm coverage at threshold"
   ```
 
 ---
 
-## Task 9: bloom-os — add action tests and extract typed param schemas
+## Task 9: os — add action tests and extract typed param schemas
 
 **Files:**
-- Modify: `core/pi/extensions/bloom-os/index.ts`
-- Modify: `core/pi/extensions/bloom-os/actions.ts`
-- Modify: `tests/extensions/bloom-os.test.ts`
-- Modify: `tests/extensions/bloom-os-update.test.ts`
-- Audit/modify: `tests/extensions/bloom-os-proposal.test.ts`
+- Modify: `core/pi/extensions/os/index.ts`
+- Modify: `core/pi/extensions/os/actions.ts`
+- Modify: `tests/extensions/os.test.ts`
+- Modify: `tests/extensions/os-update.test.ts`
+- Audit/modify: `tests/extensions/os-proposal.test.ts`
 
-bloom-os is the lowest-coverage extension (~10%). The `execute` functions use `params as { action: ... }` casts (type-unsafe); `actions.ts` calls system commands that need mocking in tests.
+os is the lowest-coverage extension (~10%). The `execute` functions use `params as { action: ... }` casts (type-unsafe); `actions.ts` calls system commands that need mocking in tests.
 
 ### Step 9.1 — Extract parameter schema constants in `index.ts`
 
-For each tool in `bloom-os/index.ts`, extract the inline `Type.Object({...})` parameter definition to a named const before `defineTool`, then replace the unsafe execute cast:
+For each tool in `os/index.ts`, extract the inline `Type.Object({...})` parameter definition to a named const before `defineTool`, then replace the unsafe execute cast:
 
 ```typescript
 import { type Static, Type } from "@sinclair/typebox"
@@ -617,13 +617,13 @@ Do the same for `SystemdControlParams`, `NixConfigProposalParams`, etc.
 
 ### Step 9.2 — Check for Value.Check patterns in actions.ts
 
-- [ ] Read `core/pi/extensions/bloom-os/actions.ts`. If any `Value.Check(T, x)` + manual guard exists, replace with `Value.Parse(T, x)` (bare throw — tool inputs are a trust boundary where throws are correct).
+- [ ] Read `core/pi/extensions/os/actions.ts`. If any `Value.Check(T, x)` + manual guard exists, replace with `Value.Parse(T, x)` (bare throw — tool inputs are a trust boundary where throws are correct).
 
-### Step 9.3 — Add action tests to bloom-os.test.ts
+### Step 9.3 — Add action tests to os.test.ts
 
 The `run` function from `core/lib/exec.ts` makes real system calls. Mock it.
 
-Add these blocks **after the existing test blocks** in `tests/extensions/bloom-os.test.ts` (do not duplicate the existing imports or `beforeEach`/`afterEach`):
+Add these blocks **after the existing test blocks** in `tests/extensions/os.test.ts` (do not duplicate the existing imports or `beforeEach`/`afterEach`):
 
 ```typescript
 import { vi } from "vitest"
@@ -634,7 +634,7 @@ vi.mock("../../core/lib/exec.js", () => ({
 }))
 
 import * as execModule from "../../core/lib/exec.js"
-import { handleNixosUpdate, handleSystemdControl, handleUpdateStatus } from "../../core/pi/extensions/bloom-os/actions.js"
+import { handleNixosUpdate, handleSystemdControl, handleUpdateStatus } from "../../core/pi/extensions/os/actions.js"
 
 const mockRun = vi.mocked(execModule.run)
 
@@ -704,19 +704,19 @@ describe("handleUpdateStatus", () => {
 
 **Important:** The `vi.mock` call must be at the top-level of the test file (outside any `describe`). If `vi.mock` is already imported in the file, do not add it again.
 
-### Step 9.4 — Read and extend bloom-os-update.test.ts
+### Step 9.4 — Read and extend os-update.test.ts
 
-- [ ] Read `tests/extensions/bloom-os-update.test.ts`. Identify which update-related action paths are already tested. Add tests for any uncovered happy/error paths using the same `vi.mock("../../core/lib/exec.js", ...)` pattern.
+- [ ] Read `tests/extensions/os-update.test.ts`. Identify which update-related action paths are already tested. Add tests for any uncovered happy/error paths using the same `vi.mock("../../core/lib/exec.js", ...)` pattern.
 
-### Step 9.5 — Read and extend bloom-os-proposal.test.ts
+### Step 9.5 — Read and extend os-proposal.test.ts
 
-- [ ] Read `tests/extensions/bloom-os-proposal.test.ts`. Check for coverage of `handleNixConfigProposal`. Add tests for `status`, `validate`, and `update_flake_lock` actions by mocking `run`.
+- [ ] Read `tests/extensions/os-proposal.test.ts`. Check for coverage of `handleNixConfigProposal`. Add tests for `status`, `validate`, and `update_flake_lock` actions by mocking `run`.
 
 ### Step 9.6 — Run tests
 
 - [ ] Run:
   ```bash
-  npx vitest run tests/extensions/bloom-os.test.ts tests/extensions/bloom-os-update.test.ts tests/extensions/bloom-os-proposal.test.ts
+  npx vitest run tests/extensions/os.test.ts tests/extensions/os-update.test.ts tests/extensions/os-proposal.test.ts
   ```
   Expected: all pass.
 
@@ -724,7 +724,7 @@ describe("handleUpdateStatus", () => {
 
 - [ ] Run:
   ```bash
-  npm run test:coverage 2>&1 | grep "bloom-os"
+  npm run test:coverage 2>&1 | grep "os"
   ```
   Confirm ≥ 60% statements.
 
@@ -739,25 +739,25 @@ describe("handleUpdateStatus", () => {
 
 - [ ] Run:
   ```bash
-  git add core/pi/extensions/bloom-os/ tests/extensions/bloom-os.test.ts tests/extensions/bloom-os-update.test.ts tests/extensions/bloom-os-proposal.test.ts
-  git commit -m "test(bloom-os): add action tests; extract typed param schemas"
+  git add core/pi/extensions/os/ tests/extensions/os.test.ts tests/extensions/os-update.test.ts tests/extensions/os-proposal.test.ts
+  git commit -m "test(os): add action tests; extract typed param schemas"
   ```
 
 ---
 
-## Task 10: bloom-garden — add command handler tests
+## Task 10: garden — add command handler tests
 
 **Files:**
-- Audit/modify: `core/pi/extensions/bloom-garden/index.ts`, `core/pi/extensions/bloom-garden/actions.ts`
-- Modify: `tests/extensions/bloom-garden.test.ts`
+- Audit/modify: `core/pi/extensions/garden/index.ts`, `core/pi/extensions/garden/actions.ts`
+- Modify: `tests/extensions/garden.test.ts`
 
 ### Step 10.1 — Audit for Value.Check patterns and unsafe casts
 
-- [ ] Read `core/pi/extensions/bloom-garden/index.ts` and `actions.ts`. Replace any `Value.Check(T, x)` + manual guard with `Value.Parse(T, x)` at tool input boundaries. Extract param schemas to named consts and replace `params as { ... }` casts.
+- [ ] Read `core/pi/extensions/garden/index.ts` and `actions.ts`. Replace any `Value.Check(T, x)` + manual guard with `Value.Parse(T, x)` at tool input boundaries. Extract param schemas to named consts and replace `params as { ... }` casts.
 
 ### Step 10.2 — Read current test file
 
-- [ ] Read `tests/extensions/bloom-garden.test.ts`. Identify tested vs. untested paths. bloom-garden exposes `garden_status` tool and a `/bloom` command with subcommands (`init`, `status`, `update-blueprints`).
+- [ ] Read `tests/extensions/garden.test.ts`. Identify tested vs. untested paths. garden exposes `garden_status` tool and a `/bloom` command with subcommands (`init`, `status`, `update-blueprints`).
 
 ### Step 10.3 — Add tool execute and command handler tests
 
@@ -805,8 +805,8 @@ Adjust based on the actual command handler signature read in Step 10.2.
 
 - [ ] Run:
   ```bash
-  npx vitest run tests/extensions/bloom-garden.test.ts
-  npm run test:coverage 2>&1 | grep "bloom-garden"
+  npx vitest run tests/extensions/garden.test.ts
+  npm run test:coverage 2>&1 | grep "garden"
   ```
   Expected: tests pass; ≥ 60% statements.
 
@@ -821,25 +821,25 @@ Adjust based on the actual command handler signature read in Step 10.2.
 
 - [ ] Run:
   ```bash
-  git add core/pi/extensions/bloom-garden/ tests/extensions/bloom-garden.test.ts
-  git commit -m "test(bloom-garden): add tool execute and command handler tests"
+  git add core/pi/extensions/garden/ tests/extensions/garden.test.ts
+  git commit -m "test(garden): add tool execute and command handler tests"
   ```
 
 ---
 
-## Task 11: bloom-episodes — add action tests
+## Task 11: episodes — add action tests
 
 **Files:**
-- Audit/modify: `core/pi/extensions/bloom-episodes/index.ts`, `core/pi/extensions/bloom-episodes/actions.ts`
-- Modify: `tests/extensions/bloom-episodes.test.ts`
+- Audit/modify: `core/pi/extensions/episodes/index.ts`, `core/pi/extensions/episodes/actions.ts`
+- Modify: `tests/extensions/episodes.test.ts`
 
 ### Step 11.1 — Audit for Value.Check patterns and unsafe casts
 
-- [ ] Read `core/pi/extensions/bloom-episodes/index.ts` and `actions.ts`. Apply the same audit: `Value.Check → Value.Parse`, `params as { ... } → params as Static<typeof XxxParams>`.
+- [ ] Read `core/pi/extensions/episodes/index.ts` and `actions.ts`. Apply the same audit: `Value.Check → Value.Parse`, `params as { ... } → params as Static<typeof XxxParams>`.
 
 ### Step 11.2 — Read current test file
 
-- [ ] Read `tests/extensions/bloom-episodes.test.ts`. Note which action handlers are already tested.
+- [ ] Read `tests/extensions/episodes.test.ts`. Note which action handlers are already tested.
 
 ### Step 11.3 — Add action tests
 
@@ -853,14 +853,14 @@ describe("episode actions", () => {
   afterEach(() => { temp.cleanup() })
 
   it("episode_create creates an episode and returns success", async () => {
-    const { handleEpisodeCreate } = await import("../../core/pi/extensions/bloom-episodes/actions.js")
+    const { handleEpisodeCreate } = await import("../../core/pi/extensions/episodes/actions.js")
     const result = await handleEpisodeCreate({ title: "Test Episode", content: "body text", tags: [] })
     expect(result.isError).toBeFalsy()
     expect(result.content[0].text).toBeDefined()
   })
 
   it("episode_list returns a list (empty garden)", async () => {
-    const { handleEpisodeList } = await import("../../core/pi/extensions/bloom-episodes/actions.js")
+    const { handleEpisodeList } = await import("../../core/pi/extensions/episodes/actions.js")
     const result = await handleEpisodeList({})
     expect(result).toHaveProperty("content")
   })
@@ -873,8 +873,8 @@ Adjust function names and argument shapes to match actual exports from `actions.
 
 - [ ] Run:
   ```bash
-  npx vitest run tests/extensions/bloom-episodes.test.ts
-  npm run test:coverage 2>&1 | grep "bloom-episodes"
+  npx vitest run tests/extensions/episodes.test.ts
+  npm run test:coverage 2>&1 | grep "episodes"
   ```
   Expected: tests pass; ≥ 60% statements.
 
@@ -889,17 +889,17 @@ Adjust function names and argument shapes to match actual exports from `actions.
 
 - [ ] Run:
   ```bash
-  git add core/pi/extensions/bloom-episodes/ tests/extensions/bloom-episodes.test.ts
-  git commit -m "test(bloom-episodes): add episode action tests; extract typed param schemas"
+  git add core/pi/extensions/episodes/ tests/extensions/episodes.test.ts
+  git commit -m "test(episodes): add episode action tests; extract typed param schemas"
   ```
 
 ---
 
-## Task 12: bloom-objects — add action tests
+## Task 12: objects — add action tests
 
 **Files:**
-- Audit/modify: `core/pi/extensions/bloom-objects/index.ts`, `core/pi/extensions/bloom-objects/actions.ts`
-- Modify: `tests/extensions/bloom-objects.test.ts`
+- Audit/modify: `core/pi/extensions/objects/index.ts`, `core/pi/extensions/objects/actions.ts`
+- Modify: `tests/extensions/objects.test.ts`
 
 ### Step 12.1 — Audit for Value.Check patterns and unsafe casts
 
@@ -907,7 +907,7 @@ Adjust function names and argument shapes to match actual exports from `actions.
 
 ### Step 12.2 — Read current test file
 
-- [ ] Read `tests/extensions/bloom-objects.test.ts`. Note which object store operations are already tested.
+- [ ] Read `tests/extensions/objects.test.ts`. Note which object store operations are already tested.
 
 ### Step 12.3 — Add CRUD tests
 
@@ -919,20 +919,20 @@ describe("object store CRUD", () => {
   afterEach(() => { temp.cleanup() })
 
   it("memory_create writes an object and returns success", async () => {
-    const { handleMemoryCreate } = await import("../../core/pi/extensions/bloom-objects/actions.js")
+    const { handleMemoryCreate } = await import("../../core/pi/extensions/objects/actions.js")
     const result = await handleMemoryCreate({ title: "Test Note", content: "some content", type: "note" })
     expect(result.isError).toBeFalsy()
   })
 
   it("memory_read returns content after create", async () => {
-    const { handleMemoryCreate, handleMemoryRead } = await import("../../core/pi/extensions/bloom-objects/actions.js")
+    const { handleMemoryCreate, handleMemoryRead } = await import("../../core/pi/extensions/objects/actions.js")
     await handleMemoryCreate({ title: "Read Test", content: "hello", type: "note" })
     const result = await handleMemoryRead({ title: "Read Test" })
     expect(result.content[0].text).toContain("hello")
   })
 
   it("memory_list returns objects", async () => {
-    const { handleMemoryList } = await import("../../core/pi/extensions/bloom-objects/actions.js")
+    const { handleMemoryList } = await import("../../core/pi/extensions/objects/actions.js")
     const result = await handleMemoryList({})
     expect(result).toHaveProperty("content")
   })
@@ -945,8 +945,8 @@ Adjust function names and argument shapes to match actual exports.
 
 - [ ] Run:
   ```bash
-  npx vitest run tests/extensions/bloom-objects.test.ts
-  npm run test:coverage 2>&1 | grep "bloom-objects"
+  npx vitest run tests/extensions/objects.test.ts
+  npm run test:coverage 2>&1 | grep "objects"
   ```
   Expected: tests pass; ≥ 60% statements.
 
@@ -961,29 +961,29 @@ Adjust function names and argument shapes to match actual exports.
 
 - [ ] Run:
   ```bash
-  git add core/pi/extensions/bloom-objects/ tests/extensions/bloom-objects.test.ts
-  git commit -m "test(bloom-objects): add memory CRUD action tests; extract typed param schemas"
+  git add core/pi/extensions/objects/ tests/extensions/objects.test.ts
+  git commit -m "test(objects): add memory CRUD action tests; extract typed param schemas"
   ```
 
 ---
 
-## Task 13: bloom-persona — audit guardrail hooks
+## Task 13: persona — audit guardrail hooks
 
 **Files:**
-- Audit/modify: `core/pi/extensions/bloom-persona/index.ts`, `core/pi/extensions/bloom-persona/actions.ts`
-- Audit: `tests/extensions/bloom-persona.test.ts`
+- Audit/modify: `core/pi/extensions/persona/index.ts`, `core/pi/extensions/persona/actions.ts`
+- Audit: `tests/extensions/persona.test.ts`
 
 ### Step 13.1 — Check current coverage
 
 - [ ] Run:
   ```bash
-  npm run test:coverage 2>&1 | grep "bloom-persona"
+  npm run test:coverage 2>&1 | grep "persona"
   ```
-  bloom-persona's coverage should be decent (guardrails are tested in `tests/integration/persona-guardrails.test.ts`).
+  persona's coverage should be decent (guardrails are tested in `tests/integration/persona-guardrails.test.ts`).
 
 ### Step 13.2 — Audit for defensive casts
 
-- [ ] Read `core/pi/extensions/bloom-persona/index.ts` and `actions.ts`. Apply the same audit: replace `params as { ... }` with `as Static<typeof XxxParams>`, replace `Value.Check` guards with `Value.Parse` at event/tool boundaries.
+- [ ] Read `core/pi/extensions/persona/index.ts` and `actions.ts`. Apply the same audit: replace `params as { ... }` with `as Static<typeof XxxParams>`, replace `Value.Check` guards with `Value.Parse` at event/tool boundaries.
 
 ### Step 13.3 — If coverage < 60%, add missing event handler tests
 
@@ -1000,8 +1000,8 @@ If needed, add tests that trigger the registered event handlers (`session_start`
 
 - [ ] Run:
   ```bash
-  git add core/pi/extensions/bloom-persona/
-  git commit -m "refactor(bloom-persona): extract typed param schemas, audit event handlers"
+  git add core/pi/extensions/persona/
+  git commit -m "refactor(persona): extract typed param schemas, audit event handlers"
   ```
 
 ---
@@ -1036,7 +1036,7 @@ describe("operator journey: setup_status tool call", () => {
     temp = createTempGarden()
     // BLOOM_DIR is set automatically by createTempGarden()
     api = createMockExtensionAPI()
-    const mod = await import("../../core/pi/extensions/bloom-setup/index.js")
+    const mod = await import("../../core/pi/extensions/setup/index.js")
     mod.default(api as never)
   })
 
@@ -1066,7 +1066,7 @@ describe("operator journey: memory_create tool call", () => {
   beforeEach(async () => {
     temp = createTempGarden()
     api = createMockExtensionAPI()
-    const mod = await import("../../core/pi/extensions/bloom-objects/index.js")
+    const mod = await import("../../core/pi/extensions/objects/index.js")
     mod.default(api as never)
   })
 
@@ -1122,7 +1122,7 @@ describe("operator journey: memory_create tool call", () => {
 **Files:**
 - Modify: `.github/workflows/nixos-tests.yml`
 
-`bloom-boot` and `bloom-daemon` already run in `nixos-vm-tests` but the job silently passes when KVM is absent. This makes the gate meaningless on ubuntu-latest runners.
+`boot` and `bloom-daemon` already run in `nixos-vm-tests` but the job silently passes when KVM is absent. This makes the gate meaningless on ubuntu-latest runners.
 
 ### Step 15.1 — Read the current workflow
 
@@ -1202,7 +1202,7 @@ Replace it with:
   ```bash
   nix eval .#checks.x86_64-linux --apply builtins.attrNames --no-write-lock-file
   ```
-  Expected: all checks present including `bloom-boot`, `bloom-daemon`, `bloom-config`.
+  Expected: all checks present including `boot`, `bloom-daemon`, `config`.
 
 - [ ] Run:
   ```bash
@@ -1217,7 +1217,7 @@ Replace it with:
   ```bash
   nix eval .#packages.x86_64-linux --apply builtins.attrNames --no-write-lock-file
   ```
-  Expected: `[ "bloom-app" "iso" "qcow2" "raw" ]`
+  Expected: `[ "app" "iso" "qcow2" "raw" ]`
 
 ### Step 16.6 — Review commit log
 

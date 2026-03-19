@@ -1,0 +1,201 @@
+#!/usr/bin/env bash
+# firstboot.sh — Non-interactive first-boot preparation for Garden OS.
+# Runs before getty via garden-firstboot.service as the primary Garden user.
+# If ~/.garden/prefill.env is present, first boot completes unattended; otherwise
+# it performs background preparation and leaves the interactive wizard pending.
+# On failure, exits 1 (non-fatal per SuccessExitStatus). User can re-run
+# setup-wizard.sh on next login to resume from the last incomplete checkpoint.
+set -euo pipefail
+
+# Logging setup - log to file for debugging
+FIRSTBOOT_LOG="$HOME/.garden/firstboot.log"
+mkdir -p "$(dirname "$FIRSTBOOT_LOG")"
+exec > >(tee -a "$FIRSTBOOT_LOG") 2>&1
+
+echo "=== Garden Firstboot Started: $(date) ==="
+
+WIZARD_STATE="$HOME/.garden/wizard-state"
+SETUP_COMPLETE="$HOME/.garden/.setup-complete"
+GARDEN_DIR="${GARDEN_DIR:-$HOME/Garden}"
+SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
+BLOOM_CONFIG="$HOME/.config/garden"
+PI_DIR="$HOME/.pi"
+MATRIX_HOMESERVER="http://localhost:6167"
+MATRIX_STATE_DIR="$WIZARD_STATE/matrix-state"
+
+PREFILL_FILE="$HOME/.garden/prefill.env"
+if [[ -f "$PREFILL_FILE" ]]; then
+    # shellcheck source=/dev/null
+    source "$PREFILL_FILE"
+fi
+
+NONINTERACTIVE_INSTALL=0
+if [[ -f "$PREFILL_FILE" ]]; then
+    NONINTERACTIVE_INSTALL=1
+fi
+
+# Load shared function library.
+# firstboot.sh is run directly from the Nix source tree (not via app),
+# so $(dirname "$0") points into the source store, not app's $out/bin/.
+# The dirname probe is kept for pattern consistency but will always fall through
+# to the /run/current-system/sw/bin fallback at runtime.
+BLOOM_LIB="$(dirname "$0")/setup-lib.sh"
+if [[ ! -f "$BLOOM_LIB" ]]; then
+    BLOOM_LIB="/run/current-system/sw/bin/setup-lib.sh"
+fi
+# shellcheck source=setup-lib.sh
+source "$BLOOM_LIB"
+
+step_done() { [[ -f "$WIZARD_STATE/$1" ]]; }
+
+# --- First-boot steps ---
+
+firstboot_netbird() {
+    [[ -z "${PREFILL_NETBIRD_KEY:-}" ]] && { echo "garden-firstboot: no NetBird key, skipping"; return 0; }
+    echo "garden-firstboot: connecting to NetBird..."
+    if ! systemctl is-active --quiet netbird.service; then
+        sudo systemctl start netbird.service
+    fi
+    local wait_count=0
+    while [[ ! -S /var/run/netbird/sock ]]; do
+        wait_count=$((wait_count + 1))
+        [[ $wait_count -ge 20 ]] && { echo "garden-firstboot: NetBird daemon did not start" >&2; return 1; }
+        sleep 0.5
+    done
+    if sudo netbird up --setup-key "$PREFILL_NETBIRD_KEY"; then
+        sleep 3
+        local mesh_ip
+        mesh_ip=$(netbird status 2>/dev/null | grep -oP 'NetBird IP:\s+\K[\d.]+' || true)
+        [[ -n "$mesh_ip" ]] && mark_done_with netbird "$mesh_ip"
+        echo "garden-firstboot: NetBird connected (${mesh_ip:-unknown IP})"
+    else
+        echo "garden-firstboot: NetBird connection failed" >&2
+        return 1
+    fi
+}
+
+firstboot_matrix() {
+    [[ -z "${PREFILL_USERNAME:-}" ]] && { echo "garden-firstboot: no Matrix username, skipping"; return 0; }
+    echo "garden-firstboot: setting up Matrix..."
+    # Poll until homeserver accepts connections (up to 60s)
+    local attempts=0
+    until curl -sf "http://localhost:6167/_matrix/client/versions" >/dev/null 2>&1; do
+        attempts=$((attempts + 1))
+        [[ $attempts -ge 60 ]] && { echo "garden-firstboot: Matrix homeserver not ready after 60s" >&2; return 1; }
+        sleep 1
+    done
+    echo "garden-firstboot: Matrix homeserver ready"
+    # Delegate to wizard's step_matrix (reads PREFILL_USERNAME from env)
+    step_matrix
+}
+
+firstboot_services() {
+    echo "garden-firstboot: provisioning Garden Home..."
+    local mesh_ip mesh_fqdn
+    mesh_ip=$(read_checkpoint_data netbird)
+    mesh_fqdn=$(netbird_fqdn)
+    write_fluffychat_runtime_config
+    write_service_home_runtime "$mesh_ip" "$mesh_fqdn"
+    install_home_infrastructure || echo "garden-firstboot: Garden Home setup failed (non-fatal)"
+    systemctl --user restart garden-fluffychat.service || echo "garden-firstboot: fluffychat restart failed (non-fatal)" >&2
+    systemctl --user restart garden-dufs.service || echo "garden-firstboot: dufs restart failed (non-fatal)" >&2
+    systemctl --user restart garden-code-server.service || echo "garden-firstboot: code-server restart failed (non-fatal)" >&2
+    mark_done_with services "fluffychat dufs code-server"
+}
+
+firstboot_localai() {
+    # localai-download.service starts automatically (localai.service requires it).
+    # This step surfaces the status so it appears in the firstboot log.
+    local state
+    state=$(systemctl is-active localai-download.service 2>/dev/null || true)
+    case "$state" in
+        active)
+            echo "garden-firstboot: AI model already downloaded"
+            ;;
+        activating)
+            echo "garden-firstboot: AI model download in progress (background)"
+            echo "garden-firstboot: track with: sudo journalctl -fu localai-download"
+            ;;
+        failed)
+            echo "garden-firstboot: AI model download failed — retry with: sudo systemctl restart localai-download" >&2
+            return 1
+            ;;
+        *)
+            echo "garden-firstboot: starting AI model download in background..."
+            sudo systemctl start --no-block localai-download.service || true
+            echo "garden-firstboot: track with: sudo journalctl -fu localai-download"
+            ;;
+    esac
+    mark_done_with localai "download-started"
+}
+
+firstboot_ai_defaults() {
+    local settings_path="$PI_DIR/agent/settings.json"
+    mkdir -p "$(dirname "$settings_path")"
+    cat > "$settings_path" <<'EOF'
+{
+  "packages": [
+    "/usr/local/share/garden"
+  ],
+  "defaultProvider": "localai",
+  "defaultModel": "omnicoder-9b-q4_k_m",
+  "defaultThinkingLevel": "medium"
+}
+EOF
+    chmod 600 "$settings_path"
+}
+
+firstboot_repo_clone() {
+    local repo_dir="$HOME/.garden/pi-garden"
+    if [[ -d "$repo_dir/.git" ]]; then
+        return 0
+    fi
+    mkdir -p "$(dirname "$repo_dir")"
+    if ! curl -fsI --connect-timeout 5 https://github.com >/dev/null 2>&1; then
+        echo "garden-firstboot: skipping repo clone until network is available"
+        return 0
+    fi
+    if timeout 30 git clone --depth 1 https://github.com/alexradunet/piBloom.git "$repo_dir"; then
+        echo "garden-firstboot: cloned pi-garden repo"
+    else
+        echo "garden-firstboot: repo clone failed (non-fatal)" >&2
+    fi
+}
+
+firstboot_git_identity() {
+    [[ -n "${PREFILL_NAME:-}" ]] || return 0
+    git config --global user.name "$PREFILL_NAME"
+    if [[ -n "${PREFILL_EMAIL:-}" ]]; then
+        git config --global user.email "$PREFILL_EMAIL"
+    fi
+}
+
+firstboot_prepare_local_state() {
+    firstboot_ai_defaults
+    firstboot_repo_clone
+    firstboot_git_identity
+}
+
+firstboot_finalize() {
+    if [[ "$NONINTERACTIVE_INSTALL" -ne 1 ]]; then
+        echo "garden-firstboot: interactive setup remains pending"
+        return 0
+    fi
+    # linger is enabled statically via systemd.tmpfiles.rules in garden-firstboot.nix
+    systemctl --user enable --now pi-daemon.service || \
+        echo "garden-firstboot: pi-daemon enable failed (non-fatal)" >&2
+    touch "$SETUP_COMPLETE"
+    echo "garden-firstboot: setup complete"
+}
+
+main() {
+    mkdir -p "$WIZARD_STATE"
+    firstboot_prepare_local_state
+    step_done localai  || firstboot_localai  || true
+    step_done netbird  || firstboot_netbird  || true
+    step_done matrix   || firstboot_matrix   || true
+    step_done services || firstboot_services || true
+    firstboot_finalize
+}
+
+main

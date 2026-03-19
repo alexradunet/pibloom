@@ -28,12 +28,12 @@ Service-dependent steps (NetBird connection, Matrix account creation, optional s
 
 ### Components
 
-**1. `nixosModules.bloom` and `nixosModules.bloom-firstboot` (new flake outputs)**
+**1. `nixosModules.platform` and `nixosModules.firstboot` (new flake outputs)**
 
 Two new outputs added to `flake.nix`:
 
-- `nixosModules.bloom` — exports the six Bloom feature modules (`bloom-app`, `bloom-llm`, `bloom-matrix`, `bloom-network`, `bloom-shell`, `bloom-update`) as a single composable NixOS module, plus `nixpkgs.config.allowUnfree = true`. Does not include disko disk config or VM-specific mounts. **Requires `piAgent` and `bloomApp` in the consuming system's `specialArgs`** — these are packages from `llm-agents-nix` and `pkgs.callPackage ./core/os/pkgs/bloom-app` respectively. The generated installer `flake.nix` always provides them (see Step 3 below).
-- `nixosModules.bloom-firstboot` — exports the first-boot service module (see below).
+- `nixosModules.platform` — exports the six Bloom feature modules (`app`, `bloom-llm`, `bloom-matrix`, `bloom-network`, `bloom-shell`, `bloom-update`) as a single composable NixOS module, plus `nixpkgs.config.allowUnfree = true`. Does not include disko disk config or VM-specific mounts. **Requires `piAgent` and `bloomApp` in the consuming system's `specialArgs`** — these are packages from `llm-agents-nix` and `pkgs.callPackage ./core/os/pkgs/app` respectively. The generated installer `flake.nix` always provides them (see Step 3 below).
+- `nixosModules.firstboot` — exports the first-boot service module (see below).
 
 These allow the Calamares-installed system's local `flake.nix` to import Bloom cleanly without pulling in machine-specific or dev-only configuration.
 
@@ -74,9 +74,9 @@ Four new wizard pages inserted before the partition step:
 
 All fields are optional — the first-boot service handles missing keys gracefully (skips the step).
 
-`bloom_matrix_username` is distinct from the OS login username (which is always `pi`). It is the user's chosen Matrix handle and maps to `PREFILL_USERNAME` in `prefill.env` (the key `bloom-wizard.sh` already reads for Matrix account creation).
+`bloom_matrix_username` is distinct from the OS login username (which is always `pi`). It is the user's chosen Matrix handle and maps to `PREFILL_USERNAME` in `prefill.env` (the key `setup-wizard.sh` already reads for Matrix account creation).
 
-**4. `core/os/modules/bloom-firstboot.nix` + `core/scripts/bloom-firstboot.sh`**
+**4. `core/os/modules/firstboot.nix` + `core/scripts/firstboot.sh`**
 
 A new NixOS module that declares `bloom-firstboot.service`. The service runs once before `getty@tty1.service` on first boot, reads `~/.bloom/prefill.env`, and completes the service-dependent setup non-interactively.
 
@@ -147,7 +147,7 @@ Machine-specific overrides written to `/mnt/etc/nixos/host-config.nix`:
   console.keyMap = "@@vconsole@@";
   networking.networkmanager.enable = true;
   # NOTE: users.users.pi is NOT defined here. bloom-shell.nix (included via
-  # nixosModules.bloom) already defines the pi user with group, shell, home,
+  # nixosModules.platform) already defines the pi user with group, shell, home,
   # and autologin. Calamares users exec module sets the password directly via
   # chpasswd on the mounted target — no initialPassword needed.
   system.stateVersion = "25.05";
@@ -176,7 +176,7 @@ Written to `/mnt/etc/nixos/flake.nix`:
     system = "x86_64-linux";
     pkgs = nixpkgs.legacyPackages.${system};
     piAgent = llm-agents-nix.packages.${system}.pi;
-    bloomApp = pkgs.callPackage (bloom + "/core/os/pkgs/bloom-app") { inherit piAgent; };
+    bloomApp = pkgs.callPackage (bloom + "/core/os/pkgs/app") { inherit piAgent; };
   in {
     nixosConfigurations.bloom = nixpkgs.lib.nixosSystem {
       inherit system;
@@ -184,8 +184,8 @@ Written to `/mnt/etc/nixos/flake.nix`:
       modules = [
         ./hardware-configuration.nix
         ./host-config.nix
-        bloom.nixosModules.bloom
-        bloom.nixosModules.bloom-firstboot
+        bloom.nixosModules.platform
+        bloom.nixosModules.firstboot
       ];
     };
   };
@@ -226,9 +226,9 @@ File written with `chmod 600`, owned by UID/GID 1000 (hardcoded — NixOS determ
   "defaultThinkingLevel": "medium"
 }
 ```
-`defaultThinkingLevel` is included to match the output of `write_pi_settings_defaults` in `bloom-wizard.sh` (which always writes this key). Ensures `pi-daemon.service` starts with a complete config on first boot and that the wizard recovery path's `jq` merge produces an identical result.
+`defaultThinkingLevel` is included to match the output of `write_pi_settings_defaults` in `setup-wizard.sh` (which always writes this key). Ensures `pi-daemon.service` starts with a complete config on first boot and that the wizard recovery path's `jq` merge produces an identical result.
 
-Written at install time with `chmod 600`. This replaces `step_ai` from `bloom-wizard.sh`; `pi-daemon.service` has its required `settings.json` on first boot without any first-boot step. Parent directory `~pi/.pi/agent/` created if absent.
+Written at install time with `chmod 600`. This replaces `step_ai` from `setup-wizard.sh`; `pi-daemon.service` has its required `settings.json` on first boot without any first-boot step. Parent directory `~pi/.pi/agent/` created if absent.
 
 **`/mnt/home/pi/.gitconfig`**
 ```ini
@@ -272,20 +272,20 @@ The target directory is created before the copy. If no `.nmconnection` files exi
       Type = "oneshot";
       RemainAfterExit = true;
       User = "pi";
-      ExecStart = "${pkgs.bash}/bin/bash ${./bloom-firstboot.sh}";
+      ExecStart = "${pkgs.bash}/bin/bash ${./firstboot.sh}";
       StandardOutput = "journal+console";
       # systemctl --user requires XDG_RUNTIME_DIR to reach the user bus socket.
       # When a system service runs as User="pi" outside a PAM session, this env var
       # is not set automatically. UID 1000 is hardcoded (same rationale as bloom_prefill).
       Environment = "XDG_RUNTIME_DIR=/run/user/1000";
-      # Do not fail the boot if setup fails — user can recover via bloom-wizard.sh
+      # Do not fail the boot if setup fails — user can recover via setup-wizard.sh
       SuccessExitStatus = "0 1";
     };
     unitConfig.ConditionPathExists = "!/home/pi/.bloom/.setup-complete";
   };
 
-  # Passwordless sudo rules required by bloom-firstboot.sh in the non-TTY service context.
-  # NOTE: bloom-shell.nix (included via nixosModules.bloom) already grants pi ALL NOPASSWD
+  # Passwordless sudo rules required by firstboot.sh in the non-TTY service context.
+  # NOTE: bloom-shell.nix (included via nixosModules.platform) already grants pi ALL NOPASSWD
   # sudo, so these narrow rules are currently redundant. They are included here for
   # documentation clarity and to support future hardening (when bloom-shell.nix's full-sudo
   # grant is removed, these rules must be present for the first-boot service to work).
@@ -314,9 +314,9 @@ The target directory is created before the copy. If no `.nmconnection` files exi
 
 The `wants = [ "bloom-matrix.service" "netbird.service" ]` ensures those services are started before `bloom-firstboot` attempts to use them, even though they may not be fully ready at the socket level. The script uses retry loops (see below) to wait for application-level readiness.
 
-### `bloom-firstboot.sh`
+### `firstboot.sh`
 
-A stripped, non-interactive version of `bloom-wizard.sh`. Reads `~/.bloom/prefill.env`. Linger for `pi` is enabled statically via `systemd.tmpfiles.rules` in `bloom-firstboot.nix` — no `loginctl` call is needed in the script. Execution order:
+A stripped, non-interactive version of `setup-wizard.sh`. Reads `~/.bloom/prefill.env`. Linger for `pi` is enabled statically via `systemd.tmpfiles.rules` in `bloom-firstboot.nix` — no `loginctl` call is needed in the script. Execution order:
 
 1. **`step_netbird`** — starts netbird daemon via `sudo systemctl start netbird.service`, then connects with `sudo netbird up --setup-key $PREFILL_NETBIRD_KEY`; skipped if `PREFILL_NETBIRD_KEY` is empty.
 2. **`step_matrix`** — polls `http://localhost:6167/_matrix/client/versions` in a retry loop (up to 60s, 1s interval). Once the homeserver is accepting connections, reads the registration token via `sudo cat /var/lib/continuwuity/registration_token` and registers bot + user accounts using `PREFILL_USERNAME`. Skipped if `PREFILL_USERNAME` is empty.
@@ -327,7 +327,7 @@ A stripped, non-interactive version of `bloom-wizard.sh`. Reads `~/.bloom/prefil
 
 All interactive prompts are removed. Non-fatal failures are logged to the journal and do not block subsequent steps or login.
 
-**`bloom-wizard.sh` `step_services` change:** `install_home_infrastructure` is always called first. Then:
+**`setup-wizard.sh` `step_services` change:** `install_home_infrastructure` is always called first. Then:
 
 ```bash
 # Pseudocode for the modified step_services non-interactive path
@@ -353,9 +353,9 @@ mark_done_with services "${installed:-none}"
 
 `write_service_home_runtime` takes three args: installed services string, mesh IP, mesh FQDN. `mark_done_with` takes two args: step name and data string (matches its actual signature). Both are called in both the interactive and non-interactive paths.
 
-**`step_ai` in `bloom-wizard.sh`:** `step_ai` is kept in the wizard's recovery sequence. `bloom_prefill` writes `settings.json` at install time, so on the recovery path `step_ai` encounters an already-existing file and the `jq` merge branch is taken (idempotent). No change to `bloom-wizard.sh`'s `step_ai` or its place in `main()`.
+**`step_ai` in `setup-wizard.sh`:** `step_ai` is kept in the wizard's recovery sequence. `bloom_prefill` writes `settings.json` at install time, so on the recovery path `step_ai` encounters an already-existing file and the `jq` merge branch is taken (idempotent). No change to `setup-wizard.sh`'s `step_ai` or its place in `main()`.
 
-`bloom-wizard.sh` continues to work as a recovery mechanism: if `.setup-complete` is absent it re-runs from the last incomplete checkpoint using the same prefill logic.
+`setup-wizard.sh` continues to work as a recovery mechanism: if `.setup-complete` is absent it re-runs from the last incomplete checkpoint using the same prefill logic.
 
 ## File Changes Summary
 
@@ -373,19 +373,19 @@ mark_done_with services "${installed:-none}"
 | ADD | `core/calamares/config/users.conf` |
 | ADD | `core/calamares/bloom_prefill/main.py` |
 | ADD | `core/calamares/bloom_prefill/module.desc` |
-| ADD | `core/os/modules/bloom-firstboot.nix` |
-| ADD | `core/scripts/bloom-firstboot.sh` |
-| MODIFY | `flake.nix` — add `nixosModules.bloom` + `nixosModules.bloom-firstboot` outputs + nixpkgs overlay |
+| ADD | `core/os/modules/firstboot.nix` |
+| ADD | `core/scripts/firstboot.sh` |
+| MODIFY | `flake.nix` — add `nixosModules.platform` + `nixosModules.firstboot` outputs + nixpkgs overlay |
 | MODIFY | `core/os/hosts/x86_64-installer.nix` — use custom Calamares package, remove bloom-convert |
-| MODIFY | `core/scripts/bloom-wizard.sh` — add `PREFILL_SERVICES` support to `step_services` |
+| MODIFY | `core/scripts/setup-wizard.sh` — add `PREFILL_SERVICES` support to `step_services` |
 | DELETE | `core/scripts/bloom-convert.sh` |
 
 ## Error Handling
 
 - **nixos-install fails**: Calamares shows error dialog with journal output. User can retry from the summary page.
-- **First-boot NetBird fails**: Logged to journal. `bloom-wizard.sh` re-runs the netbird step on next login (existing checkpoint resume logic).
+- **First-boot NetBird fails**: Logged to journal. `setup-wizard.sh` re-runs the netbird step on next login (existing checkpoint resume logic).
 - **First-boot Matrix fails**: Same — wizard resumes from `step_matrix` on next login.
-- **Missing prefill.env**: First-boot service skips NetBird/services gracefully. Matrix runs but prompts for username interactively via `bloom-wizard.sh` on next login.
+- **Missing prefill.env**: First-boot service skips NetBird/services gracefully. Matrix runs but prompts for username interactively via `setup-wizard.sh` on next login.
 
 ## Testing
 

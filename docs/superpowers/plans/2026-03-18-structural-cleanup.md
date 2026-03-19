@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove dead code (CLI ISO), eliminate duplication in `flake.nix` and `justfile`, and make the `bloom-firstboot.sh` → `bloom-wizard.sh` dependency explicit via a shared library.
+**Goal:** Remove dead code (CLI ISO), eliminate duplication in `flake.nix` and `justfile`, and make the `firstboot.sh` → `setup-wizard.sh` dependency explicit via a shared library.
 
 **Architecture:** Four independent mechanical changes tackled in sequence, each committed separately. No behaviour changes to the installed system or installer. Changes confined to `flake.nix`, `justfile`, and `core/scripts/`.
 
@@ -19,10 +19,10 @@
 | `flake.nix` | Modify | Remove `iso` block; rename `iso-gui` → `iso`; add `mkDiskImage`; replace `qcow2`/`raw` blocks |
 | `justfile` | Modify | Remove `iso` + `test-iso` (CLI); rename `iso-gui` → `iso`, `test-iso-gui` → `test-iso`; collapse vm recipes to one-liners |
 | `core/scripts/run-qemu.sh` | Create | Shared QEMU disk setup + launch logic for all three VM modes |
-| `core/scripts/bloom-lib.sh` | Create | Shared shell function library extracted from `bloom-wizard.sh` |
-| `core/scripts/bloom-wizard.sh` | Modify | Add `source bloom-lib.sh` at top; remove the extracted functions |
-| `core/scripts/bloom-firstboot.sh` | Modify | Replace wizard sourcing + guard with direct `bloom-lib.sh` source |
-| `core/os/pkgs/bloom-app/default.nix` | Modify | Add `bloom-lib.sh` to install phase |
+| `core/scripts/setup-lib.sh` | Create | Shared shell function library extracted from `setup-wizard.sh` |
+| `core/scripts/setup-wizard.sh` | Modify | Add `source setup-lib.sh` at top; remove the extracted functions |
+| `core/scripts/firstboot.sh` | Modify | Replace wizard sourcing + guard with direct `setup-lib.sh` source |
+| `core/os/pkgs/app/default.nix` | Modify | Add `setup-lib.sh` to install phase |
 
 ---
 
@@ -405,14 +405,14 @@ vm-daemon: qcow2
 
 ---
 
-## Task 5: Create bloom-lib.sh
+## Task 5: Create setup-lib.sh
 
 **Files:**
-- Create: `core/scripts/bloom-lib.sh`
+- Create: `core/scripts/setup-lib.sh`
 
 ### Step 5.1 — Identify functions to extract
 
-Read `core/scripts/bloom-wizard.sh` and locate the following functions. They will be cut from wizard and placed in bloom-lib.sh. Find their exact line ranges:
+Read `core/scripts/setup-wizard.sh` and locate the following functions. They will be cut from wizard and placed in setup-lib.sh. Find their exact line ranges:
 
 | Function(s) | Section in wizard.sh |
 |---|---|
@@ -427,15 +427,15 @@ Read `core/scripts/bloom-wizard.sh` and locate the following functions. They wil
 | `install_service` | (search for `install_service()`) |
 | `step_matrix` | (search for `step_matrix()`) |
 
-- [ ] Read `bloom-wizard.sh` to confirm all line ranges before proceeding
+- [ ] Read `setup-wizard.sh` to confirm all line ranges before proceeding
 
-### Step 5.2 — Create `core/scripts/bloom-lib.sh`
+### Step 5.2 — Create `core/scripts/setup-lib.sh`
 
 Create the file with this header, then paste in the functions found above (in the order listed in Step 5.1):
 
 ```bash
 #!/usr/bin/env bash
-# bloom-lib.sh — Shared function library for bloom-wizard.sh and bloom-firstboot.sh.
+# setup-lib.sh — Shared function library for setup-wizard.sh and firstboot.sh.
 # Source this file; do not execute directly.
 #
 # Provides: checkpoint management, NetBird utilities, Matrix API/state,
@@ -454,13 +454,13 @@ Create the file with this header, then paste in the functions found above (in th
 
 Then paste all the extracted functions after the header.
 
-- [ ] Create `core/scripts/bloom-lib.sh` with the header + all extracted functions
+- [ ] Create `core/scripts/setup-lib.sh` with the header + all extracted functions
 
 ### Step 5.3 — Syntax check
 
 - [ ] Run:
   ```bash
-  bash -n core/scripts/bloom-lib.sh
+  bash -n core/scripts/setup-lib.sh
   ```
   Expected: no output.
 
@@ -468,36 +468,36 @@ Then paste all the extracted functions after the header.
 
 - [ ] Run:
   ```bash
-  git add core/scripts/bloom-lib.sh
-  git commit -m "feat(scripts): add bloom-lib.sh shared function library"
+  git add core/scripts/setup-lib.sh
+  git commit -m "feat(scripts): add setup-lib.sh shared function library"
   ```
 
 ---
 
-## Task 6: Update bloom-wizard.sh to source bloom-lib.sh
+## Task 6: Update setup-wizard.sh to source setup-lib.sh
 
 **Files:**
-- Modify: `core/scripts/bloom-wizard.sh`
+- Modify: `core/scripts/setup-wizard.sh`
 
-### Step 6.1 — Add bloom-lib.sh sourcing at the top of wizard
+### Step 6.1 — Add setup-lib.sh sourcing at the top of wizard
 
 After the shebang and existing comment block (after the prefill sourcing block, around line 30), add:
 
 ```bash
 # Load shared function library.
-BLOOM_LIB="$(dirname "$0")/bloom-lib.sh"
+BLOOM_LIB="$(dirname "$0")/setup-lib.sh"
 if [[ ! -f "$BLOOM_LIB" ]]; then
-    BLOOM_LIB="/run/current-system/sw/bin/bloom-lib.sh"
+    BLOOM_LIB="/run/current-system/sw/bin/setup-lib.sh"
 fi
-# shellcheck source=bloom-lib.sh
+# shellcheck source=setup-lib.sh
 source "$BLOOM_LIB"
 ```
 
-- [ ] Add the sourcing block to `bloom-wizard.sh`
+- [ ] Add the sourcing block to `setup-wizard.sh`
 
 ### Step 6.2 — Remove extracted functions from wizard
 
-Delete from `bloom-wizard.sh` the function bodies that were moved to `bloom-lib.sh` in Task 5. These are:
+Delete from `setup-wizard.sh` the function bodies that were moved to `setup-lib.sh` in Task 5. These are:
 - `mark_done`, `mark_done_with`, `read_checkpoint_data` (keep `step_done` — wizard needs it and firstboot defines its own)
 - `netbird_status_json`, `netbird_fqdn` (keep `netbird_ip` — it is wizard-only)
 - The `# --- Matrix state helpers ---` section and its three functions
@@ -511,17 +511,17 @@ Delete from `bloom-wizard.sh` the function bodies that were moved to `bloom-lib.
 
 **Do NOT remove:** `step_done`, `netbird_ip`, or any of the interactive step functions (`step_welcome`, `step_password`, `step_network`, `step_git`, `step_ai`, `step_services`, `step_netbird`) or `main()`.
 
-- [ ] Remove the extracted function bodies from `bloom-wizard.sh`
+- [ ] Remove the extracted function bodies from `setup-wizard.sh`
 
 ### Step 6.2b — Verify wizard retained functions
 
-Confirm that functions which must stay in `bloom-wizard.sh` are still present after the removal:
+Confirm that functions which must stay in `setup-wizard.sh` are still present after the removal:
 
 - [ ] Run:
   ```bash
   WIZARD_STATE=/tmp MATRIX_STATE_DIR=/tmp MATRIX_HOMESERVER=x PI_DIR=/tmp \
     BLOOM_CONFIG=/tmp BLOOM_SERVICES=/tmp BLOOM_DIR=/tmp SYSTEMD_USER_DIR=/tmp \
-    bash -c 'source core/scripts/bloom-wizard.sh 2>/dev/null
+    bash -c 'source core/scripts/setup-wizard.sh 2>/dev/null
              type step_done
              type netbird_ip
              type step_welcome
@@ -533,19 +533,19 @@ Confirm that functions which must stay in `bloom-wizard.sh` are still present af
 
 - [ ] Run:
   ```bash
-  bash -n core/scripts/bloom-wizard.sh
+  bash -n core/scripts/setup-wizard.sh
   ```
   Expected: no output.
 
 ### Step 6.4 — Smoke test (verify function availability)
 
-Since wizard now depends on bloom-lib.sh, simulate sourcing:
+Since wizard now depends on setup-lib.sh, simulate sourcing:
 
 - [ ] Run:
   ```bash
   WIZARD_STATE=/tmp MATRIX_STATE_DIR=/tmp MATRIX_HOMESERVER=x PI_DIR=/tmp \
     BLOOM_CONFIG=/tmp BLOOM_SERVICES=/tmp BLOOM_DIR=/tmp SYSTEMD_USER_DIR=/tmp \
-    bash -c 'source core/scripts/bloom-lib.sh && type matrix_register && type mark_done && type step_matrix'
+    bash -c 'source core/scripts/setup-lib.sh && type matrix_register && type mark_done && type step_matrix'
   ```
   Expected: outputs `matrix_register is a function`, `mark_done is a function`, `step_matrix is a function`.
 
@@ -553,29 +553,29 @@ Since wizard now depends on bloom-lib.sh, simulate sourcing:
 
 - [ ] Run:
   ```bash
-  git add core/scripts/bloom-wizard.sh
-  git commit -m "refactor(wizard): source bloom-lib.sh, remove extracted functions"
+  git add core/scripts/setup-wizard.sh
+  git commit -m "refactor(wizard): source setup-lib.sh, remove extracted functions"
   ```
 
 ---
 
-## Task 7: Update bloom-firstboot.sh to source bloom-lib.sh directly
+## Task 7: Update firstboot.sh to source setup-lib.sh directly
 
 **Files:**
-- Modify: `core/scripts/bloom-firstboot.sh:25-36`
+- Modify: `core/scripts/firstboot.sh:25-36`
 
 ### Step 7.1 — Replace wizard sourcing with bloom-lib sourcing
 
-Find the existing sourcing block in `bloom-firstboot.sh` (lines 25-36):
+Find the existing sourcing block in `firstboot.sh` (lines 25-36):
 
 ```bash
-# Re-use all helper functions from bloom-wizard.sh to avoid duplication.
+# Re-use all helper functions from setup-wizard.sh to avoid duplication.
 # When running from the Nix store (via bloom-firstboot.service), dirname "$0" is a store
-# path without bloom-wizard.sh. Fall back to the system PATH install location.
-# shellcheck source=bloom-wizard.sh
-WIZARD_SCRIPT="$(dirname "$0")/bloom-wizard.sh"
+# path without setup-wizard.sh. Fall back to the system PATH install location.
+# shellcheck source=setup-wizard.sh
+WIZARD_SCRIPT="$(dirname "$0")/setup-wizard.sh"
 if [[ ! -f "$WIZARD_SCRIPT" ]]; then
-    WIZARD_SCRIPT="/run/current-system/sw/bin/bloom-wizard.sh"
+    WIZARD_SCRIPT="/run/current-system/sw/bin/setup-wizard.sh"
 fi
 # Source only the function definitions (skip main() execution) by setting a guard.
 BLOOM_FIRSTBOOT_SOURCING=1
@@ -587,86 +587,86 @@ Replace it with:
 
 ```bash
 # Load shared function library.
-# bloom-firstboot.sh is run directly from the Nix source tree (not via bloom-app),
-# so $(dirname "$0") points into the source store, not bloom-app's $out/bin/.
+# firstboot.sh is run directly from the Nix source tree (not via app),
+# so $(dirname "$0") points into the source store, not app's $out/bin/.
 # The dirname probe is kept for pattern consistency but will always fall through
 # to the /run/current-system/sw/bin fallback at runtime.
-BLOOM_LIB="$(dirname "$0")/bloom-lib.sh"
+BLOOM_LIB="$(dirname "$0")/setup-lib.sh"
 if [[ ! -f "$BLOOM_LIB" ]]; then
-    BLOOM_LIB="/run/current-system/sw/bin/bloom-lib.sh"
+    BLOOM_LIB="/run/current-system/sw/bin/setup-lib.sh"
 fi
-# shellcheck source=bloom-lib.sh
+# shellcheck source=setup-lib.sh
 source "$BLOOM_LIB"
 ```
 
-- [ ] Make this replacement in `bloom-firstboot.sh`
+- [ ] Make this replacement in `firstboot.sh`
 
 ### Step 7.2 — Syntax check
 
 - [ ] Run:
   ```bash
-  bash -n core/scripts/bloom-firstboot.sh
+  bash -n core/scripts/firstboot.sh
   ```
   Expected: no output.
 
 ### Step 7.3 — Smoke test (verify function availability)
 
-Confirm that `bloom-firstboot.sh` can source `bloom-lib.sh` and that the key shared functions are available:
+Confirm that `firstboot.sh` can source `setup-lib.sh` and that the key shared functions are available:
 
 - [ ] Run:
   ```bash
   WIZARD_STATE=/tmp MATRIX_STATE_DIR=/tmp MATRIX_HOMESERVER=x PI_DIR=/tmp \
     BLOOM_CONFIG=/tmp BLOOM_SERVICES=/tmp BLOOM_DIR=/tmp SYSTEMD_USER_DIR=/tmp \
-    bash -c 'source core/scripts/bloom-lib.sh
+    bash -c 'source core/scripts/setup-lib.sh
              type mark_done
              type step_matrix
              type install_service'
   ```
-  Expected: all three print `is a function`. This confirms `bloom-lib.sh` loaded correctly and all functions firstboot depends on are available.
+  Expected: all three print `is a function`. This confirms `setup-lib.sh` loaded correctly and all functions firstboot depends on are available.
 
 ### Step 7.4 — Commit
 
 - [ ] Run:
   ```bash
-  git add core/scripts/bloom-firstboot.sh
-  git commit -m "refactor(firstboot): source bloom-lib.sh directly, remove wizard dependency"
+  git add core/scripts/firstboot.sh
+  git commit -m "refactor(firstboot): source setup-lib.sh directly, remove wizard dependency"
   ```
 
 ---
 
-## Task 8: Install bloom-lib.sh via bloom-app
+## Task 8: Install setup-lib.sh via app
 
 **Files:**
-- Modify: `core/os/pkgs/bloom-app/default.nix:40-42`
+- Modify: `core/os/pkgs/app/default.nix:40-42`
 
-### Step 8.1 — Add bloom-lib.sh to the install phase
+### Step 8.1 — Add setup-lib.sh to the install phase
 
-In `bloom-app/default.nix`, find the install phase lines that install `bloom-wizard.sh` and `bloom-greeting.sh`:
-
-```nix
-mkdir -p $out/bin
-install -m 755 ${../../../scripts/bloom-wizard.sh} $out/bin/bloom-wizard.sh
-install -m 755 ${../../../scripts/bloom-greeting.sh} $out/bin/bloom-greeting.sh
-```
-
-Add one line for `bloom-lib.sh` alongside them:
+In `app/default.nix`, find the install phase lines that install `setup-wizard.sh` and `login-greeting.sh`:
 
 ```nix
 mkdir -p $out/bin
-install -m 755 ${../../../scripts/bloom-lib.sh} $out/bin/bloom-lib.sh
-install -m 755 ${../../../scripts/bloom-wizard.sh} $out/bin/bloom-wizard.sh
-install -m 755 ${../../../scripts/bloom-greeting.sh} $out/bin/bloom-greeting.sh
+install -m 755 ${../../../scripts/setup-wizard.sh} $out/bin/setup-wizard.sh
+install -m 755 ${../../../scripts/login-greeting.sh} $out/bin/login-greeting.sh
 ```
 
-Use the store-path interpolation form `${../../../scripts/bloom-lib.sh}` — this bypasses the `cleanSourceWith` filter. Do NOT use a plain `cp core/scripts/bloom-lib.sh`.
+Add one line for `setup-lib.sh` alongside them:
 
-- [ ] Add the `bloom-lib.sh` install line to `bloom-app/default.nix`
+```nix
+mkdir -p $out/bin
+install -m 755 ${../../../scripts/setup-lib.sh} $out/bin/setup-lib.sh
+install -m 755 ${../../../scripts/setup-wizard.sh} $out/bin/setup-wizard.sh
+install -m 755 ${../../../scripts/login-greeting.sh} $out/bin/login-greeting.sh
+```
 
-### Step 8.2 — Verify bloom-app builds
+Use the store-path interpolation form `${../../../scripts/setup-lib.sh}` — this bypasses the `cleanSourceWith` filter. Do NOT use a plain `cp core/scripts/setup-lib.sh`.
+
+- [ ] Add the `setup-lib.sh` install line to `app/default.nix`
+
+### Step 8.2 — Verify app builds
 
 - [ ] Run:
   ```bash
-  nix build .#bloom-app --no-link 2>&1 | tail -5
+  nix build .#app --no-link 2>&1 | tail -5
   ```
   Expected: build succeeds (or is cached). No "file not found" errors.
 
@@ -674,8 +674,8 @@ Use the store-path interpolation form `${../../../scripts/bloom-lib.sh}` — thi
 
 - [ ] Run:
   ```bash
-  git add core/os/pkgs/bloom-app/default.nix
-  git commit -m "feat(bloom-app): install bloom-lib.sh alongside wizard and greeting scripts"
+  git add core/os/pkgs/app/default.nix
+  git commit -m "feat(app): install setup-lib.sh alongside wizard and greeting scripts"
   ```
 
 ---
@@ -696,15 +696,15 @@ Use the store-path interpolation form `${../../../scripts/bloom-lib.sh}` — thi
   ```bash
   nix eval .#packages.x86_64-linux --apply builtins.attrNames --no-write-lock-file
   ```
-  Expected: `[ "bloom-app" "iso" "qcow2" "raw" ]` — four outputs, no `iso-gui`, no `iso` duplicate.
+  Expected: `[ "app" "iso" "qcow2" "raw" ]` — four outputs, no `iso-gui`, no `iso` duplicate.
 
-### Step 9.3 — bloom-app builds cleanly
+### Step 9.3 — app builds cleanly
 
 - [ ] Run:
   ```bash
-  nix build .#bloom-app --no-link 2>&1 | tail -5
+  nix build .#app --no-link 2>&1 | tail -5
   ```
-  Expected: exits 0, `bloom-lib.sh` is present in the output.
+  Expected: exits 0, `setup-lib.sh` is present in the output.
 
 ### Step 9.4 — Checks pass (fast config check)
 
@@ -726,9 +726,9 @@ Use the store-path interpolation form `${../../../scripts/bloom-lib.sh}` — thi
 
 - [ ] Run:
   ```bash
-  bash -n core/scripts/bloom-lib.sh
-  bash -n core/scripts/bloom-wizard.sh
-  bash -n core/scripts/bloom-firstboot.sh
+  bash -n core/scripts/setup-lib.sh
+  bash -n core/scripts/setup-wizard.sh
+  bash -n core/scripts/firstboot.sh
   bash -n core/scripts/run-qemu.sh
   ```
   Expected: all silent (no syntax errors).

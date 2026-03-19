@@ -12,8 +12,8 @@ import {
 	handleNixosUpdate,
 	handleSystemdControl,
 	handleUpdateStatus,
-} from "../../core/pi/extensions/bloom-os/actions.js";
-import { handleSystemHealth } from "../../core/pi/extensions/bloom-os/actions-health.js";
+} from "../../core/pi/extensions/os/actions.js";
+import { handleSystemHealth } from "../../core/pi/extensions/os/actions-health.js";
 
 let temp: TempGarden;
 let api: MockExtensionAPI;
@@ -30,7 +30,7 @@ const EXPECTED_TOOL_NAMES = [
 beforeEach(async () => {
 	temp = createTempGarden();
 	api = createMockExtensionAPI();
-	const mod = await import("../../core/pi/extensions/bloom-os/index.js");
+	const mod = await import("../../core/pi/extensions/os/index.js");
 	mod.default(api as never);
 });
 
@@ -45,7 +45,7 @@ function toolNames(): string[] {
 // ---------------------------------------------------------------------------
 // Registration
 // ---------------------------------------------------------------------------
-describe("bloom-os registration", () => {
+describe("os registration", () => {
 	it("registers exactly 6 tools", () => {
 		expect(api._registeredTools).toHaveLength(6);
 	});
@@ -63,7 +63,7 @@ describe("bloom-os registration", () => {
 // ---------------------------------------------------------------------------
 // Tool structure validation
 // ---------------------------------------------------------------------------
-describe("bloom-os tool structure", () => {
+describe("os tool structure", () => {
 	it("each tool has name, label, description, parameters, and execute", () => {
 		for (const tool of api._registeredTools) {
 			expect(tool, `tool ${tool.name} missing 'name'`).toHaveProperty("name");
@@ -130,30 +130,30 @@ describe("handleNixosUpdate — rollback", () => {
 describe("handleNixosUpdate — apply local (missing repo)", () => {
 	it("returns error when local repo is absent", async () => {
 		const ctx = createMockExtensionContext();
-		const prev = process.env.BLOOM_REPO_DIR;
-		process.env.BLOOM_REPO_DIR = "/tmp/bloom-repo-does-not-exist-12345";
+		const prev = process.env.GARDEN_REPO_DIR;
+		process.env.GARDEN_REPO_DIR = "/tmp/garden-repo-does-not-exist-12345";
 		const result = await handleNixosUpdate("apply", "local", undefined, ctx as never);
 		if (prev === undefined) {
-			delete process.env.BLOOM_REPO_DIR;
+			delete process.env.GARDEN_REPO_DIR;
 		} else {
-			process.env.BLOOM_REPO_DIR = prev;
+			process.env.GARDEN_REPO_DIR = prev;
 		}
 		expect(result.isError).toBe(true);
-		expect(result.content[0].text).toContain("Local Bloom repo not found");
+		expect(result.content[0].text).toContain("Local Garden repo not found");
 	});
 });
 
 describe("handleSystemdControl", () => {
-	it("rejects non-bloom services", async () => {
+	it("rejects non-garden services", async () => {
 		const ctx = createMockExtensionContext();
 		const result = await handleSystemdControl("sshd", "status", undefined, ctx as never);
 		expect(result.isError).toBe(true);
 	});
 
-	it("runs systemctl for bloom-dufs status", async () => {
+	it("runs systemctl for garden-dufs status", async () => {
 		mockRun.mockResolvedValueOnce({ stdout: "active", stderr: "", exitCode: 0 });
 		const ctx = createMockExtensionContext();
-		const result = await handleSystemdControl("bloom-dufs", "status", undefined, ctx as never);
+		const result = await handleSystemdControl("garden-dufs", "status", undefined, ctx as never);
 		expect(result.content[0].text).toContain("active");
 	});
 });
@@ -190,7 +190,7 @@ describe("handleSystemHealth", () => {
 		mockRun
 			.mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 1 }) // nixos-rebuild fails
 			.mockResolvedValueOnce({
-				stdout: JSON.stringify([{ Names: ["bloom-dufs"], Status: "Up 1 hour" }]),
+				stdout: JSON.stringify([{ Names: ["garden-dufs"], Status: "Up 1 hour" }]),
 				stderr: "",
 				exitCode: 0,
 			}) // podman ps
@@ -199,7 +199,7 @@ describe("handleSystemHealth", () => {
 			.mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 1 }) // free
 			.mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 1 }); // uptime
 		const result = await handleSystemHealth(undefined);
-		expect(result.content[0].text).toContain("bloom-dufs");
+		expect(result.content[0].text).toContain("garden-dufs");
 		expect(result.content[0].text).toContain("Up 1 hour");
 	});
 

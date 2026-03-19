@@ -25,13 +25,13 @@ Delete the `bloom.wifi.ssid` / `bloom.wifi.psk` options and the `environment.etc
 
 WiFi is already configured correctly by two other paths:
 - The Calamares installer sets it during graphical install
-- The first-boot wizard (`bloom-wizard.sh`) configures it interactively via NetworkManager
+- The first-boot wizard (`setup-wizard.sh`) configures it interactively via NetworkManager
 
 Neither path touches the Nix store. No secrets infrastructure (sops-nix, agenix) is needed — removing the option is sufficient.
 
 ### Files Changed
 
-- `core/os/modules/bloom-network.nix` — remove `options.bloom.wifi` block and `environment.etc` nmconnection block
+- `core/os/modules/network.nix` — remove `options.bloom.wifi` block and `environment.etc` nmconnection block
 
 Note: `bloom-options.nix` does not declare wifi options (it only contains `bloom.username`) and requires no changes.
 
@@ -70,7 +70,7 @@ Remove the `if [ ! -f ~/.config/sway/config ]` bash block and the heredoc from `
 
 ### Files Changed
 
-- `core/os/modules/bloom-shell.nix`:
+- `core/os/modules/shell.nix`:
   - Add `environment.etc."xdg/sway/config".text = ''...sway config content...''`
   - Remove Sway config heredoc from `bashProfile`
   - Remove `XDG_RUNTIME_DIR` export from `bashrc`
@@ -93,18 +93,18 @@ Every `nixos-rebuild` on-device compiles the full closure from source. Updates t
 
 ### Solution
 
-**Step 1 — Create Cachix cache:** Create a Cachix cache (e.g. `bloom-os`) at cachix.org. Free for public repositories.
+**Step 1 — Create Cachix cache:** Create a Cachix cache (e.g. `os`) at cachix.org. Free for public repositories.
 
 **Step 2 — Wire into `bloom-update.nix`:** Uncomment and fill in the substituter and public key:
 
 ```nix
 nix.settings.substituters = [
   "https://cache.nixos.org"
-  "https://bloom-os.cachix.org"
+  "https://os.cachix.org"
 ];
 nix.settings.trusted-public-keys = [
   "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-  "bloom-os.cachix.org-1:<pubkey>"
+  "os.cachix.org-1:<pubkey>"
 ];
 ```
 
@@ -113,8 +113,8 @@ nix.settings.trusted-public-keys = [
 Cachix provides a public substituter that on-device users can pull from. Modify `build-os.yml` as follows:
 
 1. Add `cachix/cachix-action` step immediately **before** the existing build steps (after `magic-nix-cache-action`). `cachix-action` must precede builds to act as a substituter and to automatically capture all built store paths.
-2. Add an explicit `nix build .#checks.x86_64-linux.bloom-config` step alongside the existing `nix build .#bloom-app` step — the existing eval step (`nix eval .#nixosConfigurations.bloom-x86_64.config.system.stateVersion`) evaluates only a single attribute and does not build the full system closure. Note: `checks.x86_64-linux.bloom-config` builds `nixosConfigurations.bloom-installed-test` (the Calamares-installed config) — this is distinct from `bloom-x86_64` (the bare-metal config) but represents what end users actually run. Both `bloom-app` and `bloom-config` closures should be pushed to Cachix.
-3. `cachix-action` automatically pushes all new store paths built during the job to `bloom-os.cachix.org`.
+2. Add an explicit `nix build .#checks.x86_64-linux.config` step alongside the existing `nix build .#app` step — the existing eval step (`nix eval .#nixosConfigurations.bloom-x86_64.config.system.stateVersion`) evaluates only a single attribute and does not build the full system closure. Note: `checks.x86_64-linux.config` builds `nixosConfigurations.installed-test` (the Calamares-installed config) — this is distinct from `bloom-x86_64` (the bare-metal config) but represents what end users actually run. Both `app` and `config` closures should be pushed to Cachix.
+3. `cachix-action` automatically pushes all new store paths built during the job to `os.cachix.org`.
 
 No new workflow file is needed. `magic-nix-cache-action` and `cachix-action` coexist: the former speeds up CI, the latter populates the public substituter for on-device use.
 
@@ -128,7 +128,7 @@ The signing key lives only in GitHub Actions secrets — never in the repo.
 
 ### Files Changed
 
-- `core/os/modules/bloom-update.nix` — uncomment and fill in substituters
+- `core/os/modules/update.nix` — uncomment and fill in substituters
 - `.github/workflows/build-os.yml` — add Cachix push step (no new workflow file needed)
 
 ---

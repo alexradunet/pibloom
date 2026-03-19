@@ -12,7 +12,7 @@ describe("computeNextRunAt", () => {
 		const job: ScheduledJob = {
 			id: "daily-heartbeat",
 			agentId: "host",
-			roomId: "!ops:bloom",
+			roomId: "!ops:garden",
 			kind: "heartbeat",
 			intervalMinutes: 1440,
 			prompt: "Heartbeat",
@@ -27,7 +27,7 @@ describe("computeNextRunAt", () => {
 		const job: ScheduledJob = {
 			id: "daily-heartbeat",
 			agentId: "host",
-			roomId: "!ops:bloom",
+			roomId: "!ops:garden",
 			kind: "heartbeat",
 			intervalMinutes: 1440,
 			prompt: "Heartbeat",
@@ -42,7 +42,7 @@ describe("computeNextRunAt", () => {
 		const job: ScheduledJob = {
 			id: "morning-check",
 			agentId: "host",
-			roomId: "!ops:bloom",
+			roomId: "!ops:garden",
 			kind: "cron",
 			cron: "0 9 * * *",
 			prompt: "Morning check",
@@ -56,7 +56,7 @@ describe("computeNextRunAt", () => {
 		const job: ScheduledJob = {
 			id: "hourly-check",
 			agentId: "host",
-			roomId: "!ops:bloom",
+			roomId: "!ops:garden",
 			kind: "cron",
 			cron: "@hourly",
 			prompt: "Hourly check",
@@ -69,7 +69,7 @@ describe("computeNextRunAt", () => {
 		const job: ScheduledJob = {
 			id: "weekly-check",
 			agentId: "host",
-			roomId: "!ops:bloom",
+			roomId: "!ops:garden",
 			kind: "cron",
 			cron: "@weekly",
 			prompt: "Weekly check",
@@ -84,7 +84,7 @@ describe("computeNextRunAt", () => {
 		const job: ScheduledJob = {
 			id: "monday-check",
 			agentId: "host",
-			roomId: "!ops:bloom",
+			roomId: "!ops:garden",
 			kind: "cron",
 			cron: "0 9 * * 1", // Mondays at 9 AM
 			prompt: "Monday check",
@@ -104,7 +104,7 @@ describe("computeNextRunAt", () => {
 });
 
 describe("isSupportedCronExpression", () => {
-	it("accepts the small cron subset used by Bloom", () => {
+	it("accepts the small cron subset used by Garden", () => {
 		expect(isSupportedCronExpression("@daily")).toBe(true);
 		expect(isSupportedCronExpression("@hourly")).toBe(true);
 		expect(isSupportedCronExpression("@weekly")).toBe(true);
@@ -137,7 +137,7 @@ describe("Scheduler", () => {
 			{
 				id: "daily-heartbeat",
 				agentId: "host",
-				roomId: "!ops:bloom",
+				roomId: "!ops:garden",
 				kind: "heartbeat",
 				intervalMinutes: 1440,
 				prompt: "Heartbeat",
@@ -148,7 +148,7 @@ describe("Scheduler", () => {
 			now: () => Date.UTC(2026, 2, 14, 12, 0, 0),
 			onTrigger: callback,
 			loadState: () => ({
-				"host::!ops:bloom::daily-heartbeat": {
+				"host::!ops:garden::daily-heartbeat": {
 					lastRunAt: Date.UTC(2026, 2, 13, 12, 0, 0),
 				},
 			}),
@@ -164,12 +164,12 @@ describe("Scheduler", () => {
 			expect.objectContaining({
 				jobId: "daily-heartbeat",
 				agentId: "host",
-				roomId: "!ops:bloom",
+				roomId: "!ops:garden",
 				kind: "heartbeat",
 			}),
 		);
 		expect(persistState).toHaveBeenCalledWith({
-			"host::!ops:bloom::daily-heartbeat": {
+			"host::!ops:garden::daily-heartbeat": {
 				lastRunAt: Date.UTC(2026, 2, 14, 12, 0, 0),
 			},
 		});
@@ -194,7 +194,7 @@ describe("Scheduler", () => {
 				{
 					id: "daily-heartbeat",
 					agentId: "host",
-					roomId: "!ops:bloom",
+					roomId: "!ops:garden",
 					kind: "heartbeat",
 					intervalMinutes: 1440,
 					prompt: "Heartbeat",
@@ -213,7 +213,7 @@ describe("Scheduler", () => {
 
 		expect(callback).toHaveBeenCalledTimes(1);
 		expect(persistState).toHaveBeenCalledWith({
-			"host::!ops:bloom::daily-heartbeat": {
+			"host::!ops:garden::daily-heartbeat": {
 				lastFailureAt: Date.UTC(2026, 2, 14, 12, 0, 0),
 			},
 		});
@@ -237,7 +237,7 @@ describe("Scheduler", () => {
 				{
 					id: "failing-job",
 					agentId: "host",
-					roomId: "!ops:bloom",
+					roomId: "!ops:garden",
 					kind: "heartbeat",
 					intervalMinutes: 60,
 					prompt: "Test",
@@ -260,7 +260,7 @@ describe("Scheduler", () => {
 			expect.objectContaining({
 				jobId: "failing-job",
 				agentId: "host",
-				roomId: "!ops:bloom",
+				roomId: "!ops:garden",
 			}),
 			error,
 		);
@@ -295,7 +295,7 @@ describe("Scheduler", () => {
 				{
 					id: "test-job",
 					agentId: "host",
-					roomId: "!ops:bloom",
+					roomId: "!ops:garden",
 					kind: "heartbeat",
 					intervalMinutes: 60,
 					prompt: "Test",
@@ -329,7 +329,7 @@ describe("Scheduler", () => {
 				{
 					id: "test-job",
 					agentId: "host",
-					roomId: "!ops:bloom",
+					roomId: "!ops:garden",
 					kind: "heartbeat",
 					intervalMinutes: 60,
 					prompt: "Test",
@@ -365,7 +365,7 @@ describe("Scheduler", () => {
 				{
 					id: "hourly-job",
 					agentId: "host",
-					roomId: "!room1:bloom",
+					roomId: "!room1:garden",
 					kind: "heartbeat",
 					intervalMinutes: 60,
 					prompt: "Hourly",
@@ -373,7 +373,7 @@ describe("Scheduler", () => {
 				{
 					id: "daily-job",
 					agentId: "host",
-					roomId: "!room2:bloom",
+					roomId: "!room2:garden",
 					kind: "cron",
 					cron: "0 9 * * *",
 					prompt: "Daily",
@@ -385,7 +385,7 @@ describe("Scheduler", () => {
 				return callbacks.daily();
 			},
 			loadState: () => ({
-				"host::!room1:bloom::hourly-job": { lastRunAt: Date.UTC(2026, 2, 14, 7, 0, 0) },
+				"host::!room1:garden::hourly-job": { lastRunAt: Date.UTC(2026, 2, 14, 7, 0, 0) },
 			}),
 			saveState: vi.fn(),
 			setTimeoutImpl: setTimeoutImpl as unknown as typeof setTimeout,
@@ -415,7 +415,7 @@ describe("Scheduler", () => {
 				{
 					id: "test-job",
 					agentId: "host",
-					roomId: "!ops:bloom",
+					roomId: "!ops:garden",
 					kind: "heartbeat",
 					intervalMinutes: 60,
 					prompt: "Test",
@@ -457,7 +457,7 @@ describe("Scheduler", () => {
 				{
 					id: "test-job",
 					agentId: "host",
-					roomId: "!ops:bloom",
+					roomId: "!ops:garden",
 					kind: "heartbeat",
 					intervalMinutes: 60,
 					prompt: "Test",
@@ -467,7 +467,7 @@ describe("Scheduler", () => {
 			onTrigger: callback,
 			loadState: () => ({
 				// Corrupted state with invalid values
-				"host::!ops:bloom::test-job": { lastRunAt: Number.NaN, lastFailureAt: Number.NaN },
+				"host::!ops:garden::test-job": { lastRunAt: Number.NaN, lastFailureAt: Number.NaN },
 			}),
 			saveState: vi.fn(),
 			setTimeoutImpl: setTimeoutImpl as unknown as typeof setTimeout,

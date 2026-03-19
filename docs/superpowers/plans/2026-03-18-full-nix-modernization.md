@@ -16,11 +16,11 @@
 
 | File | Change |
 |------|--------|
-| `core/os/modules/bloom-network.nix` | Remove `options.bloom.wifi` block + nmconnection `environment.etc` block |
-| `core/os/modules/bloom-shell.nix` | Add `environment.etc."xdg/sway/config"`, remove Sway heredoc from `.bash_profile`, remove `XDG_RUNTIME_DIR` from `.bashrc` |
+| `core/os/modules/network.nix` | Remove `options.bloom.wifi` block + nmconnection `environment.etc` block |
+| `core/os/modules/shell.nix` | Add `environment.etc."xdg/sway/config"`, remove Sway heredoc from `.bash_profile`, remove `XDG_RUNTIME_DIR` from `.bashrc` |
 | `flake.nix` | Add `devShells.${system}.default` output |
-| `core/os/modules/bloom-update.nix` | Uncomment + fill in Cachix substituters |
-| `.github/workflows/build-os.yml` | Add `cachix/cachix-action` step + explicit `bloom-config` build step |
+| `core/os/modules/update.nix` | Uncomment + fill in Cachix substituters |
+| `.github/workflows/build-os.yml` | Add `cachix/cachix-action` step + explicit `config` build step |
 
 ---
 
@@ -30,10 +30,10 @@ Used throughout. Run these to check NixOS evaluation doesn't break:
 
 ```bash
 # Fast: evaluates the full installed-system config (catches module errors, bad references)
-nix build .#checks.x86_64-linux.bloom-config
+nix build .#checks.x86_64-linux.config
 
 # Even faster: just evaluate without building
-nix eval .#nixosConfigurations.bloom-installed-test.config.system.stateVersion
+nix eval .#nixosConfigurations.installed-test.config.system.stateVersion
 ```
 
 ---
@@ -41,7 +41,7 @@ nix eval .#nixosConfigurations.bloom-installed-test.config.system.stateVersion
 ## Task 1: Remove WiFi NixOS Option
 
 **Files:**
-- Modify: `core/os/modules/bloom-network.nix`
+- Modify: `core/os/modules/network.nix`
 
 ### Context
 
@@ -49,21 +49,21 @@ nix eval .#nixosConfigurations.bloom-installed-test.config.system.stateVersion
 - An `options.bloom.wifi` block (lines 5–8) declaring `ssid` and `psk` options
 - Inside `config = { ... }`, an `environment.etc."NetworkManager/system-connections/wifi.nmconnection"` block (lines 31–54) that writes the PSK to the Nix store in plaintext when `ssid != ""`
 
-WiFi is already configured by Calamares at install time and by `bloom-wizard.sh` at first boot — neither path touches the Nix config. The NixOS option is a footgun with no callers.
+WiFi is already configured by Calamares at install time and by `setup-wizard.sh` at first boot — neither path touches the Nix config. The NixOS option is a footgun with no callers.
 
 ### Steps
 
 - [ ] **Step 1: Verify baseline eval passes**
 
   ```bash
-  nix eval .#nixosConfigurations.bloom-installed-test.config.system.stateVersion
+  nix eval .#nixosConfigurations.installed-test.config.system.stateVersion
   ```
 
   Expected: prints `"25.05"` with no errors.
 
 - [ ] **Step 2: Remove the `options.bloom.wifi` block from `bloom-network.nix`**
 
-  Delete these lines from `core/os/modules/bloom-network.nix`:
+  Delete these lines from `core/os/modules/network.nix`:
 
   ```nix
   options.bloom.wifi = {
@@ -112,7 +112,7 @@ WiFi is already configured by Calamares at install time and by `bloom-wizard.sh`
 - [ ] **Step 4: Verify eval still passes**
 
   ```bash
-  nix eval .#nixosConfigurations.bloom-installed-test.config.system.stateVersion
+  nix eval .#nixosConfigurations.installed-test.config.system.stateVersion
   ```
 
   Expected: `"25.05"` with no errors.
@@ -120,10 +120,10 @@ WiFi is already configured by Calamares at install time and by `bloom-wizard.sh`
 - [ ] **Step 5: Commit**
 
   ```bash
-  git add core/os/modules/bloom-network.nix
+  git add core/os/modules/network.nix
   git commit -m "fix(nix): remove plaintext WiFi PSK option from NixOS config
 
-  WiFi is configured by the Calamares installer and bloom-wizard.sh.
+  WiFi is configured by the Calamares installer and setup-wizard.sh.
   The NixOS option stored the PSK in the Nix store in plaintext."
   ```
 
@@ -132,7 +132,7 @@ WiFi is already configured by Calamares at install time and by `bloom-wizard.sh`
 ## Task 2: Move Sway Config to Nix + Shell Cleanup
 
 **Files:**
-- Modify: `core/os/modules/bloom-shell.nix`
+- Modify: `core/os/modules/shell.nix`
 
 ### Context
 
@@ -151,7 +151,7 @@ WiFi is already configured by Calamares at install time and by `bloom-wizard.sh`
 - [ ] **Step 0: Verify baseline eval passes**
 
   ```bash
-  nix eval .#nixosConfigurations.bloom-installed-test.config.system.stateVersion
+  nix eval .#nixosConfigurations.installed-test.config.system.stateVersion
   ```
 
   Expected: `"25.05"` with no errors.
@@ -261,7 +261,7 @@ WiFi is already configured by Calamares at install time and by `bloom-wizard.sh`
     default_floating_border pixel 2
 
     # Autostart Pi in a terminal
-    exec $term -e bash -c 'bloom-greeting.sh && exec pi'
+    exec $term -e bash -c 'login-greeting.sh && exec pi'
   '';
   ```
 
@@ -314,7 +314,7 @@ WiFi is already configured by Calamares at install time and by `bloom-wizard.sh`
 - [ ] **Step 4: Verify eval passes**
 
   ```bash
-  nix eval .#nixosConfigurations.bloom-installed-test.config.system.stateVersion
+  nix eval .#nixosConfigurations.installed-test.config.system.stateVersion
   ```
 
   Expected: `"25.05"` with no errors.
@@ -322,7 +322,7 @@ WiFi is already configured by Calamares at install time and by `bloom-wizard.sh`
 - [ ] **Step 5: Verify the Sway config is in the evaluated system**
 
   ```bash
-  nix eval --raw .#nixosConfigurations.bloom-installed-test.config.environment.etc."xdg/sway/config".text | head -5
+  nix eval --raw .#nixosConfigurations.installed-test.config.environment.etc."xdg/sway/config".text | head -5
   ```
 
   Expected: first few lines of the Sway config (the `# Bloom OS Sway Configuration` comment and `set $mod Mod4`).
@@ -330,7 +330,7 @@ WiFi is already configured by Calamares at install time and by `bloom-wizard.sh`
 - [ ] **Step 6: Commit**
 
   ```bash
-  git add core/os/modules/bloom-shell.nix
+  git add core/os/modules/shell.nix
   git commit -m "fix(nix): move Sway config to environment.etc, drop manual XDG_RUNTIME_DIR
 
   Sway config was written by bash on first login and never updated by
@@ -425,7 +425,7 @@ The dev shell is **additive** — it does not change `environment.systemPackages
 ## Task 4: Cachix Binary Cache
 
 **Files:**
-- Modify: `core/os/modules/bloom-update.nix`
+- Modify: `core/os/modules/update.nix`
 - Modify: `.github/workflows/build-os.yml`
 
 ### Context
@@ -439,10 +439,10 @@ The dev shell is **additive** — it does not change `environment.systemPackages
 - [ ] **Step 1: Create Cachix cache (manual, external)**
 
   1. Sign up at https://app.cachix.org (free for public repos)
-  2. Create a new cache named `bloom-os`
+  2. Create a new cache named `os`
   3. On the cache settings page, find:
-     - **Substituter URL**: `https://bloom-os.cachix.org`
-     - **Public key**: something like `bloom-os.cachix.org-1:AAAA...=`
+     - **Substituter URL**: `https://os.cachix.org`
+     - **Public key**: something like `os.cachix.org-1:AAAA...=`
   4. Generate an **auth token** for pushing: Settings → Auth Tokens → Create Token
   5. Add the auth token to GitHub Actions secrets:
      - Go to the repo on GitHub → Settings → Secrets and variables → Actions
@@ -465,11 +465,11 @@ The dev shell is **additive** — it does not change `environment.systemPackages
   ```nix
   nix.settings.substituters = [
     "https://cache.nixos.org"
-    "https://bloom-os.cachix.org"
+    "https://os.cachix.org"
   ];
   nix.settings.trusted-public-keys = [
     "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-    "bloom-os.cachix.org-1:<paste-actual-pubkey-from-step-1>"
+    "os.cachix.org-1:<paste-actual-pubkey-from-step-1>"
   ];
   ```
 
@@ -478,10 +478,10 @@ The dev shell is **additive** — it does not change `environment.systemPackages
 - [ ] **Step 3: Verify eval passes**
 
   ```bash
-  nix eval .#nixosConfigurations.bloom-installed-test.config.nix.settings.substituters
+  nix eval .#nixosConfigurations.installed-test.config.nix.settings.substituters
   ```
 
-  Expected: a list containing both `"https://cache.nixos.org"` and `"https://bloom-os.cachix.org"`.
+  Expected: a list containing both `"https://cache.nixos.org"` and `"https://os.cachix.org"`.
 
 - [ ] **Step 4: Add `cachix-action` to `build-os.yml`**
 
@@ -493,7 +493,7 @@ The dev shell is **additive** — it does not change `environment.systemPackages
   5. `npm ci`
   6. TypeScript build, Biome check, tests, coverage upload
   7. `nix eval ...`
-  8. `nix build .#bloom-app`
+  8. `nix build .#app`
 
   Insert the `cachix-action` step as step 4 (immediately after `magic-nix-cache-action`, before `setup-node`):
 
@@ -501,37 +501,37 @@ The dev shell is **additive** — it does not change `environment.systemPackages
       - name: Set up Cachix
         uses: cachix/cachix-action@v15
         with:
-          name: bloom-os
+          name: os
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
   ```
 
-  Then add a new `nix build` step after the existing `nix build .#bloom-app` step:
+  Then add a new `nix build` step after the existing `nix build .#app` step:
 
   ```yaml
-      - name: Build bloom-config check (populates Cachix)
-        run: nix build .#checks.x86_64-linux.bloom-config
+      - name: Build config check (populates Cachix)
+        run: nix build .#checks.x86_64-linux.config
   ```
 
   **Why `cachix-action` comes before builds:** The action sets up Cachix as both a substituter (so builds can pull from cache) and a push target (so all new store paths built during the job are automatically pushed). If placed after builds, it misses all the paths built earlier in the job.
 
-  **What gets cached:** All Nix store paths built during the job, including those from `nix build .#bloom-app` and `nix build .#checks.x86_64-linux.bloom-config`. The `bloom-config` check builds `nixosConfigurations.bloom-installed-test` — the configuration that end users actually install via Calamares.
+  **What gets cached:** All Nix store paths built during the job, including those from `nix build .#app` and `nix build .#checks.x86_64-linux.config`. The `config` check builds `nixosConfigurations.installed-test` — the configuration that end users actually install via Calamares.
 
 - [ ] **Step 5: Commit**
 
   ```bash
-  git add core/os/modules/bloom-update.nix .github/workflows/build-os.yml
+  git add core/os/modules/update.nix .github/workflows/build-os.yml
   git commit -m "feat(cache): add Cachix binary cache for on-device updates
 
-  bloom-update.nix now references the bloom-os Cachix substituter so
+  bloom-update.nix now references the os Cachix substituter so
   nixos-rebuild pulls pre-built binaries. build-os.yml pushes closures
   to Cachix on every merge to main."
   ```
 
 - [ ] **Step 6: Verify CI pushes to Cachix**
 
-  Push to `main` (or open a PR and merge it). Check the GitHub Actions run for the `Build Bloom OS` workflow. The `Set up Cachix` step should show it's authenticated, and subsequent build steps should show paths being pushed to `bloom-os.cachix.org`.
+  Push to `main` (or open a PR and merge it). Check the GitHub Actions run for the `Build Bloom OS` workflow. The `Set up Cachix` step should show it's authenticated, and subsequent build steps should show paths being pushed to `os.cachix.org`.
 
-  In the Cachix dashboard, the `bloom-os` cache should show store paths populated after the workflow completes.
+  In the Cachix dashboard, the `os` cache should show store paths populated after the workflow completes.
 
 ---
 
@@ -547,7 +547,7 @@ Final verification:
 
 ```bash
 # All NixOS checks pass
-nix build .#checks.x86_64-linux.bloom-config
+nix build .#checks.x86_64-linux.config
 
 # Dev shell works
 nix develop --command bash -c "node --version && biome --version && vitest --version && shellcheck --version && just --version"

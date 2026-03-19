@@ -5,7 +5,7 @@
 
 ## Overview
 
-LocalAI with a bundled default model is always installed and always running on Bloom OS. No feature flags, no opt-in. A Pi extension registers LocalAI as a provider; `bloom-wizard.sh` sets it as the default provider/model so Pi uses it automatically without login or model selection. Pi agent also receives a bundled skill documenting all four modalities.
+LocalAI with a bundled default model is always installed and always running on Bloom OS. No feature flags, no opt-in. A Pi extension registers LocalAI as a provider; `setup-wizard.sh` sets it as the default provider/model so Pi uses it automatically without login or model selection. Pi agent also receives a bundled skill documenting all four modalities.
 
 ## Goals
 
@@ -30,7 +30,7 @@ LocalAI with a bundled default model is always installed and always running on B
 
 ## Architecture
 
-### 1. NixOS Module: `core/os/modules/bloom-llm.nix`
+### 1. NixOS Module: `core/os/modules/llm.nix`
 
 LocalAI always enabled. No options.
 
@@ -82,9 +82,9 @@ Key decisions:
 
 Add `../modules/bloom-llm.nix` to imports.
 
-### 3. Pi Extension: `core/pi/extensions/bloom-localai/`
+### 3. Pi Extension: `core/pi/extensions/localai/`
 
-Pi auto-loads all subdirectories listed under `"extensions": ["./core/pi/extensions"]` in `package.json`. Adding `bloom-localai/` to that directory is sufficient — no registry or loader change needed. The compiled output lands in `dist/core/pi/extensions/bloom-localai/` and is included via the `cp -r dist` step in `bloom-app/default.nix`.
+Pi auto-loads all subdirectories listed under `"extensions": ["./core/pi/extensions"]` in `package.json`. Adding `localai/` to that directory is sufficient — no registry or loader change needed. The compiled output lands in `dist/core/pi/extensions/localai/` and is included via the `cp -r dist` step in `app/default.nix`.
 
 Extension has two files:
 
@@ -114,11 +114,11 @@ export default function (pi: ExtensionAPI) {
 }
 ```
 
-No `actions.ts` needed — the extension only registers the provider. Default model selection is handled by `bloom-wizard.sh` (see below).
+No `actions.ts` needed — the extension only registers the provider. Default model selection is handled by `setup-wizard.sh` (see below).
 
-### 4. Wizard Update: `core/scripts/bloom-wizard.sh`
+### 4. Wizard Update: `core/scripts/setup-wizard.sh`
 
-`bloom-wizard.sh` already has `write_pi_settings_defaults(provider, model)` which unconditionally writes `defaultProvider` and `defaultModel` to `~/.pi/agent/settings.json`. It always overwrites — there is no per-key guard. The single-run protection is the wizard's own gate (`~/.bloom/.setup-complete`): the wizard runs once on first boot, so `write_pi_settings_defaults` is only called once in practice.
+`setup-wizard.sh` already has `write_pi_settings_defaults(provider, model)` which unconditionally writes `defaultProvider` and `defaultModel` to `~/.pi/agent/settings.json`. It always overwrites — there is no per-key guard. The single-run protection is the wizard's own gate (`~/.bloom/.setup-complete`): the wizard runs once on first boot, so `write_pi_settings_defaults` is only called once in practice.
 
 Update the wizard to call:
 
@@ -130,7 +130,7 @@ This replaces any existing cloud provider default call. On a fresh install, Pi w
 
 ### 5. Pi Skill: `core/pi/skills/local-llm/SKILL.md`
 
-Bundled via bloom-garden blueprints sync — `bloom-app/default.nix` already copies `core/pi/skills/` wholesale, so no derivation change is needed.
+Bundled via garden blueprints sync — `app/default.nix` already copies `core/pi/skills/` wholesale, so no derivation change is needed.
 
 Skill content:
 
@@ -160,18 +160,18 @@ Skill content:
 
 ### 6. AGENTS.md Update
 
-Add `bloom-localai` to the extensions table and `local-llm` to the bundled skills list under `## 📜 Bundled Skills`.
+Add `localai` to the extensions table and `local-llm` to the bundled skills list under `## 📜 Bundled Skills`.
 
 ## File Changes
 
 | File | Change |
 |------|--------|
-| `core/os/modules/bloom-llm.nix` | New file — always-on LocalAI systemd service |
+| `core/os/modules/llm.nix` | New file — always-on LocalAI systemd service |
 | `core/os/hosts/x86_64.nix` | Add `bloom-llm.nix` to imports |
-| `core/pi/extensions/bloom-localai/index.ts` | New file — provider registration |
-| `core/scripts/bloom-wizard.sh` | Call `write_pi_settings_defaults "localai" "omnicoder-9b-q4_k_m"` |
+| `core/pi/extensions/localai/index.ts` | New file — provider registration |
+| `core/scripts/setup-wizard.sh` | Call `write_pi_settings_defaults "localai" "omnicoder-9b-q4_k_m"` |
 | `core/pi/skills/local-llm/SKILL.md` | New file |
-| `AGENTS.md` | Add `bloom-localai` extension + `local-llm` skill |
+| `AGENTS.md` | Add `localai` extension + `local-llm` skill |
 
 ## Testing
 

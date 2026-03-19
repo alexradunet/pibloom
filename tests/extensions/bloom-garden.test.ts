@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-	ensureBloom,
+	ensureGarden,
 	getPackageDir,
 	handleAgentCreate,
 	handleGardenStatus,
@@ -11,43 +11,43 @@ import {
 	handleSkillCreate,
 	handleSkillList,
 	loadAgentInfos,
-} from "../../core/pi/extensions/bloom-garden/actions.js";
+} from "../../core/pi/extensions/garden/actions.js";
 import { createMockExtensionAPI } from "../helpers/mock-extension-api.js";
 import { createMockExtensionContext } from "../helpers/mock-extension-context.js";
 import { createTempGarden, type TempGarden } from "../helpers/temp-garden.js";
 
-let bloomDir: string;
+let gardenDir: string;
 
 beforeEach(() => {
-	bloomDir = fs.mkdtempSync(path.join(os.tmpdir(), "bloom-garden-test-"));
+	gardenDir = fs.mkdtempSync(path.join(os.tmpdir(), "garden-test-"));
 });
 
 afterEach(() => {
-	fs.rmSync(bloomDir, { recursive: true, force: true });
+	fs.rmSync(gardenDir, { recursive: true, force: true });
 });
 
 // ---------------------------------------------------------------------------
-// ensureBloom
+// ensureGarden
 // ---------------------------------------------------------------------------
-describe("ensureBloom", () => {
+describe("ensureGarden", () => {
 	it("creates all required subdirectories", () => {
-		ensureBloom(bloomDir);
+		ensureGarden(gardenDir);
 		for (const dir of ["Persona", "Skills", "Evolutions", "audit"]) {
-			expect(fs.existsSync(path.join(bloomDir, dir))).toBe(true);
+			expect(fs.existsSync(path.join(gardenDir, dir))).toBe(true);
 		}
 	});
 
 	it("is idempotent — calling twice does not throw", () => {
-		ensureBloom(bloomDir);
-		expect(() => ensureBloom(bloomDir)).not.toThrow();
+		ensureGarden(gardenDir);
+		expect(() => ensureGarden(gardenDir)).not.toThrow();
 	});
 });
 
-describe("bloom-garden extension", () => {
+describe("garden extension", () => {
 	it("does not register authoring tools in the default runtime surface", async () => {
 		vi.resetModules();
 		const api = createMockExtensionAPI();
-		const mod = await import("../../core/pi/extensions/bloom-garden/index.js");
+		const mod = await import("../../core/pi/extensions/garden/index.js");
 		mod.default(api as never);
 
 		const names = api._registeredTools.map((tool) => tool.name);
@@ -55,21 +55,21 @@ describe("bloom-garden extension", () => {
 		expect(api._eventHandlers.has("input")).toBe(false);
 	});
 
-	it("shows usage for /bloom without arguments instead of opening an interaction prompt", async () => {
+	it("shows usage for /garden without arguments instead of opening an interaction prompt", async () => {
 		vi.resetModules();
 		const api = createMockExtensionAPI();
-		const mod = await import("../../core/pi/extensions/bloom-garden/index.js");
+		const mod = await import("../../core/pi/extensions/garden/index.js");
 		mod.default(api as never);
 
 		const ctx = createMockExtensionContext({ hasUI: true });
-		const command = api._registeredCommands.find((entry) => entry.name === "bloom") as unknown as {
+		const command = api._registeredCommands.find((entry) => entry.name === "garden") as unknown as {
 			handler: (args: string, ctx: ReturnType<typeof createMockExtensionContext>) => Promise<void>;
 		};
 
 		await command.handler("", ctx);
 
 		expect(api._sentCustomMessages).toEqual([]);
-		expect(ctx.ui.notify).toHaveBeenCalledWith("Usage: /bloom init | status | update-blueprints", "info");
+		expect(ctx.ui.notify).toHaveBeenCalledWith("Usage: /garden init | status | update-blueprints", "info");
 	});
 });
 
@@ -93,23 +93,23 @@ describe("getPackageDir", () => {
 // handleGardenStatus
 // ---------------------------------------------------------------------------
 describe("handleGardenStatus", () => {
-	it("returns content containing the bloom dir path", () => {
-		ensureBloom(bloomDir);
-		const result = handleGardenStatus(bloomDir);
+	it("returns content containing the garden dir path", () => {
+		ensureGarden(gardenDir);
+		const result = handleGardenStatus(gardenDir);
 		expect(result.content).toHaveLength(1);
 		expect(result.content[0].type).toBe("text");
-		expect(result.content[0].text).toContain(bloomDir);
+		expect(result.content[0].text).toContain(gardenDir);
 	});
 
 	it("returns a details object", () => {
-		ensureBloom(bloomDir);
-		const result = handleGardenStatus(bloomDir);
+		ensureGarden(gardenDir);
+		const result = handleGardenStatus(gardenDir);
 		expect(result.details).toBeDefined();
 	});
 
 	it("shows package version line", () => {
-		ensureBloom(bloomDir);
-		const result = handleGardenStatus(bloomDir);
+		ensureGarden(gardenDir);
+		const result = handleGardenStatus(gardenDir);
 		expect(result.content[0].text).toContain("Package version:");
 	});
 });
@@ -119,40 +119,40 @@ describe("handleGardenStatus", () => {
 // ---------------------------------------------------------------------------
 describe("handleSkillCreate", () => {
 	beforeEach(() => {
-		ensureBloom(bloomDir);
+		ensureGarden(gardenDir);
 	});
 
 	it("creates a SKILL.md file at the expected path", () => {
-		const result = handleSkillCreate(bloomDir, {
+		const result = handleSkillCreate(gardenDir, {
 			name: "my-skill",
 			description: "A test skill",
 			content: "# My Skill\n\nDo things.",
 		});
 		expect(result.content[0].text).toContain("created skill: my-skill");
-		const skillFile = path.join(bloomDir, "Skills", "my-skill", "SKILL.md");
+		const skillFile = path.join(gardenDir, "Skills", "my-skill", "SKILL.md");
 		expect(fs.existsSync(skillFile)).toBe(true);
 	});
 
 	it("writes name and description into the frontmatter", () => {
-		handleSkillCreate(bloomDir, {
+		handleSkillCreate(gardenDir, {
 			name: "scoped-skill",
 			description: "Scoped description",
 			content: "Body text",
 		});
-		const raw = fs.readFileSync(path.join(bloomDir, "Skills", "scoped-skill", "SKILL.md"), "utf-8");
+		const raw = fs.readFileSync(path.join(gardenDir, "Skills", "scoped-skill", "SKILL.md"), "utf-8");
 		expect(raw).toContain("name: scoped-skill");
 		expect(raw).toContain("description: Scoped description");
 		expect(raw).toContain("Body text");
 	});
 
 	it("returns an error result when the skill already exists", () => {
-		handleSkillCreate(bloomDir, { name: "dup-skill", description: "first", content: "" });
-		const result = handleSkillCreate(bloomDir, { name: "dup-skill", description: "second", content: "" });
+		handleSkillCreate(gardenDir, { name: "dup-skill", description: "first", content: "" });
+		const result = handleSkillCreate(gardenDir, { name: "dup-skill", description: "second", content: "" });
 		expect(result.content[0].text).toContain("already exists");
 	});
 
-	it("blocks path traversal in skill name that escapes bloom dir", () => {
-		const result = handleSkillCreate(bloomDir, { name: "../../escape", description: "bad", content: "" });
+	it("blocks path traversal in skill name that escapes garden dir", () => {
+		const result = handleSkillCreate(gardenDir, { name: "../../escape", description: "bad", content: "" });
 		expect(result.content[0].text).toContain("Path traversal blocked");
 	});
 });
@@ -162,13 +162,13 @@ describe("handleSkillCreate", () => {
 // ---------------------------------------------------------------------------
 describe("handleAgentCreate", () => {
 	beforeEach(() => {
-		ensureBloom(bloomDir);
+		ensureGarden(gardenDir);
 	});
 
 	it("creates agent credentials and a starter AGENTS.md", async () => {
 		const restartDaemon = vi.fn().mockResolvedValue({ ok: true });
 		const result = await handleAgentCreate(
-			bloomDir,
+			gardenDir,
 			{
 				id: "planner",
 				name: "Planner",
@@ -179,7 +179,7 @@ describe("handleAgentCreate", () => {
 				respond_mode: "mentioned",
 			},
 			{
-				homeDir: bloomDir,
+				homeDir: gardenDir,
 				loadPrimaryMatrixConfig: () => ({
 					homeserver: "http://localhost:6167",
 					registrationToken: "reg-token",
@@ -189,7 +189,7 @@ describe("handleAgentCreate", () => {
 					ok: true,
 					credentials: {
 						homeserver: "http://localhost:6167",
-						userId: "@planner:bloom",
+						userId: "@planner:garden",
 						accessToken: "planner-token",
 						password: "secret-pass",
 						username: "planner",
@@ -199,9 +199,9 @@ describe("handleAgentCreate", () => {
 		);
 
 		expect(result.content[0].text).toContain("created agent: planner");
-		expect(fs.existsSync(path.join(bloomDir, ".pi", "matrix-agents", "planner.json"))).toBe(true);
-		expect(fs.existsSync(path.join(bloomDir, "Agents", "planner", "AGENTS.md"))).toBe(true);
-		const raw = fs.readFileSync(path.join(bloomDir, "Agents", "planner", "AGENTS.md"), "utf-8");
+		expect(fs.existsSync(path.join(gardenDir, ".pi", "matrix-agents", "planner.json"))).toBe(true);
+		expect(fs.existsSync(path.join(gardenDir, "Agents", "planner", "AGENTS.md"))).toBe(true);
+		const raw = fs.readFileSync(path.join(gardenDir, "Agents", "planner", "AGENTS.md"), "utf-8");
 		expect(raw).toContain("id: planner");
 		expect(raw).toContain("name: Planner");
 		expect(raw).toContain("username: planner");
@@ -217,7 +217,7 @@ describe("handleAgentCreate", () => {
 			ok: true,
 			credentials: {
 				homeserver: "http://localhost:6167",
-				userId: "@critic:bloom",
+				userId: "@critic:garden",
 				accessToken: "critic-token",
 				password: "secret-pass",
 				username: "critic",
@@ -225,7 +225,7 @@ describe("handleAgentCreate", () => {
 		});
 
 		await handleAgentCreate(
-			bloomDir,
+			gardenDir,
 			{
 				id: "critic",
 				name: "Critic",
@@ -233,7 +233,7 @@ describe("handleAgentCreate", () => {
 				role_prompt: "Look for flaws and missing assumptions.",
 			},
 			{
-				homeDir: bloomDir,
+				homeDir: gardenDir,
 				loadPrimaryMatrixConfig: () => ({
 					homeserver: "http://localhost:6167",
 					registrationToken: "reg-token",
@@ -249,7 +249,7 @@ describe("handleAgentCreate", () => {
 
 	it("returns success with a warning when pi-daemon restart fails", async () => {
 		const result = await handleAgentCreate(
-			bloomDir,
+			gardenDir,
 			{
 				id: "cashus",
 				name: "Cashus",
@@ -257,7 +257,7 @@ describe("handleAgentCreate", () => {
 				role_prompt: "Provide financial guidance.",
 			},
 			{
-				homeDir: bloomDir,
+				homeDir: gardenDir,
 				loadPrimaryMatrixConfig: () => ({
 					homeserver: "http://localhost:6167",
 					registrationToken: "reg-token",
@@ -267,7 +267,7 @@ describe("handleAgentCreate", () => {
 					ok: true,
 					credentials: {
 						homeserver: "http://localhost:6167",
-						userId: "@cashus:bloom",
+						userId: "@cashus:garden",
 						accessToken: "cashus-token",
 						password: "secret-pass",
 						username: "cashus",
@@ -285,7 +285,7 @@ describe("handleAgentCreate", () => {
 
 	it("returns an error if the agent already exists", async () => {
 		await handleAgentCreate(
-			bloomDir,
+			gardenDir,
 			{
 				id: "planner",
 				name: "Planner",
@@ -293,7 +293,7 @@ describe("handleAgentCreate", () => {
 				role_prompt: "Focus on decomposition and sequencing.",
 			},
 			{
-				homeDir: bloomDir,
+				homeDir: gardenDir,
 				loadPrimaryMatrixConfig: () => ({
 					homeserver: "http://localhost:6167",
 					registrationToken: "reg-token",
@@ -302,7 +302,7 @@ describe("handleAgentCreate", () => {
 					ok: true,
 					credentials: {
 						homeserver: "http://localhost:6167",
-						userId: "@planner:bloom",
+						userId: "@planner:garden",
 						accessToken: "planner-token",
 						password: "secret-pass",
 						username: "planner",
@@ -312,7 +312,7 @@ describe("handleAgentCreate", () => {
 		);
 
 		const result = await handleAgentCreate(
-			bloomDir,
+			gardenDir,
 			{
 				id: "planner",
 				name: "Planner",
@@ -320,7 +320,7 @@ describe("handleAgentCreate", () => {
 				role_prompt: "Focus on decomposition and sequencing.",
 			},
 			{
-				homeDir: bloomDir,
+				homeDir: gardenDir,
 				loadPrimaryMatrixConfig: () => ({
 					homeserver: "http://localhost:6167",
 					registrationToken: "reg-token",
@@ -329,7 +329,7 @@ describe("handleAgentCreate", () => {
 					ok: true,
 					credentials: {
 						homeserver: "http://localhost:6167",
-						userId: "@planner:bloom",
+						userId: "@planner:garden",
 						accessToken: "planner-token",
 						password: "secret-pass",
 						username: "planner",
@@ -343,7 +343,7 @@ describe("handleAgentCreate", () => {
 
 	it("rejects invalid agent ids", async () => {
 		const result = await handleAgentCreate(
-			bloomDir,
+			gardenDir,
 			{
 				id: "../../evil",
 				name: "Evil",
@@ -351,7 +351,7 @@ describe("handleAgentCreate", () => {
 				role_prompt: "Nope.",
 			},
 			{
-				homeDir: bloomDir,
+				homeDir: gardenDir,
 				loadPrimaryMatrixConfig: () => ({
 					homeserver: "http://localhost:6167",
 					registrationToken: "reg-token",
@@ -369,23 +369,23 @@ describe("handleAgentCreate", () => {
 // ---------------------------------------------------------------------------
 describe("handleSkillList", () => {
 	it("returns message when Skills directory does not exist", () => {
-		// bloomDir exists but Skills subdir has not been created
-		const result = handleSkillList(bloomDir);
+		// gardenDir exists but Skills subdir has not been created
+		const result = handleSkillList(gardenDir);
 		expect(result.content[0].text).toContain("No skills directory found");
 	});
 
 	it("returns message when Skills directory is empty", () => {
-		fs.mkdirSync(path.join(bloomDir, "Skills"), { recursive: true });
-		const result = handleSkillList(bloomDir);
+		fs.mkdirSync(path.join(gardenDir, "Skills"), { recursive: true });
+		const result = handleSkillList(gardenDir);
 		expect(result.content[0].text).toContain("No skills found");
 	});
 
 	it("lists skills with their descriptions", () => {
-		ensureBloom(bloomDir);
-		handleSkillCreate(bloomDir, { name: "alpha", description: "Alpha skill", content: "" });
-		handleSkillCreate(bloomDir, { name: "beta", description: "Beta skill", content: "" });
+		ensureGarden(gardenDir);
+		handleSkillCreate(gardenDir, { name: "alpha", description: "Alpha skill", content: "" });
+		handleSkillCreate(gardenDir, { name: "beta", description: "Beta skill", content: "" });
 
-		const result = handleSkillList(bloomDir);
+		const result = handleSkillList(gardenDir);
 		expect(result.content[0].text).toContain("alpha");
 		expect(result.content[0].text).toContain("Alpha skill");
 		expect(result.content[0].text).toContain("beta");
@@ -393,10 +393,10 @@ describe("handleSkillList", () => {
 	});
 
 	it("ignores entries without a SKILL.md file", () => {
-		ensureBloom(bloomDir);
+		ensureGarden(gardenDir);
 		// Create a directory without a SKILL.md
-		fs.mkdirSync(path.join(bloomDir, "Skills", "orphan"), { recursive: true });
-		const result = handleSkillList(bloomDir);
+		fs.mkdirSync(path.join(gardenDir, "Skills", "orphan"), { recursive: true });
+		const result = handleSkillList(gardenDir);
 		expect(result.content[0].text).toContain("No skills found");
 	});
 });
@@ -406,13 +406,13 @@ describe("handleSkillList", () => {
 // ---------------------------------------------------------------------------
 describe("loadAgentInfos", () => {
 	it("returns empty array when Agents directory does not exist", () => {
-		const agents = loadAgentInfos(bloomDir);
+		const agents = loadAgentInfos(gardenDir);
 		expect(agents).toEqual([]);
 	});
 
 	it("parses agent definitions from AGENTS.md files", () => {
-		ensureBloom(bloomDir);
-		const agentDir = path.join(bloomDir, "Agents", "cookie");
+		ensureGarden(gardenDir);
+		const agentDir = path.join(gardenDir, "Agents", "cookie");
 		fs.mkdirSync(agentDir, { recursive: true });
 		fs.writeFileSync(
 			path.join(agentDir, "AGENTS.md"),
@@ -430,7 +430,7 @@ I manage memories.
 `,
 		);
 
-		const agents = loadAgentInfos(bloomDir);
+		const agents = loadAgentInfos(gardenDir);
 		expect(agents).toHaveLength(1);
 		expect(agents[0]).toMatchObject({
 			id: "cookie",
@@ -441,12 +441,12 @@ I manage memories.
 	});
 
 	it("skips malformed agent files", () => {
-		ensureBloom(bloomDir);
-		const agentDir = path.join(bloomDir, "Agents", "bad");
+		ensureGarden(gardenDir);
+		const agentDir = path.join(gardenDir, "Agents", "bad");
 		fs.mkdirSync(agentDir, { recursive: true });
 		fs.writeFileSync(path.join(agentDir, "AGENTS.md"), "not valid frontmatter");
 
-		const agents = loadAgentInfos(bloomDir);
+		const agents = loadAgentInfos(gardenDir);
 		expect(agents).toEqual([]);
 	});
 });
@@ -456,12 +456,12 @@ I manage memories.
 // ---------------------------------------------------------------------------
 describe("handleMentionAgent", () => {
 	beforeEach(() => {
-		ensureBloom(bloomDir);
+		ensureGarden(gardenDir);
 	});
 
 	it("formats a message with the agent's Matrix User ID", () => {
 		// Setup: create an agent
-		const agentDir = path.join(bloomDir, "Agents", "cookie");
+		const agentDir = path.join(gardenDir, "Agents", "cookie");
 		fs.mkdirSync(agentDir, { recursive: true });
 		fs.writeFileSync(
 			path.join(agentDir, "AGENTS.md"),
@@ -475,22 +475,22 @@ description: Memory manager
 `,
 		);
 
-		const result = handleMentionAgent(bloomDir, {
+		const result = handleMentionAgent(gardenDir, {
 			agent_id: "cookie",
 			message: "Please remember that I prefer dark mode",
 		});
 
-		expect(result.content[0].text).toBe("@cookie:bloom Please remember that I prefer dark mode");
+		expect(result.content[0].text).toBe("@cookie:garden Please remember that I prefer dark mode");
 		expect(result.details).toMatchObject({
 			agentId: "cookie",
 			agentName: "Cookie",
-			userId: "@cookie:bloom",
+			userId: "@cookie:garden",
 		});
 	});
 
 	it("returns error for unknown agent with available agents list", () => {
 		// Setup: create one agent
-		const agentDir = path.join(bloomDir, "Agents", "planner");
+		const agentDir = path.join(gardenDir, "Agents", "planner");
 		fs.mkdirSync(agentDir, { recursive: true });
 		fs.writeFileSync(
 			path.join(agentDir, "AGENTS.md"),
@@ -504,7 +504,7 @@ description: Planning assistant
 `,
 		);
 
-		const result = handleMentionAgent(bloomDir, {
+		const result = handleMentionAgent(gardenDir, {
 			agent_id: "unknown",
 			message: "Hello",
 		});
@@ -515,7 +515,7 @@ description: Planning assistant
 	});
 
 	it("returns error when no agents exist", () => {
-		const result = handleMentionAgent(bloomDir, {
+		const result = handleMentionAgent(gardenDir, {
 			agent_id: "anyone",
 			message: "Hello",
 		});
@@ -540,7 +540,7 @@ describe("garden_status tool execute", () => {
 		temp = createTempGarden();
 		vi.resetModules();
 		api = createMockExtensionAPI();
-		const mod = await import("../../core/pi/extensions/bloom-garden/index.js");
+		const mod = await import("../../core/pi/extensions/garden/index.js");
 		mod.default(api as never);
 	});
 
@@ -562,7 +562,7 @@ describe("garden_status tool execute", () => {
 		expect(result.content[0]).toHaveProperty("type", "text");
 	});
 
-	it("includes the bloom dir path in the status text", async () => {
+	it("includes the garden dir path in the status text", async () => {
 		const result = await getGardenStatusExecute()();
 		expect(result.content[0].text).toContain(temp.gardenDir);
 	});
@@ -579,9 +579,9 @@ describe("garden_status tool execute", () => {
 });
 
 // ---------------------------------------------------------------------------
-// /bloom command handler subcommands
+// /garden command handler subcommands
 // ---------------------------------------------------------------------------
-describe("/bloom command handler", () => {
+describe("/garden command handler", () => {
 	let temp: TempGarden;
 	let api: ReturnType<typeof createMockExtensionAPI>;
 
@@ -589,7 +589,7 @@ describe("/bloom command handler", () => {
 		temp = createTempGarden();
 		vi.resetModules();
 		api = createMockExtensionAPI();
-		const mod = await import("../../core/pi/extensions/bloom-garden/index.js");
+		const mod = await import("../../core/pi/extensions/garden/index.js");
 		mod.default(api as never);
 	});
 
@@ -598,13 +598,13 @@ describe("/bloom command handler", () => {
 	});
 
 	function getCommandHandler() {
-		const entry = api._registeredCommands.find((c) => c.name === "bloom");
-		if (!entry) throw new Error("bloom command not registered");
+		const entry = api._registeredCommands.find((c) => c.name === "garden");
+		if (!entry) throw new Error("garden command not registered");
 		return entry.handler as (args: string, ctx: ReturnType<typeof createMockExtensionContext>) => Promise<void>;
 	}
 
-	it("registers the /bloom command", () => {
-		const entry = api._registeredCommands.find((c) => c.name === "bloom");
+	it("registers the /garden command", () => {
+		const entry = api._registeredCommands.find((c) => c.name === "garden");
 		expect(entry).toBeDefined();
 	});
 
@@ -616,14 +616,14 @@ describe("/bloom command handler", () => {
 		expect(api._sentMessages[0].message).toContain("garden_status");
 	});
 
-	it("init subcommand notifies with Bloom initialized", async () => {
+	it("init subcommand notifies with Garden initialized", async () => {
 		const handler = getCommandHandler();
 		const ctx = createMockExtensionContext({ hasUI: true });
 		await handler("init", ctx);
-		expect(ctx.ui.notify).toHaveBeenCalledWith("Bloom initialized", "info");
+		expect(ctx.ui.notify).toHaveBeenCalledWith("Garden initialized", "info");
 	});
 
-	it("init subcommand creates bloom subdirectories", async () => {
+	it("init subcommand creates garden subdirectories", async () => {
 		const handler = getCommandHandler();
 		const ctx = createMockExtensionContext({ hasUI: true });
 		await handler("init", ctx);
@@ -646,6 +646,6 @@ describe("/bloom command handler", () => {
 		const handler = getCommandHandler();
 		const ctx = createMockExtensionContext({ hasUI: true });
 		await handler("unknown-cmd", ctx);
-		expect(ctx.ui.notify).toHaveBeenCalledWith("Usage: /bloom init | status | update-blueprints", "info");
+		expect(ctx.ui.notify).toHaveBeenCalledWith("Usage: /garden init | status | update-blueprints", "info");
 	});
 });

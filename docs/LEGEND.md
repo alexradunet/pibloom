@@ -1,17 +1,17 @@
 # 📖 Emoji Legend
 
-This document defines the emoji notation used across Bloom documentation for visual scanning and consistent reference.
+This document defines the emoji notation used across Garden documentation for visual scanning and consistent reference.
 
 ## 🧩 Notation Table
 
 | Emoji | Concept |
 |-------|---------|
-| 🌱 | Bloom / purpose / overview |
+| 🌱 | Garden / purpose / overview |
 | 🤖 | Pi / agent behavior |
 | 📜 | Skill / written guidance |
 | 🧩 | Extension / integration layer |
 | 📦 | Service / OCI workload |
-| 🌿 | Bloom directory / host layout |
+| 🌿 | Garden directory / host layout |
 | 🪞 | Persona / identity |
 | 💻 | OS / build / host operations |
 | 📡 | Daemon / messaging / IPC |

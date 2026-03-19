@@ -1,7 +1,7 @@
 {
-	"name": "bloom",
+	"name": "pi-platform",
 	"version": "0.1.0",
-	"description": "Bloom — Pi-native OS platform on NixOS",
+	"description": "Pi-native OS platform on NixOS",
 	"type": "module",
 	"private": true,
 	"engines": {
@@ -12,13 +12,13 @@
 	],
 	"pi": {
 		"extensions": [
-			"./core/pi/extensions/bloom-persona",
-			"./core/pi/extensions/bloom-localai",
-			"./core/pi/extensions/bloom-os",
-			"./core/pi/extensions/bloom-episodes",
-			"./core/pi/extensions/bloom-objects",
-			"./core/pi/extensions/bloom-garden",
-			"./core/pi/extensions/bloom-setup"
+			"./core/pi/extensions/persona",
+			"./core/pi/extensions/localai",
+			"./core/pi/extensions/os",
+			"./core/pi/extensions/episodes",
+			"./core/pi/extensions/objects",
+			"./core/pi/extensions/garden",
+			"./core/pi/extensions/setup"
 		],
 		"skills": [
 			"./core/pi/skills"

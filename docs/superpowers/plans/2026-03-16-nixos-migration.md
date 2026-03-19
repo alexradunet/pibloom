@@ -4,7 +4,7 @@
 
 **Goal:** Fully migrate Bloom OS from Fedora bootc to NixOS with a modular flake, replacing the Containerfile/BIB pipeline with `nix build` and `nixos-rebuild`.
 
-**Architecture:** A single `flake.nix` at repo root exposes `nixosConfigurations.bloom-x86_64` and format-specific image packages (qcow2, raw, iso) via `nixos-generators`. Five focused NixOS modules under `core/os/modules/` compose into the host config. The only custom derivation is `bloom-app` (the TypeScript monorepo). `pkgs.matrix-continuwuity` and the `pi` agent from `llm-agents.nix` are sourced from upstream.
+**Architecture:** A single `flake.nix` at repo root exposes `nixosConfigurations.bloom-x86_64` and format-specific image packages (qcow2, raw, iso) via `nixos-generators`. Five focused NixOS modules under `core/os/modules/` compose into the host config. The only custom derivation is `app` (the TypeScript monorepo). `pkgs.matrix-continuwuity` and the `pi` agent from `llm-agents.nix` are sourced from upstream.
 
 **Tech Stack:** Nix flakes, NixOS modules, nixos-generators, disko, llm-agents.nix (pi agent), `buildNpmPackage`, systemd tmpfiles, TypeScript (unchanged logic, updated OS interface)
 
@@ -19,25 +19,25 @@
 |------|---------|
 | `flake.nix` | Flake inputs + all outputs |
 | `core/os/hosts/x86_64.nix` | x86_64 host: imports modules, bootloader, disk, stateVersion |
-| `core/os/modules/bloom-app.nix` | Bloom app install, pi-daemon user service, tmpfiles |
-| `core/os/modules/bloom-matrix.nix` | Continuwuity Matrix server system service |
-| `core/os/modules/bloom-network.nix` | NetBird, SSH, firewall, NetworkManager, packages |
-| `core/os/modules/bloom-shell.nix` | pi user, autologin, sudoers, skel copy, branding |
-| `core/os/modules/bloom-update.nix` | nixos-rebuild OTA timer, Cachix substituter |
-| `core/os/pkgs/bloom-app/default.nix` | buildNpmPackage derivation for the Bloom TS monorepo |
+| `core/os/modules/app.nix` | Bloom app install, pi-daemon user service, tmpfiles |
+| `core/os/modules/matrix.nix` | Continuwuity Matrix server system service |
+| `core/os/modules/network.nix` | NetBird, SSH, firewall, NetworkManager, packages |
+| `core/os/modules/shell.nix` | pi user, autologin, sudoers, skel copy, branding |
+| `core/os/modules/update.nix` | nixos-rebuild OTA timer, Cachix substituter |
+| `core/os/pkgs/app/default.nix` | buildNpmPackage derivation for the Bloom TS monorepo |
 | `core/os/disk/x86_64-disk.nix` | disko: EFI + btrfs root |
-| `core/scripts/bloom-wizard.sh` | Moved from system_files (first-boot wizard) |
-| `core/scripts/bloom-greeting.sh` | Moved from system_files (login greeting) |
-| `core/scripts/bloom-update.sh` | New: NixOS update + status-file script |
+| `core/scripts/setup-wizard.sh` | Moved from system_files (first-boot wizard) |
+| `core/scripts/login-greeting.sh` | Moved from system_files (login greeting) |
+| `core/scripts/system-update.sh` | New: NixOS update + status-file script |
 
 ### Modified
 | File | Change |
 |------|--------|
 | `justfile` | Replace all podman/BIB/bootc recipes with nix equivalents |
-| `core/pi/extensions/bloom-os/types.ts` | `UpdateStatus`: add `generation?`, note `version` is now unused |
-| `core/pi/extensions/bloom-os/actions.ts` | Replace `handleBootc` with `handleNixosUpdate`; fix `handleUpdateStatus` |
-| `core/pi/extensions/bloom-os/index.ts` | Replace `bootc` tool with `nixos_update` tool |
-| `core/pi/extensions/bloom-os/actions-health.ts` | Replace `bootcSection` with NixOS generation section |
+| `core/pi/extensions/os/types.ts` | `UpdateStatus`: add `generation?`, note `version` is now unused |
+| `core/pi/extensions/os/actions.ts` | Replace `handleBootc` with `handleNixosUpdate`; fix `handleUpdateStatus` |
+| `core/pi/extensions/os/index.ts` | Replace `bootc` tool with `nixos_update` tool |
+| `core/pi/extensions/os/actions-health.ts` | Replace `bootcSection` with NixOS generation section |
 | `core/lib/repo.ts` | Remove `bootc status` inference; rely on git remote only |
 | `core/pi/extensions/bloom-services/actions-manifest.ts` | Remove `bootc status` image inference |
 
@@ -58,12 +58,12 @@
 ### Task 1: Create directory structure
 
 **Files:**
-- Create: `core/os/hosts/` `core/os/modules/` `core/os/pkgs/bloom-app/` `core/os/disk/` `core/scripts/`
+- Create: `core/os/hosts/` `core/os/modules/` `core/os/pkgs/app/` `core/os/disk/` `core/scripts/`
 
 - [ ] **Step 1: Create directories**
 
 ```bash
-mkdir -p core/os/hosts core/os/modules core/os/pkgs/bloom-app core/os/disk core/scripts
+mkdir -p core/os/hosts core/os/modules core/os/pkgs/app core/os/disk core/scripts
 ```
 
 - [ ] **Step 2: Verify structure**
@@ -74,12 +74,12 @@ ls core/os/
 
 Expected: `build_files  disk  disk_config  hosts  modules  packages  pkgs  system_files  Containerfile  bib.Containerfile`
 
-- [ ] **Step 3: Copy bloom-wizard.sh and bloom-greeting.sh to core/scripts/**
+- [ ] **Step 3: Copy setup-wizard.sh and login-greeting.sh to core/scripts/**
 
 ```bash
-cp core/os/system_files/usr/local/bin/bloom-wizard.sh core/scripts/bloom-wizard.sh
-cp core/os/system_files/usr/local/bin/bloom-greeting.sh core/scripts/bloom-greeting.sh
-chmod +x core/scripts/bloom-wizard.sh core/scripts/bloom-greeting.sh
+cp core/os/system_files/usr/local/bin/setup-wizard.sh core/scripts/setup-wizard.sh
+cp core/os/system_files/usr/local/bin/login-greeting.sh core/scripts/login-greeting.sh
+chmod +x core/scripts/setup-wizard.sh core/scripts/login-greeting.sh
 ```
 
 > **Note:** The originals remain in `core/os/system_files/` until Task 15 deletes old files. Both copies coexist during the migration — this is intentional. Task 4 references `core/scripts/` paths which are already valid after this step.
@@ -87,7 +87,7 @@ chmod +x core/scripts/bloom-wizard.sh core/scripts/bloom-greeting.sh
 - [ ] **Step 4: Add .gitkeep to empty directories so git tracks them**
 
 ```bash
-touch core/os/hosts/.gitkeep core/os/modules/.gitkeep core/os/pkgs/bloom-app/.gitkeep core/os/disk/.gitkeep
+touch core/os/hosts/.gitkeep core/os/modules/.gitkeep core/os/pkgs/app/.gitkeep core/os/disk/.gitkeep
 ```
 
 - [ ] **Step 5: Commit**
@@ -132,10 +132,10 @@ git commit -m "chore: scaffold NixOS migration directory structure and copy wiza
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
       piAgent = llm-agents-nix.packages.${system}.pi;
-      bloomApp = pkgs.callPackage ./core/os/pkgs/bloom-app { inherit piAgent; };
+      bloomApp = pkgs.callPackage ./core/os/pkgs/app { inherit piAgent; };
     in {
       packages.${system} = {
-        bloom-app = bloomApp;
+        app = bloomApp;
       };
 
       nixosConfigurations.bloom-x86_64 = nixpkgs.lib.nixosSystem {
@@ -166,7 +166,7 @@ nix flake metadata . 2>&1 | grep -E "Inputs|nixpkgs|disko|llm"
 
 Expected: all four inputs listed with resolved revisions.
 
-> **Note on `nix flake show`:** Do NOT run `nix flake show` at this point. It eagerly evaluates `nixosConfigurations`, which will hard-fail because `core/os/hosts/x86_64.nix` and `core/os/pkgs/bloom-app/default.nix` don't exist yet. Run it after Task 5 (host stub) is in place.
+> **Note on `nix flake show`:** Do NOT run `nix flake show` at this point. It eagerly evaluates `nixosConfigurations`, which will hard-fail because `core/os/hosts/x86_64.nix` and `core/os/pkgs/app/default.nix` don't exist yet. Run it after Task 5 (host stub) is in place.
 
 - [ ] **Step 4: Write a minimal host stub so the flake can evaluate**
 
@@ -255,12 +255,12 @@ git commit -m "feat: add disko btrfs+EFI disk layout for x86_64"
 
 ---
 
-## Chunk 2: bloom-app Derivation
+## Chunk 2: app Derivation
 
-### Task 4: Write bloom-app buildNpmPackage derivation
+### Task 4: Write app buildNpmPackage derivation
 
 **Files:**
-- Create: `core/os/pkgs/bloom-app/default.nix`
+- Create: `core/os/pkgs/app/default.nix`
 
 The `piAgent` argument is the `pi` package from `llm-agents.nix`. Before finalising the symlink paths, inspect its output structure:
 
@@ -283,11 +283,11 @@ Note the exact path to `pi-coding-agent` and `pi-ai` in the output. The derivati
 - [ ] **Step 2: Write the derivation with a placeholder npmDepsHash**
 
 ```nix
-# core/os/pkgs/bloom-app/default.nix
+# core/os/pkgs/app/default.nix
 { lib, buildNpmPackage, nodejs, piAgent }:
 
 buildNpmPackage {
-  pname = "bloom-app";
+  pname = "app";
   version = "0.1.0";
 
   # Source: repo root filtered to exclude build artifacts and the OS layer itself.
@@ -323,8 +323,8 @@ buildNpmPackage {
 
     # Scripts (accessible on PATH via environment.systemPackages)
     mkdir -p $out/bin
-    install -m 755 ${../../../../core/scripts/bloom-wizard.sh} $out/bin/bloom-wizard.sh
-    install -m 755 ${../../../../core/scripts/bloom-greeting.sh} $out/bin/bloom-greeting.sh
+    install -m 755 ${../../../../core/scripts/setup-wizard.sh} $out/bin/setup-wizard.sh
+    install -m 755 ${../../../../core/scripts/login-greeting.sh} $out/bin/login-greeting.sh
 
     # Wire pi-coding-agent symlinks.
     # Paths below assume layout found in Step 1: lib/node_modules/@mariozechner/...
@@ -336,7 +336,7 @@ buildNpmPackage {
     ln -sf ${piAgent}/lib/node_modules/@mariozechner/pi-coding-agent/node_modules/@mariozechner/pi-ai \
       $out/share/bloom/node_modules/@mariozechner/pi-ai || true
 
-    # Pi settings (default; overridden at runtime by bloom-greeting.sh)
+    # Pi settings (default; overridden at runtime by login-greeting.sh)
     mkdir -p $out/share/bloom/.pi/agent
     echo '{"packages": ["/usr/local/share/bloom"]}' > $out/share/bloom/.pi/agent/settings.json
 
@@ -358,7 +358,7 @@ buildNpmPackage {
 - [ ] **Step 3: First build attempt (will fail with wrong hash — that's expected)**
 
 ```bash
-nix build .#bloom-app 2>&1 | tail -20
+nix build .#app 2>&1 | tail -20
 ```
 
 Expected output contains: `error: hash mismatch in fixed-output derivation` with a line like:
@@ -368,7 +368,7 @@ Expected output contains: `error: hash mismatch in fixed-output derivation` with
 
 - [ ] **Step 4: Copy the correct hash into the derivation**
 
-Edit `core/os/pkgs/bloom-app/default.nix` — replace the placeholder:
+Edit `core/os/pkgs/app/default.nix` — replace the placeholder:
 ```nix
 npmDepsHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
 ```
@@ -377,7 +377,7 @@ with the actual hash from Step 3's error output.
 - [ ] **Step 5: Build succeeds — verify no dangling symlinks**
 
 ```bash
-nix build .#bloom-app
+nix build .#app
 ls result/share/bloom/dist/
 ls result/share/bloom/node_modules/@mariozechner/
 # Verify symlinks are not dangling (find -L resolves symlinks; dangling ones appear as broken)
@@ -393,13 +393,13 @@ Expected: `dist/` contains compiled JS, `node_modules/@mariozechner/` has `pi-co
 ls result/bin/
 ```
 
-Expected: `bloom-greeting.sh  bloom-wizard.sh`
+Expected: `login-greeting.sh  setup-wizard.sh`
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add core/os/pkgs/bloom-app/default.nix core/scripts/
-git commit -m "feat: add bloom-app buildNpmPackage derivation"
+git add core/os/pkgs/app/default.nix core/scripts/
+git commit -m "feat: add app buildNpmPackage derivation"
 ```
 
 ---
@@ -409,12 +409,12 @@ git commit -m "feat: add bloom-app buildNpmPackage derivation"
 ### Task 5: bloom-shell.nix — user, autologin, sudoers, skel, branding
 
 **Files:**
-- Create: `core/os/modules/bloom-shell.nix`
+- Create: `core/os/modules/shell.nix`
 
 - [ ] **Step 1: Write bloom-shell.nix**
 
 ```nix
-# core/os/modules/bloom-shell.nix
+# core/os/modules/shell.nix
 { pkgs, lib, ... }:
 
 let
@@ -431,14 +431,14 @@ let
 
     # First-boot wizard (runs once, before Pi)
     if [ -t 0 ] && [ ! -f "$HOME/.bloom/.setup-complete" ]; then
-      bloom-wizard.sh
+      setup-wizard.sh
     fi
 
     # Start Pi on interactive login (only after setup, only one instance — atomic mkdir lock)
     if [ -t 0 ] && [ -f "$HOME/.bloom/.setup-complete" ] && [ -z "$PI_SESSION" ] && mkdir /tmp/.bloom-pi-session 2>/dev/null; then
       trap 'rmdir /tmp/.bloom-pi-session 2>/dev/null' EXIT
       export PI_SESSION=1
-      bloom-greeting.sh
+      login-greeting.sh
       exec pi
     fi
   '';
@@ -520,7 +520,7 @@ Expected: `true`
 - [ ] **Step 3: Commit**
 
 ```bash
-git add core/os/modules/bloom-shell.nix core/os/hosts/x86_64.nix
+git add core/os/modules/shell.nix core/os/hosts/x86_64.nix
 git commit -m "feat: add bloom-shell NixOS module (pi user, autologin, skel, branding)"
 ```
 
@@ -529,12 +529,12 @@ git commit -m "feat: add bloom-shell NixOS module (pi user, autologin, skel, bra
 ### Task 6: bloom-network.nix — NetBird, SSH, firewall, packages
 
 **Files:**
-- Create: `core/os/modules/bloom-network.nix`
+- Create: `core/os/modules/network.nix`
 
 - [ ] **Step 1: Write bloom-network.nix**
 
 ```nix
-# core/os/modules/bloom-network.nix
+# core/os/modules/network.nix
 { pkgs, lib, config, ... }:
 
 {
@@ -629,7 +629,7 @@ Expected: `true`
 - [ ] **Step 3: Commit**
 
 ```bash
-git add core/os/modules/bloom-network.nix
+git add core/os/modules/network.nix
 git commit -m "feat: add bloom-network NixOS module (netbird, SSH, firewall, packages)"
 ```
 
@@ -638,7 +638,7 @@ git commit -m "feat: add bloom-network NixOS module (netbird, SSH, firewall, pac
 ### Task 7: bloom-matrix.nix — Continuwuity Matrix server
 
 **Files:**
-- Create: `core/os/modules/bloom-matrix.nix`
+- Create: `core/os/modules/matrix.nix`
 
 The matrix.toml content is in `core/os/system_files/etc/bloom/matrix.toml`. Read it:
 ```
@@ -657,7 +657,7 @@ allow_check_for_updates = false
 - [ ] **Step 1: Write bloom-matrix.nix**
 
 ```nix
-# core/os/modules/bloom-matrix.nix
+# core/os/modules/matrix.nix
 { pkgs, lib, ... }:
 
 {
@@ -729,30 +729,30 @@ Expected: `true`
 - [ ] **Step 4: Commit**
 
 ```bash
-git add core/os/modules/bloom-matrix.nix
+git add core/os/modules/matrix.nix
 git commit -m "feat: add bloom-matrix NixOS module (continuwuity Matrix server)"
 ```
 
 ---
 
-### Task 8: bloom-app.nix module — install app, pi-daemon user service, tmpfiles
+### Task 8: app.nix module — install app, pi-daemon user service, tmpfiles
 
 **Files:**
-- Create: `core/os/modules/bloom-app.nix`
+- Create: `core/os/modules/app.nix`
 
-- [ ] **Step 1: Write bloom-app.nix**
+- [ ] **Step 1: Write app.nix**
 
 ```nix
-# core/os/modules/bloom-app.nix
+# core/os/modules/app.nix
 { pkgs, lib, bloomApp, piAgent, ... }:
 
 {
-  # Make bloom-app and pi scripts available system-wide
+  # Make app and pi scripts available system-wide
   environment.systemPackages = [ bloomApp piAgent ];
 
   # Bloom app at the conventional path
   systemd.tmpfiles.rules = [
-    # Symlink bloom-app store path to the conventional location
+    # Symlink app store path to the conventional location
     "L+ /usr/local/share/bloom - - - - ${bloomApp}/share/bloom"
     # Appservices directory (for service registration files)
     "d /etc/bloom/appservices 0755 root root -"
@@ -805,8 +805,8 @@ Expected: output contains a line with `L+` and `/usr/local/share/bloom` pointing
 - [ ] **Step 4: Commit**
 
 ```bash
-git add core/os/modules/bloom-app.nix
-git commit -m "feat: add bloom-app NixOS module (app install, pi-daemon user service)"
+git add core/os/modules/app.nix
+git commit -m "feat: add app NixOS module (app install, pi-daemon user service)"
 ```
 
 ---
@@ -814,14 +814,14 @@ git commit -m "feat: add bloom-app NixOS module (app install, pi-daemon user ser
 ### Task 9: bloom-update.nix — OTA timer and Cachix
 
 **Files:**
-- Create: `core/os/modules/bloom-update.nix`
-- Create: `core/scripts/bloom-update.sh`
+- Create: `core/os/modules/update.nix`
+- Create: `core/scripts/system-update.sh`
 
-- [ ] **Step 1: Write bloom-update.sh**
+- [ ] **Step 1: Write system-update.sh**
 
 ```bash
 #!/usr/bin/env bash
-# bloom-update.sh — NixOS OTA update + status-file writer.
+# system-update.sh — NixOS OTA update + status-file writer.
 # Runs as root via bloom-update.service. Writes status to /home/pi/.bloom/update-status.json.
 set -euo pipefail
 
@@ -880,13 +880,13 @@ fi
 ```
 
 ```bash
-chmod +x core/scripts/bloom-update.sh
+chmod +x core/scripts/system-update.sh
 ```
 
 - [ ] **Step 2: Write bloom-update.nix**
 
 ```nix
-# core/os/modules/bloom-update.nix
+# core/os/modules/update.nix
 { pkgs, lib, ... }:
 
 {
@@ -913,7 +913,7 @@ chmod +x core/scripts/bloom-update.sh
       # and then the store paths of nix, git, and jq.
       # nix-env --list-generations is part of pkgs.nix.
       Environment     = "PATH=/run/current-system/sw/bin:${lib.makeBinPath (with pkgs; [ nix git jq ])}";
-      ExecStart       = pkgs.writeShellScript "bloom-update" (builtins.readFile ../../../core/scripts/bloom-update.sh);
+      ExecStart       = pkgs.writeShellScript "bloom-update" (builtins.readFile ../../../core/scripts/system-update.sh);
       RemainAfterExit = false;
     };
   };
@@ -950,7 +950,7 @@ Expected: outputs a store path containing the bloom-update script content (not a
 - [ ] **Step 5: Commit**
 
 ```bash
-git add core/os/modules/bloom-update.nix core/scripts/bloom-update.sh
+git add core/os/modules/update.nix core/scripts/system-update.sh
 git commit -m "feat: add bloom-update NixOS module (nixos-rebuild OTA timer)"
 ```
 
@@ -971,7 +971,7 @@ git commit -m "feat: add bloom-update NixOS module (nixos-rebuild OTA timer)"
 
 {
   imports = [
-    ../modules/bloom-app.nix
+    ../modules/app.nix
     ../modules/bloom-matrix.nix
     ../modules/bloom-network.nix
     ../modules/bloom-shell.nix
@@ -1038,7 +1038,7 @@ Replace the existing `packages.${system}` block in `flake.nix`:
 
 ```nix
 packages.${system} = {
-  bloom-app = bloomApp;
+  app = bloomApp;
 
   qcow2 = nixos-generators.nixosGenerate {
     inherit system;
@@ -1069,11 +1069,11 @@ packages.${system} = {
 nix flake show 2>&1
 ```
 
-Expected: lists `packages.x86_64-linux.{bloom-app, qcow2, raw, iso}` and `nixosConfigurations.bloom-x86_64`.
+Expected: lists `packages.x86_64-linux.{app, qcow2, raw, iso}` and `nixosConfigurations.bloom-x86_64`.
 
 - [ ] **Step 3: Build qcow2 image (this takes several minutes on first run)**
 
-> **Prerequisite:** Task 4 Step 4 must be complete — `npmDepsHash` in `core/os/pkgs/bloom-app/default.nix` must have the real hash (not `sha256-AAAA...`). The qcow2 build includes `bloom-app` and will fail if the hash is still a placeholder.
+> **Prerequisite:** Task 4 Step 4 must be complete — `npmDepsHash` in `core/os/pkgs/app/default.nix` must have the real hash (not `sha256-AAAA...`). The qcow2 build includes `app` and will fail if the hash is still a placeholder.
 
 ```bash
 nix build .#qcow2 -L 2>&1 | tail -20
@@ -1112,7 +1112,7 @@ ovmf_vars := "/usr/share/edk2/ovmf/OVMF_VARS.fd"
 
 # Build Bloom TypeScript app derivation only
 build:
-    nix build {{ flake }}#bloom-app
+    nix build {{ flake }}#app
 
 # Generate qcow2 disk image
 qcow2:
@@ -1257,9 +1257,9 @@ git commit -m "feat: replace podman/BIB justfile with nix build recipes"
 
 ## Chunk 5: TypeScript Updates + Cleanup
 
-### Task 13: Update UpdateStatus type and bloom-os extension
+### Task 13: Update UpdateStatus type and os extension
 
-The current `bloom-os` extension calls `bootc` CLI commands. These are replaced with NixOS-native equivalents:
+The current `os` extension calls `bootc` CLI commands. These are replaced with NixOS-native equivalents:
 
 | Old (bootc) | New (NixOS) |
 |-------------|-------------|
@@ -1270,14 +1270,14 @@ The current `bloom-os` extension calls `bootc` CLI commands. These are replaced 
 | `bootc rollback` | `sudo nixos-rebuild switch --rollback` |
 
 **Files:**
-- Modify: `core/pi/extensions/bloom-os/types.ts`
-- Modify: `core/pi/extensions/bloom-os/actions.ts`
-- Modify: `core/pi/extensions/bloom-os/index.ts`
-- Modify: `core/pi/extensions/bloom-os/actions-health.ts`
+- Modify: `core/pi/extensions/os/types.ts`
+- Modify: `core/pi/extensions/os/actions.ts`
+- Modify: `core/pi/extensions/os/index.ts`
+- Modify: `core/pi/extensions/os/actions-health.ts`
 
 - [ ] **Step 1: Update UpdateStatus type**
 
-Edit `core/pi/extensions/bloom-os/types.ts`. Replace `UpdateStatus`:
+Edit `core/pi/extensions/os/types.ts`. Replace `UpdateStatus`:
 
 ```typescript
 /** Update status persisted to /home/pi/.bloom/update-status.json by the bloom-update.service. */
@@ -1293,7 +1293,7 @@ export interface UpdateStatus {
 
 - [ ] **Step 2: Update actions.ts — replace handleBootc, fix handleUpdateStatus**
 
-In `core/pi/extensions/bloom-os/actions.ts`:
+In `core/pi/extensions/os/actions.ts`:
 
 **Delete** the entire `handleBootc` function body (find `export async function handleBootc` and remove it and all its lines up to and including the closing `}`).
 
@@ -1355,7 +1355,7 @@ export async function handleUpdateStatus() {
 
 - [ ] **Step 3: Update index.ts — replace bootc tool with nixos_update**
 
-In `core/pi/extensions/bloom-os/index.ts`:
+In `core/pi/extensions/os/index.ts`:
 
 Replace the `bootc` tool definition:
 
@@ -1381,7 +1381,7 @@ Update the import at top of file: replace `handleBootc` with `handleNixosUpdate`
 Update the JSDoc comment:
 ```typescript
 /**
- * bloom-os — OS management: NixOS lifecycle, containers, systemd, health, updates.
+ * os — OS management: NixOS lifecycle, containers, systemd, health, updates.
  *
  * @tools nixos_update, container, systemd_control, system_health, update_status, schedule_reboot
  * @hooks before_agent_start
@@ -1390,7 +1390,7 @@ Update the JSDoc comment:
 
 - [ ] **Step 4: Update actions-health.ts — replace bootcSection with NixOS generation info**
 
-In `core/pi/extensions/bloom-os/actions-health.ts`:
+In `core/pi/extensions/os/actions-health.ts`:
 
 Replace `parseBootcSection`, `bootcSection`, and the `run("bootc", ...)` call:
 
@@ -1423,7 +1423,7 @@ Expected: exits 0, no TypeScript errors.
 - [ ] **Step 6: Commit TypeScript changes**
 
 ```bash
-git add core/pi/extensions/bloom-os/
+git add core/pi/extensions/os/
 git commit -m "feat: replace bootc extension with NixOS nixos_update tool"
 ```
 

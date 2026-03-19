@@ -15,10 +15,10 @@ afterEach(() => {
 	temp.cleanup();
 });
 
-// We test garden seeding by importing and calling the bloom-garden extension
-// which calls ensureBloom + seedBlueprints in its session_start handler.
+// We test garden seeding by importing and calling the garden extension
+// which calls ensureGarden + seedBlueprints in its session_start handler.
 async function runGardenExtension() {
-	const mod = await import("../../core/pi/extensions/bloom-garden/index.js");
+	const mod = await import("../../core/pi/extensions/garden/index.js");
 	const api = createMockExtensionAPI();
 	const ctx = createMockExtensionContext();
 	mod.default(api as never);
@@ -27,7 +27,7 @@ async function runGardenExtension() {
 }
 
 describe("garden seeding", () => {
-	it("creates Bloom subdirectories", async () => {
+	it("creates Garden subdirectories", async () => {
 		await runGardenExtension();
 
 		const expected = ["Persona", "Skills", "Evolutions", "audit"];
@@ -77,18 +77,18 @@ describe("garden seeding", () => {
 		}
 	});
 
-	it("does not create .stignore inside bloom dir", async () => {
+	it("does not create .stignore inside garden dir", async () => {
 		await runGardenExtension();
 		expect(existsSync(join(temp.gardenDir, ".stignore"))).toBe(false);
 	});
 
-	it("sets _BLOOM_DIR_RESOLVED env var", async () => {
+	it("sets _GARDEN_DIR_RESOLVED env var", async () => {
 		await runGardenExtension();
-		expect(process.env._BLOOM_DIR_RESOLVED).toBe(temp.gardenDir);
+		expect(process.env._GARDEN_DIR_RESOLVED).toBe(temp.gardenDir);
 	});
 
 	it("sets UI status when hasUI is true", async () => {
 		const { ctx } = await runGardenExtension();
-		expect(ctx.ui.setStatus).toHaveBeenCalledWith("bloom-garden", expect.stringContaining("Bloom:"));
+		expect(ctx.ui.setStatus).toHaveBeenCalledWith("garden", expect.stringContaining("Garden:"));
 	});
 });

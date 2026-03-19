@@ -47,7 +47,7 @@ const InteractionStoreSchema = Type.Object({
 	records: Type.Array(InteractionRecordSchema),
 });
 
-const STORE_SUFFIX = ".bloom-interactions.json";
+const STORE_SUFFIX = ".garden-interactions.json";
 const MAX_RECORDS = 32;
 
 function nowIso(): string {

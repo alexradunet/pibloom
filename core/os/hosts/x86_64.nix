@@ -3,13 +3,13 @@
 
 {
   imports = [
-    ../modules/bloom-app.nix
-    ../modules/bloom-firstboot.nix
-    ../modules/bloom-llm.nix
-    ../modules/bloom-matrix.nix
-    ../modules/bloom-network.nix
-    ../modules/bloom-shell.nix
-    ../modules/bloom-update.nix
+    ../modules/app.nix
+    ../modules/firstboot.nix
+    ../modules/llm.nix
+    ../modules/matrix.nix
+    ../modules/network.nix
+    ../modules/shell.nix
+    ../modules/update.nix
   ];
 
   system.stateVersion = "25.05";
@@ -48,10 +48,10 @@
     libnotify
   ];
 
-  # VM dev share: mount host's ~/.bloom into /mnt/host-bloom via 9p virtfs.
+  # VM dev share: mount host's ~/.garden into /mnt/host-garden via 9p virtfs.
   # Requires QEMU -virtfs flag (see justfile). nofail means this is ignored on real hardware.
-  fileSystems."/mnt/host-bloom" = {
-    device = "host-bloom";
+  fileSystems."/mnt/host-garden" = {
+    device = "host-garden";
     fsType = "9p";
     options = [ "trans=virtio" "ro" "nofail" ];
   };

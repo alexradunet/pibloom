@@ -66,11 +66,11 @@ async function flushAsyncWork(): Promise<void> {
 
 describe("AgentSupervisor", () => {
 	it("routes host-default messages to the host session and sends the preamble only once", async () => {
-		const host = makeAgent("host", "@pi:bloom", "host");
-		const planner = makeAgent("planner", "@planner:bloom", "mentioned");
+		const host = makeAgent("host", "@pi:garden", "host");
+		const planner = makeAgent("planner", "@planner:garden", "mentioned");
 		const createdSessions: FakeSession[] = [];
 		const matrixBridge = {
-			getRoomAlias: vi.fn().mockResolvedValue("#general:bloom"),
+			getRoomAlias: vi.fn().mockResolvedValue("#general:garden"),
 			sendText: vi.fn().mockResolvedValue(undefined),
 			setTyping: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn(),
@@ -88,18 +88,18 @@ describe("AgentSupervisor", () => {
 		});
 
 		await supervisor.handleEnvelope({
-			roomId: "!room:bloom",
+			roomId: "!room:garden",
 			eventId: "$evt1",
-			senderUserId: "@alex:bloom",
+			senderUserId: "@alex:garden",
 			body: "hello there",
 			senderKind: "human",
 			mentions: [],
 			timestamp: 1_000,
 		});
 		await supervisor.handleEnvelope({
-			roomId: "!room:bloom",
+			roomId: "!room:garden",
 			eventId: "$evt2",
-			senderUserId: "@alex:bloom",
+			senderUserId: "@alex:garden",
 			body: "hello again",
 			senderKind: "human",
 			mentions: [],
@@ -114,19 +114,19 @@ describe("AgentSupervisor", () => {
 			"Avoid Markdown, headings, tables, bold, italics, blockquotes, and fenced code blocks.",
 		);
 		expect(createdSessions[0]?.sentMessages[0]).toContain("# host");
-		expect(createdSessions[0]?.sentMessages[0]).toContain("[matrix: @alex:bloom] hello there");
-		expect(createdSessions[0]?.sentMessages[1]).toBe("[matrix: @alex:bloom] hello again");
-		expect(matrixBridge.getRoomAlias).toHaveBeenCalledWith("host", "!room:bloom");
+		expect(createdSessions[0]?.sentMessages[0]).toContain("[matrix: @alex:garden] hello there");
+		expect(createdSessions[0]?.sentMessages[1]).toBe("[matrix: @alex:garden] hello again");
+		expect(matrixBridge.getRoomAlias).toHaveBeenCalledWith("host", "!room:garden");
 
 		await supervisor.shutdown();
 	});
 
 	it("routes explicit mentions to the mentioned agent, starts typing immediately, and sends replies from the correct Matrix identity", async () => {
-		const host = makeAgent("host", "@pi:bloom", "host");
-		const planner = makeAgent("planner", "@planner:bloom", "mentioned");
+		const host = makeAgent("host", "@pi:garden", "host");
+		const planner = makeAgent("planner", "@planner:garden", "mentioned");
 		const createdSessions: FakeSession[] = [];
 		const matrixBridge = {
-			getRoomAlias: vi.fn().mockResolvedValue("#general:bloom"),
+			getRoomAlias: vi.fn().mockResolvedValue("#general:garden"),
 			sendText: vi.fn().mockResolvedValue(undefined),
 			setTyping: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn(),
@@ -144,31 +144,31 @@ describe("AgentSupervisor", () => {
 		});
 
 		await supervisor.handleEnvelope({
-			roomId: "!room:bloom",
+			roomId: "!room:garden",
 			eventId: "$evt3",
-			senderUserId: "@alex:bloom",
-			body: "@planner:bloom help me plan",
+			senderUserId: "@alex:garden",
+			body: "@planner:garden help me plan",
 			senderKind: "human",
-			mentions: ["@planner:bloom"],
+			mentions: ["@planner:garden"],
 			timestamp: 1_000,
 		});
 
 		expect(createdSessions).toHaveLength(1);
 		expect(createdSessions[0]?.opts.agent.id).toBe("planner");
-		expect(matrixBridge.setTyping).toHaveBeenCalledWith("planner", "!room:bloom", true, 30_000);
+		expect(matrixBridge.setTyping).toHaveBeenCalledWith("planner", "!room:garden", true, 30_000);
 		createdSessions[0]?.triggerAgentEnd("Here is the plan.");
 		await flushAsyncWork();
-		expect(matrixBridge.sendText).toHaveBeenCalledWith("planner", "!room:bloom", "Here is the plan.");
+		expect(matrixBridge.sendText).toHaveBeenCalledWith("planner", "!room:garden", "Here is the plan.");
 
 		await supervisor.shutdown();
 	});
 
 	it("uses the first mention when multiple agents are mentioned", async () => {
-		const critic = makeAgent("critic", "@critic:bloom", "mentioned");
-		const planner = makeAgent("planner", "@planner:bloom", "mentioned");
+		const critic = makeAgent("critic", "@critic:garden", "mentioned");
+		const planner = makeAgent("planner", "@planner:garden", "mentioned");
 		const createdSessions: FakeSession[] = [];
 		const matrixBridge = {
-			getRoomAlias: vi.fn().mockResolvedValue("#general:bloom"),
+			getRoomAlias: vi.fn().mockResolvedValue("#general:garden"),
 			sendText: vi.fn().mockResolvedValue(undefined),
 			setTyping: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn(),
@@ -186,19 +186,19 @@ describe("AgentSupervisor", () => {
 		});
 
 		await supervisor.handleEnvelope({
-			roomId: "!room:bloom",
+			roomId: "!room:garden",
 			eventId: "$evt4",
-			senderUserId: "@alex:bloom",
-			body: "@planner:bloom propose a plan, then @critic:bloom point out the biggest flaw",
+			senderUserId: "@alex:garden",
+			body: "@planner:garden propose a plan, then @critic:garden point out the biggest flaw",
 			senderKind: "human",
-			mentions: ["@planner:bloom", "@critic:bloom"],
+			mentions: ["@planner:garden", "@critic:garden"],
 			timestamp: 1_000,
 		});
 
 		expect(createdSessions).toHaveLength(1);
 		expect(createdSessions[0]?.opts.agent.id).toBe("planner");
 		expect(createdSessions[0]?.sentMessages[0]).toContain(
-			"[matrix: @alex:bloom] @planner:bloom propose a plan, then @critic:bloom point out the biggest flaw",
+			"[matrix: @alex:garden] @planner:garden propose a plan, then @critic:garden point out the biggest flaw",
 		);
 
 		createdSessions[0]?.triggerAgentEnd("1. Clear junk\n2. Sort essentials\n3. Reset the desk");
@@ -206,7 +206,7 @@ describe("AgentSupervisor", () => {
 
 		expect(matrixBridge.sendText).toHaveBeenCalledWith(
 			"planner",
-			"!room:bloom",
+			"!room:garden",
 			"1. Clear junk\n2. Sort essentials\n3. Reset the desk",
 		);
 		expect(createdSessions).toHaveLength(1);
@@ -215,11 +215,11 @@ describe("AgentSupervisor", () => {
 	});
 
 	it("maintains separate sessions per agent in the same room and toggles typing per agent", async () => {
-		const host = makeAgent("host", "@pi:bloom", "host");
-		const planner = makeAgent("planner", "@planner:bloom", "mentioned");
+		const host = makeAgent("host", "@pi:garden", "host");
+		const planner = makeAgent("planner", "@planner:garden", "mentioned");
 		const createdSessions: FakeSession[] = [];
 		const matrixBridge = {
-			getRoomAlias: vi.fn().mockResolvedValue("#general:bloom"),
+			getRoomAlias: vi.fn().mockResolvedValue("#general:garden"),
 			sendText: vi.fn().mockResolvedValue(undefined),
 			setTyping: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn(),
@@ -237,21 +237,21 @@ describe("AgentSupervisor", () => {
 		});
 
 		await supervisor.handleEnvelope({
-			roomId: "!room:bloom",
+			roomId: "!room:garden",
 			eventId: "$evt5",
-			senderUserId: "@alex:bloom",
+			senderUserId: "@alex:garden",
 			body: "hello host",
 			senderKind: "human",
 			mentions: [],
 			timestamp: 1_000,
 		});
 		await supervisor.handleEnvelope({
-			roomId: "!room:bloom",
+			roomId: "!room:garden",
 			eventId: "$evt6",
-			senderUserId: "@alex:bloom",
-			body: "@planner:bloom help",
+			senderUserId: "@alex:garden",
+			body: "@planner:garden help",
 			senderKind: "human",
-			mentions: ["@planner:bloom"],
+			mentions: ["@planner:garden"],
 			timestamp: 5_000,
 		});
 
@@ -259,17 +259,17 @@ describe("AgentSupervisor", () => {
 
 		createdSessions[1]?.triggerEvent({ type: "agent_start" });
 		createdSessions[1]?.triggerEvent({ type: "agent_end" });
-		expect(matrixBridge.setTyping).toHaveBeenCalledWith("planner", "!room:bloom", true, 30_000);
-		expect(matrixBridge.setTyping).toHaveBeenCalledWith("planner", "!room:bloom", false, 30_000);
+		expect(matrixBridge.setTyping).toHaveBeenCalledWith("planner", "!room:garden", true, 30_000);
+		expect(matrixBridge.setTyping).toHaveBeenCalledWith("planner", "!room:garden", false, 30_000);
 
 		await supervisor.shutdown();
 	});
 
 	it("recreates a dead session when the same target agent is needed again", async () => {
-		const host = makeAgent("host", "@pi:bloom", "host");
+		const host = makeAgent("host", "@pi:garden", "host");
 		const createdSessions: FakeSession[] = [];
 		const matrixBridge = {
-			getRoomAlias: vi.fn().mockResolvedValue("#general:bloom"),
+			getRoomAlias: vi.fn().mockResolvedValue("#general:garden"),
 			sendText: vi.fn().mockResolvedValue(undefined),
 			setTyping: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn(),
@@ -287,9 +287,9 @@ describe("AgentSupervisor", () => {
 		});
 
 		const firstEnvelope: RoomEnvelope = {
-			roomId: "!room:bloom",
+			roomId: "!room:garden",
 			eventId: "$evt7",
-			senderUserId: "@alex:bloom",
+			senderUserId: "@alex:garden",
 			body: "hello",
 			senderKind: "human",
 			mentions: [],
@@ -305,10 +305,10 @@ describe("AgentSupervisor", () => {
 	});
 
 	it("dispatches proactive jobs directly to the target agent and suppresses configured no-op replies", async () => {
-		const host = makeAgent("host", "@pi:bloom", "host");
+		const host = makeAgent("host", "@pi:garden", "host");
 		const createdSessions: FakeSession[] = [];
 		const matrixBridge = {
-			getRoomAlias: vi.fn().mockResolvedValue("#ops:bloom"),
+			getRoomAlias: vi.fn().mockResolvedValue("#ops:garden"),
 			sendText: vi.fn().mockResolvedValue(undefined),
 			setTyping: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn(),
@@ -329,7 +329,7 @@ describe("AgentSupervisor", () => {
 			id: "daily-heartbeat",
 			jobId: "daily-heartbeat",
 			agentId: "host",
-			roomId: "!ops:bloom",
+			roomId: "!ops:garden",
 			kind: "heartbeat",
 			prompt: "Review the room and host state. Reply HEARTBEAT_OK if nothing needs surfacing.",
 			quietIfNoop: true,
@@ -348,7 +348,7 @@ describe("AgentSupervisor", () => {
 			id: "daily-heartbeat",
 			jobId: "daily-heartbeat",
 			agentId: "host",
-			roomId: "!ops:bloom",
+			roomId: "!ops:garden",
 			kind: "heartbeat",
 			prompt: "Review the room and host state. Reply HEARTBEAT_OK if nothing needs surfacing.",
 			quietIfNoop: true,
@@ -356,16 +356,16 @@ describe("AgentSupervisor", () => {
 		});
 		createdSessions[0]?.triggerAgentEnd("The dufs service failed overnight.");
 		await flushAsyncWork();
-		expect(matrixBridge.sendText).toHaveBeenCalledWith("host", "!ops:bloom", "The dufs service failed overnight.");
+		expect(matrixBridge.sendText).toHaveBeenCalledWith("host", "!ops:garden", "The dufs service failed overnight.");
 
 		await supervisor.shutdown();
 	});
 
 	it("still delivers proactive replies when quiet_if_noop is disabled or the token does not match", async () => {
-		const host = makeAgent("host", "@pi:bloom", "host");
+		const host = makeAgent("host", "@pi:garden", "host");
 		const createdSessions: FakeSession[] = [];
 		const matrixBridge = {
-			getRoomAlias: vi.fn().mockResolvedValue("#ops:bloom"),
+			getRoomAlias: vi.fn().mockResolvedValue("#ops:garden"),
 			sendText: vi.fn().mockResolvedValue(undefined),
 			setTyping: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn(),
@@ -386,7 +386,7 @@ describe("AgentSupervisor", () => {
 			id: "morning-check",
 			jobId: "morning-check",
 			agentId: "host",
-			roomId: "!ops:bloom",
+			roomId: "!ops:garden",
 			kind: "cron",
 			prompt: "Send the morning operational check-in.",
 			quietIfNoop: false,
@@ -399,7 +399,7 @@ describe("AgentSupervisor", () => {
 			id: "daily-heartbeat",
 			jobId: "daily-heartbeat",
 			agentId: "host",
-			roomId: "!ops:bloom",
+			roomId: "!ops:garden",
 			kind: "heartbeat",
 			prompt: "Review the room and host state.",
 			quietIfNoop: true,
@@ -408,17 +408,17 @@ describe("AgentSupervisor", () => {
 		createdSessions[0]?.triggerAgentEnd("HEARTBEAT_OK but with context");
 		await flushAsyncWork();
 
-		expect(matrixBridge.sendText).toHaveBeenNthCalledWith(1, "host", "!ops:bloom", "HEARTBEAT_OK");
-		expect(matrixBridge.sendText).toHaveBeenNthCalledWith(2, "host", "!ops:bloom", "HEARTBEAT_OK but with context");
+		expect(matrixBridge.sendText).toHaveBeenNthCalledWith(1, "host", "!ops:garden", "HEARTBEAT_OK");
+		expect(matrixBridge.sendText).toHaveBeenNthCalledWith(2, "host", "!ops:garden", "HEARTBEAT_OK but with context");
 
 		await supervisor.shutdown();
 	});
 
 	it("ignores messages after shutdown is called", async () => {
-		const host = makeAgent("host", "@pi:bloom", "host");
+		const host = makeAgent("host", "@pi:garden", "host");
 		const createdSessions: FakeSession[] = [];
 		const matrixBridge = {
-			getRoomAlias: vi.fn().mockResolvedValue("#general:bloom"),
+			getRoomAlias: vi.fn().mockResolvedValue("#general:garden"),
 			sendText: vi.fn().mockResolvedValue(undefined),
 			setTyping: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn(),
@@ -439,9 +439,9 @@ describe("AgentSupervisor", () => {
 
 		// After shutdown, messages should be ignored
 		await supervisor.handleEnvelope({
-			roomId: "!room:bloom",
+			roomId: "!room:garden",
 			eventId: "$evt1",
-			senderUserId: "@alex:bloom",
+			senderUserId: "@alex:garden",
 			body: "hello",
 			senderKind: "human",
 			mentions: [],
@@ -452,10 +452,10 @@ describe("AgentSupervisor", () => {
 	});
 
 	it("ignores proactive jobs after shutdown", async () => {
-		const host = makeAgent("host", "@pi:bloom", "host");
+		const host = makeAgent("host", "@pi:garden", "host");
 		const createdSessions: FakeSession[] = [];
 		const matrixBridge = {
-			getRoomAlias: vi.fn().mockResolvedValue("#ops:bloom"),
+			getRoomAlias: vi.fn().mockResolvedValue("#ops:garden"),
 			sendText: vi.fn().mockResolvedValue(undefined),
 			setTyping: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn(),
@@ -478,7 +478,7 @@ describe("AgentSupervisor", () => {
 			id: "daily-heartbeat",
 			jobId: "daily-heartbeat",
 			agentId: "host",
-			roomId: "!ops:bloom",
+			roomId: "!ops:garden",
 			kind: "heartbeat",
 			prompt: "Review the room and host state.",
 		});
@@ -487,10 +487,10 @@ describe("AgentSupervisor", () => {
 	});
 
 	it("clears typing intervals on shutdown", async () => {
-		const host = makeAgent("host", "@pi:bloom", "host");
+		const host = makeAgent("host", "@pi:garden", "host");
 		const createdSessions: FakeSession[] = [];
 		const matrixBridge = {
-			getRoomAlias: vi.fn().mockResolvedValue("#general:bloom"),
+			getRoomAlias: vi.fn().mockResolvedValue("#general:garden"),
 			sendText: vi.fn().mockResolvedValue(undefined),
 			setTyping: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn(),
@@ -508,16 +508,16 @@ describe("AgentSupervisor", () => {
 		});
 
 		await supervisor.handleEnvelope({
-			roomId: "!room:bloom",
+			roomId: "!room:garden",
 			eventId: "$evt1",
-			senderUserId: "@alex:bloom",
+			senderUserId: "@alex:garden",
 			body: "hello",
 			senderKind: "human",
 			mentions: [],
 			timestamp: 1_000,
 		});
 
-		expect(matrixBridge.setTyping).toHaveBeenCalledWith("host", "!room:bloom", true, 30_000);
+		expect(matrixBridge.setTyping).toHaveBeenCalledWith("host", "!room:garden", true, 30_000);
 
 		await supervisor.shutdown();
 
@@ -527,7 +527,7 @@ describe("AgentSupervisor", () => {
 	});
 
 	it("handles errors when getting room alias gracefully", async () => {
-		const host = makeAgent("host", "@pi:bloom", "host");
+		const host = makeAgent("host", "@pi:garden", "host");
 		const createdSessions: FakeSession[] = [];
 		const matrixBridge = {
 			getRoomAlias: vi.fn().mockRejectedValue(new Error("Matrix error")),
@@ -550,9 +550,9 @@ describe("AgentSupervisor", () => {
 		// Should not throw
 		await expect(
 			supervisor.handleEnvelope({
-				roomId: "!room:bloom",
+				roomId: "!room:garden",
 				eventId: "$evt1",
-				senderUserId: "@alex:bloom",
+				senderUserId: "@alex:garden",
 				body: "hello",
 				senderKind: "human",
 				mentions: [],
@@ -566,9 +566,9 @@ describe("AgentSupervisor", () => {
 	});
 
 	it("handles dispatch errors by stopping typing", async () => {
-		const host = makeAgent("host", "@pi:bloom", "host");
+		const host = makeAgent("host", "@pi:garden", "host");
 		const matrixBridge = {
-			getRoomAlias: vi.fn().mockResolvedValue("#general:bloom"),
+			getRoomAlias: vi.fn().mockResolvedValue("#general:garden"),
 			sendText: vi.fn().mockResolvedValue(undefined),
 			setTyping: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn(),
@@ -592,9 +592,9 @@ describe("AgentSupervisor", () => {
 		// Should not throw, but should stop typing on error
 		await expect(
 			supervisor.handleEnvelope({
-				roomId: "!room:bloom",
+				roomId: "!room:garden",
 				eventId: "$evt1",
-				senderUserId: "@alex:bloom",
+				senderUserId: "@alex:garden",
 				body: "hello",
 				senderKind: "human",
 				mentions: [],
@@ -603,16 +603,16 @@ describe("AgentSupervisor", () => {
 		).rejects.toThrow("Spawn failed");
 
 		// Should have tried to stop typing on error
-		expect(matrixBridge.setTyping).toHaveBeenCalledWith("host", "!room:bloom", false, 30_000);
+		expect(matrixBridge.setTyping).toHaveBeenCalledWith("host", "!room:garden", false, 30_000);
 
 		await supervisor.shutdown();
 	});
 
 	it("handles agent responses that fail to send", async () => {
-		const host = makeAgent("host", "@pi:bloom", "host");
+		const host = makeAgent("host", "@pi:garden", "host");
 		const createdSessions: FakeSession[] = [];
 		const matrixBridge = {
-			getRoomAlias: vi.fn().mockResolvedValue("#general:bloom"),
+			getRoomAlias: vi.fn().mockResolvedValue("#general:garden"),
 			sendText: vi.fn().mockRejectedValue(new Error("Send failed")),
 			setTyping: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn(),
@@ -630,9 +630,9 @@ describe("AgentSupervisor", () => {
 		});
 
 		await supervisor.handleEnvelope({
-			roomId: "!room:bloom",
+			roomId: "!room:garden",
 			eventId: "$evt1",
-			senderUserId: "@alex:bloom",
+			senderUserId: "@alex:garden",
 			body: "hello",
 			senderKind: "human",
 			mentions: [],
@@ -644,16 +644,16 @@ describe("AgentSupervisor", () => {
 		await flushAsyncWork();
 
 		// Error should be logged but not thrown
-		expect(matrixBridge.sendText).toHaveBeenCalledWith("host", "!room:bloom", "Response");
+		expect(matrixBridge.sendText).toHaveBeenCalledWith("host", "!room:garden", "Response");
 
 		await supervisor.shutdown();
 	});
 
 	it("does not send proactive reply when quietIfNoop is true but noOpToken is undefined", async () => {
-		const host = makeAgent("host", "@pi:bloom", "host");
+		const host = makeAgent("host", "@pi:garden", "host");
 		const createdSessions: FakeSession[] = [];
 		const matrixBridge = {
-			getRoomAlias: vi.fn().mockResolvedValue("#ops:bloom"),
+			getRoomAlias: vi.fn().mockResolvedValue("#ops:garden"),
 			sendText: vi.fn().mockResolvedValue(undefined),
 			setTyping: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn(),
@@ -674,7 +674,7 @@ describe("AgentSupervisor", () => {
 			id: "test-job",
 			jobId: "test-job",
 			agentId: "host",
-			roomId: "!ops:bloom",
+			roomId: "!ops:garden",
 			kind: "heartbeat",
 			prompt: "Test prompt",
 			quietIfNoop: true,
@@ -685,16 +685,16 @@ describe("AgentSupervisor", () => {
 		createdSessions[0]?.triggerAgentEnd("ANY_TOKEN");
 		await flushAsyncWork();
 
-		expect(matrixBridge.sendText).toHaveBeenCalledWith("host", "!ops:bloom", "ANY_TOKEN");
+		expect(matrixBridge.sendText).toHaveBeenCalledWith("host", "!ops:garden", "ANY_TOKEN");
 
 		await supervisor.shutdown();
 	});
 
 	it("handles multiple pending proactive jobs in order", async () => {
-		const host = makeAgent("host", "@pi:bloom", "host");
+		const host = makeAgent("host", "@pi:garden", "host");
 		const createdSessions: FakeSession[] = [];
 		const matrixBridge = {
-			getRoomAlias: vi.fn().mockResolvedValue("#ops:bloom"),
+			getRoomAlias: vi.fn().mockResolvedValue("#ops:garden"),
 			sendText: vi.fn().mockResolvedValue(undefined),
 			setTyping: vi.fn().mockResolvedValue(undefined),
 			stop: vi.fn(),
@@ -716,7 +716,7 @@ describe("AgentSupervisor", () => {
 			id: "job-1",
 			jobId: "job-1",
 			agentId: "host",
-			roomId: "!ops:bloom",
+			roomId: "!ops:garden",
 			kind: "heartbeat",
 			prompt: "First job",
 		});
@@ -724,7 +724,7 @@ describe("AgentSupervisor", () => {
 			id: "job-2",
 			jobId: "job-2",
 			agentId: "host",
-			roomId: "!ops:bloom",
+			roomId: "!ops:garden",
 			kind: "heartbeat",
 			prompt: "Second job",
 		});
@@ -732,12 +732,12 @@ describe("AgentSupervisor", () => {
 		// First response should be for job-1
 		createdSessions[0]?.triggerAgentEnd("Response 1");
 		await flushAsyncWork();
-		expect(matrixBridge.sendText).toHaveBeenNthCalledWith(1, "host", "!ops:bloom", "Response 1");
+		expect(matrixBridge.sendText).toHaveBeenNthCalledWith(1, "host", "!ops:garden", "Response 1");
 
 		// Second response should be for job-2
 		createdSessions[0]?.triggerAgentEnd("Response 2");
 		await flushAsyncWork();
-		expect(matrixBridge.sendText).toHaveBeenNthCalledWith(2, "host", "!ops:bloom", "Response 2");
+		expect(matrixBridge.sendText).toHaveBeenNthCalledWith(2, "host", "!ops:garden", "Response 2");
 
 		await supervisor.shutdown();
 	});

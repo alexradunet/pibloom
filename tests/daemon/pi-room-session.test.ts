@@ -58,8 +58,8 @@ describe("PiRoomSession", () => {
 	beforeEach(() => {
 		const sessionDir = mkdtempSync(join(tmpdir(), "pi-room-session-"));
 		options = {
-			roomId: "!room:bloom",
-			roomAlias: "#general:bloom",
+			roomId: "!room:garden",
+			roomAlias: "#general:garden",
 			sanitizedAlias: "general_bloom",
 			sessionDir,
 			idleTimeoutMs: 60_000,
@@ -138,8 +138,8 @@ describe("PiRoomSession", () => {
 		const sessionA = new PiRoomSession(options);
 		const sessionB = new PiRoomSession({
 			...options,
-			roomId: "!room-2:bloom",
-			roomAlias: "#other:bloom",
+			roomId: "!room-2:garden",
+			roomAlias: "#other:garden",
 			sanitizedAlias: "other_bloom",
 			sessionDir: mkdtempSync(join(tmpdir(), "pi-room-session-")),
 		});

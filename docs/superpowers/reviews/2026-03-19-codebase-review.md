@@ -13,7 +13,7 @@ The base platform currently exposes too much optional capability for a system th
 - 53 extension tools across the active Pi extensions
 - 477 passing TypeScript tests
 - strong daemon and `core/lib` coverage
-- much weaker coverage and much higher product ambiguity in `bloom-dev`, `bloom-repo`, `bloom-services`, and parts of `bloom-os`
+- much weaker coverage and much higher product ambiguity in `bloom-dev`, `bloom-repo`, `bloom-services`, and parts of `os`
 
 The codebase is therefore in a mixed state:
 
@@ -35,7 +35,7 @@ Coverage snapshot:
 - all files: 63.12% statements, 49.9% branches, 72.83% functions, 65.59% lines
 - `core/daemon/**`: 83.91% statements, 79.94% branches, 76.72% functions, 85.68% lines
 - `core/lib/**`: 81.91% statements, 68.55% branches, 90.55% functions, 85.46% lines
-- `core/pi/extensions/bloom-os/**`: 10.25% statements, 5% branches, 11.11% functions, 10.71% lines
+- `core/pi/extensions/os/**`: 10.25% statements, 5% branches, 11.11% functions, 10.71% lines
 - `core/pi/extensions/bloom-repo/**`: 1.74% statements, 0% branches, 3.22% functions, 2.03% lines
 - `core/pi/extensions/bloom-services/**`: 44.71% statements, 30.97% branches, 52.63% functions, 47.49% lines
 - `core/pi/extensions/bloom-dev/**`: 39.6% statements, 24.13% branches, 60.52% functions, 40.25% lines
@@ -79,7 +79,7 @@ Severity: High
 There are multiple ways to affect service state:
 
 - `bloom-services`: install, test, scaffold, manifest show/sync/set/apply, bridge create/remove/status
-- `bloom-os`: container status/logs/deploy and systemd start/stop/restart/status
+- `os`: container status/logs/deploy and systemd start/stop/restart/status
 - shell and Nix workflows outside the extension surface
 
 This overlap is manageable for maintainers, but it is not minimal and it is not especially inspectable for operators. It also mixes stable operations with clearly optional or experimental workflows such as service scaffolding and Matrix bridge lifecycle.
@@ -117,7 +117,7 @@ The repo has a clear architectural statement that Skills, Extensions, and Servic
 
 - `bloom-dev` mixes environment gating, build/test loops, OS switching, package installation, PR creation, and artifact copying
 - `bloom-services` mixes user operations with package authoring concerns
-- `bloom-garden` mixes Bloom-home management with blueprint seeding, interactive command routing, and agent/persona authoring workflows
+- `garden` mixes Bloom-home management with blueprint seeding, interactive command routing, and agent/persona authoring workflows
 
 This is not a code-style issue. It is a packaging issue. The code often reads clearly enough, but the deployed extension surface is doing too many classes of work.
 
@@ -162,12 +162,12 @@ Recommendation:
 |---|---|---:|---:|---|
 | `core/daemon` | High | High | Strong | Keep as-is, only narrow optional surface |
 | `core/lib` | High | Medium | Strong | Keep, continue small refactors only |
-| `bloom-persona` | High | Medium | Good | Keep |
-| `bloom-setup` | High | Medium | Moderate | Keep, strengthen system-level tests |
-| `bloom-os` | High | Medium | Weak in coverage | Keep, narrow tool semantics and raise tests |
-| `bloom-objects` | Medium-High | Medium | Good | Keep |
-| `bloom-episodes` | Medium | Medium | Good | Keep for now, no expansion |
-| `bloom-garden` | Medium | Medium-High | Moderate | Simplify, keep only bootstrap essentials |
+| `persona` | High | Medium | Good | Keep |
+| `setup` | High | Medium | Moderate | Keep, strengthen system-level tests |
+| `os` | High | Medium | Weak in coverage | Keep, narrow tool semantics and raise tests |
+| `objects` | Medium-High | Medium | Good | Keep |
+| `episodes` | Medium | Medium | Good | Keep for now, no expansion |
+| `garden` | Medium | Medium-High | Moderate | Simplify, keep only bootstrap essentials |
 | `bloom-services` | Medium | High | Weak-Moderate | Reduce to operator essentials |
 | `bloom-dev` | Low for stable OS | High | Weak | Remove from base runtime or hard-gate out |
 | `bloom-repo` | Low for stable OS | Medium | Very weak | Remove from base runtime |
@@ -185,10 +185,10 @@ Recommendation:
 
 ### Next-pass simplifications
 
-- Split `bloom-garden` into a minimal bootstrap/status surface and a separate authoring/evolution surface.
+- Split `garden` into a minimal bootstrap/status surface and a separate authoring/evolution surface.
 - Collapse overlapping service-control paths so operators have one primary model.
-- Review whether `bloom-episodes` remains worth carrying as a separate concept versus a simpler object-first memory model.
-- Tighten `bloom-os` so the tool surface maps directly to the minimum host operations you actually intend to support long term.
+- Review whether `episodes` remains worth carrying as a separate concept versus a simpler object-first memory model.
+- Tighten `os` so the tool surface maps directly to the minimum host operations you actually intend to support long term.
 
 ### Keep and avoid churn
 

@@ -19,7 +19,7 @@ afterEach(() => {
 });
 
 async function setupObjectsExtension() {
-	const mod = await import("../../core/pi/extensions/bloom-objects/index.js");
+	const mod = await import("../../core/pi/extensions/objects/index.js");
 	const api = createMockExtensionAPI();
 	const ctx = createMockExtensionContext();
 	mod.default(api as never);

@@ -16,22 +16,22 @@ describe("loadAgentDefinitions", () => {
 	});
 
 	function makeBloomDir(): string {
-		const dir = mkdtempSync(join(tmpdir(), "bloom-agents-"));
+		const dir = mkdtempSync(join(tmpdir(), "garden-agents-"));
 		tempDirs.push(dir);
 		mkdirSync(join(dir, "Agents"), { recursive: true });
 		return dir;
 	}
 
-	function writeAgent(bloomDir: string, agentId: string, content: string): void {
-		const agentDir = join(bloomDir, "Agents", agentId);
+	function writeAgent(gardenDir: string, agentId: string, content: string): void {
+		const agentDir = join(gardenDir, "Agents", agentId);
 		mkdirSync(agentDir, { recursive: true });
 		writeFileSync(join(agentDir, "AGENTS.md"), content);
 	}
 
 	it("loads a valid AGENTS.md file", () => {
-		const bloomDir = makeBloomDir();
+		const gardenDir = makeBloomDir();
 		writeAgent(
-			bloomDir,
+			gardenDir,
 			"planner",
 			`---
 id: planner
@@ -54,17 +54,17 @@ Plan first.
 `,
 		);
 
-		const agents = loadAgentDefinitions({ bloomDir });
+		const agents = loadAgentDefinitions({ gardenDir });
 		expect(agents).toHaveLength(1);
 		expect(agents[0]).toEqual({
 			id: "planner",
 			name: "Planner",
 			description: "Planning specialist",
-			instructionsPath: join(bloomDir, "Agents", "planner", "AGENTS.md"),
+			instructionsPath: join(gardenDir, "Agents", "planner", "AGENTS.md"),
 			instructionsBody: "# Planner\n\nPlan first.\n",
 			matrix: {
 				username: "planner",
-				userId: "@planner:bloom",
+				userId: "@planner:garden",
 				autojoin: true,
 			},
 			model: "anthropic/claude-sonnet-4-5",
@@ -79,9 +79,9 @@ Plan first.
 	});
 
 	it("applies defaults for optional respond fields", () => {
-		const bloomDir = makeBloomDir();
+		const gardenDir = makeBloomDir();
 		writeAgent(
-			bloomDir,
+			gardenDir,
 			"critic",
 			`---
 id: critic
@@ -95,7 +95,7 @@ Question assumptions.
 `,
 		);
 
-		const agents = loadAgentDefinitions({ bloomDir });
+		const agents = loadAgentDefinitions({ gardenDir });
 		expect(agents[0]?.respond).toEqual({
 			mode: "mentioned",
 			allowAgentMentions: true,
@@ -104,15 +104,15 @@ Question assumptions.
 		});
 		expect(agents[0]?.matrix).toEqual({
 			username: "critic",
-			userId: "@critic:bloom",
+			userId: "@critic:garden",
 			autojoin: true,
 		});
 	});
 
 	it("loads multiple agent directories", () => {
-		const bloomDir = makeBloomDir();
+		const gardenDir = makeBloomDir();
 		writeAgent(
-			bloomDir,
+			gardenDir,
 			"host",
 			`---
 id: host
@@ -126,7 +126,7 @@ respond:
 `,
 		);
 		writeAgent(
-			bloomDir,
+			gardenDir,
 			"planner",
 			`---
 id: planner
@@ -138,14 +138,14 @@ matrix:
 `,
 		);
 
-		const agents = loadAgentDefinitions({ bloomDir });
+		const agents = loadAgentDefinitions({ gardenDir });
 		expect(agents.map((agent) => agent.id)).toEqual(["host", "planner"]);
 	});
 
 	it("skips agents with missing id and records the error", () => {
-		const bloomDir = makeBloomDir();
+		const gardenDir = makeBloomDir();
 		writeAgent(
-			bloomDir,
+			gardenDir,
 			"planner",
 			`---
 name: Planner
@@ -156,15 +156,15 @@ matrix:
 `,
 		);
 
-		const result = loadAgentDefinitionsResult({ bloomDir });
+		const result = loadAgentDefinitionsResult({ gardenDir });
 		expect(result.agents).toEqual([]);
 		expect(result.errors).toEqual([expect.stringContaining("missing required field 'id'")]);
 	});
 
 	it("skips agents with missing name and records the error", () => {
-		const bloomDir = makeBloomDir();
+		const gardenDir = makeBloomDir();
 		writeAgent(
-			bloomDir,
+			gardenDir,
 			"planner",
 			`---
 id: planner
@@ -175,15 +175,15 @@ matrix:
 `,
 		);
 
-		const result = loadAgentDefinitionsResult({ bloomDir });
+		const result = loadAgentDefinitionsResult({ gardenDir });
 		expect(result.agents).toEqual([]);
 		expect(result.errors).toEqual([expect.stringContaining("missing required field 'name'")]);
 	});
 
 	it("skips agents with missing matrix.username and records the error", () => {
-		const bloomDir = makeBloomDir();
+		const gardenDir = makeBloomDir();
 		writeAgent(
-			bloomDir,
+			gardenDir,
 			"planner",
 			`---
 id: planner
@@ -195,15 +195,15 @@ matrix:
 `,
 		);
 
-		const result = loadAgentDefinitionsResult({ bloomDir });
+		const result = loadAgentDefinitionsResult({ gardenDir });
 		expect(result.agents).toEqual([]);
 		expect(result.errors).toEqual([expect.stringContaining("missing required field 'matrix.username'")]);
 	});
 
 	it("loads valid agents even when another agent definition is malformed", () => {
-		const bloomDir = makeBloomDir();
+		const gardenDir = makeBloomDir();
 		writeAgent(
-			bloomDir,
+			gardenDir,
 			"host",
 			`---
 id: host
@@ -217,7 +217,7 @@ respond:
 `,
 		);
 		writeAgent(
-			bloomDir,
+			gardenDir,
 			"broken",
 			`---
 name: Broken
@@ -228,15 +228,15 @@ matrix:
 `,
 		);
 
-		const result = loadAgentDefinitionsResult({ bloomDir });
+		const result = loadAgentDefinitionsResult({ gardenDir });
 		expect(result.agents.map((agent) => agent.id)).toEqual(["host"]);
 		expect(result.errors).toHaveLength(1);
 	});
 
 	it("uses provided server name when deriving Matrix user ids", () => {
-		const bloomDir = makeBloomDir();
+		const gardenDir = makeBloomDir();
 		writeAgent(
-			bloomDir,
+			gardenDir,
 			"planner",
 			`---
 id: planner
@@ -248,14 +248,14 @@ matrix:
 `,
 		);
 
-		const agents = loadAgentDefinitions({ bloomDir, serverName: "homebox" });
+		const agents = loadAgentDefinitions({ gardenDir, serverName: "homebox" });
 		expect(agents[0]?.matrix.userId).toBe("@planner:homebox");
 	});
 
 	it("loads proactive heartbeat and cron jobs when configured", () => {
-		const bloomDir = makeBloomDir();
+		const gardenDir = makeBloomDir();
 		writeAgent(
-			bloomDir,
+			gardenDir,
 			"host",
 			`---
 id: host
@@ -268,14 +268,14 @@ proactive:
   jobs:
     - id: daily-heartbeat
       kind: heartbeat
-      room: "!ops:bloom"
+      room: "!ops:garden"
       interval_minutes: 1440
       prompt: Review the room and host state. Reply HEARTBEAT_OK if nothing needs surfacing.
       quiet_if_noop: true
       no_op_token: HEARTBEAT_OK
     - id: morning-check
       kind: cron
-      room: "!ops:bloom"
+      room: "!ops:garden"
       cron: "0 9 * * *"
       prompt: Send the morning operational check-in.
 ---
@@ -283,12 +283,12 @@ proactive:
 `,
 		);
 
-		const agents = loadAgentDefinitions({ bloomDir });
+		const agents = loadAgentDefinitions({ gardenDir });
 		expect(agents[0]?.proactive?.jobs).toEqual([
 			{
 				id: "daily-heartbeat",
 				kind: "heartbeat",
-				room: "!ops:bloom",
+				room: "!ops:garden",
 				intervalMinutes: 1440,
 				prompt: "Review the room and host state. Reply HEARTBEAT_OK if nothing needs surfacing.",
 				quietIfNoop: true,
@@ -297,7 +297,7 @@ proactive:
 			{
 				id: "morning-check",
 				kind: "cron",
-				room: "!ops:bloom",
+				room: "!ops:garden",
 				cron: "0 9 * * *",
 				prompt: "Send the morning operational check-in.",
 			},
@@ -305,9 +305,9 @@ proactive:
 	});
 
 	it("rejects proactive jobs with invalid heartbeat intervals", () => {
-		const bloomDir = makeBloomDir();
+		const gardenDir = makeBloomDir();
 		writeAgent(
-			bloomDir,
+			gardenDir,
 			"host",
 			`---
 id: host
@@ -318,7 +318,7 @@ proactive:
   jobs:
     - id: bad-heartbeat
       kind: heartbeat
-      room: "!ops:bloom"
+      room: "!ops:garden"
       interval_minutes: 0
       prompt: Invalid
 ---
@@ -326,15 +326,15 @@ proactive:
 `,
 		);
 
-		const result = loadAgentDefinitionsResult({ bloomDir });
+		const result = loadAgentDefinitionsResult({ gardenDir });
 		expect(result.agents).toEqual([]);
 		expect(result.errors).toEqual([expect.stringContaining("invalid interval_minutes")]);
 	});
 
 	it("rejects proactive jobs with unsupported cron expressions", () => {
-		const bloomDir = makeBloomDir();
+		const gardenDir = makeBloomDir();
 		writeAgent(
-			bloomDir,
+			gardenDir,
 			"host",
 			`---
 id: host
@@ -345,7 +345,7 @@ proactive:
   jobs:
     - id: bad-cron
       kind: cron
-      room: "!ops:bloom"
+      room: "!ops:garden"
       cron: "*/5 * * * *"
       prompt: Invalid
 ---
@@ -353,15 +353,15 @@ proactive:
 `,
 		);
 
-		const result = loadAgentDefinitionsResult({ bloomDir });
+		const result = loadAgentDefinitionsResult({ gardenDir });
 		expect(result.agents).toEqual([]);
 		expect(result.errors).toEqual([expect.stringContaining("unsupported cron")]);
 	});
 
 	it("rejects duplicate proactive job ids within the same room", () => {
-		const bloomDir = makeBloomDir();
+		const gardenDir = makeBloomDir();
 		writeAgent(
-			bloomDir,
+			gardenDir,
 			"host",
 			`---
 id: host
@@ -372,12 +372,12 @@ proactive:
   jobs:
     - id: daily-heartbeat
       kind: heartbeat
-      room: "!ops:bloom"
+      room: "!ops:garden"
       interval_minutes: 1440
       prompt: First
     - id: daily-heartbeat
       kind: cron
-      room: "!ops:bloom"
+      room: "!ops:garden"
       cron: "0 9 * * *"
       prompt: Second
 ---
@@ -385,7 +385,7 @@ proactive:
 `,
 		);
 
-		const result = loadAgentDefinitionsResult({ bloomDir });
+		const result = loadAgentDefinitionsResult({ gardenDir });
 		expect(result.agents).toEqual([]);
 		expect(result.errors).toEqual([expect.stringContaining("duplicate proactive job 'daily-heartbeat'")]);
 	});

@@ -37,7 +37,7 @@ afterEach(() => {
 });
 
 async function loadExtension() {
-	const mod = await import("../../core/pi/extensions/bloom-setup/index.js");
+	const mod = await import("../../core/pi/extensions/setup/index.js");
 	mod.default(api as never);
 }
 
@@ -48,7 +48,7 @@ function toolNames(): string[] {
 // ---------------------------------------------------------------------------
 // Registration
 // ---------------------------------------------------------------------------
-describe("bloom-setup registration", () => {
+describe("setup registration", () => {
 	it("registers exactly 3 tools", async () => {
 		await loadExtension();
 		expect(api._registeredTools).toHaveLength(3);
@@ -69,7 +69,7 @@ describe("bloom-setup registration", () => {
 // ---------------------------------------------------------------------------
 // Tool structure validation
 // ---------------------------------------------------------------------------
-describe("bloom-setup tool structure", () => {
+describe("setup tool structure", () => {
 	it("each tool has name, label, description, parameters, and execute", async () => {
 		await loadExtension();
 		for (const tool of api._registeredTools) {
@@ -100,10 +100,10 @@ describe("bloom-setup tool structure", () => {
 // ---------------------------------------------------------------------------
 // Startup gating
 // ---------------------------------------------------------------------------
-describe("bloom-setup startup gating", () => {
+describe("setup startup gating", () => {
 	it("injects a setup-first prompt after the wizard completes and persona is still pending", async () => {
-		mkdirSync(path.join(os.homedir(), ".bloom"), { recursive: true });
-		writeFileSync(path.join(os.homedir(), ".bloom", ".setup-complete"), "done", "utf-8");
+		mkdirSync(path.join(os.homedir(), ".garden"), { recursive: true });
+		writeFileSync(path.join(os.homedir(), ".garden", ".setup-complete"), "done", "utf-8");
 
 		await loadExtension();
 		const result = await api.fireEvent("before_agent_start", { systemPrompt: "BASE_PROMPT" });
@@ -120,9 +120,9 @@ describe("bloom-setup startup gating", () => {
 	});
 
 	it("does not inject setup guidance after persona setup is already complete", async () => {
-		mkdirSync(path.join(os.homedir(), ".bloom", "wizard-state"), { recursive: true });
-		writeFileSync(path.join(os.homedir(), ".bloom", ".setup-complete"), "done", "utf-8");
-		writeFileSync(path.join(os.homedir(), ".bloom", "wizard-state", "persona-done"), "done", "utf-8");
+		mkdirSync(path.join(os.homedir(), ".garden", "wizard-state"), { recursive: true });
+		writeFileSync(path.join(os.homedir(), ".garden", ".setup-complete"), "done", "utf-8");
+		writeFileSync(path.join(os.homedir(), ".garden", "wizard-state", "persona-done"), "done", "utf-8");
 
 		await loadExtension();
 		const result = await api.fireEvent("before_agent_start", { systemPrompt: "BASE_PROMPT" });
@@ -133,8 +133,8 @@ describe("bloom-setup startup gating", () => {
 
 describe("setup_advance daemon reconciliation", () => {
 	it("enables pi-daemon when setup completes", async () => {
-		mkdirSync(path.join(os.homedir(), ".bloom"), { recursive: true });
-		writeFileSync(path.join(os.homedir(), ".bloom", ".setup-complete"), "done", "utf-8");
+		mkdirSync(path.join(os.homedir(), ".garden"), { recursive: true });
+		writeFileSync(path.join(os.homedir(), ".garden", ".setup-complete"), "done", "utf-8");
 
 		await loadExtension();
 		const tool = api._registeredTools.find((entry) => entry.name === "setup_advance") as {
@@ -159,20 +159,20 @@ describe("setup_advance daemon reconciliation", () => {
 describe("handleSetupStatus", () => {
 	it("returns text content when wizard is not complete", async () => {
 		// No .setup-complete file — wizard hasn't run
-		const { handleSetupStatus: status } = await import("../../core/pi/extensions/bloom-setup/actions.js");
+		const { handleSetupStatus: status } = await import("../../core/pi/extensions/setup/actions.js");
 		const result = status();
 		expect(result.content[0]).toHaveProperty("type", "text");
-		expect(result.content[0].text).toContain("Finish `bloom-wizard.sh` first");
+		expect(result.content[0].text).toContain("Finish `setup-wizard.sh` first");
 		expect(result.details.waitingForWizard).toBe(true);
 		expect(result.details.complete).toBe(false);
 		expect(result.details.nextStep).toBeNull();
 	});
 
 	it("returns text content and progress when wizard is complete", async () => {
-		mkdirSync(path.join(os.homedir(), ".bloom"), { recursive: true });
-		writeFileSync(path.join(os.homedir(), ".bloom", ".setup-complete"), "done", "utf-8");
+		mkdirSync(path.join(os.homedir(), ".garden"), { recursive: true });
+		writeFileSync(path.join(os.homedir(), ".garden", ".setup-complete"), "done", "utf-8");
 
-		const { handleSetupStatus: status } = await import("../../core/pi/extensions/bloom-setup/actions.js");
+		const { handleSetupStatus: status } = await import("../../core/pi/extensions/setup/actions.js");
 		const result = status();
 		expect(result.content[0]).toHaveProperty("type", "text");
 		expect(result.details.waitingForWizard).toBe(false);
@@ -180,10 +180,10 @@ describe("handleSetupStatus", () => {
 	});
 
 	it("reports setup in progress when steps remain", async () => {
-		mkdirSync(path.join(os.homedir(), ".bloom"), { recursive: true });
-		writeFileSync(path.join(os.homedir(), ".bloom", ".setup-complete"), "done", "utf-8");
+		mkdirSync(path.join(os.homedir(), ".garden"), { recursive: true });
+		writeFileSync(path.join(os.homedir(), ".garden", ".setup-complete"), "done", "utf-8");
 
-		const { handleSetupStatus: status } = await import("../../core/pi/extensions/bloom-setup/actions.js");
+		const { handleSetupStatus: status } = await import("../../core/pi/extensions/setup/actions.js");
 		const result = status();
 		expect(result.details.complete).toBe(false);
 		expect(result.details.nextStep).toBe("persona");
@@ -191,12 +191,12 @@ describe("handleSetupStatus", () => {
 	});
 
 	it("reports complete when all steps are done", async () => {
-		mkdirSync(path.join(os.homedir(), ".bloom"), { recursive: true });
-		writeFileSync(path.join(os.homedir(), ".bloom", ".setup-complete"), "done", "utf-8");
+		mkdirSync(path.join(os.homedir(), ".garden"), { recursive: true });
+		writeFileSync(path.join(os.homedir(), ".garden", ".setup-complete"), "done", "utf-8");
 
 		// Write a completed state
 		const { createInitialState, advanceStep } = await import("../../core/lib/setup.js");
-		const { saveState, handleSetupStatus: status } = await import("../../core/pi/extensions/bloom-setup/actions.js");
+		const { saveState, handleSetupStatus: status } = await import("../../core/pi/extensions/setup/actions.js");
 		const state = advanceStep(createInitialState(), "persona", "completed");
 		saveState(state);
 
@@ -212,10 +212,10 @@ describe("handleSetupStatus", () => {
 // ---------------------------------------------------------------------------
 describe("handleSetupAdvance", () => {
 	it("marks a step as completed and returns text content", async () => {
-		mkdirSync(path.join(os.homedir(), ".bloom"), { recursive: true });
-		writeFileSync(path.join(os.homedir(), ".bloom", ".setup-complete"), "done", "utf-8");
+		mkdirSync(path.join(os.homedir(), ".garden"), { recursive: true });
+		writeFileSync(path.join(os.homedir(), ".garden", ".setup-complete"), "done", "utf-8");
 
-		const { handleSetupAdvance: advance } = await import("../../core/pi/extensions/bloom-setup/actions.js");
+		const { handleSetupAdvance: advance } = await import("../../core/pi/extensions/setup/actions.js");
 		const result = await advance({ step: "persona", result: "completed" });
 
 		expect(result.content[0]).toHaveProperty("type", "text");
@@ -223,20 +223,20 @@ describe("handleSetupAdvance", () => {
 	});
 
 	it("marks a step as skipped with a reason", async () => {
-		mkdirSync(path.join(os.homedir(), ".bloom"), { recursive: true });
-		writeFileSync(path.join(os.homedir(), ".bloom", ".setup-complete"), "done", "utf-8");
+		mkdirSync(path.join(os.homedir(), ".garden"), { recursive: true });
+		writeFileSync(path.join(os.homedir(), ".garden", ".setup-complete"), "done", "utf-8");
 
-		const { handleSetupAdvance: advance } = await import("../../core/pi/extensions/bloom-setup/actions.js");
+		const { handleSetupAdvance: advance } = await import("../../core/pi/extensions/setup/actions.js");
 		const result = await advance({ step: "persona", result: "skipped", reason: "user skipped" });
 
 		expect(result.content[0].text).toContain('"persona" marked as skipped');
 	});
 
 	it("persists state to disk after advancing", async () => {
-		mkdirSync(path.join(os.homedir(), ".bloom"), { recursive: true });
-		writeFileSync(path.join(os.homedir(), ".bloom", ".setup-complete"), "done", "utf-8");
+		mkdirSync(path.join(os.homedir(), ".garden"), { recursive: true });
+		writeFileSync(path.join(os.homedir(), ".garden", ".setup-complete"), "done", "utf-8");
 
-		const { handleSetupAdvance: advance, loadState } = await import("../../core/pi/extensions/bloom-setup/actions.js");
+		const { handleSetupAdvance: advance, loadState } = await import("../../core/pi/extensions/setup/actions.js");
 		await advance({ step: "persona", result: "completed" });
 
 		const state = loadState();
@@ -244,11 +244,11 @@ describe("handleSetupAdvance", () => {
 	});
 
 	it("reports daemon warning when systemctl fails", async () => {
-		mkdirSync(path.join(os.homedir(), ".bloom"), { recursive: true });
-		writeFileSync(path.join(os.homedir(), ".bloom", ".setup-complete"), "done", "utf-8");
+		mkdirSync(path.join(os.homedir(), ".garden"), { recursive: true });
+		writeFileSync(path.join(os.homedir(), ".garden", ".setup-complete"), "done", "utf-8");
 		runMock.mockResolvedValue({ stdout: "", stderr: "Access denied", exitCode: 1 });
 
-		const { handleSetupAdvance: advance } = await import("../../core/pi/extensions/bloom-setup/actions.js");
+		const { handleSetupAdvance: advance } = await import("../../core/pi/extensions/setup/actions.js");
 		const result = await advance({ step: "persona", result: "completed" });
 
 		expect(result.content[0].text).toContain("could not be enabled automatically");
@@ -260,14 +260,14 @@ describe("handleSetupAdvance", () => {
 // ---------------------------------------------------------------------------
 describe("handleSetupReset", () => {
 	it("resets a single step to pending", async () => {
-		mkdirSync(path.join(os.homedir(), ".bloom"), { recursive: true });
-		writeFileSync(path.join(os.homedir(), ".bloom", ".setup-complete"), "done", "utf-8");
+		mkdirSync(path.join(os.homedir(), ".garden"), { recursive: true });
+		writeFileSync(path.join(os.homedir(), ".garden", ".setup-complete"), "done", "utf-8");
 
 		const {
 			handleSetupAdvance: advance,
 			handleSetupReset: reset,
 			loadState,
-		} = await import("../../core/pi/extensions/bloom-setup/actions.js");
+		} = await import("../../core/pi/extensions/setup/actions.js");
 		// First complete persona
 		await advance({ step: "persona", result: "completed" });
 
@@ -281,14 +281,14 @@ describe("handleSetupReset", () => {
 	});
 
 	it("performs a full reset when no step is specified", async () => {
-		mkdirSync(path.join(os.homedir(), ".bloom"), { recursive: true });
-		writeFileSync(path.join(os.homedir(), ".bloom", ".setup-complete"), "done", "utf-8");
+		mkdirSync(path.join(os.homedir(), ".garden"), { recursive: true });
+		writeFileSync(path.join(os.homedir(), ".garden", ".setup-complete"), "done", "utf-8");
 
 		const {
 			handleSetupAdvance: advance,
 			handleSetupReset: reset,
 			loadState,
-		} = await import("../../core/pi/extensions/bloom-setup/actions.js");
+		} = await import("../../core/pi/extensions/setup/actions.js");
 		await advance({ step: "persona", result: "completed" });
 
 		const result = reset({});
@@ -301,10 +301,10 @@ describe("handleSetupReset", () => {
 	});
 
 	it("returns text content for single step reset", async () => {
-		mkdirSync(path.join(os.homedir(), ".bloom"), { recursive: true });
-		writeFileSync(path.join(os.homedir(), ".bloom", ".setup-complete"), "done", "utf-8");
+		mkdirSync(path.join(os.homedir(), ".garden"), { recursive: true });
+		writeFileSync(path.join(os.homedir(), ".garden", ".setup-complete"), "done", "utf-8");
 
-		const { handleSetupReset: reset } = await import("../../core/pi/extensions/bloom-setup/actions.js");
+		const { handleSetupReset: reset } = await import("../../core/pi/extensions/setup/actions.js");
 		const result = reset({ step: "persona" });
 		expect(result.content[0]).toHaveProperty("type", "text");
 	});

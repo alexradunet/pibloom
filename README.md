@@ -1,4 +1,4 @@
-# Bloom
+# Garden
 
 > 📖 [Emoji Legend](docs/LEGEND.md)
 
@@ -8,13 +8,13 @@ It is very experimental and I am still currently developing it based on my needs
 
 I plan to keep this project as minimal as possible so the end user can evolve the OS through Pi without carrying a large default runtime surface.
 
-## 🌱 Why Bloom Exists
+## 🌱 Why Garden Exists
 
 BloomOS packages Pi, host integration, memory, and a small set of built-in user services into one self-hosted system.
 
-Bloom exists to give Pi:
+Garden exists to give Pi:
 
-- a durable home directory under `~/Bloom/`
+- a durable home directory under `~/Garden/`
 - first-class host tools for NixOS workflows
 - a local repo proposal workflow for human-reviewed system changes
 - a private Matrix-based messaging surface
@@ -24,25 +24,25 @@ Bloom exists to give Pi:
 
 Current platform capabilities:
 
-- Bloom directory management and blueprint seeding for `~/Bloom/`
+- Garden directory management and blueprint seeding for `~/Garden/`
 - persona injection, shell guardrails, durable-memory digest injection, and compaction context persistence
 - local-only Nix proposal support for checking the seeded repo clone, refreshing `flake.lock`, and validating config before review
 - host OS management tools for NixOS updates, local/remote switch, systemd, health, and reboot scheduling
-- built-in user services for Bloom Home, Bloom Web Chat, Bloom Files, and code-server
-- markdown-native durable memory in `~/Bloom/Objects/`
-- append-only episodic memory in `~/Bloom/Episodes/`
+- built-in user services for Garden Home, Garden Web Chat, Garden Files, and code-server
+- markdown-native durable memory in `~/Garden/Objects/`
+- append-only episodic memory in `~/Garden/Episodes/`
 - a unified Matrix room daemon with synthesized host-agent fallback and optional multi-agent overlays
 - proactive daemon jobs for heartbeat and simple cron-style scheduled turns
 - a first-boot flow split between a bash wizard and a Pi-guided persona step
 
 ## 🚀 Quick Start
 
-Install Bloom on a standard NixOS system:
+Install Garden on a standard NixOS system:
 
 ```bash
 # 1. Install NixOS from the official ISO: https://nixos.org/download.html
-# 2. After first boot, switch to the Bloom flake:
-sudo nixos-rebuild switch --flake github:alexradunet/piBloom#bloom-desktop
+# 2. After first boot, switch to the Garden flake:
+sudo nixos-rebuild switch --flake github:alexradunet/piBloom#desktop
 
 # 3. Complete the first-boot wizard (runs automatically on login)
 ```
@@ -53,7 +53,7 @@ See [docs/quick_deploy.md](docs/quick_deploy.md) for detailed instructions.
 
 Choose the entry point that matches your job:
 
-- **Installing Bloom**: [docs/quick_deploy.md](docs/quick_deploy.md), [docs/pibloom-setup.md](docs/pibloom-setup.md)
+- **Installing Garden**: [docs/quick_deploy.md](docs/quick_deploy.md), [docs/pibloom-setup.md](docs/pibloom-setup.md)
 - **Maintainers**: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENTS.md](AGENTS.md), and [docs/README.md](docs/README.md)
 - **Operators**: [docs/pibloom-setup.md](docs/pibloom-setup.md), [docs/quick_deploy.md](docs/quick_deploy.md), and [docs/live-testing-checklist.md](docs/live-testing-checklist.md)
 - **Built-in service behavior**: [docs/service-architecture.md](docs/service-architecture.md)
@@ -64,27 +64,27 @@ Installed by default:
 
 - `sshd.service`
 - `netbird.service`
-- `bloom-matrix.service`
+- `garden-matrix.service`
 - `pi-daemon.service` after setup once AI auth and defaults are ready
-- `bloom-home.service`
-- `bloom-fluffychat.service`
-- `bloom-dufs.service`
-- `bloom-code-server.service`
+- `garden-home.service`
+- `garden-fluffychat.service`
+- `garden-dufs.service`
+- `garden-code-server.service`
 
 ## 🌿 Repository Layout
 
 | Path | Purpose |
 |------|---------|
-| `core/` | Bloom core: NixOS modules, daemon, persona, skills, built-in extensions, and shared runtime code |
+| `core/` | Garden core: NixOS modules, daemon, persona, skills, built-in extensions, and shared runtime code |
 | `core/os/` | NixOS modules and host configurations |
 | `core/daemon/` | Matrix room daemon and multi-agent runtime |
-| `core/pi/extensions/` | Pi-facing Bloom extensions shipped in the default runtime |
+| `core/pi/extensions/` | Pi-facing Garden extensions shipped in the default runtime |
 | `tests/` | unit, integration, daemon, and extension tests |
 | `docs/` | live project documentation |
 
 ## 🧩 Capability Model
 
-Bloom extends Pi through two active runtime layers:
+Garden extends Pi through two active runtime layers:
 
 | Layer | What it is | Typical use |
 |------|-------------|-------------|
@@ -93,9 +93,9 @@ Bloom extends Pi through two active runtime layers:
 
 Built-in service surface is part of the base NixOS system:
 
-- `Bloom Home` on `:8080`
-- `Bloom Web Chat` on `:8081`
-- `Bloom Files` on `:5000`
+- `Garden Home` on `:8080`
+- `Garden Web Chat` on `:8081`
+- `Garden Files` on `:5000`
 - `code-server` on `:8443`
 
 ## 📚 Documentation Map

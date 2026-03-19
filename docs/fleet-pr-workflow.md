@@ -2,11 +2,11 @@
 
 > 📖 [Emoji Legend](LEGEND.md)
 
-Audience: maintainers using Bloom to prepare local repo changes for later human review and external publish.
+Audience: maintainers using Garden to prepare local repo changes for later human review and external publish.
 
 ## 🌱 Why This Flow Exists
 
-Bloom should be able to propose code and configuration changes locally without being able to publish them autonomously.
+Garden should be able to propose code and configuration changes locally without being able to publish them autonomously.
 
 This keeps the useful part of agentic development:
 
@@ -23,32 +23,32 @@ while forcing the approval boundary to stay with the human and the external cont
 
 ## 🚀 Local Proposal Flow
 
-Bloom assumes the local working clone lives at:
+Garden assumes the local working clone lives at:
 
-- `~/.bloom/pi-bloom`
+- `~/.garden/pi-garden`
 
 Recommended workflow:
 
-1. Ask Bloom to inspect the repo and prepare a local change.
-2. Let Bloom edit files and run local validation such as:
+1. Ask Garden to inspect the repo and prepare a local change.
+2. Let Garden edit files and run local validation such as:
    - `npm run build`
    - `npm run test:unit`
    - `npm run test:integration`
    - `npm run test:e2e`
 3. Review the resulting diff in VS Code.
 4. Decide whether to keep, revise, commit, or discard the change.
-5. Use your normal git/GitHub workflow outside Bloom to publish the change.
+5. Use your normal git/GitHub workflow outside Garden to publish the change.
 
 ## 📚 Reference
 
-Bloom's role in this model:
+Garden's role in this model:
 
 - propose local edits
 - explain what changed and why
 - run local checks
 - prepare code for human review
 
-Bloom does not publish in this model:
+Garden does not publish in this model:
 
 - no remote push
 - no PR creation
@@ -57,7 +57,7 @@ Bloom does not publish in this model:
 
 Current repo assumptions:
 
-- local path is `~/.bloom/pi-bloom`
+- local path is `~/.garden/pi-garden`
 - the clone is a working area for proposals and review
 - remote publishing is handled by the human or an external controller
 

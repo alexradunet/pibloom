@@ -11,7 +11,7 @@ describe("sanitizeRoomAlias", () => {
 	});
 
 	it("handles alias with subdomain", () => {
-		expect(sanitizeRoomAlias("#dev:bloom")).toBe("dev_bloom");
+		expect(sanitizeRoomAlias("#dev:garden")).toBe("dev_garden");
 	});
 
 	it("passes through already-clean strings", () => {

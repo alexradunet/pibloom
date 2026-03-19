@@ -33,42 +33,42 @@ describe("runtime package extension list", () => {
 		const extensionList = packageJson.pi?.extensions ?? [];
 
 		expect(extensionList).toEqual([
-			"./core/pi/extensions/bloom-persona",
-			"./core/pi/extensions/bloom-localai",
-			"./core/pi/extensions/bloom-os",
-			"./core/pi/extensions/bloom-episodes",
-			"./core/pi/extensions/bloom-objects",
-			"./core/pi/extensions/bloom-garden",
-			"./core/pi/extensions/bloom-setup",
+			"./core/pi/extensions/persona",
+			"./core/pi/extensions/localai",
+			"./core/pi/extensions/os",
+			"./core/pi/extensions/episodes",
+			"./core/pi/extensions/objects",
+			"./core/pi/extensions/garden",
+			"./core/pi/extensions/setup",
 		]);
-		expect(extensionList).not.toContain("./core/pi/extensions/bloom-dev");
-		expect(extensionList).not.toContain("./core/pi/extensions/bloom-repo");
-		expect(extensionList).not.toContain("./core/pi/extensions/bloom-services");
+		expect(extensionList).not.toContain("./core/pi/extensions/garden-dev");
+		expect(extensionList).not.toContain("./core/pi/extensions/garden-repo");
+		expect(extensionList).not.toContain("./core/pi/extensions/garden-services");
 	});
 });
 
 // ---------------------------------------------------------------------------
-// bloom-garden
+// garden
 // ---------------------------------------------------------------------------
-describe("bloom-garden registration", () => {
+describe("garden registration", () => {
 	it("registers expected tools, commands, and events", async () => {
-		const mod = await import("../../core/pi/extensions/bloom-garden/index.js");
+		const mod = await import("../../core/pi/extensions/garden/index.js");
 		const api = createMockExtensionAPI();
 		mod.default(api as never);
 
 		expect(toolNames(api)).toEqual(["garden_status"]);
-		expect(commandNames(api)).toEqual(["bloom"]);
+		expect(commandNames(api)).toEqual(["garden"]);
 		expect(eventNames(api)).toEqual(expect.arrayContaining(["session_start", "resources_discover"]));
 		expect(eventNames(api)).not.toContain("input");
 	});
 });
 
 // ---------------------------------------------------------------------------
-// bloom-episodes
+// episodes
 // ---------------------------------------------------------------------------
-describe("bloom-episodes registration", () => {
+describe("episodes registration", () => {
 	it("registers episodic tools without events", async () => {
-		const mod = await import("../../core/pi/extensions/bloom-episodes/index.js");
+		const mod = await import("../../core/pi/extensions/episodes/index.js");
 		const api = createMockExtensionAPI();
 		mod.default(api as never);
 
@@ -80,11 +80,11 @@ describe("bloom-episodes registration", () => {
 });
 
 // ---------------------------------------------------------------------------
-// bloom-objects
+// objects
 // ---------------------------------------------------------------------------
-describe("bloom-objects registration", () => {
+describe("objects registration", () => {
 	it("registers expected tools (no events)", async () => {
-		const mod = await import("../../core/pi/extensions/bloom-objects/index.js");
+		const mod = await import("../../core/pi/extensions/objects/index.js");
 		const api = createMockExtensionAPI();
 		mod.default(api as never);
 
@@ -107,11 +107,11 @@ describe("bloom-objects registration", () => {
 });
 
 // ---------------------------------------------------------------------------
-// bloom-os
+// os
 // ---------------------------------------------------------------------------
-describe("bloom-os registration", () => {
+describe("os registration", () => {
 	it("registers tools and events", async () => {
-		const mod = await import("../../core/pi/extensions/bloom-os/index.js");
+		const mod = await import("../../core/pi/extensions/os/index.js");
 		const api = createMockExtensionAPI();
 		mod.default(api as never);
 
@@ -122,11 +122,11 @@ describe("bloom-os registration", () => {
 });
 
 // ---------------------------------------------------------------------------
-// bloom-persona
+// persona
 // ---------------------------------------------------------------------------
-describe("bloom-persona registration", () => {
+describe("persona registration", () => {
 	it("registers events only (no tools/commands)", async () => {
-		const mod = await import("../../core/pi/extensions/bloom-persona/index.js");
+		const mod = await import("../../core/pi/extensions/persona/index.js");
 		const api = createMockExtensionAPI();
 		mod.default(api as never);
 

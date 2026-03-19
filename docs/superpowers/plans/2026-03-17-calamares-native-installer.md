@@ -4,7 +4,7 @@
 
 **Goal:** Replace the two-step install flow (Calamares → bloom-convert) with a single native Calamares installer that produces a fully-configured Bloom OS after one reboot.
 
-**Architecture:** Custom `calamares-nixos-extensions` override in `core/calamares/` provides a Python `bloom_nixos` module (writes flake + host-config, runs nixos-install) and a `bloom_prefill` module (writes prefill.env, settings.json, .gitconfig, NM connections). Four QML pages collect Bloom-specific config. A new `bloom-firstboot.service` (declared in `core/os/modules/bloom-firstboot.nix`) runs before getty on first boot to connect NetBird, register Matrix accounts, and activate services non-interactively.
+**Architecture:** Custom `calamares-nixos-extensions` override in `core/calamares/` provides a Python `bloom_nixos` module (writes flake + host-config, runs nixos-install) and a `bloom_prefill` module (writes prefill.env, settings.json, .gitconfig, NM connections). Four QML pages collect Bloom-specific config. A new `bloom-firstboot.service` (declared in `core/os/modules/firstboot.nix`) runs before getty on first boot to connect NetBird, register Matrix accounts, and activate services non-interactively.
 
 **Tech Stack:** NixOS flakes, Calamares Python job modules, Calamares QML pages, systemd, bash, Python 3
 
@@ -14,9 +14,9 @@
 
 | Action | File | Responsibility |
 |--------|------|----------------|
-| MODIFY | `flake.nix` | Add `nixosModules.bloom`, `nixosModules.bloom-firstboot`, nixpkgs overlay |
-| ADD | `core/os/modules/bloom-firstboot.nix` | Systemd oneshot service, sudo rules, linger tmpfile |
-| ADD | `core/scripts/bloom-firstboot.sh` | Non-interactive: netbird, matrix, services, finalize |
+| MODIFY | `flake.nix` | Add `nixosModules.platform`, `nixosModules.firstboot`, nixpkgs overlay |
+| ADD | `core/os/modules/firstboot.nix` | Systemd oneshot service, sudo rules, linger tmpfile |
+| ADD | `core/scripts/firstboot.sh` | Non-interactive: netbird, matrix, services, finalize |
 | ADD | `core/calamares/package.nix` | Nix derivation for custom calamares-nixos-extensions |
 | ADD | `core/calamares/bloom_nixos/module.desc` | Calamares module descriptor |
 | ADD | `core/calamares/bloom_nixos/main.py` | Hardware detect, write host-config + flake, nixos-install |
@@ -30,7 +30,7 @@
 | ADD | `core/calamares/config/bloom-nixos.conf` | bloom-nixos module config |
 | ADD | `core/calamares/config/users.conf` | Lock username to pi, dont_create_user |
 | MODIFY | `core/os/hosts/x86_64-installer.nix` | Use custom Calamares package, remove bloom-convert |
-| MODIFY | `core/scripts/bloom-wizard.sh` | Add PREFILL_SERVICES non-interactive path |
+| MODIFY | `core/scripts/setup-wizard.sh` | Add PREFILL_SERVICES non-interactive path |
 | DELETE | `core/scripts/bloom-convert.sh` | No longer needed |
 
 ---
@@ -40,7 +40,7 @@
 **Files:**
 - Modify: `flake.nix`
 
-**Context:** `x86_64.nix` currently imports the six bloom modules directly. `nixosModules.bloom` re-exports them as a single composable module so the generated installer `flake.nix` can reference `bloom.nixosModules.bloom`. `nixosModules.bloom-firstboot` exports the first-boot service (which is machine-specific, not part of the portable bloom module set).
+**Context:** `x86_64.nix` currently imports the six bloom modules directly. `nixosModules.platform` re-exports them as a single composable module so the generated installer `flake.nix` can reference `bloom.nixosModules.platform`. `nixosModules.firstboot` exports the first-boot service (which is machine-specific, not part of the portable bloom module set).
 
 - [ ] **Step 1: Add `nixosModules` outputs to `flake.nix`**
 
@@ -52,18 +52,18 @@
     # Consuming flake.nix must provide piAgent and bloomApp in specialArgs.
     bloom = { piAgent, bloomApp, ... }: {
       imports = [
-        ./core/os/modules/bloom-app.nix
-        ./core/os/modules/bloom-llm.nix
-        ./core/os/modules/bloom-matrix.nix
-        ./core/os/modules/bloom-network.nix
-        ./core/os/modules/bloom-shell.nix
-        ./core/os/modules/bloom-update.nix
+        ./core/os/modules/app.nix
+        ./core/os/modules/llm.nix
+        ./core/os/modules/matrix.nix
+        ./core/os/modules/network.nix
+        ./core/os/modules/shell.nix
+        ./core/os/modules/update.nix
       ];
       nixpkgs.config.allowUnfree = true;
     };
 
     # First-boot service module (included separately, not part of portable bloom module).
-    bloom-firstboot = import ./core/os/modules/bloom-firstboot.nix;
+    bloom-firstboot = import ./core/os/modules/firstboot.nix;
   };
   ```
 
@@ -78,7 +78,7 @@
 
   ```bash
   git add flake.nix
-  git commit -m "feat(flake): add nixosModules.bloom and nixosModules.bloom-firstboot outputs"
+  git commit -m "feat(flake): add nixosModules.platform and nixosModules.firstboot outputs"
   ```
 
 ---
@@ -86,14 +86,14 @@
 ## Task 2: bloom-firstboot.nix
 
 **Files:**
-- Create: `core/os/modules/bloom-firstboot.nix`
+- Create: `core/os/modules/firstboot.nix`
 
-**Context:** The module declares the systemd oneshot service. `bloom-firstboot.sh` is a sibling file referenced with `${./bloom-firstboot.sh}`. `bloom-shell.nix` already grants `pi` full NOPASSWD sudo, so the narrow extraRules here are redundant but document the future-hardening intent.
+**Context:** The module declares the systemd oneshot service. `firstboot.sh` is a sibling file referenced with `${./firstboot.sh}`. `bloom-shell.nix` already grants `pi` full NOPASSWD sudo, so the narrow extraRules here are redundant but document the future-hardening intent.
 
-- [ ] **Step 1: Create `core/os/modules/bloom-firstboot.nix`**
+- [ ] **Step 1: Create `core/os/modules/firstboot.nix`**
 
   ```nix
-  # core/os/modules/bloom-firstboot.nix
+  # core/os/modules/firstboot.nix
   { config, pkgs, ... }:
 
   {
@@ -120,20 +120,20 @@
         Type = "oneshot";
         RemainAfterExit = true;
         User = "pi";
-        ExecStart = "${pkgs.bash}/bin/bash ${./bloom-firstboot.sh}";
+        ExecStart = "${pkgs.bash}/bin/bash ${./firstboot.sh}";
         StandardOutput = "journal+console";
         # systemctl --user needs XDG_RUNTIME_DIR to reach the user bus socket.
         # This env var is not set automatically for system services running as a
         # non-root user outside a PAM login session. UID 1000 is deterministic
         # for the first normal user in NixOS (same rationale as bloom_prefill).
         Environment = "XDG_RUNTIME_DIR=/run/user/1000";
-        # Exit 1 = non-fatal partial failure; user can recover via bloom-wizard.sh.
+        # Exit 1 = non-fatal partial failure; user can recover via setup-wizard.sh.
         SuccessExitStatus = "0 1";
       };
       unitConfig.ConditionPathExists = "!/home/pi/.bloom/.setup-complete";
     };
 
-    # Narrow sudo rules for commands bloom-firstboot.sh needs in a non-TTY context.
+    # Narrow sudo rules for commands firstboot.sh needs in a non-TTY context.
     # NOTE: bloom-shell.nix already grants pi full NOPASSWD sudo, making these rules
     # currently redundant. They are kept for future hardening documentation.
     security.sudo.extraRules = [
@@ -158,37 +158,37 @@
 - [ ] **Step 2: Verify nix parses the file**
 
   ```bash
-  nix eval --expr 'import ./core/os/modules/bloom-firstboot.nix' --apply builtins.isFunction
+  nix eval --expr 'import ./core/os/modules/firstboot.nix' --apply builtins.isFunction
   ```
   Expected: `true`
 
 - [ ] **Step 3: Commit**
 
   ```bash
-  git add core/os/modules/bloom-firstboot.nix
+  git add core/os/modules/firstboot.nix
   git commit -m "feat(os): add bloom-firstboot.nix systemd service module"
   ```
 
 ---
 
-## Task 3: bloom-firstboot.sh
+## Task 3: firstboot.sh
 
 **Files:**
-- Create: `core/scripts/bloom-firstboot.sh`
+- Create: `core/scripts/firstboot.sh`
 
-**Context:** This script runs as `pi` via the systemd service from Task 2. It is a stripped, non-interactive version of `bloom-wizard.sh`. All helper functions it calls (`matrix_login`, `matrix_register`, `install_home_infrastructure`, `install_service`, etc.) live in `bloom-wizard.sh` and are re-sourced here — this avoids duplicating shared logic. The script reads `~/.bloom/prefill.env` which `bloom_prefill` writes at install time.
+**Context:** This script runs as `pi` via the systemd service from Task 2. It is a stripped, non-interactive version of `setup-wizard.sh`. All helper functions it calls (`matrix_login`, `matrix_register`, `install_home_infrastructure`, `install_service`, etc.) live in `setup-wizard.sh` and are re-sourced here — this avoids duplicating shared logic. The script reads `~/.bloom/prefill.env` which `bloom_prefill` writes at install time.
 
-Note: `finalize` in `bloom-wizard.sh` calls `loginctl enable-linger` — this script does NOT do that (linger is handled by `bloom-firstboot.nix` via tmpfiles).
+Note: `finalize` in `setup-wizard.sh` calls `loginctl enable-linger` — this script does NOT do that (linger is handled by `bloom-firstboot.nix` via tmpfiles).
 
-- [ ] **Step 1: Create `core/scripts/bloom-firstboot.sh`**
+- [ ] **Step 1: Create `core/scripts/firstboot.sh`**
 
   ```bash
   #!/usr/bin/env bash
-  # bloom-firstboot.sh — Non-interactive first-boot automation for Bloom OS.
+  # firstboot.sh — Non-interactive first-boot automation for Bloom OS.
   # Runs once before getty via bloom-firstboot.service (User=pi).
   # Reads ~/.bloom/prefill.env written by the Calamares bloom_prefill module.
   # On failure, exits 1 (non-fatal per SuccessExitStatus). User can re-run
-  # bloom-wizard.sh on next login to resume from the last incomplete checkpoint.
+  # setup-wizard.sh on next login to resume from the last incomplete checkpoint.
   set -euo pipefail
 
   WIZARD_STATE="$HOME/.bloom/wizard-state"
@@ -207,11 +207,11 @@ Note: `finalize` in `bloom-wizard.sh` calls `loginctl enable-linger` — this sc
       source "$PREFILL_FILE"
   fi
 
-  # Re-use all helper functions from bloom-wizard.sh to avoid duplication.
-  # shellcheck source=bloom-wizard.sh
-  WIZARD_SCRIPT="$(dirname "$0")/bloom-wizard.sh"
+  # Re-use all helper functions from setup-wizard.sh to avoid duplication.
+  # shellcheck source=setup-wizard.sh
+  WIZARD_SCRIPT="$(dirname "$0")/setup-wizard.sh"
   if [[ ! -f "$WIZARD_SCRIPT" ]]; then
-      WIZARD_SCRIPT="/usr/local/share/bloom/dist/scripts/bloom-wizard.sh"
+      WIZARD_SCRIPT="/usr/local/share/bloom/dist/scripts/setup-wizard.sh"
   fi
   # Source only the function definitions (skip main() execution) by setting a guard.
   BLOOM_FIRSTBOOT_SOURCING=1
@@ -308,11 +308,11 @@ Note: `finalize` in `bloom-wizard.sh` calls `loginctl enable-linger` — this sc
   main
   ```
 
-- [ ] **Step 2: Check for the sourcing guard in bloom-wizard.sh**
+- [ ] **Step 2: Check for the sourcing guard in setup-wizard.sh**
 
-  `bloom-firstboot.sh` sources `bloom-wizard.sh` to reuse helper functions, but must not trigger `main`. Verify `bloom-wizard.sh` ends with a plain `main` call (no guard) and add a guard:
+  `firstboot.sh` sources `setup-wizard.sh` to reuse helper functions, but must not trigger `main`. Verify `setup-wizard.sh` ends with a plain `main` call (no guard) and add a guard:
 
-  Open `core/scripts/bloom-wizard.sh`, find the last two lines:
+  Open `core/scripts/setup-wizard.sh`, find the last two lines:
   ```bash
   main
   ```
@@ -326,28 +326,28 @@ Note: `finalize` in `bloom-wizard.sh` calls `loginctl enable-linger` — this sc
 - [ ] **Step 3: Verify syntax of both scripts**
 
   ```bash
-  bash -n core/scripts/bloom-firstboot.sh && echo "firstboot.sh: OK"
-  bash -n core/scripts/bloom-wizard.sh    && echo "wizard.sh: OK"
+  bash -n core/scripts/firstboot.sh && echo "firstboot.sh: OK"
+  bash -n core/scripts/setup-wizard.sh    && echo "wizard.sh: OK"
   ```
   Both should print `OK`.
 
 - [ ] **Step 4: Commit**
 
   ```bash
-  git add core/scripts/bloom-firstboot.sh core/scripts/bloom-wizard.sh
-  git commit -m "feat(scripts): add bloom-firstboot.sh non-interactive first-boot automation"
+  git add core/scripts/firstboot.sh core/scripts/setup-wizard.sh
+  git commit -m "feat(scripts): add firstboot.sh non-interactive first-boot automation"
   ```
 
 ---
 
-## Task 4: bloom-wizard.sh PREFILL_SERVICES support
+## Task 4: setup-wizard.sh PREFILL_SERVICES support
 
 **Files:**
-- Modify: `core/scripts/bloom-wizard.sh` (lines 1025–1067, `step_services`)
+- Modify: `core/scripts/setup-wizard.sh` (lines 1025–1067, `step_services`)
 
 **Context:** When `PREFILL_SERVICES` is set (e.g., `"fluffychat,dufs"`), skip the interactive `read -rp` prompts and iterate the comma-separated list. When unset/empty, the existing interactive behavior is unchanged. `install_home_infrastructure` is always called first. `write_service_home_runtime` and `mark_done_with` are called in both paths with correct signatures.
 
-- [ ] **Step 1: Replace `step_services` in `bloom-wizard.sh`**
+- [ ] **Step 1: Replace `step_services` in `setup-wizard.sh`**
 
   Find the function (lines ~1025–1067):
   ```bash
@@ -464,14 +464,14 @@ Note: `finalize` in `bloom-wizard.sh` calls `loginctl enable-linger` — this sc
 - [ ] **Step 2: Verify syntax**
 
   ```bash
-  bash -n core/scripts/bloom-wizard.sh && echo "OK"
+  bash -n core/scripts/setup-wizard.sh && echo "OK"
   ```
   Expected: `OK`
 
 - [ ] **Step 3: Commit**
 
   ```bash
-  git add core/scripts/bloom-wizard.sh
+  git add core/scripts/setup-wizard.sh
   git commit -m "feat(wizard): add PREFILL_SERVICES non-interactive path to step_services"
   ```
 
@@ -628,7 +628,7 @@ Note: `finalize` in `bloom-wizard.sh` calls `loginctl enable-linger` — this sc
     console.keyMap = "{vconsole}";
     networking.networkmanager.enable = true;
     # NOTE: users.users.pi is NOT defined here.
-    # bloom-shell.nix (included via nixosModules.bloom) owns the pi user definition.
+    # bloom-shell.nix (included via nixosModules.platform) owns the pi user definition.
     # Calamares users exec module sets the password via chpasswd (dont_create_user = true).
     system.stateVersion = "25.05";
   }}
@@ -658,7 +658,7 @@ Note: `finalize` in `bloom-wizard.sh` calls `loginctl enable-linger` — this sc
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
       piAgent = llm-agents-nix.packages.${system}.pi;
-      bloomApp = pkgs.callPackage (bloom + "/core/os/pkgs/bloom-app") { inherit piAgent; };
+      bloomApp = pkgs.callPackage (bloom + "/core/os/pkgs/app") { inherit piAgent; };
     in {
       nixosConfigurations.bloom = nixpkgs.lib.nixosSystem {
         inherit system;
@@ -666,8 +666,8 @@ Note: `finalize` in `bloom-wizard.sh` calls `loginctl enable-linger` — this sc
         modules = [
           ./hardware-configuration.nix
           ./host-config.nix
-          bloom.nixosModules.bloom
-          bloom.nixosModules.bloom-firstboot
+          bloom.nixosModules.platform
+          bloom.nixosModules.firstboot
         ];
       };
     };
@@ -1184,7 +1184,7 @@ Note: `finalize` in `bloom-wizard.sh` calls `loginctl enable-linger` — this sc
       "${modulesPath}/installer/cd-dvd/installation-cd-graphical-calamares-gnome.nix"
 
       # LXQt desktop configuration
-      ../modules/bloom-desktop.nix
+      ../modules/desktop.nix
     ];
 
     # Replace upstream calamares-nixos-extensions with our custom Bloom version
@@ -1203,7 +1203,7 @@ Note: `finalize` in `bloom-wizard.sh` calls `loginctl enable-linger` — this sc
 
     # ISO-specific settings
     isoImage.volumeID  = lib.mkDefault "BLOOM_INSTALLER";
-    image.fileName     = lib.mkDefault "bloom-os-installer.iso";
+    image.fileName     = lib.mkDefault "os-installer.iso";
 
     boot.kernelParams = [
       "copytoram"
@@ -1243,7 +1243,7 @@ Note: `finalize` in `bloom-wizard.sh` calls `loginctl enable-linger` — this sc
   ```bash
   nix eval .#packages.x86_64-linux --apply builtins.attrNames
   ```
-  Expected output includes `iso-gui` (plus `bloom-app`, `qcow2`, `raw`, `iso`).
+  Expected output includes `iso-gui` (plus `app`, `qcow2`, `raw`, `iso`).
 
 - [ ] **Step 4: Commit**
 
@@ -1272,7 +1272,7 @@ Note: `finalize` in `bloom-wizard.sh` calls `loginctl enable-linger` — this sc
   ```bash
   just iso-gui
   ```
-  This takes 30–60 min on first build (downloads nixpkgs). Expected: `result/iso/bloom-os-installer.iso` (or similar path shown in output).
+  This takes 30–60 min on first build (downloads nixpkgs). Expected: `result/iso/os-installer.iso` (or similar path shown in output).
 
 - [ ] **Step 3: Boot the ISO in QEMU**
 

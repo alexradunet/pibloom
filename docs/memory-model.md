@@ -1,12 +1,12 @@
-# Bloom Memory Model
+# Garden Memory Model
 
 > 📖 [Emoji Legend](LEGEND.md)
 
 Audience: maintainers changing memory tools, storage rules, or retrieval behavior.
 
-## 🌱 Why Bloom Uses Markdown Memory
+## 🌱 Why Garden Uses Markdown Memory
 
-Bloom memory is intentionally file-based.
+Garden memory is intentionally file-based.
 
 The goal is to keep memory:
 
@@ -17,14 +17,14 @@ The goal is to keep memory:
 
 ## 🗂️ How The Memory Layers Work
 
-Bloom has two persistent layers:
+Garden has two persistent layers:
 
-- `~/Bloom/Objects/` for durable long-term memory
-- `~/Bloom/Episodes/` for append-only episodic capture
+- `~/Garden/Objects/` for durable long-term memory
+- `~/Garden/Episodes/` for append-only episodic capture
 
 ### Working Memory
 
-Short-term continuity lives in `~/.pi/bloom-context.json` and normal Pi session compaction.
+Short-term continuity lives in `~/.pi/garden-context.json` and normal Pi session compaction.
 
 Use this for:
 
@@ -36,7 +36,7 @@ Do not treat working memory as canonical long-term truth.
 
 ### Episodic Memory
 
-Episodes are raw observations stored under `~/Bloom/Episodes/YYYY-MM-DD/*.md`.
+Episodes are raw observations stored under `~/Garden/Episodes/YYYY-MM-DD/*.md`.
 
 Use episodes for:
 
@@ -50,7 +50,7 @@ Episodes are cheap to write and should remain append-only.
 
 ### Durable Memory
 
-Durable objects live in `~/Bloom/Objects/*.md`.
+Durable objects live in `~/Garden/Objects/*.md`.
 
 Use durable objects for:
 

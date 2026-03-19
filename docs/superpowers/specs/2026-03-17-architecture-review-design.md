@@ -63,7 +63,7 @@ exposed to local network devices.
   "NetBird is not optional. It is the network security boundary for all Bloom services.
   Complete NetBird setup and verify `wt0` is active before exposing this machine to any
   network."
-- Add a preflight check in the first-boot wizard (`bloom-wizard.sh`) that warns if
+- Add a preflight check in the first-boot wizard (`setup-wizard.sh`) that warns if
   `netbird status` is not connected.
 - Document the threat model explicitly in a `docs/security-model.md`: what is protected
   inside the mesh, what is not, what happens if NetBird is absent.
@@ -153,7 +153,7 @@ crafted Matrix message):
 - `~/Bloom/Agents/` — loaded by the daemon on every restart (`agent-registry.ts`).
   Writing a new `AGENTS.md` creates a persistent agent with arbitrary instructions and
   proactive jobs that survives reboots.
-- `~/Bloom/guardrails.yaml` — user-override path, loaded first in `bloom-persona/actions.ts:37`.
+- `~/Bloom/guardrails.yaml` — user-override path, loaded first in `persona/actions.ts:37`.
   An empty or permissive file disables all shell command blocks.
 - `~/Bloom/Objects/` and `~/Bloom/Persona/` — injected into Pi's context at every session
   start via `before_agent_start`. Writing here achieves persistent system-prompt injection.

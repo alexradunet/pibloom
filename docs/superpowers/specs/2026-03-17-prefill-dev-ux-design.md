@@ -63,7 +63,7 @@ just vm
 
 ### What Is Not Changed
 
-- `bloom-wizard.sh` — no changes; it already has the `/mnt/host-bloom/prefill.env` fallback
+- `setup-wizard.sh` — no changes; it already has the `/mnt/host-bloom/prefill.env` fallback
 - `core/os/hosts/x86_64.nix` — no new virtfs mounts needed
 - `vm-run` — not modified (see reasoning above)
 

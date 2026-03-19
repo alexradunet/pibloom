@@ -11,7 +11,7 @@ let api: MockExtensionAPI;
 beforeEach(async () => {
 	temp = createTempGarden();
 	api = createMockExtensionAPI();
-	const mod = await import("../../core/pi/extensions/bloom-episodes/index.js");
+	const mod = await import("../../core/pi/extensions/episodes/index.js");
 	mod.default(api as never);
 });
 
@@ -27,7 +27,7 @@ function getExecute(name: string) {
 	) => Promise<{ content: Array<{ text: string }>; details: Record<string, unknown>; isError?: boolean }>;
 }
 
-describe("bloom-episodes", () => {
+describe("episodes", () => {
 	it("registers episodic tools", () => {
 		expect(api._registeredTools.map((tool) => tool.name)).toEqual([
 			"episode_create",
@@ -100,7 +100,7 @@ describe("bloom-episodes", () => {
 			"call-1",
 			{
 				title: "Recovery Procedure",
-				body: "Restart bloom-matrix.service, then verify the bridge recovers.",
+				body: "Restart garden-matrix.service, then verify the bridge recovers.",
 				kind: "resolution",
 				importance: "high",
 				tags: ["recovery", "procedure"],
@@ -113,7 +113,7 @@ describe("bloom-episodes", () => {
 			},
 			undefined,
 			undefined,
-			createMockExtensionContext({ cwd: "/tmp/pi-bloom" }),
+			createMockExtensionContext({ cwd: "/tmp/pi-garden" }),
 		);
 
 		expect(result.content[0].text).toContain("created episode/");
@@ -123,7 +123,7 @@ describe("bloom-episodes", () => {
 		expect(fs.existsSync(objectPath)).toBe(true);
 		const objectRaw = fs.readFileSync(objectPath, "utf-8");
 		expect(objectRaw).toContain("scope: project");
-		expect(objectRaw).toContain("scope_value: pi-bloom");
+		expect(objectRaw).toContain("scope_value: pi-garden");
 	});
 
 	it("proposes and applies conservative episode consolidation", async () => {
@@ -183,7 +183,7 @@ describe("bloom-episodes", () => {
 			},
 			undefined,
 			undefined,
-			createMockExtensionContext({ cwd: "/tmp/pi-bloom" }),
+			createMockExtensionContext({ cwd: "/tmp/pi-garden" }),
 		);
 
 		const objectPath = path.join(temp.gardenDir, "Objects", "ops-room-preference.md");

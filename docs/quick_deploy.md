@@ -1,14 +1,14 @@
-# Bloom OS Quick Deploy
+# Garden OS Quick Deploy
 
 > 📖 [Emoji Legend](LEGEND.md)
 
-Audience: operators and maintainers installing Bloom on NixOS or running test VMs.
+Audience: operators and maintainers installing Garden on NixOS or running test VMs.
 
 > 🛡️ **Security Note: NetBird is Mandatory**
 >
-> NetBird is the network security boundary for all Bloom services. The firewall
+> NetBird is the network security boundary for all Garden services. The firewall
 > trusts only the NetBird interface (`wt0`). Without NetBird running, all services
-> (Matrix, Bloom Home, dufs, code-server) are exposed to the local network.
+> (Matrix, Garden Home, dufs, code-server) are exposed to the local network.
 >
 > **Complete NetBird setup and verify `wt0` is active before exposing this
 > machine to any network.** See [security-model.md](security-model.md) for the
@@ -16,19 +16,19 @@ Audience: operators and maintainers installing Bloom on NixOS or running test VM
 
 ## 🌱 Installation Workflow
 
-Bloom is installed on top of a standard NixOS system:
+Garden is installed on top of a standard NixOS system:
 
 1. **Install NixOS** using the [official NixOS ISO](https://nixos.org/download.html)
    - Choose your preferred desktop environment during installation
    - Set up your user, hostname, and basic system configuration
    - Complete the standard NixOS install process
 
-2. **Switch to Bloom flake** after first boot:
+2. **Switch to Garden flake** after first boot:
    ```bash
-   sudo nixos-rebuild switch --flake github:alexradunet/piBloom#bloom-desktop
+   sudo nixos-rebuild switch --flake github:alexradunet/piBloom#desktop
    ```
 
-3. **Complete first-boot setup** — the `bloom-wizard.sh` runs automatically on first login
+3. **Complete first-boot setup** — the `setup-wizard.sh` runs automatically on first login
 
 ## 💻 Development: VM Testing
 
@@ -70,7 +70,7 @@ Default user: `pi` (no initial password; TTY auto-login prompts for password cre
 
 ## 🔄 OTA Updates
 
-The `bloom-update` timer checks for updates every 6 hours automatically. To apply manually:
+The `garden-update` timer checks for updates every 6 hours automatically. To apply manually:
 
 ```bash
 just update          # pull from remote flake and switch
@@ -80,7 +80,7 @@ just rollback        # revert to previous generation
 Or directly:
 
 ```bash
-sudo nixos-rebuild switch --flake github:alexradunet/piBloom#bloom-desktop
+sudo nixos-rebuild switch --flake github:alexradunet/piBloom#desktop
 ```
 
 ## 📚 Reference
@@ -109,7 +109,7 @@ just check-boot      # Thorough: boot test in VM
 
 After first login:
 
-1. Complete `bloom-wizard.sh` (prompted automatically on tty1)
+1. Complete `setup-wizard.sh` (prompted automatically on tty1)
 2. Let Pi resume the persona step
 3. Use `setup_status` if you need to inspect or resume Pi-side setup state
 

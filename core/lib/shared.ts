@@ -134,7 +134,7 @@ export function createLogger(component: string) {
 }
 
 /** Validate that a service/unit name matches `<prefix>-[a-z0-9-]+`. Returns error message or null. */
-export function guardServiceName(name: string, prefix = "bloom"): string | null {
+export function guardServiceName(name: string, prefix = "garden"): string | null {
 	const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	const pattern = new RegExp(`^${escapedPrefix}-[a-z0-9][a-z0-9-]*$`);
 	if (!pattern.test(name)) {

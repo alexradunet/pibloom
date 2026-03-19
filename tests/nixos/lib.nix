@@ -1,22 +1,22 @@
 # tests/nixos/lib.nix
-# Shared helpers for Bloom OS NixOS integration tests
+# Shared helpers for Garden OS NixOS integration tests
 
 { pkgs, lib }:
 
 {
-  # Common test configuration for Bloom OS nodes
-  mkBloomNode = { bloomModules, piAgent, bloomApp, extraConfig ? {} }: {
-    imports = bloomModules ++ [ extraConfig ];
-    _module.args = { inherit piAgent bloomApp; };
+  # Common test configuration for Garden OS nodes
+  mkGardenNode = { gardenModules, piAgent, appPackage, extraConfig ? {} }: {
+    imports = gardenModules ++ [ extraConfig ];
+    _module.args = { inherit piAgent appPackage; };
     
     # Common VM settings for tests
     virtualisation.diskSize = 20480;  # 20 GB
     virtualisation.memorySize = 4096;
     
-    # Standard Bloom configuration
+    # Standard Garden configuration
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
-    networking.hostName = lib.mkDefault "bloom";
+    networking.hostName = lib.mkDefault "garden";
     time.timeZone = "UTC";
     i18n.defaultLocale = "en_US.UTF-8";
     networking.networkmanager.enable = true;
@@ -29,28 +29,28 @@
     fileSystems."/boot" = { device = "/dev/vda1"; fsType = "vfat"; };
   };
 
-  # Standard Bloom modules list
-  bloomModules = [ 
-    ../../core/os/modules/bloom-app.nix
-    ../../core/os/modules/bloom-llm.nix
-    ../../core/os/modules/bloom-matrix.nix
-    ../../core/os/modules/bloom-network.nix
-    ../../core/os/modules/bloom-shell.nix
-    ../../core/os/modules/bloom-update.nix
+  # Standard Garden modules list
+  gardenModules = [
+    ../../core/os/modules/app.nix
+    ../../core/os/modules/llm.nix
+    ../../core/os/modules/matrix.nix
+    ../../core/os/modules/network.nix
+    ../../core/os/modules/shell.nix
+    ../../core/os/modules/update.nix
   ];
 
-  # Bloom modules without bloom-shell (for tests that define their own user)
-  bloomModulesNoShell = [ 
-    ../../core/os/modules/bloom-options.nix
-    ../../core/os/modules/bloom-app.nix
-    ../../core/os/modules/bloom-llm.nix
-    ../../core/os/modules/bloom-matrix.nix
-    ../../core/os/modules/bloom-network.nix
-    ../../core/os/modules/bloom-update.nix
+  # Garden modules without garden-shell (for tests that define their own user)
+  gardenModulesNoShell = [
+    ../../core/os/modules/options.nix
+    ../../core/os/modules/app.nix
+    ../../core/os/modules/llm.nix
+    ../../core/os/modules/matrix.nix
+    ../../core/os/modules/network.nix
+    ../../core/os/modules/update.nix
   ];
 
   # Test utilities package
-  testUtils = pkgs.writeShellScriptBin "bloom-test-utils" ''
+  testUtils = pkgs.writeShellScriptBin "garden-test-utils" ''
     # Wait for a systemd unit to be active on the user bus
     wait_for_user_unit() {
       local user="$1"

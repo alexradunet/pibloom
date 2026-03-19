@@ -2,11 +2,11 @@
 
 > 📖 [Emoji Legend](LEGEND.md)
 
-Audience: operators validating a fresh Bloom image on real hardware or a realistic VM.
+Audience: operators validating a fresh Garden image on real hardware or a realistic VM.
 
 ## 🌱 Why This Checklist Exists
 
-This is the acceptance checklist for first real Bloom runs.
+This is the acceptance checklist for first real Garden runs.
 
 Use it to verify that setup, messaging, and recovery paths still match the shipped documentation.
 
@@ -32,14 +32,14 @@ Pi resumes cleanly after reboot and does not require manual cleanup of partial w
 ### Core Runtime
 
 1. Confirm `pi-daemon.service` is active in the user session.
-2. Confirm `bloom-matrix.service` is active.
-3. Verify the `#general:bloom` room exists and Pi replies to a message.
+2. Confirm `garden-matrix.service` is active.
+3. Verify the `#general:garden` room exists and Pi replies to a message.
 4. If agent overlays exist, confirm malformed overlays are skipped without killing the daemon.
 
 ### Recovery Cases
 
 1. Interrupt the wizard during Matrix setup, log back in, and confirm setup resumes instead of re-registering from scratch.
-2. Corrupt `~/Bloom/guardrails.yaml` and confirm Bloom falls back to the packaged defaults instead of crashing the session startup path.
+2. Corrupt `~/Garden/guardrails.yaml` and confirm Garden falls back to the packaged defaults instead of crashing the session startup path.
 
 ## 📚 Reference
 

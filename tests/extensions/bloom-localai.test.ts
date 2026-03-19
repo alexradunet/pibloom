@@ -6,11 +6,11 @@ let api: MockExtensionAPI;
 beforeEach(async () => {
 	vi.resetModules();
 	api = createMockExtensionAPI();
-	const mod = await import("../../core/pi/extensions/bloom-localai/index.js");
+	const mod = await import("../../core/pi/extensions/localai/index.js");
 	mod.default(api as never);
 });
 
-describe("bloom-localai registration", () => {
+describe("localai registration", () => {
 	it("calls registerProvider with localai", () => {
 		expect(api.registerProvider).toHaveBeenCalledOnce();
 		expect(api.registerProvider).toHaveBeenCalledWith(

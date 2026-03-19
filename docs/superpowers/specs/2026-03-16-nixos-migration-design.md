@@ -22,7 +22,7 @@ Fedora bootc treats the OS as an OCI container image. NixOS treats it as a purel
 
 - Target architecture: `x86_64-linux` (aarch64 slot reserved, not implemented in this spec)
 - No backwards compatibility with Fedora bootc artifacts
-- All current features must be preserved: Matrix homeserver, Pi daemon, NetBird, autologin, SSH, update timer, update-status.json protocol consumed by bloom-app
+- All current features must be preserved: Matrix homeserver, Pi daemon, NetBird, autologin, SSH, update timer, update-status.json protocol consumed by app
 - As Nix-native as possible — no imperative workarounds baked into the image
 
 ---
@@ -39,13 +39,13 @@ core/os/
   hosts/
     x86_64.nix                   # x86_64 host: imports modules, sets machine options
   modules/
-    bloom-app.nix                # Bloom TS app install, symlinks, Pi settings, pi-daemon user service
+    app.nix                # Bloom TS app install, symlinks, Pi settings, pi-daemon user service
     bloom-matrix.nix             # Continuwuity Matrix homeserver service
     bloom-network.nix            # NetBird, SSH, firewall, NetworkManager, packages
     bloom-shell.nix              # pi user, autologin, sudoers, skel, branding
     bloom-update.nix             # nixos-rebuild OTA timer + Cachix substituter
   pkgs/
-    bloom-app/default.nix        # buildNpmPackage derivation for the Bloom TS monorepo
+    app/default.nix        # buildNpmPackage derivation for the Bloom TS monorepo
     # continuwuity: pkgs.matrix-continuwuity from nixpkgs (confirmed in 25.11/unstable)
     # pi-coding-agent: sourced from llm-agents-nix flake input
   disk/
@@ -77,7 +77,7 @@ inputs = {
 
 outputs = { nixpkgs, nixos-generators, disko, llm-agents-nix, self, ... }: {
   packages.x86_64-linux = {
-    bloom-app = ...;   # buildNpmPackage derivation (only custom derivation)
+    app = ...;   # buildNpmPackage derivation (only custom derivation)
     # continuwuity: pkgs.matrix-continuwuity from nixpkgs
     # pi: inputs.llm-agents-nix.packages.x86_64-linux.pi
     qcow2        = nixos-generators.nixosGenerate { format = "qcow2";       ... };
@@ -101,9 +101,9 @@ outputs = { nixpkgs, nixos-generators, disko, llm-agents-nix, self, ... }: {
 
 ## 5. Package Derivations
 
-One custom derivation (`bloom-app`). Everything else sourced from nixpkgs or upstream flake inputs.
+One custom derivation (`app`). Everything else sourced from nixpkgs or upstream flake inputs.
 
-### 5.1 `pkgs/bloom-app/default.nix` — `buildNpmPackage`
+### 5.1 `pkgs/app/default.nix` — `buildNpmPackage`
 
 Packages the Bloom TypeScript monorepo:
 
@@ -130,9 +130,9 @@ Confirmed present in nixpkgs 25.11/unstable (`matrix-continuwuity`). No custom d
 
 ## 6. NixOS Modules
 
-### 6.1 `bloom-app.nix`
+### 6.1 `app.nix`
 
-- Installs `bloom-app` derivation; app lives at `/usr/local/share/bloom` via `systemd.tmpfiles.rules` symlink from the Nix store path
+- Installs `app` derivation; app lives at `/usr/local/share/bloom` via `systemd.tmpfiles.rules` symlink from the Nix store path
 - Adds `pi-coding-agent`, `biome`, `typescript` to `environment.systemPackages`
 - Writes `/etc/bloom/appservices/` directory via `systemd.tmpfiles.rules`
 - Writes Pi `settings.json` via `environment.etc."local/share/bloom/.pi/agent/settings.json"`
@@ -208,7 +208,7 @@ No upstream NixOS service module exists for continuwuity — service declared ma
 
 #### 6.5.1 update-status.json protocol
 
-The current `bloom-update-check.sh` writes `~/.bloom/update-status.json` with fields consumed by the bloom-app daemon. This protocol is preserved with NixOS-native fields:
+The current `bloom-update-check.sh` writes `~/.bloom/update-status.json` with fields consumed by the app daemon. This protocol is preserved with NixOS-native fields:
 
 ```json
 {
@@ -225,7 +225,7 @@ The `bloom-update` service script:
 3. If `available`, runs `nixos-rebuild switch` and updates `generation`
 4. Drops the `staged` field (no staging in NixOS — apply is atomic)
 
-**Note:** The bloom-app TypeScript code that reads `update-status.json` must be updated to handle the removal of the `staged` field and the addition of `generation`. This is a coordinated change — bloom-app TypeScript and `bloom-update.nix` are updated together.
+**Note:** The app TypeScript code that reads `update-status.json` must be updated to handle the removal of the `staged` field and the addition of `generation`. This is a coordinated change — app TypeScript and `bloom-update.nix` are updated together.
 
 ---
 
@@ -234,7 +234,7 @@ The `bloom-update` service script:
 ```nix
 { pkgs, lib, ... }: {
   imports = [
-    ../modules/bloom-app.nix
+    ../modules/app.nix
     ../modules/bloom-matrix.nix
     ../modules/bloom-network.nix
     ../modules/bloom-shell.nix
@@ -296,7 +296,7 @@ ovmf_vars := "/usr/share/edk2/ovmf/OVMF_VARS.fd"
 
 # Build Bloom app derivation
 build:
-    nix build {{ flake }}#bloom-app
+    nix build {{ flake }}#app
 
 # Generate disk images
 qcow2: nix build {{ flake }}#qcow2
@@ -426,5 +426,5 @@ Manual rollback: `just rollback` or select previous generation in systemd-boot m
 
 These changes to the TypeScript layer must accompany the NixOS migration:
 
-1. **bloom-app update-status.json consumer**: Remove `staged` field handling, add `generation` field handling. The update mechanism no longer stages — it applies atomically.
+1. **app update-status.json consumer**: Remove `staged` field handling, add `generation` field handling. The update mechanism no longer stages — it applies atomically.
 2. **update-check TypeScript code**: The `bootc upgrade --check` and `bootc status` calls in `bloom-update-check.sh` are replaced by the Nix-native service. Any TypeScript code that shells out to `bootc` must be removed or replaced.

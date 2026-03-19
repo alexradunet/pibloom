@@ -1,15 +1,15 @@
-# Bloom OS — build, test, and develop
+# Garden OS — build, test, and develop
 
 system    := "x86_64-linux"
 flake     := "."
-host      := "bloom-desktop"
+host      := "desktop"
 output    := "result"
 ovmf      := "/usr/share/edk2/ovmf/OVMF_CODE.fd"
 ovmf_vars := "/usr/share/edk2/ovmf/OVMF_VARS.fd"
 
-# Build Bloom TypeScript app derivation only
+# Build Garden TypeScript app derivation only
 build:
-    nix build {{ flake }}#bloom-app
+    nix build {{ flake }}#app
 
 # Apply current flake config to the running system (local dev iteration)
 switch:
@@ -48,7 +48,7 @@ vm-daemon: qcow2
 # SSH into the running VM
 vm-ssh:
     #!/usr/bin/env bash
-    if ! pgrep -f "[q]emu-system-x86_64.*bloom-vm-disk" > /dev/null; then
+    if ! pgrep -f "[q]emu-system-x86_64.*garden-vm-disk" > /dev/null; then
         echo "No VM running. Start with: just vm-daemon"
         exit 1
     fi
@@ -57,12 +57,12 @@ vm-ssh:
 
 # Show VM log (for vm-daemon)
 vm-logs:
-    tail -f /tmp/bloom-vm.log
+    tail -f /tmp/garden-vm.log
 
 # Stop the running VM (graceful if possible, otherwise kill)
 vm-stop:
     #!/usr/bin/env bash
-    pid=$(pgrep -f "[q]emu-system-x86_64.*bloom-vm-disk" || true)
+    pid=$(pgrep -f "[q]emu-system-x86_64.*garden-vm-disk" || true)
     if [ -z "$pid" ]; then
         echo "No VM running"
         exit 0
@@ -82,7 +82,7 @@ vm-kill: vm-stop
 # Remove build results and VM disk
 clean:
     rm -f result result-*
-    rm -f /tmp/bloom-vm-disk.qcow2 /tmp/bloom-ovmf-vars.fd
+    rm -f /tmp/garden-vm-disk.qcow2 /tmp/garden-ovmf-vars.fd
 
 # Install host dependencies (Fedora build host; NixOS devs use nix develop)
 deps:
@@ -91,13 +91,13 @@ deps:
 # Fast config check: build the NixOS closure locally.
 # Catches locale errors, bad module references, and evaluation failures
 check-config:
-    nix build {{ flake }}#checks.{{ system }}.bloom-config --no-link
+    nix build {{ flake }}#checks.{{ system }}.config --no-link
 
 # Full VM boot test: boots the installed system in a NixOS test VM.
 # Slower than check-config but verifies runtime behaviour (services, users).
 # Requires KVM. Takes 20-40 min on first run.
 check-boot:
-    nix build {{ flake }}#checks.{{ system }}.bloom-boot --no-link
+    nix build {{ flake }}#checks.{{ system }}.boot --no-link
 
 # Lint Nix files
 lint:

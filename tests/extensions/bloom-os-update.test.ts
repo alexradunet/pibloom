@@ -10,22 +10,22 @@ vi.mock("../../core/lib/exec.js", () => ({
 	run: (...args: unknown[]) => runMock(...args),
 }));
 
-describe("bloom-os nixos_update handler", () => {
+describe("os nixos_update handler", () => {
 	let repoDir: string;
-	const originalRepoDir = process.env.BLOOM_REPO_DIR;
+	const originalRepoDir = process.env.GARDEN_REPO_DIR;
 
 	beforeEach(() => {
 		vi.resetModules();
 		runMock.mockReset();
-		repoDir = fs.mkdtempSync(path.join(os.tmpdir(), "bloom-switch-"));
-		process.env.BLOOM_REPO_DIR = repoDir;
+		repoDir = fs.mkdtempSync(path.join(os.tmpdir(), "garden-switch-"));
+		process.env.GARDEN_REPO_DIR = repoDir;
 	});
 
 	afterEach(() => {
 		if (originalRepoDir === undefined) {
-			delete process.env.BLOOM_REPO_DIR;
+			delete process.env.GARDEN_REPO_DIR;
 		} else {
-			process.env.BLOOM_REPO_DIR = originalRepoDir;
+			process.env.GARDEN_REPO_DIR = originalRepoDir;
 		}
 		fs.rmSync(repoDir, { recursive: true, force: true });
 	});
@@ -33,14 +33,14 @@ describe("bloom-os nixos_update handler", () => {
 	it("applies the remote flake by default", async () => {
 		runMock.mockResolvedValueOnce({ stdout: "ok\n", stderr: "", exitCode: 0 });
 
-		const { handleNixosUpdate } = await import("../../core/pi/extensions/bloom-os/actions.js");
+		const { handleNixosUpdate } = await import("../../core/pi/extensions/os/actions.js");
 		const ctx = createMockExtensionContext({ hasUI: true });
 		const result = await handleNixosUpdate("apply", "remote", undefined, ctx as never);
 
 		expect(ctx.ui.confirm).toHaveBeenCalled();
 		expect(runMock).toHaveBeenCalledWith(
 			"sudo",
-			["nixos-rebuild", "switch", "--flake", "github:alexradunet/piBloom#bloom-x86_64"],
+			["nixos-rebuild", "switch", "--flake", "github:alexradunet/piBloom#garden-x86_64"],
 			undefined,
 		);
 		expect(result.isError).toBe(false);
@@ -50,13 +50,13 @@ describe("bloom-os nixos_update handler", () => {
 	it("applies the reviewed local clone when source=local", async () => {
 		runMock.mockResolvedValueOnce({ stdout: "ok\n", stderr: "", exitCode: 0 });
 
-		const { handleNixosUpdate } = await import("../../core/pi/extensions/bloom-os/actions.js");
+		const { handleNixosUpdate } = await import("../../core/pi/extensions/os/actions.js");
 		const ctx = createMockExtensionContext({ hasUI: true });
 		const result = await handleNixosUpdate("apply", "local", undefined, ctx as never);
 
 		expect(runMock).toHaveBeenCalledWith(
 			"sudo",
-			["nixos-rebuild", "switch", "--flake", `${repoDir}#bloom-x86_64`],
+			["nixos-rebuild", "switch", "--flake", `${repoDir}#garden-x86_64`],
 			undefined,
 		);
 		expect(result.isError).toBe(false);
@@ -66,19 +66,19 @@ describe("bloom-os nixos_update handler", () => {
 	it("fails early if the local repo is missing", async () => {
 		fs.rmSync(repoDir, { recursive: true, force: true });
 
-		const { handleNixosUpdate } = await import("../../core/pi/extensions/bloom-os/actions.js");
+		const { handleNixosUpdate } = await import("../../core/pi/extensions/os/actions.js");
 		const ctx = createMockExtensionContext({ hasUI: true });
 		const result = await handleNixosUpdate("apply", "local", undefined, ctx as never);
 
 		expect(runMock).not.toHaveBeenCalled();
 		expect(result.isError).toBe(true);
-		expect(result.content[0].text).toContain("Local Bloom repo not found");
+		expect(result.content[0].text).toContain("Local Garden repo not found");
 	});
 
 	it("returns error result when remote apply exits non-zero", async () => {
 		runMock.mockResolvedValueOnce({ stdout: "", stderr: "build failed", exitCode: 1 });
 
-		const { handleNixosUpdate } = await import("../../core/pi/extensions/bloom-os/actions.js");
+		const { handleNixosUpdate } = await import("../../core/pi/extensions/os/actions.js");
 		const ctx = createMockExtensionContext({ hasUI: true });
 		const result = await handleNixosUpdate("apply", "remote", undefined, ctx as never);
 
@@ -89,7 +89,7 @@ describe("bloom-os nixos_update handler", () => {
 	it("schedules a reboot after confirmation", async () => {
 		runMock.mockResolvedValueOnce({ stdout: "", stderr: "", exitCode: 0 });
 
-		const { handleScheduleReboot } = await import("../../core/pi/extensions/bloom-os/actions.js");
+		const { handleScheduleReboot } = await import("../../core/pi/extensions/os/actions.js");
 		const ctx = createMockExtensionContext({ hasUI: true });
 		const result = await handleScheduleReboot(5, undefined, ctx as never);
 
@@ -101,7 +101,7 @@ describe("bloom-os nixos_update handler", () => {
 	it("returns error when schedule reboot command fails", async () => {
 		runMock.mockResolvedValueOnce({ stdout: "", stderr: "permission denied", exitCode: 1 });
 
-		const { handleScheduleReboot } = await import("../../core/pi/extensions/bloom-os/actions.js");
+		const { handleScheduleReboot } = await import("../../core/pi/extensions/os/actions.js");
 		const ctx = createMockExtensionContext({ hasUI: true });
 		const result = await handleScheduleReboot(1, undefined, ctx as never);
 

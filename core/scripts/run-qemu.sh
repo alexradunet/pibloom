@@ -1,24 +1,27 @@
 #!/usr/bin/env bash
-# run-qemu.sh — shared QEMU setup and launch helper for justfile vm recipes.
-# Dev-only tool: NOT installed into the NixOS system.
+# run-qemu.sh — shared VM launcher for justfile vm recipes.
+# Uses the generated NixOS VM runner in result/bin/run-nixos-vm.
 #
 # Usage:
 #   run-qemu.sh --mode headless|gui|daemon [--skip-setup]
 set -euo pipefail
 
 DISK="/tmp/nixpi-vm-disk.qcow2"
-VARS="/tmp/nixpi-ovmf-vars.fd"
-OVMF_CODE="/usr/share/edk2/ovmf/OVMF_CODE.fd"
-OVMF_VARS_SRC="/usr/share/edk2/ovmf/OVMF_VARS.fd"
 OUTPUT="result"
+RUNNER="${OUTPUT}/bin/run-nixos-vm"
+LOG_FILE="/tmp/nixpi-vm.log"
 
 mode=""
-skip_setup=0
+
+host_port_busy() {
+    local port="$1"
+    ss -ltn "( sport = :${port} )" 2>/dev/null | tail -n +2 | grep -q .
+}
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --mode) mode="$2"; shift 2 ;;
-        --skip-setup) skip_setup=1; shift ;;
+        --skip-setup) shift ;;
         *) echo "Unknown flag: $1" >&2; exit 1 ;;
     esac
 done
@@ -28,76 +31,70 @@ if [[ -z "$mode" ]]; then
     exit 1
 fi
 
-if [[ "$skip_setup" -eq 0 ]]; then
-    rm -f "$VARS"
-    qcow2_src=$(find -L "$OUTPUT" -name "*.qcow2" -type f | head -1)
-    if [[ -z "$qcow2_src" ]]; then
-        echo "Error: No qcow2 found in $OUTPUT. Run 'just qcow2' first." >&2
-        exit 1
-    fi
-    echo "Found qcow2: $qcow2_src"
-    echo "Copying disk image to $DISK..."
-    cp -f "$qcow2_src" "$DISK"
-    chmod 644 "$DISK"
-    qemu-img resize "$DISK" 24G
-    cp "$OVMF_VARS_SRC" "$VARS"
-    if [[ -f "core/scripts/prefill.env" ]]; then
-        mkdir -p "$HOME/.nixpi"
-        cp "core/scripts/prefill.env" "$HOME/.nixpi/prefill.env"
-        echo "Staged core/scripts/prefill.env -> ~/.nixpi/prefill.env"
-    fi
-else
-    if [[ ! -f "$DISK" ]]; then
-        echo "Error: No VM disk found at $DISK. Run 'just vm' first." >&2
-        exit 1
-    fi
-    # Only copy fresh OVMF vars if they don't exist yet, to preserve any
-    # UEFI state (boot order etc.) written by a previous VM run.
-    if [[ ! -f "$VARS" ]]; then
-        cp "$OVMF_VARS_SRC" "$VARS"
-    fi
+if [[ ! -x "$RUNNER" ]]; then
+    echo "Error: ${RUNNER} not found. Run 'just qcow2' first." >&2
+    exit 1
 fi
 
-QEMU_COMMON=(
-    qemu-system-x86_64
-    -machine q35
-    -cpu host
-    -enable-kvm
-    -m 4096
-    -smp 2
-    -boot order=c,menu=on
-    -drive "if=pflash,format=raw,readonly=on,file=${OVMF_CODE}"
-    -drive "if=pflash,format=raw,file=${VARS}"
-    -drive "file=${DISK},format=qcow2,if=virtio,cache=writeback"
-    -netdev "user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::5000-:5000,hostfwd=tcp::8080-:8080,hostfwd=tcp::8081-:8081,hostfwd=tcp::8888-:80"
-    -device virtio-net-pci,netdev=net0
-    -virtfs "local,path=$HOME/.nixpi,mount_tag=host-nixpi,security_model=none,readonly=on"
+if [[ -f "core/scripts/prefill.env" ]]; then
+    mkdir -p "$HOME/.nixpi"
+    cp "core/scripts/prefill.env" "$HOME/.nixpi/prefill.env"
+    echo "Staged core/scripts/prefill.env -> ~/.nixpi/prefill.env"
+fi
+
+export NIX_DISK_IMAGE="$DISK"
+export QEMU_OPTS='-m 4096 -smp 2'
+
+forward_specs=(
+    "2222:22:required"
+    "5000:5000:optional"
+    "8080:8080:optional"
+    "8081:8081:optional"
+    "8443:8443:optional"
+    "8888:80:optional"
 )
+
+net_opts=()
+for spec in "${forward_specs[@]}"; do
+    IFS=":" read -r host_port guest_port policy <<<"${spec}"
+    if host_port_busy "${host_port}"; then
+        if [[ "${policy}" == "required" ]]; then
+            echo "Error: required host port ${host_port} is already in use." >&2
+            exit 1
+        fi
+        echo "Skipping busy host port ${host_port} -> guest ${guest_port}"
+        continue
+    fi
+    net_opts+=("hostfwd=tcp::${host_port}-:${guest_port}")
+done
+
+export QEMU_NET_OPTS
+QEMU_NET_OPTS="$(IFS=,; echo "${net_opts[*]}")"
 
 case "$mode" in
     headless)
         echo "Starting VM... Press Ctrl+A X to exit"
-        "${QEMU_COMMON[@]}" -nographic -serial mon:stdio
-        echo ""
-        echo "Hint: Use 'just vm-daemon' to run VM in background, then 'just vm-ssh' to connect"
+        export QEMU_OPTS="${QEMU_OPTS} -nographic -serial mon:stdio"
+        exec "$RUNNER"
         ;;
     gui)
         echo "Starting VM with GUI... Close window to exit"
-        "${QEMU_COMMON[@]}" -vga virtio -display gtk
+        export QEMU_OPTS="${QEMU_OPTS} -vga virtio -display gtk"
+        exec "$RUNNER"
         ;;
     daemon)
-        if pgrep -f "[q]emu-system-x86_64.*nixpi-vm-disk" > /dev/null; then
+        if pgrep -f "[r]un-nixos-vm|[q]emu-system-x86_64.*${DISK}" > /dev/null; then
             echo "VM already running. Use 'just vm-ssh' to connect or 'just vm-stop' to stop."
             exit 1
         fi
         echo "Starting VM in background..."
-        echo "  - Log file: /tmp/nixpi-vm.log"
+        echo "  - Log file: ${LOG_FILE}"
         echo "  - Connect:  just vm-ssh"
         echo "  - Stop:     just vm-stop"
-        nohup "${QEMU_COMMON[@]}" -nographic -serial file:/tmp/nixpi-vm.log \
-            > /dev/null 2>&1 &
+        export QEMU_OPTS="${QEMU_OPTS} -nographic"
+        nohup "$RUNNER" >"${LOG_FILE}" 2>&1 &
         echo "Waiting for VM to boot..."
-        for i in {1..30}; do
+        for i in {1..60}; do
             if nc -z localhost 2222 2>/dev/null; then
                 echo "VM is ready! SSH available on port 2222"
                 exit 0

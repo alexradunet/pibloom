@@ -47,10 +47,6 @@ export QEMU_OPTS='-m 4096 -smp 2'
 
 forward_specs=(
     "2222:22:required"
-    "5000:5000:optional"
-    "8080:8080:optional"
-    "8081:8081:optional"
-    "8443:8443:optional"
 )
 
 net_opts=()

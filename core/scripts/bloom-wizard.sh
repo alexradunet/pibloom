@@ -49,16 +49,6 @@ source "$BLOOM_LIB"
 step_done() { [[ -f "$WIZARD_STATE/$1" ]]; }
 
 
-default_model_for_provider() {
-	case "$1" in
-		anthropic) echo "claude-sonnet-4-6" ;;
-		openai) echo "codex-mini-latest" ;;
-		google) echo "gemini-2.5-pro" ;;
-		openrouter) echo "auto" ;;
-		*) return 1 ;;
-	esac
-}
-
 write_pi_settings_defaults() {
 	local provider="$1" model="$2"
 	local settings_path="$PI_DIR/agent/settings.json"
@@ -473,5 +463,4 @@ main() {
 	finalize
 }
 
-# Allow sourcing for function reuse without executing main
-[[ -z "${BLOOM_FIRSTBOOT_SOURCING:-}" ]] && main
+main

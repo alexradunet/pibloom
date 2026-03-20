@@ -34,6 +34,9 @@ class NixpiCalamaresTests(unittest.TestCase):
         self.assertEqual(artifacts["flake_install_ref"], "/mnt/target/etc/nixos#pi-box")
         self.assertIn('nix.settings.experimental-features = [ "nix-command" "flakes" ];', artifacts["nixpi_install_module"])
         self.assertIn('nixosConfigurations."pi-box"', artifacts["nixpi_flake"])
+        self.assertNotIn('github:alexradunet/NixPI', artifacts["nixpi_flake"])
+        self.assertIn('piAgent = pkgs.callPackage ./nixpi/core/os/pkgs/pi {};', artifacts["nixpi_flake"])
+        self.assertIn('./nixpi/core/os/modules/firstboot.nix', artifacts["nixpi_flake"])
         self.assertNotIn("./nixpi-install.nix", artifacts["host_cfg"])
 
     def test_write_artifacts_copies_tree_and_writes_expected_files(self):

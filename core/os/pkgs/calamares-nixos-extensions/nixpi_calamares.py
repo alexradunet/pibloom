@@ -31,22 +31,28 @@ NIXPI_FLAKE_TEMPLATE = """{
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpi.url = "github:alexradunet/NixPI";
   };
 
-  outputs = { nixpkgs, nixpi, ... }:
+  outputs = { nixpkgs, ... }:
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
-      piAgent = pkgs.callPackage "${nixpi}/core/os/pkgs/pi" {};
-      appPackage = pkgs.callPackage "${nixpi}/core/os/pkgs/app" { inherit piAgent; };
+      piAgent = pkgs.callPackage ./nixpi/core/os/pkgs/pi {};
+      appPackage = pkgs.callPackage ./nixpi/core/os/pkgs/app { inherit piAgent; };
     in {
       nixosConfigurations."@@hostname@@" = nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = { inherit piAgent appPackage; };
         modules = [
-          nixpi.nixosModules.nixpi
-          nixpi.nixosModules.firstboot
+          ./nixpi/core/os/modules/options.nix
+          ./nixpi/core/os/modules/app.nix
+          ./nixpi/core/os/modules/broker.nix
+          ./nixpi/core/os/modules/llm.nix
+          ./nixpi/core/os/modules/matrix.nix
+          ./nixpi/core/os/modules/network.nix
+          ./nixpi/core/os/modules/shell.nix
+          ./nixpi/core/os/modules/update.nix
+          ./nixpi/core/os/modules/firstboot.nix
           ./nixpi-host.nix
         ];
       };

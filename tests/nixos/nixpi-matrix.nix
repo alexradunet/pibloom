@@ -1,5 +1,5 @@
 # tests/nixos/nixpi-matrix.nix
-# Test that the nixPI Matrix homeserver (Conduwuity) starts and accepts connections
+# Test that the nixPI Matrix homeserver (Synapse) starts and accepts connections
 
 { pkgs, lib, nixpiModules, nixpiModulesNoShell, piAgent, appPackage, mkNixpiNode, mkTestFilesystems }:
 

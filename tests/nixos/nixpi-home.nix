@@ -65,12 +65,12 @@ pkgs.testers.runNixOSTest {
     nixpi.wait_for_unit("nixpi-firstboot.service", timeout=120)
     nixpi.wait_until_succeeds("test -f " + home + "/.nixpi/.setup-complete", timeout=120)
 
-    nixpi.wait_until_succeeds("test -f /var/lib/nixpi/services/home/index.html", timeout=120)
-    nixpi.wait_until_succeeds("test -f /var/lib/nixpi/services/chat/config.json", timeout=120)
-    nixpi.succeed("grep -q 'nixPI Home' /var/lib/nixpi/services/home/index.html")
-    nixpi.succeed("grep -q 'nixPI Chat' /var/lib/nixpi/services/home/index.html")
-    nixpi.succeed("grep -q 'nixPI Files' /var/lib/nixpi/services/home/index.html")
-    nixpi.succeed("grep -q 'nixPI Code' /var/lib/nixpi/services/home/index.html")
+    nixpi.wait_until_succeeds("test -f /etc/system-services/nixpi-home/webroot/index.html", timeout=120)
+    nixpi.wait_until_succeeds("test -f /etc/system-services/nixpi-chat/config.json", timeout=120)
+    nixpi.succeed("grep -q 'nixPI Home' /etc/system-services/nixpi-home/webroot/index.html")
+    nixpi.succeed("grep -q 'nixPI Chat' /etc/system-services/nixpi-home/webroot/index.html")
+    nixpi.succeed("grep -q 'nixPI Files' /etc/system-services/nixpi-home/webroot/index.html")
+    nixpi.succeed("grep -q 'nixPI Code' /etc/system-services/nixpi-home/webroot/index.html")
 
     nixpi.wait_until_succeeds("curl -sf http://127.0.0.1:8080 | grep -q 'nixPI Home'", timeout=60)
     nixpi.wait_until_succeeds("curl -sf http://127.0.0.1:8080 | grep -q '8081'", timeout=60)

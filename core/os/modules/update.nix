@@ -2,7 +2,6 @@
 { pkgs, lib, config, ... }:
 
 let
-  mkService = import ../lib/mk-service.nix { inherit lib; };
   resolved = import ../lib/resolve-primary-user.nix { inherit lib config; };
   primaryUser = resolved.resolvedPrimaryUser;
   primaryHome = resolved.resolvedPrimaryHome;
@@ -22,19 +21,13 @@ in
     }
   ];
 
-  systemd.services.nixpi-update = mkService {
-    description = "nixPI NixOS update";
-    serviceType = "oneshot";
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    execStart = pkgs.writeShellScript "nixpi-update" (builtins.readFile ../../../core/scripts/system-update.sh);
-    environment = [
-        "PATH=/run/current-system/sw/bin:${lib.makeBinPath (with pkgs; [ nix git jq ])}"
-        "NIXPI_PRIMARY_USER=${primaryUser}"
-        "NIXPI_PRIMARY_HOME=${primaryHome}"
-      ];
-    hardening = false;
-    serviceConfig.RemainAfterExit = false;
+  system.services.nixpi-update = {
+    imports = [ ../services/nixpi-update.nix ];
+    nixpi-update = {
+      command = pkgs.writeShellScript "nixpi-update" (builtins.readFile ../../../core/scripts/system-update.sh);
+      inherit primaryUser primaryHome;
+      path = "/run/current-system/sw/bin:${lib.makeBinPath (with pkgs; [ nix git jq ])}";
+    };
   };
 
   systemd.timers.nixpi-update = {

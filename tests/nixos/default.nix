@@ -18,11 +18,11 @@ let
   # Import shared helpers
   testLib = import ./lib.nix { inherit pkgs lib; };
   
-  inherit (testLib) nixpiModules nixpiModulesNoShell mkNixpiNode mkTestFilesystems;
+  inherit (testLib) nixpiModules nixpiModulesNoShell mkNixpiNode mkTestFilesystems matrixTestClient;
   
   # Test function with common dependencies
   mkTest = testFile: import testFile {
-    inherit pkgs lib nixpiModules nixpiModulesNoShell piAgent appPackage mkNixpiNode mkTestFilesystems self;
+    inherit pkgs lib nixpiModules nixpiModulesNoShell piAgent appPackage mkNixpiNode mkTestFilesystems matrixTestClient self;
   };
 in
 {
@@ -52,4 +52,10 @@ in
 
   # Existing-user install flow test
   nixpi-install-flow = mkTest ./nixpi-install-flow.nix;
+
+  # Modular service/configData regression test
+  nixpi-modular-services = mkTest ./nixpi-modular-services.nix;
+
+  # Multi-node Matrix daemon transport test
+  nixpi-matrix-bridge = mkTest ./nixpi-matrix-bridge.nix;
 }

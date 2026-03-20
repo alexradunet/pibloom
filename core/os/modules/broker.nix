@@ -1,7 +1,6 @@
 { config, lib, pkgs, ... }:
 
 let
-  mkService = import ../lib/mk-service.nix { inherit lib; };
   resolved = import ../lib/resolve-primary-user.nix { inherit lib config; };
   primaryUser = resolved.resolvedPrimaryUser;
   serviceUser = config.nixpi.serviceUser;
@@ -245,19 +244,11 @@ in
       "d ${brokerStateDir} 0770 root ${serviceUser} -"
     ];
 
-    systemd.services.nixpi-broker = mkService {
-      description = "nixPI privileged operations broker";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
-      execStart = "${brokerCtl}/bin/nixpi-brokerctl server";
-      hardening = false;
-      serviceConfig = {
-        User = "root";
-        Group = "root";
-        RuntimeDirectory = "nixpi-broker";
-        RuntimeDirectoryMode = "0770";
-        UMask = "0007";
-        Environment = [ "NIXPI_BROKER_CONFIG=${brokerConfig}" ];
+    system.services.nixpi-broker = {
+      imports = [ ../services/nixpi-broker.nix ];
+      nixpi-broker = {
+        command = "${brokerCtl}/bin/nixpi-brokerctl";
+        inherit brokerConfig serviceUser stateDir;
       };
     };
 

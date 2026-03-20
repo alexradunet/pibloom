@@ -2,7 +2,6 @@
 { pkgs, lib, config, appPackage, piAgent, ... }:
 
 let
-  mkService = import ../lib/mk-service.nix { inherit lib; };
   resolved = import ../lib/resolve-primary-user.nix { inherit lib config; };
   primaryUser = resolved.resolvedPrimaryUser;
   primaryHome = resolved.resolvedPrimaryHome;
@@ -67,32 +66,12 @@ in
     chown -h ${serviceUser}:${serviceUser} ${serviceHome}/.pi
   '';
 
-  systemd.services.pi-daemon = mkService {
-    description = "nixPI Pi Daemon (Matrix room agent)";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    unitConfig.ConditionPathExists = "${primaryHome}/.nixpi/.setup-complete";
-    execStart = "${pkgs.nodejs}/bin/node /usr/local/share/nixpi/dist/core/daemon/index.js";
-    workingDirectory = "${primaryHome}/nixPI";
-    environment = [
-      "HOME=${serviceHome}"
-      "NIXPI_DIR=${primaryHome}/nixPI"
-      "NIXPI_STATE_DIR=${stateDir}"
-      "NIXPI_PI_DIR=${agentStateDir}"
-      "NIXPI_DAEMON_STATE_DIR=${stateDir}/pi-daemon"
-      "NIXPI_PRIMARY_USER=${primaryUser}"
-      "NIXPI_PRIMARY_HOME=${primaryHome}"
-      "PATH=${lib.makeBinPath [ piAgent pkgs.nodejs ]}:/run/current-system/sw/bin"
-    ];
-    restart = "on-failure";
-    restartSec = 15;
-    protectHome = false;
-    readWritePaths = [ "${stateDir}" "${primaryHome}/nixPI" ];
-    serviceConfig = {
-      User = serviceUser;
-      Group = serviceUser;
-      UMask = "0007";
+  system.services.pi-daemon = {
+    imports = [ (lib.modules.importApply ../services/pi-daemon.nix { inherit pkgs; }) ];
+    nixpi-pi-daemon = {
+      package = appPackage;
+      inherit primaryHome primaryUser serviceHome stateDir agentStateDir serviceUser;
+      path = [ piAgent pkgs.nodejs ];
     };
   };
 }

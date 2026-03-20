@@ -8,13 +8,15 @@ This directory contains NixOS integration tests for the nixPI platform. These te
 |------|-------------|----------|-------|
 | `config` | Fast build test of the default installed system closure | ~1 min | None |
 | `boot` | Basic VM boot and service startup test | ~3 min | 1 |
-| `nixpi-matrix` | Matrix homeserver (Conduwuity) functionality | ~3 min | 1 |
+| `nixpi-matrix` | Matrix homeserver (Synapse) functionality | ~3 min | 1 |
 | `nixpi-firstboot` | First-boot preparation and unattended prefill automation | ~5 min | 1 |
 | `localai` | LocalAI inference service with test model | ~10 min | 1 |
 | `nixpi-network` | Network connectivity and SSH between nodes | ~5 min | 2 |
 | `nixpi-daemon` | Pi daemon Matrix agent connection | ~5 min | 2 |
 | `nixpi-e2e` | Full end-to-end integration test | ~10 min | 2 |
 | `nixpi-home` | nixPI Home plus built-in system web services | ~5 min | 1 |
+| `nixpi-modular-services` | Modular-service `configData` and unit wiring for built-ins | ~5 min | 1 |
+| `nixpi-matrix-bridge` | Remote Matrix homeserver plus nixPI daemon transport wiring | ~8 min | 3 |
 
 ## Running Tests
 
@@ -48,6 +50,8 @@ tests/nixos/
 ├── nixpi-daemon.nix     # Pi daemon test
 ├── nixpi-e2e.nix        # End-to-end integration test
 ├── nixpi-home.nix       # nixPI Home and built-in system services test
+├── nixpi-modular-services.nix # system.services/configData regression
+├── nixpi-matrix-bridge.nix    # multi-node Matrix daemon transport test
 └── README.md            # This file
 ```
 

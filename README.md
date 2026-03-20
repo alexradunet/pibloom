@@ -1,6 +1,6 @@
 # nixPI
 
-> 📖 [Emoji Legend](docs/LEGEND.md)
+> Pi-native AI companion OS on NixOS
 
 Very opinionated NixOS build personally for me and my workflows and how I imagine a PC will be in the future. My goal is to leverage the current AI Agents Technology to build an AI Firsts OS designed specifically for one end user to act like a personal life assistant and knowledge management system.
 
@@ -53,16 +53,28 @@ sudo NIXPI_PRIMARY_USER=alex nixos-rebuild switch --impure --flake .#desktop-att
 setup-wizard.sh
 ```
 
-See [docs/quick_deploy.md](docs/quick_deploy.md) for detailed instructions.
+See the [documentation site](https://alexradunet.github.io/nixPI) for detailed instructions.
 
-## 🧭 Start Here
+## 🧭 Documentation
 
-Choose the entry point that matches your job:
+Full documentation is available at **[alexradunet.github.io/nixPI](https://alexradunet.github.io/nixPI)**
 
-- **Installing nixPI**: [docs/quick_deploy.md](docs/quick_deploy.md), [docs/first-boot-setup.md](docs/first-boot-setup.md)
-- **Maintainers**: [ARCHITECTURE.md](ARCHITECTURE.md), [AGENTS.md](AGENTS.md), and [docs/README.md](docs/README.md)
-- **Operators**: [docs/first-boot-setup.md](docs/first-boot-setup.md), [docs/quick_deploy.md](docs/quick_deploy.md), and [docs/live-testing-checklist.md](docs/live-testing-checklist.md)
-- **Built-in service behavior**: [docs/service-architecture.md](docs/service-architecture.md)
+Or browse by topic:
+
+| Your Goal | Start Here |
+|-----------|------------|
+| Installing nixPI | [Quick Deploy](https://alexradunet.github.io/nixPI/operations/quick-deploy) |
+| First-time setup | [First Boot Setup](https://alexradunet.github.io/nixPI/operations/first-boot-setup) |
+| Understanding the system | [Architecture Overview](https://alexradunet.github.io/nixPI/architecture/) |
+| Reading the code | [Codebase Guide](https://alexradunet.github.io/nixPI/codebase/) |
+| Operating a running system | [Operations](https://alexradunet.github.io/nixPI/operations/) |
+| Deep technical reference | [Reference](https://alexradunet.github.io/nixPI/reference/) |
+
+To run the docs locally:
+
+```bash
+npm run docs:dev
+```
 
 ## 💻 Default Install
 
@@ -84,7 +96,7 @@ Installed by default:
 | `core/daemon/` | Matrix room daemon and multi-agent runtime |
 | `core/pi/extensions/` | Pi-facing nixPI extensions shipped in the default runtime |
 | `tests/` | unit, integration, daemon, and extension tests |
-| `docs/` | live project documentation |
+| `docs/` | live project documentation (VitePress site) |
 
 ## 🧩 Capability Model
 
@@ -101,20 +113,19 @@ Built-in service surface is part of the base NixOS system:
 - `Web Chat` on `:8081`
 - `Matrix` on `:6167`
 
-## 📚 Documentation Map
+## 📚 Documentation Structure
 
-| Topic | Why | How | Reference |
-|------|-----|-----|-----------|
-| Docs hub | [docs/README.md](docs/README.md) | [docs/README.md](docs/README.md) | [docs/README.md](docs/README.md) |
-| Architecture | [ARCHITECTURE.md](ARCHITECTURE.md) | [ARCHITECTURE.md](ARCHITECTURE.md) | [AGENTS.md](AGENTS.md) |
-| Daemon | [docs/daemon-architecture.md](docs/daemon-architecture.md) | [docs/daemon-architecture.md](docs/daemon-architecture.md) | [AGENTS.md](AGENTS.md) |
-| Built-in services | [docs/service-architecture.md](docs/service-architecture.md) | [docs/service-architecture.md](docs/service-architecture.md) | [AGENTS.md](AGENTS.md) |
-| Setup / deploy | [docs/first-boot-setup.md](docs/first-boot-setup.md) | [docs/quick_deploy.md](docs/quick_deploy.md) | [docs/live-testing-checklist.md](docs/live-testing-checklist.md) |
-| Memory | [docs/memory-model.md](docs/memory-model.md) | [docs/memory-model.md](docs/memory-model.md) | [AGENTS.md](AGENTS.md) |
-| Contribution workflow | [docs/fleet-pr-workflow.md](docs/fleet-pr-workflow.md) | [docs/fleet-pr-workflow.md](docs/fleet-pr-workflow.md) | [AGENTS.md](AGENTS.md) |
+| Section | Contains |
+|---------|----------|
+| [Overview](https://alexradunet.github.io/nixPI/) | Project summary and entry points |
+| [Getting Started](https://alexradunet.github.io/nixPI/getting-started/) | New maintainer orientation |
+| [Architecture](https://alexradunet.github.io/nixPI/architecture/) | Subsystem boundaries and runtime flows |
+| [Codebase](https://alexradunet.github.io/nixPI/codebase/) | File-by-file responsibility guide |
+| [Operations](https://alexradunet.github.io/nixPI/operations/) | Deploy, setup, and run procedures |
+| [Reference](https://alexradunet.github.io/nixPI/reference/) | Deep technical documentation |
+| [Contributing](https://alexradunet.github.io/nixPI/contributing/) | Maintainer guidelines |
 
 ## 🔗 Related
 
-- [docs/README.md](docs/README.md)
-- [ARCHITECTURE.md](ARCHITECTURE.md)
-- [AGENTS.md](AGENTS.md)
+- [Documentation Site](https://alexradunet.github.io/nixPI)
+- [GitHub Repository](https://github.com/alexradunet/nixPI)

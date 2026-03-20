@@ -1,20 +1,45 @@
 # nixPI Documentation
 
-> 📖 [Emoji Legend](LEGEND.md)
+> 📖 [Emoji Legend](reference/emoji-legend)
 
-This page is the documentation hub for nixPI.
+This documentation has been migrated to a VitePress site.
 
-## 📚 Reference Map
+## 🚀 New Documentation Site
 
-| Topic | Audience | Primary question | Main doc |
-|------|----------|------------------|----------|
-| Platform overview | both | what is nixPI | [../README.md](../README.md) |
-| Architecture and repo rules | maintainers | why the system is shaped this way | [../ARCHITECTURE.md](../ARCHITECTURE.md) |
-| Tools, hooks, paths, and packaged capabilities | maintainers | what exists right now | [../AGENTS.md](../AGENTS.md) |
-| Daemon model | maintainers | how room runtime works | [daemon-architecture.md](daemon-architecture.md) |
-| Built-in service surface | both | what web and user services are always present | [service-architecture.md](service-architecture.md) |
-| First boot and persona completion | operators | how setup works on a new device | [first-boot-setup.md](first-boot-setup.md) |
-| Build, image, and VM flows | operators | how to build and boot nixPI | [quick_deploy.md](quick_deploy.md) |
-| Fresh-device validation | operators | how to verify a release candidate | [live-testing-checklist.md](live-testing-checklist.md) |
-| Memory model | maintainers | how nixPI stores and promotes memory | [memory-model.md](memory-model.md) |
-| Contribution workflow | maintainers | how nixPI prepares local repo changes for human review | [fleet-pr-workflow.md](fleet-pr-workflow.md) |
+**URL**: [alexradunet.github.io/nixPI](https://alexradunet.github.io/nixPI)
+
+## 📚 Quick Links
+
+| Topic | New Location |
+|-------|--------------|
+| Overview | [docs/](https://alexradunet.github.io/nixPI/) |
+| Quick Deploy | [operations/quick-deploy](https://alexradunet.github.io/nixPI/operations/quick-deploy) |
+| First Boot Setup | [operations/first-boot-setup](https://alexradunet.github.io/nixPI/operations/first-boot-setup) |
+| Architecture | [architecture/](https://alexradunet.github.io/nixPI/architecture/) |
+| Daemon Architecture | [reference/daemon-architecture](https://alexradunet.github.io/nixPI/reference/daemon-architecture) |
+| Service Architecture | [reference/service-architecture](https://alexradunet.github.io/nixPI/reference/service-architecture) |
+| Memory Model | [reference/memory-model](https://alexradunet.github.io/nixPI/reference/memory-model) |
+| Security Model | [reference/security-model](https://alexradunet.github.io/nixPI/reference/security-model) |
+| Codebase Guide | [codebase/](https://alexradunet.github.io/nixPI/codebase/) |
+
+## 💻 Running Docs Locally
+
+```bash
+npm run docs:dev
+```
+
+## 📝 Legacy Documentation
+
+The following old documentation files are preserved for reference but are no longer maintained:
+
+- `daemon-architecture.md` → [reference/daemon-architecture](https://alexradunet.github.io/nixPI/reference/daemon-architecture)
+- `first-boot-setup.md` → [operations/first-boot-setup](https://alexradunet.github.io/nixPI/operations/first-boot-setup)
+- `fleet-pr-workflow.md` → [reference/fleet-workflow](https://alexradunet.github.io/nixPI/reference/fleet-workflow)
+- `live-testing-checklist.md` → [operations/live-testing](https://alexradunet.github.io/nixPI/operations/live-testing)
+- `matrix-infrastructure.md` → [reference/infrastructure](https://alexradunet.github.io/nixPI/reference/infrastructure)
+- `memory-model.md` → [reference/memory-model](https://alexradunet.github.io/nixPI/reference/memory-model)
+- `netbird-infrastructure.md` → [reference/infrastructure](https://alexradunet.github.io/nixPI/reference/infrastructure)
+- `quick_deploy.md` → [operations/quick-deploy](https://alexradunet.github.io/nixPI/operations/quick-deploy)
+- `security-model.md` → [reference/security-model](https://alexradunet.github.io/nixPI/reference/security-model)
+- `service-architecture.md` → [reference/service-architecture](https://alexradunet.github.io/nixPI/reference/service-architecture)
+- `supply-chain.md` → [reference/supply-chain](https://alexradunet.github.io/nixPI/reference/supply-chain)

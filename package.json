@@ -40,6 +40,7 @@
 		"@types/js-yaml": "^4.0.9",
 		"@vitest/coverage-v8": "^4.0.18",
 		"typescript": "^5.7.0",
+		"vitepress": "^1.6.4",
 		"vitest": "^4.0.18"
 	},
 	"scripts": {
@@ -52,6 +53,9 @@
 		"test:coverage": "vitest run --coverage",
 		"build": "rm -rf dist && tsc --build",
 		"check": "biome check .",
-		"check:fix": "biome check --write ."
+		"check:fix": "biome check --write .",
+		"docs:dev": "vitepress dev docs",
+		"docs:build": "vitepress build docs",
+		"docs:preview": "vitepress preview docs"
 	}
 }

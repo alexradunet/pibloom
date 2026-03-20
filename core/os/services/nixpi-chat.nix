@@ -29,6 +29,8 @@ in
   config = {
     process.argv = [
       "${pkgs.nginx}/bin/nginx"
+      "-e"
+      "stderr"
       "-c"
       config.configData."nginx.conf".path
     ];

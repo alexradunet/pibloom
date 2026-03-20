@@ -53,14 +53,14 @@ in
           <h2>Local access</h2>
           <ul>
             <li>Home: <a href="http://localhost:${toString config.nixpi-home.port}">http://localhost:${toString config.nixpi-home.port}</a></li>
-            <li>Chat: <a href="http://localhost:${toString config.nixpi-home.chatPort}">http://localhost:${toString config.nixpi-home.chatPort}</a></li>
+            <li>nixPI Chat: <a href="http://localhost:${toString config.nixpi-home.chatPort}">http://localhost:${toString config.nixpi-home.chatPort}</a></li>
             <li>Matrix: <a href="http://localhost:${toString config.nixpi-home.matrixPort}">http://localhost:${toString config.nixpi-home.matrixPort}</a></li>
           </ul>
           <h2>Remote access</h2>
           <p>Use your NetBird hostname or mesh IP on interface ${config.nixpi-home.trustedInterface} with these ports.</p>
           <ul>
             <li>Home: ${toString config.nixpi-home.port}</li>
-            <li>Chat: ${toString config.nixpi-home.chatPort}</li>
+            <li>nixPI Chat: ${toString config.nixpi-home.chatPort}</li>
             <li>Matrix: ${toString config.nixpi-home.matrixPort}</li>
           </ul>
         </body>

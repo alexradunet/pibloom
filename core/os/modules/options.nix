@@ -4,6 +4,10 @@
 
 let
   absolutePath = lib.types.pathWith { absolute = true; };
+  externalAbsolutePath = lib.types.pathWith {
+    absolute = true;
+    inStore = false;
+  };
   mkPortOption = default: description:
     lib.mkOption {
       type = lib.types.port;
@@ -163,7 +167,7 @@ in
       allowedUnits = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [
-          "pi-daemon.service"
+          "nixpi-daemon.service"
           "netbird.service"
           "nixpi-home.service"
           "nixpi-chat.service"

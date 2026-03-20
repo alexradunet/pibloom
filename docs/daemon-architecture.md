@@ -6,7 +6,7 @@ Audience: maintainers changing daemon behavior or diagnosing room-runtime issues
 
 ## 🌱 Why The Daemon Exists
 
-`pi-daemon.service` is nixPI's always-on room runtime.
+`nixpi-daemon.service` is nixPI's always-on room runtime.
 
 It exists to:
 

@@ -178,7 +178,7 @@ EOF
     nixpi.succeed("chown agent:agent /var/lib/nixpi/agent/matrix-agents/host.json")
     nixpi.succeed("chmod 600 /var/lib/nixpi/agent/matrix-agents/host.json")
 
-    nixpi.wait_for_unit("pi-daemon.service", timeout=120)
+    nixpi.wait_for_unit("nixpi-daemon.service", timeout=120)
 
     homeserver.wait_until_succeeds(
         "curl -sf http://127.0.0.1:6167/_matrix/client/v3/rooms/"
@@ -199,7 +199,7 @@ EOF
         + "'hello from integration test' -"
     )
 
-    nixpi.succeed("journalctl -u pi-daemon.service --no-pager | grep -q 'pi-daemon running'")
+    nixpi.succeed("journalctl -u nixpi-daemon.service --no-pager | grep -q 'starting nixpi-daemon'")
     homeserver.succeed(
         "curl -sf 'http://127.0.0.1:6167/_matrix/client/v3/rooms/"
         + room_id_enc

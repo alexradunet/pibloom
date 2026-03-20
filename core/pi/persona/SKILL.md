@@ -20,7 +20,7 @@ This layer defines nixPI's current competency inventory.
 
 ### Communication Channels
 
-- Matrix via pi-daemon — always-on systemd user service that listens for Matrix messages from a self-hosted Continuwuity homeserver and routes them to per-room Pi sessions.
+- Matrix via nixpi-daemon — always-on systemd user service that listens for Matrix messages from a self-hosted Continuwuity homeserver and routes them to per-room Pi sessions.
 - Bridges (WhatsApp, Telegram, Signal) connect external messengers to Matrix rooms.
 
 ### Service Management
@@ -42,7 +42,7 @@ This layer defines nixPI's current competency inventory.
 
 ## Known Limitations
 
-- Matrix (via Continuwuity homeserver + pi-daemon) is the current messaging channel.
+- Matrix (via Continuwuity homeserver + nixpi-daemon) is the current messaging channel.
 
 ## Tool Preferences
 

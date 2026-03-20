@@ -39,7 +39,7 @@ pkgs.testers.runNixOSTest {
       users.groups.${username} = {};
     };
 
-    # Agent node running pi-daemon
+    # Agent node running nixpi-daemon
     agent = { ... }: let
       username = "pi";
       homeDir = "/home/${username}";
@@ -159,26 +159,26 @@ pkgs.testers.runNixOSTest {
     )
     agent.succeed("mkdir -p " + home + "/nixPI && chown -R " + username + ":" + username + " " + home + "/nixPI")
 
-    agent.succeed("systemctl start pi-daemon.service || true")
+    agent.succeed("systemctl start nixpi-daemon.service || true")
 
-    agent.succeed("test -f /etc/systemd/system/pi-daemon.service")
+    agent.succeed("test -f /etc/systemd/system/nixpi-daemon.service")
     agent.succeed("test -d /usr/local/share/nixpi")
     agent.succeed("test -f /usr/local/share/nixpi/dist/core/daemon/index.js")
 
     time.sleep(5)
-    daemon_status = agent.succeed("systemctl is-active pi-daemon.service || true").strip()
-    journal = agent.succeed("journalctl -u pi-daemon.service -n 20 --no-pager || true")
-    print("Pi-daemon status: " + daemon_status)
-    print("Pi-daemon journal: " + journal)
-    assert daemon_status in ["active", "activating"], "Unexpected pi-daemon status: " + daemon_status
+    daemon_status = agent.succeed("systemctl is-active nixpi-daemon.service || true").strip()
+    journal = agent.succeed("journalctl -u nixpi-daemon.service -n 20 --no-pager || true")
+    print("nixpi-daemon status: " + daemon_status)
+    print("nixpi-daemon journal: " + journal)
+    assert daemon_status in ["active", "activating"], "Unexpected nixpi-daemon status: " + daemon_status
 
-    service_unit = agent.succeed("systemctl cat pi-daemon.service")
-    exec_start = agent.succeed("systemctl show -p ExecStart --value pi-daemon.service")
-    environment = agent.succeed("systemctl show -p Environment --value pi-daemon.service")
-    working_directory = agent.succeed("systemctl show -p WorkingDirectory --value pi-daemon.service").strip()
+    service_unit = agent.succeed("systemctl cat nixpi-daemon.service")
+    exec_start = agent.succeed("systemctl show -p ExecStart --value nixpi-daemon.service")
+    environment = agent.succeed("systemctl show -p Environment --value nixpi-daemon.service")
+    working_directory = agent.succeed("systemctl show -p WorkingDirectory --value nixpi-daemon.service").strip()
     assert "node" in exec_start and "/usr/local/share/nixpi/dist/core/daemon/index.js" in exec_start, \
-        "Unexpected ExecStart in pi-daemon service: " + exec_start
-    assert "NIXPI_DIR=/home/pi/nixPI" in environment, "Expected NIXPI_DIR environment in pi-daemon service"
+        "Unexpected ExecStart in nixpi-daemon service: " + exec_start
+    assert "NIXPI_DIR=/home/pi/nixPI" in environment, "Expected NIXPI_DIR environment in nixpi-daemon service"
     assert working_directory == "/home/pi/nixPI", "Unexpected WorkingDirectory: " + working_directory
     agent.succeed("ls -la /usr/local/share/nixpi/")
 

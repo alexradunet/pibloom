@@ -31,7 +31,7 @@ in
     "d ${stateDir} 0770 ${serviceUser} ${serviceUser} -"
     "d ${serviceHome} 0770 ${serviceUser} ${serviceUser} -"
     "d ${agentStateDir} 0770 ${serviceUser} ${serviceUser} -"
-    "d ${stateDir}/pi-daemon 0770 ${serviceUser} ${serviceUser} -"
+    "d ${stateDir}/nixpi-daemon 0770 ${serviceUser} ${serviceUser} -"
     "d ${stateDir}/services 0770 ${serviceUser} ${serviceUser} -"
     "d ${stateDir}/services/home 0770 ${serviceUser} ${serviceUser} -"
     "d ${stateDir}/services/chat 0770 ${serviceUser} ${serviceUser} -"
@@ -54,9 +54,9 @@ in
     chown -h ${serviceUser}:${serviceUser} ${serviceHome}/.pi
   '';
 
-  system.services.pi-daemon = {
-    imports = [ (lib.modules.importApply ../services/pi-daemon.nix { inherit pkgs; }) ];
-    nixpi-pi-daemon = {
+  system.services.nixpi-daemon = {
+    imports = [ (lib.modules.importApply ../services/nixpi-daemon.nix { inherit pkgs; }) ];
+    nixpi-daemon = {
       package = appPackage;
       inherit primaryHome primaryUser serviceHome stateDir agentStateDir serviceUser;
       path = [ piAgent pkgs.nodejs ];

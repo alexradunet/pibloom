@@ -192,8 +192,8 @@ firstboot_finalize() {
         echo "nixpi-firstboot: interactive setup remains pending"
         return 0
     fi
-    run_bootstrap_command nixpi-bootstrap-brokerctl systemd enable-now pi-daemon.service || \
-        echo "nixpi-firstboot: pi-daemon enable failed (non-fatal)" >&2
+    run_bootstrap_command nixpi-bootstrap-brokerctl systemd enable-now nixpi-daemon.service || \
+        echo "nixpi-firstboot: nixpi-daemon enable failed (non-fatal)" >&2
     touch "$SETUP_COMPLETE"
     echo "nixpi-firstboot: setup complete"
 }

@@ -34,8 +34,8 @@ let
         mkdir -p "$(dirname "$_pi_settings")"
         if [ -f "$_pi_settings" ] && command -v jq >/dev/null 2>&1; then
           if ! jq -e '.packages // [] | index("'"$_nixpi_pkg"'")' "$_pi_settings" >/dev/null 2>&1; then
-            jq '.packages = ((.packages // []) + ["'"$_nixpi_pkg"'"] | unique)' "$_pi_settings" > "${_pi_settings}.tmp" && \
-              mv "${_pi_settings}.tmp" "$_pi_settings"
+            jq '.packages = ((.packages // []) + ["'"$_nixpi_pkg"'"] | unique)' "$_pi_settings" > "''${_pi_settings}.tmp" && \
+              mv "''${_pi_settings}.tmp" "$_pi_settings"
           fi
         elif [ ! -f "$_pi_settings" ]; then
           cp "$_nixpi_pkg/.pi/settings.json" "$_pi_settings"
@@ -52,7 +52,7 @@ in
   assertions = [
     {
       assertion = primaryUser != "";
-      message = "nixpi.primaryUser must resolve to a real human user. Set `NIXPI_PRIMARY_USER` environment variable or set `nixpi.primaryUser` explicitly.;
+      message = "nixpi.primaryUser must resolve to a real human user. Set `NIXPI_PRIMARY_USER` environment variable or set `nixpi.primaryUser` explicitly.";
     }
     {
       assertion = primaryHome != "";

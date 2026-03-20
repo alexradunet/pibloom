@@ -207,7 +207,7 @@ describe("handleAgentCreate", () => {
 		expect(raw).toContain("username: planner");
 		expect(raw).not.toContain("Optional proactive jobs example");
 		expect(raw).not.toContain("HEARTBEAT_OK");
-		expect(result.content[0].text).toContain("pi-daemon restarted");
+		expect(result.content[0].text).toContain("nixpi-daemon restarted");
 		expect(result.details).toEqual(expect.objectContaining({ daemonRestarted: true }));
 		expect(restartDaemon).toHaveBeenCalledTimes(1);
 	});
@@ -247,7 +247,7 @@ describe("handleAgentCreate", () => {
 		);
 	});
 
-	it("returns success with a warning when pi-daemon restart fails", async () => {
+	it("returns success with a warning when nixpi-daemon restart fails", async () => {
 		const result = await handleAgentCreate(
 			nixpiDir,
 			{

@@ -132,7 +132,7 @@ describe("setup startup gating", () => {
 });
 
 describe("setup_advance daemon reconciliation", () => {
-	it("enables pi-daemon when setup completes", async () => {
+	it("enables nixpi-daemon when setup completes", async () => {
 		mkdirSync(path.join(os.homedir(), ".nixpi"), { recursive: true });
 		writeFileSync(path.join(os.homedir(), ".nixpi", ".setup-complete"), "done", "utf-8");
 
@@ -148,8 +148,8 @@ describe("setup_advance daemon reconciliation", () => {
 
 		const result = await tool.execute("tool-call", { step: "persona", result: "completed" });
 
-		expect(runMock).toHaveBeenCalledWith("nixpi-brokerctl", ["systemd", "enable-now", "pi-daemon.service"]);
-		expect(result.content[0]?.text).toContain("`pi-daemon.service` was enabled and started.");
+		expect(runMock).toHaveBeenCalledWith("nixpi-brokerctl", ["systemd", "enable-now", "nixpi-daemon.service"]);
+		expect(result.content[0]?.text).toContain("`nixpi-daemon.service` was enabled and started.");
 	});
 });
 

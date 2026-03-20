@@ -397,8 +397,8 @@ step_bootc_switch() {
 
 finalize() {
 	touch "$SETUP_COMPLETE"
-    if ! root_command nixpi-bootstrap-brokerctl systemd enable-now pi-daemon.service; then
-        echo "warning: failed to enable pi-daemon.service during wizard finalization" >&2
+    if ! root_command nixpi-bootstrap-brokerctl systemd enable-now nixpi-daemon.service; then
+        echo "warning: failed to enable nixpi-daemon.service during wizard finalization" >&2
     fi
 
 	local mesh_ip

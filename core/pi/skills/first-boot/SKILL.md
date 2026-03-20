@@ -37,7 +37,7 @@ You are paired with the `setup` extension which tracks state in `~/.nixpi/setup-
 Before asking persona questions, give a short orientation that covers:
 - nixPI keeps durable state in `~/nixPI/` and favors inspectable files over hidden databases
 - nixPI can propose changes to its own persona/workflows through tracked evolutions; it does not silently rewrite itself
-- Matrix is the native messaging backbone, and `pi-daemon` keeps Pi available in Matrix rooms even after logout
+- Matrix is the native messaging backbone, and `nixpi-daemon` keeps Pi available in Matrix rooms even after logout
 - If valid overlays exist in `~/nixPI/Agents/*/AGENTS.md`, nixPI can run multi-agent rooms with one Pi session per `(room, agent)`
 
 Ask one question, wait for answer, update the file, ask next question. Files to update:

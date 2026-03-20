@@ -21,14 +21,14 @@ import { startWithRetry } from "./lifecycle.js";
 import { createMultiAgentRuntime } from "./multi-agent-runtime.js";
 import { loadSchedulerState, saveSchedulerState } from "./proactive.js";
 
-const log = createLogger("pi-daemon");
+const log = createLogger("nixpi-daemon");
 
 const config = loadDaemonConfig();
 const ROOM_SESSION_BASE = join(getPiDir(), "sessions", "nixpi-rooms");
 const SCHEDULER_STATE_PATH = join(getDaemonStateDir(), "scheduler-state.json");
 
 async function main(): Promise<void> {
-	log.info("starting pi-daemon", { idleTimeoutMs: config.idleTimeoutMs });
+	log.info("starting nixpi-daemon", { idleTimeoutMs: config.idleTimeoutMs });
 
 	const credentials = loadPrimaryMatrixCredentials();
 	const { agents: configuredAgents, errors } = loadAgentDefinitionsResult();
@@ -101,7 +101,7 @@ async function runDaemon(
 	await startWithRetry(
 		async () => {
 			await runtime.start();
-			log.info("pi-daemon running", {
+			log.info("nixpi-daemon running", {
 				mode: "unified",
 				agents: agents.map((agent) => agent.id),
 				proactiveJobs: runtime.proactiveJobs,

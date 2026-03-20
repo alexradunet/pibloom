@@ -75,7 +75,7 @@ export function getUpdateStatusPath(): string {
 
 /** Resolve the dedicated daemon state directory. */
 export function getDaemonStateDir(): string {
-	return process.env.NIXPI_DAEMON_STATE_DIR ?? path.join(getPiDir(), "pi-daemon");
+	return process.env.NIXPI_DAEMON_STATE_DIR ?? path.join(getPiDir(), "nixpi-daemon");
 }
 
 /** Path to the local repo clone used for local-only proposal workflows. */

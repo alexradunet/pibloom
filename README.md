@@ -71,7 +71,7 @@ Installed by default:
 - `sshd.service`
 - `netbird.service`
 - `matrix-synapse.service`
-- `pi-daemon.service` after setup once AI auth and defaults are ready
+- `nixpi-daemon.service` after setup once AI auth and defaults are ready
 - `nixpi-home.service`
 - `nixpi-chat.service`
 

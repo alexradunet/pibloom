@@ -80,7 +80,7 @@ During that Pi-side first conversation, Pi should also orient the user to the pl
 
 - nixPI keeps durable state in `~/nixPI/` using inspectable files
 - nixPI can propose persona or workflow changes through tracked evolutions instead of silently changing itself
-- Matrix is the native messaging surface, with `pi-daemon.service` keeping Pi active in rooms outside the local terminal session as a system service running under the `agent` account
+- Matrix is the native messaging surface, with `nixpi-daemon.service` keeping Pi active in rooms outside the local terminal session as a system service running under the `agent` account
 - multi-agent rooms are optional and activate when valid overlays exist in `~/nixPI/Agents/*/AGENTS.md`
 
 ### Recovery
@@ -121,7 +121,7 @@ Current behavior:
 - after the wizard completes, opening Pi causes it to check `setup_status()` before normal conversation
 - if any Pi-side setup step is still pending, Pi starts that setup flow first and defers unrelated conversation until the step is completed or skipped
 - after all Pi-side setup steps are done, Pi resumes normal conversation and the `persona` step remains marked complete
-- the wizard enables `pi-daemon.service` as part of setup completion
+- the wizard enables `nixpi-daemon.service` as part of setup completion
 - the wizard refreshes Matrix policy so public registration is no longer left
   open after setup
 - the wizard refreshes the built-in service configs so NetBird peers have a stable page listing service URLs and shareable host info

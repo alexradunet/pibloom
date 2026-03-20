@@ -19,7 +19,7 @@ Use these procedures when diagnosing and recovering from common system issues. A
    - Database corruption: check `/var/lib/continuwuity/` for issues
    - Port conflict: verify nothing else is on port 6167
 5. If Pi is not responding to messages:
-   - Check Pi agent is running and `pi-daemon.service` is active
+   - Check Pi agent is running and `nixpi-daemon.service` is active
    - Verify Pi's Matrix credentials at `/var/lib/nixpi/agent/matrix-credentials.json`
 
 ## OS Update Failure

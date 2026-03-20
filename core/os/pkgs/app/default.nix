@@ -20,7 +20,8 @@ buildNpmPackage {
           || lib.hasSuffix ".iso" rel);
   };
 
-  npmDepsHash = "sha256-aTXzcbwrLPMeIxDReEHzRloze2iEfNWNia8QKtTUXz8=";
+  npmDepsHash = "sha256-fBTRWnnRHvZd9UiLe+b3/Aiau9BIRkoWK4DaN7QFeEM=";
+  npmDepsFetcherVersion = 2;
 
   buildPhase = ''
     runHook preBuild

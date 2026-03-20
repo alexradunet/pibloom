@@ -50,7 +50,7 @@ in
       "network-online.target"
       "matrix-synapse.service"
       "netbird.service"
-      "pi-daemon.service"
+      "nixpi-daemon.service"
       "nixpi-home.service"
       "nixpi-chat.service"
     ];
@@ -58,7 +58,7 @@ in
       "network-online.target"
       "matrix-synapse.service"
       "netbird.service"
-      "pi-daemon.service"
+      "nixpi-daemon.service"
       "nixpi-home.service"
       "nixpi-chat.service"
     ];

@@ -197,8 +197,8 @@ export async function handleAgentCreate(workspaceDir: string, params: AgentCreat
 	const restartDaemon = deps.restartDaemon ?? restartPiDaemon;
 	const restartResult = await restartDaemon();
 	const restartNote = restartResult.ok
-		? "\npi-daemon restarted to load the new agent."
-		: `\nWarning: agent was created, but pi-daemon could not be restarted automatically.\n${truncate(restartResult.error)}`;
+		? "\nnixpi-daemon restarted to load the new agent."
+		: `\nWarning: agent was created, but nixpi-daemon could not be restarted automatically.\n${truncate(restartResult.error)}`;
 
 	return {
 		content: [
@@ -242,7 +242,7 @@ function validateAgentCreateTarget(
 }
 
 async function restartPiDaemon(): Promise<{ ok: true } | { ok: false; error: string }> {
-	const result = await run("nixpi-brokerctl", ["systemd", "restart", "pi-daemon.service"]);
+	const result = await run("nixpi-brokerctl", ["systemd", "restart", "nixpi-daemon.service"]);
 	return result.exitCode === 0 ? { ok: true } : { ok: false, error: result.stderr || result.stdout };
 }
 

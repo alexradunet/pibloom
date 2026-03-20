@@ -8,7 +8,7 @@ in
 {
   _class = "service";
 
-  options.nixpi-pi-daemon = {
+  options.nixpi-daemon = {
     package = mkOption {
       type = types.package;
     };
@@ -54,21 +54,21 @@ in
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
       wantedBy = [ "multi-user.target" ];
-      unitConfig.ConditionPathExists = "${config.nixpi-pi-daemon.primaryHome}/.nixpi/.setup-complete";
+      unitConfig.ConditionPathExists = "${config.nixpi-daemon.primaryHome}/.nixpi/.setup-complete";
       serviceConfig = {
-        User = config.nixpi-pi-daemon.serviceUser;
-        Group = config.nixpi-pi-daemon.serviceUser;
+        User = config.nixpi-daemon.serviceUser;
+        Group = config.nixpi-daemon.serviceUser;
         UMask = "0007";
-        WorkingDirectory = "${config.nixpi-pi-daemon.primaryHome}/nixPI";
+        WorkingDirectory = "${config.nixpi-daemon.primaryHome}/nixPI";
         Environment = [
-          "HOME=${config.nixpi-pi-daemon.serviceHome}"
-          "NIXPI_DIR=${config.nixpi-pi-daemon.primaryHome}/nixPI"
-          "NIXPI_STATE_DIR=${config.nixpi-pi-daemon.stateDir}"
-          "NIXPI_PI_DIR=${config.nixpi-pi-daemon.agentStateDir}"
-          "NIXPI_DAEMON_STATE_DIR=${config.nixpi-pi-daemon.stateDir}/pi-daemon"
-          "NIXPI_PRIMARY_USER=${config.nixpi-pi-daemon.primaryUser}"
-          "NIXPI_PRIMARY_HOME=${config.nixpi-pi-daemon.primaryHome}"
-          "PATH=${lib.makeBinPath config.nixpi-pi-daemon.path}:/run/current-system/sw/bin"
+          "HOME=${config.nixpi-daemon.serviceHome}"
+          "NIXPI_DIR=${config.nixpi-daemon.primaryHome}/nixPI"
+          "NIXPI_STATE_DIR=${config.nixpi-daemon.stateDir}"
+          "NIXPI_PI_DIR=${config.nixpi-daemon.agentStateDir}"
+          "NIXPI_DAEMON_STATE_DIR=${config.nixpi-daemon.stateDir}/nixpi-daemon"
+          "NIXPI_PRIMARY_USER=${config.nixpi-daemon.primaryUser}"
+          "NIXPI_PRIMARY_HOME=${config.nixpi-daemon.primaryHome}"
+          "PATH=${lib.makeBinPath config.nixpi-daemon.path}:/run/current-system/sw/bin"
         ];
         Restart = "on-failure";
         RestartSec = "15";
@@ -77,8 +77,8 @@ in
         ProtectSystem = "strict";
         ProtectHome = false;
         ReadWritePaths = [
-          config.nixpi-pi-daemon.stateDir
-          "${config.nixpi-pi-daemon.primaryHome}/nixPI"
+          config.nixpi-daemon.stateDir
+          "${config.nixpi-daemon.primaryHome}/nixPI"
         ];
       };
     };

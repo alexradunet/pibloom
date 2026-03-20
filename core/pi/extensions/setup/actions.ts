@@ -67,13 +67,13 @@ export function isSetupDone(): boolean {
 }
 
 async function reconcilePiDaemon(): Promise<"enabled" | "failed"> {
-	const enable = await run("nixpi-brokerctl", ["systemd", "enable-now", "pi-daemon.service"]);
+	const enable = await run("nixpi-brokerctl", ["systemd", "enable-now", "nixpi-daemon.service"]);
 	if (enable.exitCode === 0) {
-		log.info("enabled pi-daemon after setup completion");
+		log.info("enabled nixpi-daemon after setup completion");
 		return "enabled";
 	}
 
-	log.warn("failed to enable pi-daemon after setup completion", {
+	log.warn("failed to enable nixpi-daemon after setup completion", {
 		exitCode: enable.exitCode,
 		stderr: enable.stderr,
 	});
@@ -144,9 +144,9 @@ export async function handleSetupAdvance(params: { step: StepName; result: "comp
 		const daemonState = await reconcilePiDaemon();
 		lines.push("All setup steps complete! Persona customization is done.");
 		if (daemonState === "enabled") {
-			lines.push("`pi-daemon.service` was enabled and started.");
+			lines.push("`nixpi-daemon.service` was enabled and started.");
 		} else {
-			lines.push("Warning: setup completed, but `pi-daemon.service` could not be enabled automatically.");
+			lines.push("Warning: setup completed, but `nixpi-daemon.service` could not be enabled automatically.");
 		}
 	}
 

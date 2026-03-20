@@ -42,7 +42,7 @@ Install nixPI on an existing NixOS system:
 ```bash
 # 1. Install NixOS from the official ISO: https://nixos.org/download.html
 # 2. After first boot, run the nixPI installer:
-curl -fsSL https://raw.githubusercontent.com/alexradunet/nixPI/main/core/scripts/nixpi-install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/alexradunet/nixpi/main/core/scripts/nixpi-install.sh | bash
 
 # Or manually with your username:
 # NIXPI_PRIMARY_USER=yourusername bash -c '...

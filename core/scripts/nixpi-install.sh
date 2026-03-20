@@ -10,7 +10,7 @@ set -euo pipefail
 #   NIXPI_PRIMARY_USER=alex bash ...         # Specify user explicitly
 #   bash ... github:owner/repo#branch        # Use custom flake
 
-flake="${1:-github:alexradunet/nixPI#desktop-attach}"
+flake="${1:-github:alexradunet/nixpi#desktop-attach}"
 primary_user="${NIXPI_PRIMARY_USER:-${SUDO_USER:-${USER:-}}}"
 
 if [[ -z "${primary_user}" ]]; then

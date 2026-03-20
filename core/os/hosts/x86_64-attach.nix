@@ -8,7 +8,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/alexradunet/nixPI/main/core/scripts/nixpi-install.sh | bash
 # 
 # Or manually:
-#   NIXPI_PRIMARY_USER=yourusername sudo --preserve-env=NIXPI_PRIMARY_USER nixos-rebuild switch --impure --flake github:alexradunet/nixPI#desktop-attach
+#   NIXPI_PRIMARY_USER=yourusername sudo --preserve-env=NIXPI_PRIMARY_USER nixos-rebuild switch --impure --flake github:alexradunet/nixpi#desktop-attach
 
 { lib, pkgs, config, ... }:
 
@@ -39,7 +39,7 @@ in
       message = ''
         NIXPI_PRIMARY_USER must be set to your username.
         
-        Usage: NIXPI_PRIMARY_USER=yourusername sudo --preserve-env=NIXPI_PRIMARY_USER nixos-rebuild switch --impure --flake github:alexradunet/nixPI#desktop-attach
+        Usage: NIXPI_PRIMARY_USER=yourusername sudo --preserve-env=NIXPI_PRIMARY_USER nixos-rebuild switch --impure --flake github:alexradunet/nixpi#desktop-attach
         
         Or use the install script:
         curl -fsSL https://raw.githubusercontent.com/alexradunet/nixPI/main/core/scripts/nixpi-install.sh | bash

@@ -25,12 +25,12 @@ nixPI is installed on top of a standard NixOS system:
 
 2. **Attach nixPI to your existing operator account** after first boot:
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/alexradunet/nixPI/main/core/scripts/nixpi-install.sh | bash
+   curl -fsSL https://raw.githubusercontent.com/alexradunet/nixpi/main/core/scripts/nixpi-install.sh | bash
    ```
    
    Or manually specify your user:
    ```bash
-   NIXPI_PRIMARY_USER=yourusername curl -fsSL ... | bash
+   NIXPI_PRIMARY_USER=yourusername curl -fsSL https://raw.githubusercontent.com/alexradunet/nixpi/main/core/scripts/nixpi-install.sh | bash
    ```
 
 3. **Reboot or log out/in**, then complete first-boot setup — the `setup-wizard.sh` runs automatically

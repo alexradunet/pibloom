@@ -14,7 +14,9 @@ let
     export NIXPI_PI_DIR="${stateDir}/agent"
     export NIXPI_CONFIG_DIR="${stateDir}/services"
     export NIXPI_KEEP_SSH_AFTER_SETUP="${if config.nixpi.bootstrap.keepSshAfterSetup then "1" else "0"}"
-    export BROWSER="chromium"
+    if command -v chromium >/dev/null 2>&1; then
+      export BROWSER="chromium"
+    fi
     export PATH="/usr/local/share/nixpi/node_modules/.bin:$PATH"
   '';
 
@@ -25,7 +27,7 @@ let
       setup-wizard.sh || true
     done
 
-    if [ -t 0 ] && [ -f "$HOME/.nixpi/.setup-complete" ] && [ -z "$PI_SESSION" ] && mkdir /tmp/.nixpi-pi-session 2>/dev/null; then
+    if [ -t 0 ] && [ -f "$HOME/.nixpi/.setup-complete" ] && [ -z "$PI_SESSION" ] && command -v pi >/dev/null 2>&1 && mkdir /tmp/.nixpi-pi-session 2>/dev/null; then
       trap 'rmdir /tmp/.nixpi-pi-session 2>/dev/null' EXIT
       export PI_SESSION=1
       _nixpi_pkg="/usr/local/share/nixpi"

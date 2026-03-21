@@ -1,7 +1,7 @@
 # tests/nixos/nixpi-home.nix
 # Test that NixPI Home and Element Web are provisioned after firstboot
 
-{ pkgs, lib, nixPiModulesNoShell, piAgent, appPackage, mkTestFilesystems, ... }:
+{ pkgs, lib, nixPiModulesNoShell, piAgent, appPackage, setupPackage, mkTestFilesystems, ... }:
 
 pkgs.testers.runNixOSTest {
   name = "nixpi-home";
@@ -14,7 +14,7 @@ pkgs.testers.runNixOSTest {
       ../../core/os/modules/firstboot.nix
       mkTestFilesystems
     ];
-    _module.args = { inherit piAgent appPackage; };
+    _module.args = { inherit piAgent appPackage setupPackage; };
     nixpi.primaryUser = username;
 
     virtualisation.diskSize = 20480;

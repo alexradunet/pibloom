@@ -1,14 +1,14 @@
 # tests/nixos/nixpi-matrix.nix
 # Test that the NixPI Matrix homeserver (Synapse) starts and accepts connections
 
-{ pkgs, lib, nixPiModules, nixPiModulesNoShell, piAgent, appPackage, mkNixPiNode, mkTestFilesystems, ... }:
+{ pkgs, lib, nixPiModules, nixPiModulesNoShell, piAgent, appPackage, setupPackage, mkNixPiNode, mkTestFilesystems, ... }:
 
 pkgs.testers.runNixOSTest {
   name = "nixpi-matrix";
 
   nodes.server = { ... }: {
     imports = nixPiModules ++ [ mkTestFilesystems ];
-    _module.args = { inherit piAgent appPackage; };
+    _module.args = { inherit piAgent appPackage setupPackage; };
     nixpi.primaryUser = "tester";
     nixpi.install.mode = "managed-user";
     nixpi.createPrimaryUser = true;

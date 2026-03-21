@@ -1,7 +1,7 @@
 # tests/nixos/nixpi-e2e.nix
 # End-to-end integration test - full NixPI stack validation
 
-{ pkgs, lib, nixPiModules, nixPiModulesNoShell, piAgent, appPackage, mkNixPiNode, mkTestFilesystems, ... }:
+{ pkgs, lib, nixPiModules, nixPiModulesNoShell, piAgent, appPackage, setupPackage, mkNixPiNode, mkTestFilesystems, ... }:
 
 pkgs.testers.runNixOSTest {
   name = "nixpi-e2e";
@@ -16,7 +16,7 @@ pkgs.testers.runNixOSTest {
         ../../core/os/modules/firstboot.nix
         mkTestFilesystems 
       ];
-      _module.args = { inherit piAgent appPackage; };
+      _module.args = { inherit piAgent appPackage setupPackage; };
       nixpi.primaryUser = username;
 
       virtualisation.diskSize = 20480;

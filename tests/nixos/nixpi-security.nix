@@ -2,7 +2,7 @@
 # Verify bootstrap SSH access, post-setup SSH shutdown, Matrix registration
 # shutdown, fail2ban, and trusted-interface service exposure policy.
 
-{ pkgs, nixPiModulesNoShell, piAgent, appPackage, mkTestFilesystems, ... }:
+{ pkgs, nixPiModulesNoShell, piAgent, appPackage, setupPackage, mkTestFilesystems, ... }:
 
 let
   mkNode = { hostName, username, prefill ? false }: { ... }: let
@@ -12,7 +12,7 @@ let
       ../../core/os/modules/firstboot.nix
       mkTestFilesystems
     ];
-    _module.args = { inherit piAgent appPackage; };
+    _module.args = { inherit piAgent appPackage setupPackage; };
 
     nixpi.primaryUser = username;
     nixpi.security.enforceServiceFirewall = true;

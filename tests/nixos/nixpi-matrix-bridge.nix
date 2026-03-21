@@ -1,4 +1,4 @@
-{ pkgs, lib, nixPiModulesNoShell, piAgent, appPackage, mkTestFilesystems, matrixTestClient, ... }:
+{ pkgs, lib, nixPiModulesNoShell, piAgent, appPackage, setupPackage, mkTestFilesystems, matrixTestClient, ... }:
 
 pkgs.testers.runNixOSTest {
   name = "nixpi-matrix-bridge";
@@ -9,7 +9,7 @@ pkgs.testers.runNixOSTest {
       homeDir = "/home/${username}";
     in {
       imports = nixPiModulesNoShell ++ [ mkTestFilesystems ];
-      _module.args = { inherit piAgent appPackage; };
+      _module.args = { inherit piAgent appPackage setupPackage; };
       nixpi.primaryUser = username;
       nixpi.security.trustedInterface = "eth1";
 
@@ -35,7 +35,7 @@ pkgs.testers.runNixOSTest {
       homeDir = "/home/${username}";
     in {
       imports = nixPiModulesNoShell ++ [ mkTestFilesystems ];
-      _module.args = { inherit piAgent appPackage; };
+      _module.args = { inherit piAgent appPackage setupPackage; };
       nixpi.primaryUser = username;
 
       networking.hostName = "nixpi-agent";

@@ -1,7 +1,7 @@
 # tests/nixos/nixpi-firstboot.nix
 # Test that the NixPI first-boot wizard runs correctly
 
-{ pkgs, lib, nixPiModules, nixPiModulesNoShell, piAgent, appPackage, mkNixPiNode, mkTestFilesystems, ... }:
+{ pkgs, lib, nixPiModules, nixPiModulesNoShell, piAgent, appPackage, setupPackage, mkNixPiNode, mkTestFilesystems, ... }:
 
 pkgs.testers.runNixOSTest {
   name = "nixpi-firstboot";
@@ -14,7 +14,7 @@ pkgs.testers.runNixOSTest {
       ../../core/os/modules/firstboot.nix
       mkTestFilesystems 
     ];
-    _module.args = { inherit piAgent appPackage; };
+    _module.args = { inherit piAgent appPackage setupPackage; };
     nixpi.primaryUser = username;
 
     # VM configuration

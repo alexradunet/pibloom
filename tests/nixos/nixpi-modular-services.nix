@@ -1,4 +1,4 @@
-{ pkgs, lib, nixPiModulesNoShell, piAgent, appPackage, mkTestFilesystems, ... }:
+{ pkgs, lib, nixPiModulesNoShell, piAgent, appPackage, setupPackage, mkTestFilesystems, ... }:
 
 pkgs.testers.runNixOSTest {
   name = "nixpi-modular-services";
@@ -8,7 +8,7 @@ pkgs.testers.runNixOSTest {
     homeDir = "/home/${username}";
   in {
     imports = nixPiModulesNoShell ++ [ mkTestFilesystems ];
-    _module.args = { inherit piAgent appPackage; };
+    _module.args = { inherit piAgent appPackage setupPackage; };
     nixpi.primaryUser = username;
 
     networking.hostName = "nixpi-modular-test";

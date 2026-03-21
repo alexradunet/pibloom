@@ -1,4 +1,4 @@
-{ pkgs, lib, nixPiModulesNoShell, piAgent, appPackage, mkTestFilesystems, mkExistingUserConfig, ... }:
+{ pkgs, lib, nixPiModulesNoShell, piAgent, appPackage, setupPackage, mkTestFilesystems, mkExistingUserConfig, ... }:
 
 pkgs.testers.runNixOSTest {
   name = "nixpi-bootstrap-mode";
@@ -12,7 +12,7 @@ pkgs.testers.runNixOSTest {
         ../../core/os/modules/firstboot.nix
         mkTestFilesystems
       ];
-      _module.args = { inherit piAgent appPackage; };
+      _module.args = { inherit piAgent appPackage setupPackage; };
       networking.hostName = "nixpi-bootstrap";
 
       nixpi.security.enforceServiceFirewall = true;

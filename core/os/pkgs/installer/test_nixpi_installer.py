@@ -43,6 +43,7 @@ class NixpiInstallerTests(unittest.TestCase):
         )
 
         self.assertEqual(artifacts["nixpi_install_path"], "/mnt/target/etc/nixos/nixpi-install.nix")
+        self.assertEqual(artifacts["nixpi_appliance_path"], "/mnt/target/etc/nixos/nixpi-appliance.nix")
         self.assertEqual(artifacts["nixpi_host_path"], "/mnt/target/etc/nixos/nixpi-host.nix")
         self.assertEqual(artifacts["flake_path"], "/mnt/target/etc/nixos/flake.nix")
         self.assertEqual(artifacts["configuration_path"], "/mnt/target/etc/nixos/configuration.nix")
@@ -52,6 +53,8 @@ class NixpiInstallerTests(unittest.TestCase):
         self.assertIn('nixpi.install.mode = "managed-user";', artifacts["nixpi_install_module"])
         self.assertIn('nixpi.createPrimaryUser = true;', artifacts["nixpi_install_module"])
         self.assertIn('nixosConfigurations."pi-box"', artifacts["nixpi_flake"])
+        self.assertIn('./nixpi-appliance.nix', artifacts["nixpi_flake"])
+        self.assertIn('./nixpi/core/os/modules/desktop-openbox.nix', artifacts["nixpi_appliance_module"])
         self.assertIn('inputs = {\n    nixpkgs.url = "github:NixOS/nixpkgs/', artifacts["nixpi_flake"])
         self.assertNotIn('nixpi.url = "path:./nixpi";', artifacts["nixpi_flake"])
         self.assertIn('networking.hostName = "pi-box";', artifacts["host_cfg"])
@@ -83,7 +86,7 @@ class NixpiInstallerTests(unittest.TestCase):
             copied = Path(artifacts["nixpi_source_target"]) / "README.md"
             self.assertTrue(copied.exists())
             self.assertEqual(copied.read_text(encoding="utf-8"), "nixpi")
-            for key in ("nixpi_install_path", "nixpi_host_path", "flake_path", "configuration_path"):
+            for key in ("nixpi_install_path", "nixpi_appliance_path", "nixpi_host_path", "flake_path", "configuration_path"):
                 self.assertTrue(Path(artifacts[key]).exists())
 
     def test_main_prints_json(self):

@@ -73,9 +73,9 @@ EOF
   '';
 
   # Common test configuration for NixPI nodes
-  mkNixPiNode = { nixPiModules, piAgent, appPackage, extraConfig ? {} }: {
+  mkNixPiNode = { nixPiModules, piAgent, appPackage, setupPackage, extraConfig ? {} }: {
     imports = nixPiModules ++ [ extraConfig ];
-    _module.args = { inherit piAgent appPackage; };
+    _module.args = { inherit piAgent appPackage setupPackage; };
 
     virtualisation.diskSize = 20480;
     virtualisation.memorySize = 4096;

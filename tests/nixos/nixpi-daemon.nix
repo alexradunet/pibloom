@@ -1,7 +1,7 @@
 # tests/nixos/nixpi-daemon.nix
 # Test that the Pi Daemon Matrix agent starts and connects to homeserver
 
-{ pkgs, lib, nixPiModules, nixPiModulesNoShell, piAgent, appPackage, mkNixPiNode, mkTestFilesystems, ... }:
+{ pkgs, lib, nixPiModules, nixPiModulesNoShell, piAgent, appPackage, setupPackage, mkNixPiNode, mkTestFilesystems, ... }:
 
 pkgs.testers.runNixOSTest {
   name = "nixpi-daemon";
@@ -13,7 +13,7 @@ pkgs.testers.runNixOSTest {
       homeDir = "/home/${username}";
     in {
       imports = nixPiModulesNoShell ++ [ mkTestFilesystems ];
-      _module.args = { inherit piAgent appPackage; };
+      _module.args = { inherit piAgent appPackage setupPackage; };
       nixpi.primaryUser = username;
 
       virtualisation.diskSize = 10240;
@@ -45,7 +45,7 @@ pkgs.testers.runNixOSTest {
       homeDir = "/home/${username}";
     in {
       imports = nixPiModulesNoShell ++ [ mkTestFilesystems ];
-      _module.args = { inherit piAgent appPackage; };
+      _module.args = { inherit piAgent appPackage setupPackage; };
       nixpi.primaryUser = username;
 
       virtualisation.diskSize = 10240;

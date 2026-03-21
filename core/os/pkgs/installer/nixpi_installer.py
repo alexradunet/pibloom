@@ -20,18 +20,47 @@ NIXPI_FLAKE_TEMPLATE = """{
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
+      setupPackage = pkgs.callPackage ./nixpi/core/os/pkgs/setup {};
       piAgent = pkgs.callPackage ./nixpi/core/os/pkgs/pi {};
       appPackage = pkgs.callPackage ./nixpi/core/os/pkgs/app { inherit piAgent; };
     in {
       nixosConfigurations."@@hostname@@" = nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = { inherit piAgent appPackage; };
+        specialArgs = { inherit setupPackage piAgent appPackage; };
         modules = [
           ./nixpi-host.nix
-          ./nixpi-install.nix
+          ./nixpi-appliance.nix
         ];
       };
     };
+}
+"""
+
+NIXPI_APPLIANCE_TEMPLATE = """{ pkgs, setupPackage, ... }:
+
+let
+  piAgent = pkgs.callPackage ./nixpi/core/os/pkgs/pi {};
+  appPackage = pkgs.callPackage ./nixpi/core/os/pkgs/app { inherit piAgent; };
+in
+{
+  _module.args = { inherit setupPackage piAgent appPackage; };
+
+  imports = [
+    ./nixpi/core/os/modules/options.nix
+    ./nixpi/core/os/modules/setup.nix
+    ./nixpi/core/os/modules/runtime.nix
+    ./nixpi/core/os/modules/collab.nix
+    ./nixpi/core/os/modules/llm.nix
+    ./nixpi/core/os/modules/network.nix
+    ./nixpi/core/os/modules/shell.nix
+    ./nixpi/core/os/modules/tooling.nix
+    ./nixpi/core/os/modules/update.nix
+    ./nixpi/core/os/modules/firstboot.nix
+    ./nixpi/core/os/modules/desktop-openbox.nix
+  ];
+
+  nixpkgs.config.allowUnfree = true;
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 }
 """
 
@@ -79,12 +108,14 @@ def prepare_nixpi_install_artifacts(root_mount_point, username, hostname, cfg):
         "hostname": hostname,
         "nixpi_source_target": str(nixos_etc / "nixpi"),
         "nixpi_install_path": str(nixos_etc / "nixpi-install.nix"),
+        "nixpi_appliance_path": str(nixos_etc / "nixpi-appliance.nix"),
         "nixpi_host_path": str(nixos_etc / "nixpi-host.nix"),
         "flake_path": str(nixos_etc / "flake.nix"),
         "configuration_path": str(nixos_etc / "configuration.nix"),
         "flake_install_ref": f"{nixos_etc}#{hostname}",
         "configuration_install_ref": str(nixos_etc / "configuration.nix"),
         "nixpi_install_module": load_nixpi_install_module_template().replace("@@username@@", username),
+        "nixpi_appliance_module": NIXPI_APPLIANCE_TEMPLATE,
         "nixpi_flake": NIXPI_FLAKE_TEMPLATE.replace("@@hostname@@", hostname),
         "configuration_module": NIXPI_CONFIGURATION_TEMPLATE,
         "host_cfg": host_cfg,
@@ -100,6 +131,7 @@ def write_nixpi_install_artifacts(root_mount_point, username, hostname, cfg):
 
     for key, content in (
         ("nixpi_install_path", artifacts["nixpi_install_module"]),
+        ("nixpi_appliance_path", artifacts["nixpi_appliance_module"]),
         ("nixpi_host_path", artifacts["host_cfg"]),
         ("flake_path", artifacts["nixpi_flake"]),
         ("configuration_path", artifacts["configuration_module"]),

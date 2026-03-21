@@ -12,7 +12,7 @@
 #
 # Or run all: nix flake check
 
-{ pkgs, lib, piAgent, appPackage, self, installerHelper ? null }:
+{ pkgs, lib, piAgent, appPackage, self, installerHelper ? null, setupPackage }:
 
 let
   # Import shared helpers
@@ -38,6 +38,7 @@ let
       nixPiModulesNoShell
       piAgent
       appPackage
+      setupPackage
       mkNixPiNode
       mkTestFilesystems
       matrixTestClient
@@ -56,6 +57,7 @@ let
       nixPiModulesNoShell
       piAgent
       appPackage
+      setupPackage
       mkNixPiNode
       mkTestFilesystems
       matrixTestClient

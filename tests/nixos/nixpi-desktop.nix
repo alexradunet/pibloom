@@ -1,4 +1,4 @@
-{ pkgs, nixPiModules, piAgent, appPackage, ... }:
+{ pkgs, nixPiModules, piAgent, appPackage, setupPackage, ... }:
 
 pkgs.testers.runNixOSTest {
   name = "nixpi-desktop";
@@ -12,7 +12,7 @@ pkgs.testers.runNixOSTest {
         fileSystems."/boot" = { device = "/dev/vda1"; fsType = "vfat"; };
       }
     ] ++ nixPiModules;
-    _module.args = { inherit piAgent appPackage; };
+    _module.args = { inherit piAgent appPackage setupPackage; };
 
     services.xserver.xkb = { layout = "us"; variant = ""; };
     console.keyMap = "us";

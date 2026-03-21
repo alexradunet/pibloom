@@ -1,0 +1,5 @@
+{ setupPackage, ... }:
+
+{
+  environment.systemPackages = [ setupPackage ];
+}

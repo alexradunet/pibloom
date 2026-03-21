@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-GUM_BIN="@gumBin@"
 HELPER_BIN="@helperBin@"
 
 ROOT_MOUNT="/mnt"
@@ -34,18 +33,6 @@ require_tty() {
     echo "Interactive mode requires a TTY." >&2
     exit 1
   fi
-}
-
-gum_input() {
-  local placeholder="$1"
-  local prompt="$2"
-  "$GUM_BIN" input --placeholder "$placeholder" --prompt "$prompt"
-}
-
-gum_choose_value() {
-  local header="$1"
-  shift
-  printf '%s\n' "$@" | "$GUM_BIN" choose --header "$header" --height 12
 }
 
 ensure_root() {
@@ -97,8 +84,8 @@ choose_disk() {
 
   require_tty
 
-  local options=()
   local entry name size model description
+  local index=1
   for entry in "${disks[@]}"; do
     IFS=$'\t' read -r name size <<<"$entry"
     model="$(disk_model "$name")"
@@ -106,21 +93,26 @@ choose_disk() {
     if [[ -n "$model" ]]; then
       description="$description  $model"
     fi
-    options+=("$name"$'\t'"$description")
+    printf '  %d) %s  %s\n' "$index" "$name" "$description"
+    index=$((index + 1))
   done
 
-  TARGET_DISK="$(
-    printf '%s\n' "${options[@]}" \
-      | "$GUM_BIN" choose --header "Choose the target disk" --height 12
-  )"
-  TARGET_DISK="${TARGET_DISK%%$'\t'*}"
+  while true; do
+    read -rp "Choose the target disk [1-${#disks[@]}]: " disk_choice
+    if [[ "$disk_choice" =~ ^[0-9]+$ ]] && (( disk_choice >= 1 && disk_choice <= ${#disks[@]} )); then
+      TARGET_DISK="${disks[disk_choice-1]%%$'\t'*}"
+      return
+    fi
+    echo "Invalid selection." >&2
+  done
 }
 
 prompt_inputs() {
   if [[ -z "$HOSTNAME_VALUE" ]]; then
     require_tty
     while true; do
-      HOSTNAME_VALUE="$(gum_input "nixpi" "Hostname: ")"
+      read -rp "Hostname [nixpi]: " HOSTNAME_VALUE
+      HOSTNAME_VALUE="${HOSTNAME_VALUE:-nixpi}"
       if [[ -n "$HOSTNAME_VALUE" ]]; then
         break
       fi
@@ -131,7 +123,8 @@ prompt_inputs() {
   if [[ -z "$PRIMARY_USER_VALUE" ]]; then
     require_tty
     while true; do
-      PRIMARY_USER_VALUE="$(gum_input "nixpi" "Primary user: ")"
+      read -rp "Primary user [nixpi]: " PRIMARY_USER_VALUE
+      PRIMARY_USER_VALUE="${PRIMARY_USER_VALUE:-nixpi}"
       if [[ -n "$PRIMARY_USER_VALUE" ]]; then
         break
       fi
@@ -157,14 +150,33 @@ choose_layout() {
 
   require_tty
 
-  local choice
-  choice="$(
-    gum_choose_value "Choose the disk layout" \
-      "EFI + ext4 root"$'\t'"no-swap" \
-      "EFI + ext4 root + 8GiB swap"$'\t'"swap:8GiB" \
-      "EFI + ext4 root + custom swap"$'\t'"swap:custom"
-  )"
-  choice="${choice##*$'\t'}"
+  local choice=""
+
+  echo "Choose the disk layout:"
+  echo "  1) EFI + ext4 root"
+  echo "  2) EFI + ext4 root + 8GiB swap"
+  echo "  3) EFI + ext4 root + custom swap"
+
+  while true; do
+    read -rp "Select option [1/2/3]: " choice
+    case "$choice" in
+      1)
+        choice="no-swap"
+        break
+        ;;
+      2)
+        choice="swap:8GiB"
+        break
+        ;;
+      3)
+        choice="swap:custom"
+        break
+        ;;
+      *)
+        echo "Invalid option." >&2
+        ;;
+    esac
+  done
 
   case "$choice" in
     no-swap)
@@ -177,7 +189,8 @@ choose_layout() {
     swap:custom)
       LAYOUT_MODE="swap"
       while true; do
-        SWAP_SIZE="$(gum_input "8GiB" "Swap size: ")"
+        read -rp "Swap size [8GiB]: " SWAP_SIZE
+        SWAP_SIZE="${SWAP_SIZE:-8GiB}"
         if validate_swap_size "$SWAP_SIZE"; then
           break
         fi
@@ -229,19 +242,25 @@ prompt_network_setup() {
     echo "  3) Continue without network"
     echo ""
 
-    case "$("$GUM_BIN" choose --header "Installer network setup" "Launch WiFi setup (nmtui)" "Connect to WiFi with nmcli" "Continue without network")" in
-      "Launch WiFi setup (nmtui)")
+    local network_choice=""
+    read -rp "Select option [1/2/3]: " network_choice
+
+    case "$network_choice" in
+      1)
         if command -v nmtui >/dev/null 2>&1; then
           nmtui
         else
           echo "nmtui is not available on this image." >&2
         fi
         ;;
-      "Connect to WiFi with nmcli")
+      2)
         connect_wifi_nmcli || true
         ;;
-      "Continue without network")
+      3)
         return
+        ;;
+      *)
+        echo "Invalid option." >&2
         ;;
     esac
 
@@ -298,7 +317,8 @@ confirm_install() {
     "Primary user: ${PRIMARY_USER_VALUE}" \
     "" \
     "This will erase the selected disk."
-  if [[ "$("$GUM_BIN" choose --header "Proceed with destructive install?" "Proceed" "Cancel")" != "Proceed" ]]; then
+  read -rp "Proceed with destructive install? [y/N]: " proceed
+  if [[ ! "$proceed" =~ ^[Yy]$ ]]; then
     echo "Install cancelled."
     exit 0
   fi

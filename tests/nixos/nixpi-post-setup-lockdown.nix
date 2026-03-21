@@ -1,4 +1,4 @@
-{ pkgs, lib, nixPiModulesNoShell, piAgent, appPackage, mkTestFilesystems, mkExistingUserConfig, mkPrefillActivation, ... }:
+{ pkgs, lib, nixPiModulesNoShell, piAgent, appPackage, setupPackage, mkTestFilesystems, mkExistingUserConfig, mkPrefillActivation, ... }:
 
 pkgs.testers.runNixOSTest {
   name = "nixpi-post-setup-lockdown";
@@ -13,7 +13,7 @@ pkgs.testers.runNixOSTest {
         ../../core/os/modules/firstboot.nix
         mkTestFilesystems
       ];
-      _module.args = { inherit piAgent appPackage; };
+      _module.args = { inherit piAgent appPackage setupPackage; };
 
       networking.hostName = "nixpi-steady";
       nixpi.security.enforceServiceFirewall = true;

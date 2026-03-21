@@ -54,6 +54,76 @@ source "$SETUP_LIB"
 
 step_done() { [[ -f "$WIZARD_STATE/$1" ]]; }
 
+has_command() {
+	command -v "$1" >/dev/null 2>&1
+}
+
+has_systemd_unit() {
+	systemctl list-unit-files "$1" >/dev/null 2>&1
+}
+
+has_runtime_stack() {
+	[[ -d /usr/local/share/nixpi ]] && has_command pi
+}
+
+has_matrix_stack() {
+	has_systemd_unit matrix-synapse.service && has_command curl
+}
+
+has_service_stack() {
+	[[ -f /usr/local/share/nixpi/home-template.html ]] && has_systemd_unit nixpi-home.service && has_systemd_unit nixpi-element-web.service
+}
+
+has_git() {
+	has_command git
+}
+
+has_full_appliance() {
+	has_runtime_stack && has_matrix_stack && has_service_stack && has_command chromium
+}
+
+step_appliance() {
+	echo ""
+	echo "--- Appliance Upgrade ---"
+
+	if has_full_appliance; then
+		echo "Standard NixPI appliance is already installed."
+		mark_done appliance
+		return
+	fi
+
+	if ! has_systemd_unit nixpi-bootstrap-upgrade.service; then
+		echo "The automatic appliance upgrade service is not installed." >&2
+		return 1
+	fi
+
+	echo "Promoting this minimal base into the standard NixPI appliance..."
+
+	local attempts=0
+	while ! has_full_appliance; do
+		attempts=$((attempts + 1))
+		local active_state
+		active_state=$(systemctl show -p ActiveState --value nixpi-bootstrap-upgrade.service 2>/dev/null || true)
+		if systemctl is-failed --quiet nixpi-bootstrap-upgrade.service; then
+			echo "Automatic appliance upgrade failed. Recent logs:" >&2
+			root_command journalctl -u nixpi-bootstrap-upgrade.service -n 40 --no-pager >&2 || true
+			return 1
+		fi
+		if [[ "$active_state" == "inactive" ]] && [[ $attempts -ge 10 ]]; then
+			echo "Automatic appliance upgrade is not running and the full appliance is still missing." >&2
+			return 1
+		fi
+		if [[ $attempts -ge 900 ]]; then
+			echo "Automatic appliance upgrade timed out." >&2
+			return 1
+		fi
+		sleep 2
+	done
+
+	echo "Standard NixPI appliance is ready."
+	mark_done appliance
+}
+
 prepare_local_state() {
 	mkdir -p "$WIZARD_STATE" "$NIXPI_DIR"
 	rm -f "$LEGACY_SETUP_STATE"
@@ -364,6 +434,11 @@ step_netbird() {
 step_git() {
 	echo ""
 	echo "--- Git Identity ---"
+	if ! has_git; then
+		echo "Git is not installed in this profile. Skipping identity setup."
+		mark_done_with git "skipped"
+		return
+	fi
 	if [[ "$NONINTERACTIVE_SETUP" -eq 1 && -z "${PREFILL_NAME:-}" && -z "${PREFILL_EMAIL:-}" ]]; then
 		echo "Skipping git identity prompts in noninteractive mode."
 		mark_done git
@@ -392,6 +467,11 @@ step_git() {
 step_ai() {
 	echo ""
 	echo "--- AI Provider ---"
+	if ! has_runtime_stack; then
+		echo "Pi runtime is not installed in this profile. Skipping AI setup."
+		mark_done_with ai "skipped"
+		return
+	fi
 	echo "Configuring Pi to use local AI (llama-server on port 11435)..."
 	write_pi_settings_defaults "localai" "Qwen3.5-4B-Q4_K_M"
 	echo "  Local AI configured. Pi will use Qwen 3.5 4B by default."
@@ -401,6 +481,11 @@ step_ai() {
 step_services() {
 	echo ""
 	echo "--- Built-In Services ---"
+	if ! has_service_stack; then
+		echo "Built-in service stack is not installed in this profile. Skipping."
+		mark_done_with services "skipped"
+		return
+	fi
 	local mesh_ip mesh_fqdn
 	mesh_ip=$(read_checkpoint_data netbird)
 	mesh_fqdn=$(netbird_fqdn)
@@ -421,12 +506,17 @@ step_services() {
 
 step_bootc_switch() {
 	echo ""
-	echo "--- System Updates ---"
-	echo "NixPI uses NixOS with automatic OTA updates."
-	echo "The nixpi-update timer checks for updates every 6 hours."
+	echo "--- Bootstrap Guidance ---"
+	echo "NixPI installs a minimal bootable base first."
+	echo "Clone your editable checkout after setup, then enable any richer roles you want."
 	echo ""
-	echo "To update manually at any time: cd ~/nixpi && sudo nixos-rebuild switch --flake ."
-	echo "To roll back:                   sudo nixos-rebuild switch --rollback"
+	echo "Bootstrap checkout:"
+	echo "  nix --extra-experimental-features 'nix-command flakes' run nixpkgs#git -- clone https://github.com/alexradunet/nixpi.git ~/nixpi"
+	echo "  cd ~/nixpi"
+	echo "  sudo nixos-rebuild switch --flake ."
+	echo ""
+	echo "To roll back later:"
+	echo "  sudo nixos-rebuild switch --rollback"
 	echo ""
 	mark_done bootc_switch
 }
@@ -437,9 +527,13 @@ finalize() {
 	if [[ "${NIXPI_KEEP_SSH_AFTER_SETUP:-0}" != "1" ]]; then
 		root_command nixpi-bootstrap-sshd-systemctl stop sshd.service || echo "warning: failed to stop sshd.service" >&2
 	fi
-	root_command nixpi-bootstrap-matrix-systemctl try-restart matrix-synapse.service || echo "warning: failed to restart matrix-synapse.service" >&2
-	if ! root_command nixpi-bootstrap-service-systemctl enable --now nixpi-daemon.service; then
-		echo "warning: failed to enable nixpi-daemon.service during wizard finalization" >&2
+	if has_matrix_stack; then
+		root_command nixpi-bootstrap-matrix-systemctl try-restart matrix-synapse.service || echo "warning: failed to restart matrix-synapse.service" >&2
+	fi
+	if has_systemd_unit nixpi-daemon.service; then
+		if ! root_command nixpi-bootstrap-service-systemctl enable --now nixpi-daemon.service; then
+			echo "warning: failed to enable nixpi-daemon.service during wizard finalization" >&2
+		fi
 	fi
 	touch "$SETUP_COMPLETE"
 
@@ -483,11 +577,13 @@ finalize() {
 	[[ -n "$mesh_ip" ]] && echo "  Mesh IP: ${mesh_ip} (access from any NetBird peer)"
 	[[ -n "$mesh_fqdn" ]] && echo "  NetBird name: ${mesh_fqdn}"
 	[[ -n "$matrix_user" ]] && echo "  Matrix user: @${matrix_user}:nixpi"
-	echo "  Built-in services: ${services:-home chat}"
-	echo ""
-	print_service_access_summary "$services" "$mesh_ip" "$mesh_fqdn"
-	echo ""
-	if [[ "$ai_provider" == "localai" ]]; then
+	if [[ "$services" != "skipped" ]]; then
+		echo "  Built-in services: ${services:-home chat}"
+		echo ""
+		print_service_access_summary "$services" "$mesh_ip" "$mesh_fqdn"
+		echo ""
+	fi
+	if [[ "$ai_provider" == "localai" ]] && has_command curl; then
 		echo "  Waiting for local AI to be ready..."
 		for i in $(seq 1 180); do
 			if curl -sf http://localhost:11435/health > /dev/null 2>&1; then
@@ -501,16 +597,19 @@ finalize() {
 		done
 	fi
 	echo ""
-	echo "  Starting Pi — your AI companion."
-	if [[ "$ai_provider" == "skipped" ]]; then
+	if has_command pi; then
+		echo "  Starting Pi — your AI companion."
 		echo ""
-		echo "  To get started in Pi:"
-		echo "    /login  — authenticate with your AI provider"
-		echo "    /model  — select your preferred model"
+		if [[ "$ai_provider" == "skipped" ]]; then
+			echo "  To get started in Pi:"
+			echo "    /login  — authenticate with your AI provider"
+			echo "    /model  — select your preferred model"
+		else
+			echo "  AI provider: ${ai_provider}"
+			echo "  Use /model in Pi to select a model."
+		fi
 	else
-		echo ""
-		echo "  AI provider: ${ai_provider}"
-		echo "  Use /model in Pi to select a model."
+		echo "  Next: clone ~/nixpi and rebuild into a richer profile when you want Pi, desktop, or collab services."
 	fi
 	echo "========================================="
 	echo ""
@@ -528,12 +627,19 @@ main() {
 	fi
 
 	step_done welcome  || step_welcome
+	step_done appliance || step_appliance
 	step_done password || step_password
 	step_done network  || step_network
 	step_done netbird  || step_netbird
-	step_done matrix   || step_matrix
-	step_done git      || step_git
-	step_done ai       || step_ai
+	if step_done matrix; then
+		:
+	elif has_matrix_stack; then
+		step_matrix
+	else
+		mark_done_with matrix "skipped"
+	fi
+	step_done git || step_git
+	step_done ai || step_ai
 	step_done services || step_services
 	step_done bootc_switch || step_bootc_switch
 

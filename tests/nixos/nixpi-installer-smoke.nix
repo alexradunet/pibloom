@@ -99,10 +99,14 @@ pkgs.testers.runNixOSTest {
 
         installer.succeed("test -f " + target_mount + "/etc/nixos/configuration.nix")
         installer.succeed("test -f " + target_mount + "/etc/nixos/nixpi-install.nix")
+        installer.succeed("test -f " + target_mount + "/etc/nixos/nixpi-appliance.nix")
         installer.succeed("test -f " + target_mount + "/etc/nixos/nixpi-host.nix")
         installer.succeed("test -f " + target_mount + "/etc/nixos/flake.nix")
         installer.succeed("grep -q 'nixpi.primaryUser = \"installer\";' " + target_mount + "/etc/nixos/nixpi-install.nix")
         installer.succeed("grep -q 'nixpi.install.mode = \"managed-user\";' " + target_mount + "/etc/nixos/nixpi-install.nix")
+        installer.succeed("grep -q 'bootstrap-upgrade.nix' " + target_mount + "/etc/nixos/nixpi-install.nix")
+        installer.succeed("grep -q 'desktop-openbox.nix' " + target_mount + "/etc/nixos/nixpi-appliance.nix")
+        installer.succeed("grep -q 'nixpi-appliance.nix' " + target_mount + "/etc/nixos/flake.nix")
         installer.succeed("grep -q 'networking.hostName = \"" + hostname + "\";' " + target_mount + "/etc/nixos/nixpi-host.nix")
         installer.succeed("grep -q 'imports = \\[' " + target_mount + "/etc/nixos/configuration.nix")
 
@@ -112,9 +116,9 @@ pkgs.testers.runNixOSTest {
             installer.fail("lsblk -nrpo LABEL " + target_disk_device + " | grep -qx swap")
 
         installer.succeed("nixos-enter --root " + target_mount + " -c 'getent passwd installer'")
-        installer.succeed("nixos-enter --root " + target_mount + " -c 'getent passwd agent'")
         installer.succeed("nixos-enter --root " + target_mount + " -c 'command -v setup-wizard.sh'")
         installer.succeed("nixos-enter --root " + target_mount + " -c 'test -d /etc/nixos/nixpi'")
+        installer.fail("nixos-enter --root " + target_mount + " -c 'getent passwd agent'")
 
     run_install_case("no-swap", "installer-vm-noswap", "--layout no-swap", False)
     run_install_case("swap", "installer-vm-swap", "--layout swap --swap-size 8GiB", True)

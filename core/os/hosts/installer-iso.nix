@@ -49,13 +49,7 @@
     fi
   '';
 
-  environment.systemPackages = with pkgs; [
-    git
-    just
-    curl
-    gum
-    networkmanager
-  ] ++ [
+  environment.systemPackages = [
     installerHelper
   ];
 }

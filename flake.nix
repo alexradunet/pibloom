@@ -15,6 +15,7 @@
       installerHelper = pkgs.callPackage ./core/os/pkgs/installer {
         inherit nixpiSource;
       };
+      setupPackage = pkgs.callPackage ./core/os/pkgs/setup {};
       # pkgsUnfree is used only for boot nixosTest.  pkgs.testers.nixosTest
       # injects its own pkgs as nixpkgs.pkgs for test nodes, which means modules
       # cannot set nixpkgs.config (NixOS assertion).  Using a pkgs already created
@@ -23,29 +24,47 @@
       piAgent = pkgs.callPackage ./core/os/pkgs/pi {};
       appPackage = pkgs.callPackage ./core/os/pkgs/app { inherit piAgent; };
 
-      specialArgs = { inherit piAgent appPackage self installerHelper; };
+      specialArgs = { inherit piAgent appPackage self installerHelper setupPackage; };
     in {
       packages.${system} = {
         pi = piAgent;
         app = appPackage;
         nixpi-installer = installerHelper;
+        nixpi-setup = setupPackage;
         installerIso = self.nixosConfigurations.installer-iso.config.system.build.isoImage;
       };
 
       formatter.${system} = pkgs.nixfmt-rfc-style;
 
       nixosModules = {
+        # Minimal installed NixPI base without the Pi runtime, collab stack,
+        # desktop shell, or operator tooling bundle.
+        nixpi-base-no-shell = { ... }: {
+          imports = [
+            ./core/os/modules/options.nix
+            ./core/os/modules/setup.nix
+            ./core/os/modules/network.nix
+            ./core/os/modules/update.nix
+          ];
+        };
+
+        # Minimal installed NixPI base with the operator shell/bootstrap path.
+        nixpi-base = { ... }: {
+          imports = [
+            self.nixosModules.nixpi-base-no-shell
+            ./core/os/modules/shell.nix
+          ];
+        };
+
         # Portable NixPI module set without the operator shell/user module.
         # Useful for tests that intentionally define their own primary user.
         nixpi-no-shell = { piAgent, appPackage, ... }: {
           imports = [
-            ./core/os/modules/options.nix
-            ./core/os/modules/app.nix
-            ./core/os/modules/broker.nix
+            self.nixosModules.nixpi-base-no-shell
+            ./core/os/modules/runtime.nix
+            ./core/os/modules/collab.nix
             ./core/os/modules/llm.nix
-            ./core/os/modules/matrix.nix
-            ./core/os/modules/network.nix
-            ./core/os/modules/update.nix
+            ./core/os/modules/tooling.nix
           ];
         };
 
@@ -130,7 +149,7 @@
           # Using pkgsUnfree so tests can use packages that require allowUnfree
           nixosTests = import ./tests/nixos {
             pkgs = pkgsUnfree;
-            inherit lib piAgent appPackage self installerHelper;
+            inherit lib piAgent appPackage self installerHelper setupPackage;
           };
           bootCheck = pkgsUnfree.testers.runNixOSTest {
             name = "boot";
@@ -139,7 +158,7 @@
               imports = [
                 ./core/os/hosts/x86_64.nix
               ];
-              _module.args = { inherit piAgent appPackage; };
+              _module.args = { inherit piAgent appPackage setupPackage; };
 
               nixpi.primaryUser = "alex";
               nixpi.install.mode = "managed-user";
@@ -187,7 +206,7 @@
             install_template="${installerHelper}/share/nixpi-installer/nixpi-install-module.nix.in"
             grep -F 'def write_nixpi_install_artifacts(' "$module" >/dev/null
             grep -F 'nix.settings.experimental-features = [ "nix-command" "flakes" ];' "$install_template" >/dev/null
-            grep -F '{ pkgs, ... }:' "$install_template" >/dev/null
+            grep -F '{ ... }:' "$install_template" >/dev/null
             grep -F 'NIXPI_CONFIGURATION_TEMPLATE' "$module" >/dev/null
             grep -F 'nixpi.install.mode = "managed-user";' "$install_template" >/dev/null
             PYTHONPYCACHEPREFIX="$TMPDIR/pycache" ${pkgs.python3}/bin/python3 -m py_compile "$module"
@@ -214,7 +233,7 @@
           '';
 
           installer-generated-config = (nixpkgs.lib.nixosSystem {
-            inherit system;
+            inherit system specialArgs;
             modules = [
               generatedInstallModule
               {

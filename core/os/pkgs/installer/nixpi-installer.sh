@@ -379,55 +379,61 @@ run_install() {
   run_install_steps "$boot_part" "$root_part" "$swap_part"
 }
 
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --disk)
-      TARGET_DISK="$2"
-      shift 2
-      ;;
-    --hostname)
-      HOSTNAME_VALUE="$2"
-      shift 2
-      ;;
-    --primary-user)
-      PRIMARY_USER_VALUE="$2"
-      shift 2
-      ;;
-    --layout)
-      LAYOUT_MODE="$2"
-      shift 2
-      ;;
-    --swap-size)
-      SWAP_SIZE="$2"
-      shift 2
-      ;;
-    --yes)
-      FORCE_YES=1
-      shift
-      ;;
-    --system)
-      SYSTEM_CLOSURE="$2"
-      shift 2
-      ;;
-    -h|--help)
-      usage
-      exit 0
-      ;;
-    *)
-      echo "Unknown argument: $1" >&2
-      usage >&2
-      exit 1
-      ;;
-  esac
-done
+main() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --disk)
+        TARGET_DISK="$2"
+        shift 2
+        ;;
+      --hostname)
+        HOSTNAME_VALUE="$2"
+        shift 2
+        ;;
+      --primary-user)
+        PRIMARY_USER_VALUE="$2"
+        shift 2
+        ;;
+      --layout)
+        LAYOUT_MODE="$2"
+        shift 2
+        ;;
+      --swap-size)
+        SWAP_SIZE="$2"
+        shift 2
+        ;;
+      --yes)
+        FORCE_YES=1
+        shift
+        ;;
+      --system)
+        SYSTEM_CLOSURE="$2"
+        shift 2
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        echo "Unknown argument: $1" >&2
+        usage >&2
+        exit 1
+        ;;
+    esac
+  done
 
-ensure_root
-choose_disk
-prompt_inputs
-prompt_network_setup
-choose_layout
-normalize_layout_inputs
-confirm_install
-run_install
+  ensure_root
+  choose_disk
+  prompt_inputs
+  prompt_network_setup
+  choose_layout
+  normalize_layout_inputs
+  confirm_install
+  run_install
 
-echo "NixPI install completed. Reboot when ready."
+  echo "NixPI install completed. Reboot when ready."
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

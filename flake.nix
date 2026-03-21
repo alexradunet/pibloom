@@ -113,6 +113,8 @@
         let
           installerHelperSource = ./core/os/pkgs/installer/nixpi_installer.py;
           installerHelperTests = ./core/os/pkgs/installer/test_nixpi_installer.py;
+          installerFrontendSource = ./core/os/pkgs/installer/nixpi-installer.sh;
+          installerFrontendTests = ./core/os/pkgs/installer/test_nixpi_installer.sh;
           generatedInstallModule =
             let
               template = builtins.readFile ./core/os/pkgs/installer/nixpi-install-module.nix.in;
@@ -189,6 +191,16 @@
             grep -F 'NIXPI_CONFIGURATION_TEMPLATE' "$module" >/dev/null
             grep -F 'nixpi.install.mode = "managed-user";' "$install_template" >/dev/null
             PYTHONPYCACHEPREFIX="$TMPDIR/pycache" ${pkgs.python3}/bin/python3 -m py_compile "$module"
+            touch "$out"
+          '';
+
+          installer-frontend = pkgs.runCommandLocal "installer-frontend-check" {
+            nativeBuildInputs = [ pkgs.bash ];
+          } ''
+            script="${installerFrontendSource}"
+            test_script="${installerFrontendTests}"
+            bash -n "$script"
+            ${pkgs.bash}/bin/bash "$test_script" "$script"
             touch "$out"
           '';
 

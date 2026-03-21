@@ -52,7 +52,7 @@ let
   };
 
   openboxAutostart = pkgs.writeText "nixpi-openbox-autostart" ''
-    ${pkgs.xorg.xsetroot}/bin/xsetroot -solid "#10161d"
+    ${pkgs.xsetroot}/bin/xsetroot -solid "#10161d"
     ${pkgs.dunst}/bin/dunst &
     ${pkgs.tint2}/bin/tint2 &
   '';
@@ -180,8 +180,8 @@ in
     wmctrl
     xclip
     xdotool
-    xorg.xprop
-    xorg.xsetroot
+    xprop
+    xsetroot
     xterm
     scrot
     openHome

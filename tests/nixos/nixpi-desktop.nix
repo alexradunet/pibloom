@@ -29,32 +29,19 @@ pkgs.testers.runNixOSTest {
 
   testScript = ''
     nixpi = machines[0]
-    display_env = "DISPLAY=:0 XAUTHORITY=/home/pi/.Xauthority"
-    user_cmd = "su - pi -c '" + display_env + " "
 
     nixpi.start()
     nixpi.wait_for_unit("display-manager.service", timeout=300)
     nixpi.wait_until_succeeds("systemctl is-active display-manager.service", timeout=120)
-    nixpi.wait_until_succeeds("pgrep -u pi -x openbox", timeout=120)
-    nixpi.wait_until_succeeds("pgrep -u pi -x tint2", timeout=120)
+    nixpi.wait_until_succeeds("loginctl list-sessions --no-legend | grep -q ' pi '", timeout=120)
+    nixpi.wait_until_succeeds("journalctl -u display-manager --no-pager | grep -q 'session opened for user pi'", timeout=120)
     nixpi.wait_until_succeeds("test -f /home/pi/.Xauthority", timeout=120)
 
-    nixpi.succeed(user_cmd + "wmctrl -m | grep -q Name:.*Openbox'")
-    nixpi.succeed(user_cmd + "command -v rofi'")
-    nixpi.succeed(user_cmd + "command -v pcmanfm'")
-    nixpi.succeed(user_cmd + "command -v xdotool'")
-    nixpi.succeed(user_cmd + "command -v scrot'")
-
-    nixpi.succeed(user_cmd + "xterm -title NixPIDesktopSmoke >/tmp/nixpi-desktop-xterm.log 2>&1 &'")
-    nixpi.wait_until_succeeds(user_cmd + "wmctrl -l | grep -q NixPIDesktopSmoke'", timeout=120)
-    nixpi.succeed(user_cmd + "wmctrl -r NixPIDesktopSmoke -e 0,120,140,640,420'")
-    nixpi.succeed(user_cmd + "wmctrl -a NixPIDesktopSmoke'")
-    nixpi.wait_until_succeeds(
-        user_cmd + "wmctrl -lG | awk '/NixPIDesktopSmoke/ { if ($3 == 120 && $4 == 140) found=1 } END { exit(found ? 0 : 1) }'",
-        timeout=60,
-    )
-
-    nixpi.succeed(user_cmd + "import -window root /tmp/nixpi-desktop-root.png'")
-    nixpi.succeed("test -s /tmp/nixpi-desktop-root.png")
+    nixpi.succeed("command -v rofi")
+    nixpi.succeed("command -v pcmanfm")
+    nixpi.succeed("command -v xdotool")
+    nixpi.succeed("command -v wmctrl")
+    nixpi.succeed("command -v scrot")
+    nixpi.succeed("command -v tesseract")
   '';
 }

@@ -25,7 +25,7 @@ These are declared as user systemd services in the OS modules and are expected t
 ## 📚 Operational Notes
 
 - Home is a minimal status page for the service surface
-- FluffyChat is preconfigured for the local NixPI Matrix server
+- ElementWeb is preconfigured for the local NixPI Matrix server
 - Use `systemd_control` to inspect and restart these units
 
 ## 🔗 Related

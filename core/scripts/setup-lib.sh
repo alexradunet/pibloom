@@ -223,6 +223,18 @@ write_element_web_runtime_config() {
 	CONFIG
 }
 
+start_matrix_homeserver() {
+	if systemctl is-active --quiet matrix-synapse.service; then
+		return 0
+	fi
+
+	if command -v nixpi-bootstrap-matrix-systemctl >/dev/null 2>&1; then
+		root_command nixpi-bootstrap-matrix-systemctl start matrix-synapse.service >/dev/null 2>&1 || true
+	else
+		root_command systemctl start matrix-synapse.service >/dev/null 2>&1 || true
+	fi
+}
+
 step_matrix() {
 	echo ""
 	echo "--- Matrix Messaging ---"
@@ -231,11 +243,21 @@ step_matrix() {
 
 	# Wait for Matrix homeserver
 	echo "Waiting for Matrix homeserver..."
+	start_matrix_homeserver
 	local attempts=0
 	while ! systemctl is-active --quiet matrix-synapse.service; do
 		attempts=$((attempts + 1))
-		if [[ $attempts -ge 30 ]]; then
-			echo "ERROR: matrix-synapse.service did not start within 30 seconds." >&2
+		if [[ $attempts -eq 30 ]]; then
+			start_matrix_homeserver
+		fi
+		if [[ $attempts -ge 120 ]]; then
+			echo "ERROR: matrix-synapse.service did not start within 120 seconds." >&2
+			if command -v nixpi-bootstrap-matrix-journal >/dev/null 2>&1; then
+				echo "Recent matrix-synapse logs:" >&2
+				root_command nixpi-bootstrap-matrix-journal >&2 || true
+			else
+				root_command journalctl -u matrix-synapse --no-pager >&2 || true
+			fi
 			echo "Run 'systemctl status matrix-synapse' to debug." >&2
 			return 1
 		fi

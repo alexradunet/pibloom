@@ -67,15 +67,16 @@ vm-install-iso: iso
         exit 1
     fi
 
-    if [ ! -f "$disk" ]; then
-        echo "Creating installer VM disk at $disk ($disk_size)..."
-        qemu-img create -f qcow2 "$disk" "$disk_size" >/dev/null
-    fi
+    echo "Resetting installer VM state..."
+    rm -f "$disk"
+    rm -f "$ovmf_vars"
+    rm -rf "$HOME/.nixpi"
+
+    echo "Creating installer VM disk at $disk ($disk_size)..."
+    qemu-img create -f qcow2 "$disk" "$disk_size" >/dev/null
 
     mkdir -p "$(dirname "$ovmf_vars")"
-    if [ ! -f "$ovmf_vars" ]; then
-        cp "$ovmf_vars_template" "$ovmf_vars"
-    fi
+    cp "$ovmf_vars_template" "$ovmf_vars"
 
     echo "Booting installer ISO: $iso_path"
     echo "ISO timestamp: $(stat -c '%y' "$iso_path")"

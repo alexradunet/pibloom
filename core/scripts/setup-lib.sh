@@ -417,10 +417,11 @@ step_matrix() {
 		matrix_state_set registration_token "$registration_token"
 	fi
 
-	local bot_password bot_token bot_user_id bot_result
+	local bot_password bot_token bot_user_id bot_result bot_registration_token
 	bot_password=$(matrix_state_get bot_password)
 	bot_token=$(matrix_state_get bot_token)
 	bot_user_id=$(matrix_state_get bot_user_id)
+	bot_registration_token="$registration_token"
 	if [[ -z "$bot_password" ]]; then
 		bot_password=$(generate_password)
 		matrix_state_set bot_password "$bot_password"
@@ -430,11 +431,12 @@ step_matrix() {
 		bot_result=$(matrix_login "pi" "$bot_password" 2>/dev/null || true)
 		if [[ -z "$bot_result" ]]; then
 			bot_result=$(matrix_register "pi" "$bot_password" "$registration_token" 2>/dev/null || true)
-			if [[ -z "$bot_result" && -z "$registration_token" ]]; then
+			if [[ -z "$bot_result" ]]; then
 				local initial_registration_token
 				initial_registration_token=$(read_initial_matrix_registration_token)
 				if [[ -n "$initial_registration_token" && "$initial_registration_token" != "$registration_token" ]]; then
 					echo "Retrying Pi bot registration with the first-user bootstrap token..."
+					bot_registration_token="$initial_registration_token"
 					bot_result=$(matrix_register "pi" "$bot_password" "$initial_registration_token" 2>/dev/null || true)
 				fi
 			fi
@@ -443,7 +445,7 @@ step_matrix() {
 			matrix_state_unset registration_token
 			matrix_state_unset bot_token
 			matrix_state_unset bot_user_id
-			bot_result=$(matrix_register "pi" "$bot_password" "$registration_token") || {
+			bot_result=$(matrix_register "pi" "$bot_password" "$bot_registration_token") || {
 				echo "ERROR: Failed to register or recover @pi:nixpi bot account." >&2
 				return 1
 			}

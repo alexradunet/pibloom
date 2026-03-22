@@ -90,6 +90,38 @@ has_full_appliance() {
 	has_runtime_stack && has_matrix_stack && has_service_stack && has_command chromium
 }
 
+refresh_group_session_if_needed() {
+	local target_path="$1"
+	[[ "$target_path" == /var/lib/* ]] || return 0
+
+	local probe_path="$target_path"
+	while [[ ! -e "$probe_path" && "$probe_path" != "/" ]]; do
+		probe_path=$(dirname "$probe_path")
+	done
+	[[ -e "$probe_path" ]] || return 0
+	[[ -w "$probe_path" ]] && return 0
+
+	local required_group current_user group_members wizard_entrypoint escaped_entrypoint
+	required_group=$(stat -c '%G' "$probe_path" 2>/dev/null || true)
+	[[ -n "$required_group" && "$required_group" != "UNKNOWN" ]] || return 0
+
+	current_user=$(whoami)
+	group_members=$(getent group "$required_group" | cut -d: -f4)
+	if ! printf '%s\n' "$group_members" | tr ',' '\n' | grep -qx "$current_user"; then
+		return 0
+	fi
+
+	if ! command -v sg >/dev/null 2>&1; then
+		return 0
+	fi
+
+	wizard_entrypoint=$(readlink -f "$0" 2>/dev/null || printf '%s' "$0")
+	printf -v escaped_entrypoint '%q' "$wizard_entrypoint"
+
+	echo "Refreshing the setup session to pick up the ${required_group} group..."
+	exec sg "$required_group" -c "$escaped_entrypoint"
+}
+
 has_internet_connection() {
 	ping -c1 -W5 1.1.1.1 &>/dev/null
 }
@@ -269,6 +301,7 @@ step_appliance() {
 
 	echo "Standard NixPI appliance is ready."
 	mark_done appliance
+	refresh_group_session_if_needed "$PI_DIR"
 }
 
 prepare_local_state() {
@@ -671,10 +704,7 @@ step_bootc_switch() {
 
 finalize() {
 	if [[ -f /usr/local/share/nixpi/.pi/settings.json ]]; then
-		root_command install -d -m 0770 /var/lib/nixpi/agent || true
-		if [[ ! -f /var/lib/nixpi/agent/settings.json ]]; then
-			root_command install -m 0640 /usr/local/share/nixpi/.pi/settings.json /var/lib/nixpi/agent/settings.json || true
-		fi
+		mkdir -p "$PI_DIR" 2>/dev/null || true
 		if [[ ! -f "$PI_DIR/settings.json" ]]; then
 			cp /usr/local/share/nixpi/.pi/settings.json "$PI_DIR/settings.json" 2>/dev/null || true
 			chmod 600 "$PI_DIR/settings.json" 2>/dev/null || true
@@ -774,8 +804,9 @@ main() {
 
 	step_done welcome  || step_welcome
 	step_done network  || step_network
-	step_done appliance || step_appliance
 	step_done password || step_password
+	step_done appliance || step_appliance
+	refresh_group_session_if_needed "$PI_DIR"
 	step_done netbird  || step_netbird
 	if step_done matrix; then
 		:

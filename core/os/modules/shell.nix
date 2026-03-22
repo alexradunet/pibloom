@@ -12,6 +12,7 @@ let
     export NIXPI_DIR="${primaryHome}/nixpi"
     export NIXPI_STATE_DIR="${stateDir}"
     export NIXPI_PI_DIR="${stateDir}/agent"
+    export PI_CODING_AGENT_DIR="${stateDir}/agent"
     export NIXPI_CONFIG_DIR="${stateDir}/services"
     export NIXPI_INSTALL_MODE="${config.nixpi.install.mode}"
     export NIXPI_KEEP_SSH_AFTER_SETUP="${if config.nixpi.bootstrap.keepSshAfterSetup then "1" else "0"}"

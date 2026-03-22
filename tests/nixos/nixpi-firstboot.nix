@@ -123,7 +123,13 @@ pkgs.testers.runNixOSTest {
     nixpi.succeed("test -d /var/lib/nixpi/agent")
     nixpi.succeed("test -f /var/lib/nixpi/agent/settings.json")
     nixpi.succeed("test \"$(readlink -f " + home + "/.pi)\" = /var/lib/nixpi/agent")
-    
+
+    # Test 8a: Login shell exports the managed Pi agent dir so `pi` can start
+    nixpi.succeed(
+        "su - pi -c '. ~/.bashrc; test \"$PI_CODING_AGENT_DIR\" = /var/lib/nixpi/agent; "
+        + "pi --help | grep -q \"AI coding assistant\"'"
+    )
+
     # Test 9: NixPI directory may or may not exist depending on network/git availability
     # The firstboot script attempts to clone a repo but may fail in test env
     # So we just check the script attempted it (log mentions it)

@@ -75,6 +75,7 @@ in
         chown root:continuwuity "$TOKEN_FILE"
         chmod 0640 "$TOKEN_FILE"
       fi
+      REGISTRATION_TOKEN="$(tr -d '\n' < "$TOKEN_FILE")"
 
       ENABLE_REGISTRATION="${if config.nixpi.matrix.keepRegistrationAfterSetup then (if config.nixpi.matrix.enableRegistration then "true" else "false") else "dynamic"}"
       if [ "$ENABLE_REGISTRATION" = "dynamic" ]; then
@@ -93,6 +94,7 @@ port = [${toString config.nixpi.matrix.port}]
 database_path = "/var/lib/continuwuity"
 max_request_size = ${toString maxRequestSize}
 allow_registration = $ENABLE_REGISTRATION
+registration_token = "$REGISTRATION_TOKEN"
 allow_federation = false
 trusted_servers = []
 allow_announcements_check = false

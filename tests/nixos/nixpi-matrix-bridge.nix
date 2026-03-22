@@ -109,6 +109,7 @@ EOF
 
     homeserver.wait_for_unit("continuwuity.service", timeout=120)
     homeserver.wait_until_succeeds("curl -sf http://127.0.0.1:6167/_matrix/client/versions", timeout=60)
+    token = homeserver.succeed("get_matrix_token").strip()
 
     def register(username, password):
         response = homeserver.succeed(
@@ -119,21 +120,46 @@ EOF
         data = json.loads(response)
         if "access_token" in data:
             return data
-        session = data.get("session")
-        assert session, response
-        payload = json.dumps({
-            "username": username,
-            "password": password,
-            "inhibit_login": False,
-            "auth": {"type": "m.login.dummy", "session": session},
-        })
-        return json.loads(
-            homeserver.succeed(
+        for _ in range(4):
+            session = data.get("session")
+            assert session, response
+
+            completed = set(data.get("completed", []))
+            auth = None
+            for flow in data.get("flows", []):
+                for stage in flow.get("stages", []):
+                    if stage in completed:
+                        continue
+                    if stage == "m.login.registration_token" and token:
+                        auth = {"type": stage, "session": session, "token": token}
+                        break
+                    if stage == "m.login.dummy":
+                        auth = {"type": stage, "session": session}
+                        break
+                if auth:
+                    break
+            if not auth and token and "m.login.registration_token" not in completed:
+                auth = {"type": "m.login.registration_token", "session": session, "token": token}
+            if not auth and "m.login.dummy" not in completed:
+                auth = {"type": "m.login.dummy", "session": session}
+            assert auth, response
+
+            payload = json.dumps({
+                "username": username,
+                "password": password,
+                "inhibit_login": False,
+                "auth": auth,
+            })
+            response = homeserver.succeed(
                 "curl -sf -X POST http://127.0.0.1:6167/_matrix/client/v3/register "
                 + "-H 'Content-Type: application/json' "
                 + "-d '" + payload + "'"
             )
-        )
+            data = json.loads(response)
+            if "access_token" in data:
+                return data
+
+        raise AssertionError("Matrix registration did not complete: " + response)
 
     host_creds = register("host", "hostpass123")
     admin_creds = register("operator", "operatorpass123")

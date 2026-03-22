@@ -1,5 +1,9 @@
 { pkgs, python3, makeWrapper, nixpiSource, nixpkgsSource }:
 
+let
+  setupPackage = pkgs.callPackage ../setup {};
+in
+
 pkgs.stdenvNoCC.mkDerivation {
   pname = "nixpi-installer";
   version = "0.1.0";
@@ -16,9 +20,14 @@ pkgs.stdenvNoCC.mkDerivation {
     install -m 0755 ${./nixpi-installer.sh} "$out/share/nixpi-installer/nixpi-installer.sh"
 
     substituteInPlace "$out/share/nixpi-installer/nixpi_installer.py" \
-      --replace-fail "@nixpiSource@" "${nixpiSource}" \
-      --replace-fail "@nixpkgsSource@" "${nixpkgsSource}" \
       --replace-fail "@nixpiInstallModuleTemplate@" "$out/share/nixpi-installer/nixpi-install-module.nix.in"
+
+    substituteInPlace "$out/share/nixpi-installer/nixpi-install-module.nix.in" \
+      --replace-fail "@setupPackage@" "${setupPackage}" \
+      --replace-fail "@firstbootModule@" "${nixpiSource}/core/os/modules/firstboot.nix" \
+      --replace-fail "@networkModule@" "${nixpiSource}/core/os/modules/network.nix" \
+      --replace-fail "@shellModule@" "${nixpiSource}/core/os/modules/shell.nix" \
+      --replace-fail "@updateModule@" "${nixpiSource}/core/os/modules/update.nix"
 
     substituteInPlace "$out/share/nixpi-installer/nixpi-installer.sh" \
       --replace-fail "@helperBin@" "$out/bin/nixpi-installer-apply"

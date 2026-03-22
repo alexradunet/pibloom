@@ -39,12 +39,17 @@ in
 
   system.activationScripts.nixpi-app = lib.stringAfter [ "users" ] ''
     primary_group="$(id -gn ${primaryUser})"
+    default_pi_settings="${appPackage}/share/nixpi/.pi/settings.json"
 
     install -d -m 0755 -o ${primaryUser} -g "$primary_group" ${primaryHome}
 
     if [ -d ${primaryHome}/.pi ] && [ ! -L ${primaryHome}/.pi ] && [ ! -e ${agentStateDir}/.migration-complete ]; then
       cp -a ${primaryHome}/.pi/. ${agentStateDir}/
       touch ${agentStateDir}/.migration-complete
+    fi
+
+    if [ ! -e ${agentStateDir}/settings.json ] && [ -f "$default_pi_settings" ]; then
+      install -m 0640 -o ${serviceUser} -g ${serviceUser} "$default_pi_settings" ${agentStateDir}/settings.json
     fi
 
     ln -sfn ${agentStateDir} ${primaryHome}/.pi

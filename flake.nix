@@ -147,12 +147,27 @@
           generatedInstallModule =
             let
               template = builtins.readFile ./core/os/pkgs/installer/nixpi-install-module.nix.in;
-              sourceRoot = toString nixpiSource;
             in
-            builtins.toFile "nixpi-install-generated.nix" (
+            pkgs.writeText "nixpi-install-generated.nix" (
               lib.replaceStrings
-                [ "@@username@@" "@@password@@" "./nixpi/" ]
-                [ "installer" "\"installerpass123\"" "${sourceRoot}/" ]
+                [
+                  "@setupPackage@"
+                  "@firstbootModule@"
+                  "@networkModule@"
+                  "@shellModule@"
+                  "@updateModule@"
+                  "@@username@@"
+                  "@@password@@"
+                ]
+                [
+                  (toString setupPackage)
+                  "${toString nixpiSource}/core/os/modules/firstboot.nix"
+                  "${toString nixpiSource}/core/os/modules/network.nix"
+                  "${toString nixpiSource}/core/os/modules/shell.nix"
+                  "${toString nixpiSource}/core/os/modules/update.nix"
+                  "installer"
+                  "\"installerpass123\""
+                ]
                 template
             );
           # Import the NixOS integration test suite
@@ -216,8 +231,9 @@
             install_template="${installerHelper}/share/nixpi-installer/nixpi-install-module.nix.in"
             grep -F 'def write_nixpi_install_artifacts(' "$module" >/dev/null
             grep -F 'nix.settings.experimental-features = [ "nix-command" "flakes" ];' "$install_template" >/dev/null
-            grep -F '{ pkgs, ... }:' "$install_template" >/dev/null
-            grep -F 'NIXPI_CONFIGURATION_TEMPLATE' "$module" >/dev/null
+            grep -F '{ config, ... }:' "$install_template" >/dev/null
+            grep -F 'environment.systemPackages = [ ' "$install_template" >/dev/null
+            grep -F 'def ensure_import(' "$module" >/dev/null
             grep -F 'nixpi.install.mode = "managed-user";' "$install_template" >/dev/null
             PYTHONPYCACHEPREFIX="$TMPDIR/pycache" ${pkgs.python3}/bin/python3 -m py_compile "$module"
             touch "$out"
@@ -245,17 +261,36 @@
           installer-generated-config = (nixpkgs.lib.nixosSystem {
             inherit system specialArgs;
             modules = [
-              generatedInstallModule
-              {
+              ({ config, ... }: {
+                imports = [
+                  "${nixpiSource}/core/os/modules/firstboot.nix"
+                  "${nixpiSource}/core/os/modules/network.nix"
+                  "${nixpiSource}/core/os/modules/shell.nix"
+                  "${nixpiSource}/core/os/modules/update.nix"
+                ];
+
+                environment.systemPackages = [ setupPackage ];
                 networking.hostName = "installer-vm";
                 time.timeZone = "UTC";
                 i18n.defaultLocale = "en_US.UTF-8";
+                nixpkgs.config.allowUnfree = true;
+                nix.settings.experimental-features = [ "nix-command" "flakes" ];
+                nixpi.primaryUser = "installer";
+                nixpi.install.mode = "managed-user";
+                nixpi.createPrimaryUser = true;
                 users.groups.installer = {};
                 users.users.installer = {
                   isNormalUser = true;
                   group = "installer";
                   extraGroups = [ "networkmanager" ];
+                  initialPassword = "installerpass123";
                 };
+                system.activationScripts.nixpi-bootstrap-primary-password = ''
+                  bootstrapPasswordFile="${config.nixpi.stateDir}/bootstrap/primary-user-password"
+                  install -d -m 0755 -o root -g root "$(dirname "$bootstrapPasswordFile")"
+                  install -m 0600 -o root -g root /dev/null "$bootstrapPasswordFile"
+                  printf '%s' "installerpass123" > "$bootstrapPasswordFile"
+                '';
                 boot.loader.systemd-boot.enable = true;
                 boot.loader.efi.canTouchEfiVariables = true;
                 fileSystems."/" = {
@@ -267,7 +302,7 @@
                   fsType = "vfat";
                 };
                 system.stateVersion = "25.05";
-              }
+              })
             ];
           }).config.system.build.toplevel;
 

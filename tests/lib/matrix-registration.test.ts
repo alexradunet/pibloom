@@ -25,7 +25,7 @@ describe("registerMatrixAccount", () => {
 		mockFetch.mockResolvedValueOnce({
 			ok: false,
 			status: 401,
-			json: async () => ({ session: "sess123" }),
+			json: async () => ({ session: "sess123", flows: [{ stages: ["m.login.registration_token"] }] }),
 		});
 		mockFetch.mockResolvedValueOnce({
 			ok: true,
@@ -42,6 +42,57 @@ describe("registerMatrixAccount", () => {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ username: "test", password: "pass", inhibit_login: false }),
+			}),
+		);
+		expect(mockFetch).toHaveBeenNthCalledWith(
+			2,
+			"http://localhost:6167/_matrix/client/v3/register",
+			expect.objectContaining({
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					username: "test",
+					password: "pass",
+					inhibit_login: false,
+					auth: { type: "m.login.registration_token", session: "sess123", token: "token" },
+				}),
+			}),
+		);
+	});
+
+	it("handles multi-stage registration token then dummy flow", async () => {
+		mockFetch.mockResolvedValueOnce({
+			ok: false,
+			status: 401,
+			json: async () => ({ session: "sess123", flows: [{ stages: ["m.login.registration_token", "m.login.dummy"] }] }),
+		});
+		mockFetch.mockResolvedValueOnce({
+			ok: false,
+			status: 401,
+			json: async () => ({
+				session: "sess123",
+				completed: ["m.login.registration_token"],
+				flows: [{ stages: ["m.login.registration_token", "m.login.dummy"] }],
+			}),
+		});
+		mockFetch.mockResolvedValueOnce({
+			ok: true,
+			status: 200,
+			json: async () => ({ user_id: "@test:nixpi", access_token: "tok789" }),
+		});
+
+		const result = await registerMatrixAccount("http://localhost:6167", "test", "pass", "token");
+		expect(result).toEqual({ ok: true, userId: "@test:nixpi", accessToken: "tok789" });
+		expect(mockFetch).toHaveBeenNthCalledWith(
+			3,
+			"http://localhost:6167/_matrix/client/v3/register",
+			expect.objectContaining({
+				body: JSON.stringify({
+					username: "test",
+					password: "pass",
+					inhibit_login: false,
+					auth: { type: "m.login.dummy", session: "sess123" },
+				}),
 			}),
 		);
 	});

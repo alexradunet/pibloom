@@ -23,6 +23,11 @@ LEGACY_SETUP_STATE="$HOME/.nixpi/setup-state.json"
 BOOTSTRAP_STATE_DIR="${NIXPI_STATE_DIR:-/var/lib/nixpi}/bootstrap"
 BOOTSTRAP_UPGRADE_STATUS_FILE="${BOOTSTRAP_STATE_DIR}/full-appliance-upgrade.status"
 BOOTSTRAP_UPGRADE_LOG_FILE="${BOOTSTRAP_STATE_DIR}/full-appliance-upgrade.log"
+BOOTSTRAP_SYSTEM_FLAKE_DIR="/etc/nixos"
+BOOTSTRAP_SYSTEM_FLAKE_FILE="${BOOTSTRAP_SYSTEM_FLAKE_DIR}/flake.nix"
+BOOTSTRAP_SYSTEM_CONFIG_FILE="${BOOTSTRAP_SYSTEM_FLAKE_DIR}/configuration.nix"
+BOOTSTRAP_SYSTEM_HOST_FILE="${BOOTSTRAP_SYSTEM_FLAKE_DIR}/nixpi-host.nix"
+NIXPI_BOOTSTRAP_REPO="${NIXPI_BOOTSTRAP_REPO:-https://github.com/alexradunet/nixpi.git}"
 
 # --- Prefill (for VM/dev use) ---
 # Create ~/.nixpi/prefill.env on your host to skip manual prompts.
@@ -89,27 +94,140 @@ has_internet_connection() {
 	ping -c1 -W5 1.1.1.1 &>/dev/null
 }
 
-print_appliance_upgrade_progress() {
-	local status_line=""
-	if [[ -r "$BOOTSTRAP_UPGRADE_STATUS_FILE" ]]; then
-		status_line=$(tail -n 1 "$BOOTSTRAP_UPGRADE_STATUS_FILE" 2>/dev/null || true)
-	fi
-	if [[ -n "$status_line" ]]; then
-		echo "  Status: $status_line"
-	else
-		echo "  Status: building and activating the full NixPI appliance..."
+write_appliance_status() {
+	mkdir -p "$BOOTSTRAP_STATE_DIR"
+	printf '%s %s\n' "$(date -Iseconds)" "$1" > "$BOOTSTRAP_UPGRADE_STATUS_FILE"
+}
+
+print_recent_appliance_log() {
+	if [[ ! -r "$BOOTSTRAP_UPGRADE_LOG_FILE" ]]; then
+		return
 	fi
 
-	if [[ -r "$BOOTSTRAP_UPGRADE_LOG_FILE" ]]; then
-		local recent_log
-		recent_log=$(tail -n 3 "$BOOTSTRAP_UPGRADE_LOG_FILE" 2>/dev/null || true)
-		if [[ -n "$recent_log" ]]; then
-			echo "  Recent activity:"
-			while IFS= read -r line; do
-				echo "    $line"
-			done <<< "$recent_log"
-		fi
+	local recent_log
+	recent_log=$(tail -n 10 "$BOOTSTRAP_UPGRADE_LOG_FILE" 2>/dev/null || true)
+	[[ -n "$recent_log" ]] || return
+
+	echo "Recent appliance promotion log:"
+	while IFS= read -r line; do
+		echo "  $line"
+	done <<< "$recent_log"
+}
+
+write_root_text_file() {
+	local destination="$1"
+	local mode="${2:-0644}"
+	local tmp_file
+	tmp_file=$(mktemp)
+	cat > "$tmp_file"
+	root_command install -D -m "$mode" "$tmp_file" "$destination"
+	rm -f "$tmp_file"
+}
+
+clone_nixpi_checkout() {
+	if [[ -d "$NIXPI_DIR/.git" ]]; then
+		echo "Using existing checkout at ${NIXPI_DIR}."
+		return 0
 	fi
+
+	if [[ -e "$NIXPI_DIR" ]] && [[ -n "$(ls -A "$NIXPI_DIR" 2>/dev/null || true)" ]]; then
+		echo "Refusing to overwrite existing non-git directory: ${NIXPI_DIR}" >&2
+		return 1
+	fi
+
+	mkdir -p "$(dirname "$NIXPI_DIR")"
+	rm -rf "$NIXPI_DIR"
+	nix --extra-experimental-features 'nix-command flakes' run nixpkgs#git -- clone "$NIXPI_BOOTSTRAP_REPO" "$NIXPI_DIR"
+}
+
+write_promoted_system_flake() {
+	local hostname="$1"
+	local primary_user="$2"
+
+	root_command install -d -m 0755 "$BOOTSTRAP_SYSTEM_FLAKE_DIR"
+
+	write_root_text_file "$BOOTSTRAP_SYSTEM_HOST_FILE" <<-EOF
+	{ ... }:
+	{
+	  networking.hostName = "${hostname}";
+	  nixpi.primaryUser = "${primary_user}";
+	  nixpi.install.mode = "managed-user";
+	  nixpi.createPrimaryUser = true;
+	}
+	EOF
+
+	write_root_text_file "$BOOTSTRAP_SYSTEM_CONFIG_FILE" <<-EOF
+	{ ... }:
+	{
+	  imports = [
+	    ${NIXPI_DIR}/core/os/hosts/x86_64.nix
+	    ./hardware-configuration.nix
+	    ./nixpi-host.nix
+	  ];
+	}
+	EOF
+
+	write_root_text_file "$BOOTSTRAP_SYSTEM_FLAKE_FILE" <<-EOF
+	{
+	  description = "NixPI installed host";
+
+	  inputs = {
+	    nixpi.url = "path:${NIXPI_DIR}";
+	    nixpkgs.follows = "nixpi/nixpkgs";
+	  };
+
+	  outputs = { nixpi, nixpkgs, ... }:
+	    let
+	      system = "x86_64-linux";
+	    in {
+	      nixosConfigurations."${hostname}" = nixpkgs.lib.nixosSystem {
+	        inherit system;
+	        specialArgs = {
+	          piAgent = nixpi.packages.${system}.pi;
+	          appPackage = nixpi.packages.${system}.app;
+	          setupPackage = nixpi.packages.${system}.nixpi-setup;
+	        };
+	        modules = [
+	          ./configuration.nix
+	          {
+	            nixpkgs.hostPlatform = system;
+	            nixpkgs.config.allowUnfree = true;
+	          }
+	        ];
+	      };
+	    };
+	}
+	EOF
+}
+
+promote_full_appliance() {
+	local hostname="$1"
+	local primary_user="$2"
+
+	mkdir -p "$BOOTSTRAP_STATE_DIR"
+	: > "$BOOTSTRAP_UPGRADE_LOG_FILE"
+	chmod 0644 "$BOOTSTRAP_UPGRADE_LOG_FILE"
+
+	write_appliance_status "Cloning the NixPI checkout..."
+	if ! clone_nixpi_checkout 2>&1 | tee -a "$BOOTSTRAP_UPGRADE_LOG_FILE"; then
+		write_appliance_status "Failed to prepare the NixPI checkout."
+		return 1
+	fi
+
+	write_appliance_status "Writing the local /etc/nixos system flake..."
+	if ! write_promoted_system_flake "$hostname" "$primary_user" 2>&1 | tee -a "$BOOTSTRAP_UPGRADE_LOG_FILE"; then
+		write_appliance_status "Failed to write the local /etc/nixos flake."
+		return 1
+	fi
+
+	write_appliance_status "Building and activating the full NixPI appliance..."
+	if ! root_command nixos-rebuild switch --flake "${BOOTSTRAP_SYSTEM_FLAKE_DIR}#${hostname}" 2>&1 | tee -a "$BOOTSTRAP_UPGRADE_LOG_FILE"; then
+		write_appliance_status "Promotion failed. Review ${BOOTSTRAP_UPGRADE_LOG_FILE}."
+		return 1
+	fi
+
+	write_appliance_status "Full NixPI appliance installed successfully."
+	return 0
 }
 
 step_appliance() {
@@ -123,51 +241,31 @@ step_appliance() {
 	fi
 
 	if ! has_internet_connection; then
+		if [[ "$NONINTERACTIVE_SETUP" -eq 1 ]]; then
+			echo "Internet connection is required before promoting this machine to the full NixPI appliance."
+			echo "Deferring appliance upgrade because setup is running in noninteractive mode."
+			echo "Connect to WiFi or Ethernet later, then rerun setup-wizard.sh to complete the upgrade."
+			mark_done_with appliance "deferred-offline"
+			return
+		fi
 		echo "Internet connection is required before promoting this machine to the full NixPI appliance."
 		echo "Connect to WiFi or Ethernet first, then continue setup."
 		return 1
 	fi
 
-	if ! has_systemd_unit nixpi-bootstrap-upgrade.service; then
-		echo "No automatic appliance upgrade service found."
-		echo "Assuming this system was built directly as the standard appliance."
-		mark_done_with appliance "not-needed"
-		return
-	fi
-
 	echo "Promoting this minimal base into the standard NixPI appliance..."
 	echo "This can take several minutes on slower hardware."
-	echo "You will see progress updates while the appliance is being built."
+	echo "A local checkout will be cloned into ~/nixpi and activated through /etc/nixos."
 
-	local attempts=0
-	local last_status_line=""
-	while ! has_full_appliance; do
-		attempts=$((attempts + 1))
-		local active_state
-		active_state=$(systemctl show -p ActiveState --value nixpi-bootstrap-upgrade.service 2>/dev/null || true)
-		local current_status_line=""
-		if [[ -r "$BOOTSTRAP_UPGRADE_STATUS_FILE" ]]; then
-			current_status_line=$(tail -n 1 "$BOOTSTRAP_UPGRADE_STATUS_FILE" 2>/dev/null || true)
-		fi
-		if [[ $attempts -eq 1 || $((attempts % 5)) -eq 0 || "$current_status_line" != "$last_status_line" ]]; then
-			print_appliance_upgrade_progress
-			last_status_line="$current_status_line"
-		fi
-		if systemctl is-failed --quiet nixpi-bootstrap-upgrade.service; then
-			echo "Automatic appliance upgrade failed. Recent logs:" >&2
-			root_command journalctl -u nixpi-bootstrap-upgrade.service -n 40 --no-pager >&2 || true
-			return 1
-		fi
-		if [[ "$active_state" == "inactive" ]] && [[ $attempts -ge 10 ]]; then
-			echo "Automatic appliance upgrade is not running and the full appliance is still missing." >&2
-			return 1
-		fi
-		if [[ $attempts -ge 900 ]]; then
-			echo "Automatic appliance upgrade timed out." >&2
-			return 1
-		fi
-		sleep 2
-	done
+	local current_hostname current_user
+	current_hostname=$(hostnamectl --static 2>/dev/null || hostname -s)
+	current_user=$(whoami)
+
+	if ! promote_full_appliance "$current_hostname" "$current_user"; then
+		echo "Appliance promotion failed. Review ${BOOTSTRAP_UPGRADE_LOG_FILE}." >&2
+		print_recent_appliance_log >&2
+		return 1
+	fi
 
 	echo "Standard NixPI appliance is ready."
 	mark_done appliance
@@ -176,6 +274,11 @@ step_appliance() {
 prepare_local_state() {
 	mkdir -p "$WIZARD_STATE" "$NIXPI_DIR"
 	rm -f "$LEGACY_SETUP_STATE"
+	if [[ ! -f "$PI_DIR/settings.json" && -f /usr/local/share/nixpi/.pi/settings.json ]]; then
+		mkdir -p "$PI_DIR"
+		cp /usr/local/share/nixpi/.pi/settings.json "$PI_DIR/settings.json"
+		chmod 600 "$PI_DIR/settings.json" 2>/dev/null || true
+	fi
 }
 
 
@@ -349,7 +452,6 @@ step_network() {
 				;;
 			2|skip)
 				echo "Skipping network setup. You can configure WiFi later with: nmtui"
-				mark_done network
 				return
 				;;
 			*)
@@ -547,16 +649,19 @@ step_services() {
 
 step_bootc_switch() {
 	echo ""
-	echo "--- Bootstrap Guidance ---"
-	echo "NixPI installs a minimal bootable base first."
-	echo "Clone your editable checkout after setup, then enable any richer roles you want."
+	echo "--- Update Guidance ---"
+	echo "NixPI now runs from the local checkout at ~/nixpi and a host-specific flake in /etc/nixos."
 	echo ""
-	echo "Bootstrap checkout:"
-	echo "  nix --extra-experimental-features 'nix-command flakes' run nixpkgs#git -- clone https://github.com/alexradunet/nixpi.git ~/nixpi"
+	echo "To refresh the local checkout later:"
 	echo "  cd ~/nixpi"
-	echo "  sudo nixos-rebuild switch --flake ."
+	echo "  git pull --ff-only"
 	echo ""
-	echo "To roll back later:"
+	echo "To apply local changes manually:"
+	echo "  sudo nixos-rebuild switch --flake /etc/nixos#$(hostname -s)"
+	echo ""
+	echo "If you need to clone the checkout again manually:"
+	echo "  nix --extra-experimental-features 'nix-command flakes' run nixpkgs#git -- clone ${NIXPI_BOOTSTRAP_REPO} ~/nixpi"
+	echo "  cd ~/nixpi"
 	echo "  sudo nixos-rebuild switch --rollback"
 	echo ""
 	mark_done bootc_switch
@@ -565,6 +670,16 @@ step_bootc_switch() {
 # --- Finalization ---
 
 finalize() {
+	if [[ -f /usr/local/share/nixpi/.pi/settings.json ]]; then
+		root_command install -d -m 0770 /var/lib/nixpi/agent || true
+		if [[ ! -f /var/lib/nixpi/agent/settings.json ]]; then
+			root_command install -m 0640 /usr/local/share/nixpi/.pi/settings.json /var/lib/nixpi/agent/settings.json || true
+		fi
+		if [[ ! -f "$PI_DIR/settings.json" ]]; then
+			cp /usr/local/share/nixpi/.pi/settings.json "$PI_DIR/settings.json" 2>/dev/null || true
+			chmod 600 "$PI_DIR/settings.json" 2>/dev/null || true
+		fi
+	fi
 	if command -v nixpi-bootstrap-remove-primary-password >/dev/null 2>&1; then
 		root_command nixpi-bootstrap-remove-primary-password || echo "warning: failed to remove bootstrap primary password file" >&2
 	fi
@@ -640,7 +755,7 @@ finalize() {
 			echo "  Use /model in Pi to select a model."
 		fi
 	else
-		echo "  Next: clone ~/nixpi and rebuild into a richer profile when you want Pi, desktop, or collab services."
+		echo "  Next: restore ~/nixpi and rebuild via /etc/nixos if you want the full NixPI profile again."
 	fi
 	echo "========================================="
 	echo ""

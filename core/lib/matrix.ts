@@ -56,47 +56,50 @@ export async function registerMatrixAccount(
 	homeserver: string,
 	username: string,
 	password: string,
-	_registrationToken?: string,
+	registrationToken?: string,
 ): Promise<{ ok: true; userId: string; accessToken: string } | { ok: false; error: string }> {
 	const url = `${homeserver}/_matrix/client/v3/register`;
 	const body = { username, password, inhibit_login: false };
+	let auth:
+		| { type: "m.login.dummy"; session: string }
+		| { type: "m.login.registration_token"; session: string; token: string }
+		| undefined;
 
-	const step1 = await fetch(url, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(body),
-	});
+	for (let attempt = 0; attempt < 4; attempt += 1) {
+		const response = await fetch(url, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(auth ? { ...body, auth } : body),
+		});
+		const responseBody = (await response.json()) as {
+			session?: string;
+			completed?: string[];
+			flows?: Array<{ stages?: string[] }>;
+			errcode?: string;
+			error?: string;
+			user_id?: string;
+			access_token?: string;
+		};
 
-	if (step1.ok) {
-		const data = (await step1.json()) as { user_id: string; access_token: string };
-		return { ok: true, userId: data.user_id, accessToken: data.access_token };
+		if (response.ok && responseBody.user_id && responseBody.access_token) {
+			return { ok: true, userId: responseBody.user_id, accessToken: responseBody.access_token };
+		}
+
+		if (response.status !== 401) {
+			return parseRegistrationError(responseBody, response.status);
+		}
+
+		const session = responseBody.session;
+		if (!session) return { ok: false, error: "No session ID in 401 response" };
+
+		const nextAuth = pickNextRegistrationAuth(responseBody.completed, responseBody.flows, session, registrationToken);
+		if (!nextAuth) {
+			return { ok: false, error: "No supported registration auth flow advertised by homeserver" };
+		}
+		auth = nextAuth;
 	}
 
-	const step1Body = (await step1.json()) as { session?: string; errcode?: string; error?: string };
-	if (step1.status !== 401) {
-		return parseRegistrationError(step1Body, step1.status);
-	}
-
-	const session = step1Body.session;
-	if (!session) return { ok: false, error: "No session ID in 401 response" };
-
-	const step2 = await fetch(url, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({
-			username,
-			password,
-			inhibit_login: false,
-			auth: { type: "m.login.dummy", session },
-		}),
-	});
-
-	if (step2.ok) {
-		const data = (await step2.json()) as { user_id: string; access_token: string };
-		return { ok: true, userId: data.user_id, accessToken: data.access_token };
-	}
-
-	return parseRegistrationError((await step2.json()) as { errcode?: string; error?: string }, step2.status);
+	return { ok: false, error: "Registration did not complete after multiple UIA attempts" };
 }
 
 export interface ProvisionMatrixAgentAccountOptions {
@@ -167,4 +170,38 @@ function parseRegistrationError(err: unknown, status: number): { ok: false; erro
 	const e = err as { errcode?: string; error?: string };
 	if (e.errcode === "M_USER_IN_USE") return { ok: false, error: "Username is already taken." };
 	return { ok: false, error: e.error ?? `Registration failed (${status})` };
+}
+
+function pickNextRegistrationAuth(
+	completed: string[] | undefined,
+	flows: Array<{ stages?: string[] }> | undefined,
+	session: string,
+	registrationToken?: string,
+):
+	| { type: "m.login.dummy"; session: string }
+	| { type: "m.login.registration_token"; session: string; token: string }
+	| undefined {
+	const completedStages = new Set(completed ?? []);
+
+	for (const flow of flows ?? []) {
+		const stages = flow.stages ?? [];
+		for (const stage of stages) {
+			if (completedStages.has(stage)) continue;
+			if (stage === "m.login.registration_token" && registrationToken) {
+				return { type: "m.login.registration_token", session, token: registrationToken };
+			}
+			if (stage === "m.login.dummy") {
+				return { type: "m.login.dummy", session };
+			}
+		}
+	}
+
+	if (!completedStages.has("m.login.registration_token") && registrationToken) {
+		return { type: "m.login.registration_token", session, token: registrationToken };
+	}
+	if (!completedStages.has("m.login.dummy")) {
+		return { type: "m.login.dummy", session };
+	}
+
+	return undefined;
 }

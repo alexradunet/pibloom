@@ -35,6 +35,7 @@ pkgs.testers.runNixOSTest {
         extraGroups = [ "wheel" "networkmanager" "agent" ];
         home = homeDir;
         shell = pkgs.bash;
+        initialPassword = "serverpass123";
       };
       users.groups.${username} = {};
     };
@@ -100,36 +101,31 @@ pkgs.testers.runNixOSTest {
     server.wait_for_unit("continuwuity.service", timeout=60)
     server.wait_until_succeeds("curl -sf http://localhost:6167/_matrix/client/versions", timeout=60)
 
-    register_response = server.succeed("""
-      curl -s -X POST http://localhost:6167/_matrix/client/v3/register \
-        -H "Content-Type: application/json" \
-        -d '{"username":"daemon","password":"testpass123","inhibit_login":false}'
-    """)
+    server.succeed(
+        "mkdir -p /home/server/.nixpi && cat > /home/server/.nixpi/prefill.env <<'EOF'\n"
+        + "PREFILL_USERNAME=server\n"
+        + "PREFILL_MATRIX_PASSWORD=serverpass123\n"
+        + "PREFILL_PRIMARY_PASSWORD=serverpass123\n"
+        + "EOF\n"
+        + "chown -R server:server /home/server/.nixpi"
+    )
+    server.succeed("su - server -c 'setup-wizard.sh'")
+    server.succeed("test -f /home/server/.nixpi/.setup-complete")
+    server.succeed("test -f /var/lib/nixpi/agent/matrix-credentials.json")
 
-    register_data = json.loads(register_response)
-    if "access_token" not in register_data:
-        session = register_data.get("session")
-        assert session, "Matrix registration challenge missing session: " + register_response
-        register_payload = json.dumps({
-            "username": "daemon",
-            "password": "testpass123",
-            "inhibit_login": False,
-            "auth": {"type": "m.login.dummy", "session": session},
-        })
-        register_response = server.succeed(
-            "curl -sf -X POST http://localhost:6167/_matrix/client/v3/register "
-            + "-H \"Content-Type: application/json\" "
-            + "-d '"
-            + register_payload
-            + "'"
+    server_creds = json.loads(server.succeed("cat /var/lib/nixpi/agent/matrix-credentials.json"))
+    access_token = server_creds["botAccessToken"]
+    user_id = server_creds["botUserId"]
+    assert user_id, "setup-wizard produced an empty botUserId"
+    assert access_token, "setup-wizard produced an empty botAccessToken"
+    whoami = json.loads(
+        server.succeed(
+            "curl -sf -H 'Authorization: Bearer "
+            + access_token
+            + "' http://localhost:6167/_matrix/client/v3/account/whoami"
         )
-        register_data = json.loads(register_response)
-
-    access_token = register_data["access_token"]
-    user_id = register_data["user_id"]
-
-    print("User ID: " + user_id)
-    print("Access token: " + access_token[:16] + "...")
+    )
+    assert whoami["user_id"] == user_id, "Bot access token does not match bot user"
 
     # Start the agent node and provision daemon credentials.
     agent.start()
@@ -183,9 +179,10 @@ pkgs.testers.runNixOSTest {
     agent.succeed("ls -la /usr/local/share/nixpi/")
 
     agent.succeed("test -f /var/lib/nixpi/agent/matrix-credentials.json")
-    creds = agent.succeed("cat /var/lib/nixpi/agent/matrix-credentials.json")
-    assert "homeserver" in creds, "Credentials missing homeserver"
-    assert "botAccessToken" in creds, "Credentials missing botAccessToken"
+    creds = json.loads(agent.succeed("cat /var/lib/nixpi/agent/matrix-credentials.json"))
+    assert creds["homeserver"] == "http://server:6167", "Credentials missing homeserver"
+    assert creds["botUserId"] == user_id, "Credentials missing botUserId"
+    assert creds["botAccessToken"] == access_token, "Credentials missing botAccessToken"
 
     print("All nixpi-daemon tests passed!")
     print("Note: Full daemon connection test requires complete Matrix network setup")

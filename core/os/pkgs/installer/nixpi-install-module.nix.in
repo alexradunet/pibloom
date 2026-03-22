@@ -1,20 +1,16 @@
-{ pkgs, config, ... }:
+{ config, ... }:
 let
-  setupPackage = pkgs.callPackage ./nixpi/core/os/pkgs/setup {};
   bootstrapPasswordFile = "${config.nixpi.stateDir}/bootstrap/primary-user-password";
 in
 {
-  _module.args = { inherit setupPackage; };
-
   imports = [
-    ./nixpi/core/os/modules/options.nix
-    ./nixpi/core/os/modules/setup.nix
-    ./nixpi/core/os/modules/bootstrap-upgrade.nix
-    ./nixpi/core/os/modules/firstboot.nix
-    ./nixpi/core/os/modules/network.nix
-    ./nixpi/core/os/modules/shell.nix
-    ./nixpi/core/os/modules/update.nix
+    @firstbootModule@
+    @networkModule@
+    @shellModule@
+    @updateModule@
   ];
+
+  environment.systemPackages = [ @setupPackage@ ];
 
   nixpi.primaryUser = "@@username@@";
   nixpi.install.mode = "managed-user";

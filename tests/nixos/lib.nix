@@ -201,27 +201,76 @@ EOF
       local username="$1"
       local password="$2"
       local homeserver="''${3:-http://localhost:6167}"
+      local token="''${4:-}"
+      if [ -z "$token" ]; then
+        token=$(get_matrix_token)
+      fi
 
-      local step1
-      step1=$(curl -s -X POST "''${homeserver}/_matrix/client/v3/register" \
+      local result
+      result=$(curl -s -X POST "''${homeserver}/_matrix/client/v3/register" \
         -H "Content-Type: application/json" \
         -d "{\"username\":\"$username\",\"password\":\"$password\",\"inhibit_login\":false}")
 
-      if echo "$step1" | grep -q '"access_token"'; then
-        echo "$step1"
+      if echo "$result" | grep -q '"access_token"'; then
+        echo "$result"
         return 0
       fi
 
-      local session
-      session=$(printf '%s' "$step1" | sed -n 's/.*"session"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
-      if [ -n "$session" ]; then
-        curl -sf -X POST "''${homeserver}/_matrix/client/v3/register" \
-          -H "Content-Type: application/json" \
-          -d "{\"username\":\"$username\",\"password\":\"$password\",\"inhibit_login\":false,\"auth\":{\"type\":\"m.login.dummy\",\"session\":\"$session\"}}"
-        return 0
-      fi
+      local attempt session auth_payload
+      for attempt in 1 2 3 4; do
+        session=$(jq -r '.session // empty' <<< "$result")
+        if [ -z "$session" ]; then
+          break
+        fi
 
-      printf '%s\n' "$step1" >&2
+        auth_payload=$(
+          jq -c \
+            --arg session "$session" \
+            --arg token "$token" \
+            '
+            def completed: (.completed // []);
+            first(
+              (.flows // [])[]?.stages[]? as $stage
+              | select((completed | index($stage)) | not)
+              | if $stage == "m.login.registration_token" and ($token | length) > 0 then
+                  { type: $stage, session: $session, token: $token }
+                elif $stage == "m.login.dummy" then
+                  { type: $stage, session: $session }
+                else
+                  empty
+                end
+            ) // (
+              if ((completed | index("m.login.registration_token")) | not) and ($token | length) > 0 then
+                { type: "m.login.registration_token", session: $session, token: $token }
+              elif ((completed | index("m.login.dummy")) | not) then
+                { type: "m.login.dummy", session: $session }
+              else
+                empty
+              end
+            )
+            ' <<< "$result"
+        )
+
+        if [ -z "$auth_payload" ] || [ "$auth_payload" = "null" ]; then
+          break
+        fi
+
+        result=$(jq -cn \
+          --arg username "$username" \
+          --arg password "$password" \
+          --argjson auth "$auth_payload" \
+          '{ username: $username, password: $password, inhibit_login: false, auth: $auth }' \
+          | curl -sf -X POST "''${homeserver}/_matrix/client/v3/register" \
+              -H "Content-Type: application/json" \
+              -d @-)
+
+        if echo "$result" | grep -q '"access_token"'; then
+          echo "$result"
+          return 0
+        fi
+      done
+
+      printf '%s\n' "$result" >&2
       return 1
     }
     
@@ -261,7 +310,9 @@ EOF
   matrixRegisterScript = ''
     import json
 
-    def register_matrix_user(machine, homeserver, username, password):
+    def register_matrix_user(machine, homeserver, username, password, token=""):
+        if not token:
+            token = machine.succeed("get_matrix_token").strip()
         response = machine.succeed(
             "curl -s -X POST " + homeserver + "/_matrix/client/v3/register "
             + "-H 'Content-Type: application/json' "
@@ -270,20 +321,45 @@ EOF
         data = json.loads(response)
         if "access_token" in data:
             return data
-        session = data.get("session")
-        assert session, "Matrix registration challenge missing session: " + response
-        payload = json.dumps({
-            "username": username,
-            "password": password,
-            "inhibit_login": False,
-            "auth": {"type": "m.login.dummy", "session": session},
-        })
-        return json.loads(
-            machine.succeed(
+        for _ in range(4):
+            session = data.get("session")
+            assert session, "Matrix registration challenge missing session: " + response
+
+            completed = set(data.get("completed", []))
+            auth = None
+            for flow in data.get("flows", []):
+                for stage in flow.get("stages", []):
+                    if stage in completed:
+                        continue
+                    if stage == "m.login.registration_token" and token:
+                        auth = {"type": stage, "session": session, "token": token}
+                        break
+                    if stage == "m.login.dummy":
+                        auth = {"type": stage, "session": session}
+                        break
+                if auth:
+                    break
+            if not auth and token and "m.login.registration_token" not in completed:
+                auth = {"type": "m.login.registration_token", "session": session, "token": token}
+            if not auth and "m.login.dummy" not in completed:
+                auth = {"type": "m.login.dummy", "session": session}
+            assert auth, "Matrix registration challenge advertised no supported auth stages: " + response
+
+            payload = json.dumps({
+                "username": username,
+                "password": password,
+                "inhibit_login": False,
+                "auth": auth,
+            })
+            response = machine.succeed(
                 "curl -sf -X POST " + homeserver + "/_matrix/client/v3/register "
                 + "-H 'Content-Type: application/json' "
                 + "-d '" + payload + "'"
             )
-        )
+            data = json.loads(response)
+            if "access_token" in data:
+                return data
+
+        raise AssertionError("Matrix registration did not complete: " + response)
   '';
 }

@@ -118,6 +118,33 @@ EOF
   bootstrapPasswd = bootstrapAction "passwd" "/run/current-system/sw/bin/passwd ${primaryUser}";
   bootstrapChpasswd = bootstrapAction "chpasswd" "/run/current-system/sw/bin/chpasswd";
   bootstrapBroker = bootstrapAction "brokerctl" "/run/current-system/sw/bin/nixpi-brokerctl";
+  bootstrapWriteHostNix = pkgs.writeShellScriptBin "nixpi-bootstrap-write-host-nix" ''
+    set -euo pipefail
+    if [ -f "${systemReadyFile}" ]; then
+      echo "NixPI bootstrap access is disabled after setup completes" >&2
+      exit 1
+    fi
+
+    hostname="''${1:-}"
+    primary_user="''${2:-}"
+    tz="''${3:-}"
+    kb="''${4:-}"
+    if [ -z "$hostname" ] || [ -z "$primary_user" ] || [ -z "$tz" ] || [ -z "$kb" ]; then
+      echo "usage: nixpi-bootstrap-write-host-nix <hostname> <primary_user> <timezone> <keyboard>" >&2
+      exit 1
+    fi
+
+    install -d -m 0755 /etc/nixos
+    cat > /etc/nixos/nixpi-host.nix <<EOF
+{ ... }:
+{
+  networking.hostName = "$hostname";
+  nixpi.primaryUser = "$primary_user";
+  nixpi.timezone = "$tz";
+  nixpi.keyboard = "$kb";
+}
+EOF
+  '';
   bootstrapMatrixExecute = pkgs.writeShellScriptBin "nixpi-bootstrap-matrix-execute" ''
     set -euo pipefail
     if [ -f "${systemReadyFile}" ]; then
@@ -167,6 +194,7 @@ in
     bootstrapPasswd
     bootstrapChpasswd
     bootstrapBroker
+    bootstrapWriteHostNix
     bootstrapMatrixExecute
   ];
 
@@ -199,6 +227,7 @@ in
       { command = "/run/current-system/sw/bin/nixpi-bootstrap-brokerctl systemd *"; options = [ "NOPASSWD" ]; }
       { command = "/run/current-system/sw/bin/nixpi-bootstrap-brokerctl status"; options = [ "NOPASSWD" ]; }
       { command = "/run/current-system/sw/bin/nixpi-bootstrap-matrix-execute *"; options = [ "NOPASSWD" ]; }
+      { command = "/run/current-system/sw/bin/nixpi-bootstrap-write-host-nix *"; options = [ "NOPASSWD" ]; }
     ];
   };
 }

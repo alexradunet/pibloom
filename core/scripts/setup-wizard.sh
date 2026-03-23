@@ -30,7 +30,7 @@ NIXPI_BOOTSTRAP_REPO="${NIXPI_BOOTSTRAP_REPO:-https://github.com/alexradunet/nix
 # When running in a VM via `just vm`, this file is shared into the VM automatically.
 # Supported vars: PREFILL_NETBIRD_KEY, PREFILL_NAME, PREFILL_EMAIL,
 #                 PREFILL_USERNAME, PREFILL_MATRIX_PASSWORD,
-#                 PREFILL_PRIMARY_PASSWORD
+#                 PREFILL_PRIMARY_PASSWORD, NIXPI_TIMEZONE, NIXPI_KEYBOARD
 PREFILL_FILE="$HOME/.nixpi/prefill.env"
 # Fall back to host-shared mount (9p virtfs, available when running via `just vm`)
 if [[ ! -f "$PREFILL_FILE" && -f "/mnt/host-nixpi/prefill.env" ]]; then
@@ -350,6 +350,49 @@ step_welcome() {
 	mark_done welcome
 }
 
+step_locale() {
+	echo ""
+	echo "--- Locale & Timezone ---"
+	echo "Common timezones: UTC, Europe/Paris, Europe/London, America/New_York, America/Los_Angeles, Asia/Tokyo"
+	echo "Common keyboard layouts: us, uk, fr, de, es"
+	echo ""
+
+	local tz kb
+	tz="${NIXPI_TIMEZONE:-}"
+	kb="${NIXPI_KEYBOARD:-}"
+
+	if [[ -z "$tz" ]]; then
+		read -rp "Timezone [UTC]: " tz
+		tz="${tz:-UTC}"
+	else
+		echo "Timezone (prefill): $tz"
+	fi
+
+	if [[ -z "$kb" ]]; then
+		read -rp "Keyboard layout [us]: " kb
+		kb="${kb:-us}"
+	else
+		echo "Keyboard layout (prefill): $kb"
+	fi
+
+	# Read existing values from nixpi-host.nix (preserve hostname and primaryUser)
+	local hostname primary_user
+	hostname="$(grep 'networking\.hostName' /etc/nixos/nixpi-host.nix 2>/dev/null \
+		| sed 's/.*= "\(.*\)".*/\1/' || echo "nixpi")"
+	primary_user="$(grep 'nixpi\.primaryUser' /etc/nixos/nixpi-host.nix 2>/dev/null \
+		| sed 's/.*= "\(.*\)".*/\1/' || echo "pi")"
+
+	# Rewrite nixpi-host.nix in full (idempotent)
+	root_command nixpi-bootstrap-write-host-nix "$hostname" "$primary_user" "$tz" "$kb"
+
+	echo "Applying locale settings (this may take a minute)..."
+	root_command nixpi-bootstrap-nixos-rebuild-switch "$hostname" || {
+		echo "warning: nixos-rebuild failed; locale settings saved but not applied yet." >&2
+	}
+
+	mark_done locale
+}
+
 step_password() {
 	echo "--- Password Setup ---"
 	echo ""
@@ -462,11 +505,19 @@ step_network() {
 		mark_done network
 		return
 	fi
-	echo ""
-	echo "Options:"
-	echo "  1) Launch WiFi setup (recommended)"
-	echo "  2) Skip and configure network later"
-	echo ""
+	if ! has_wifi_device; then
+		log "no WiFi hardware detected, skipping WiFi preference"
+		echo ""
+		echo "Options:"
+		echo "  1) Skip and configure network later (connect Ethernet before continuing)"
+		echo ""
+	else
+		echo ""
+		echo "Options:"
+		echo "  1) Launch WiFi setup (recommended)"
+		echo "  2) Skip and configure network later"
+		echo ""
+	fi
 
 	while true; do
 		read -rp "Select option [1/2]: " choice
@@ -828,6 +879,7 @@ main() {
 
 	step_done welcome  || step_welcome
 	step_done network  || step_network
+	step_done locale   || step_locale
 	step_done password || step_password
 	step_done appliance || step_appliance
 	refresh_group_session_if_needed "$PI_DIR"

@@ -5,6 +5,7 @@
 let
   inherit (lib) mkOption types;
   primaryHome = "/home/${config.nixpi-daemon.primaryUser}";
+  systemReadyFile = "${primaryHome}/.nixpi/wizard-state/system-ready";
 in
 {
   _class = "service";
@@ -43,7 +44,7 @@ in
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
       wantedBy = [ "multi-user.target" ];
-      unitConfig.ConditionPathExists = "${primaryHome}/.nixpi/.setup-complete";
+      unitConfig.ConditionPathExists = systemReadyFile;
       serviceConfig = {
         User = config.nixpi-daemon.primaryUser;
         Group = config.nixpi-daemon.primaryUser;

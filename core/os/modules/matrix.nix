@@ -6,7 +6,7 @@ let
   primaryHome = "/home/${config.nixpi.primaryUser}";
   stateDir = config.nixpi.stateDir;
   secretDir = "${stateDir}/secrets";
-  setupCompleteFile = "${primaryHome}/.nixpi/.setup-complete";
+  systemReadyFile = "${primaryHome}/.nixpi/wizard-state/system-ready";
   matrixBindsLocally =
     config.nixpi.matrix.bindAddress == "127.0.0.1"
     || config.nixpi.matrix.bindAddress == "::1"
@@ -105,7 +105,7 @@ in
 
       ENABLE_REGISTRATION="${if config.nixpi.matrix.keepRegistrationAfterSetup then (if config.nixpi.matrix.enableRegistration then "true" else "false") else "dynamic"}"
       if [ "$ENABLE_REGISTRATION" = "dynamic" ]; then
-        if [ -f "${setupCompleteFile}" ]; then
+        if [ -f "${systemReadyFile}" ]; then
           ENABLE_REGISTRATION="false"
         else
           ENABLE_REGISTRATION="${if config.nixpi.matrix.enableRegistration then "true" else "false"}"
@@ -132,7 +132,7 @@ EOF
         printf '\n' >> /var/lib/continuwuity/continuwuity.toml
         cat "${extraRootSettingsToml}" >> /var/lib/continuwuity/continuwuity.toml
       fi
-      if [ ! -f "${setupCompleteFile}" ] && [ -s "${adminExecuteToml}" ]; then
+      if [ ! -f "${systemReadyFile}" ] && [ -s "${adminExecuteToml}" ]; then
         printf '\n' >> /var/lib/continuwuity/continuwuity.toml
         cat "${adminExecuteToml}" >> /var/lib/continuwuity/continuwuity.toml
       fi

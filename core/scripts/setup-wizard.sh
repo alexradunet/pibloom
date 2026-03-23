@@ -13,7 +13,7 @@ exec > >(tee -a "$WIZARD_LOG") 2>&1
 echo "=== NixPI Wizard Started: $(date) ==="
 
 WIZARD_STATE="$HOME/.nixpi/wizard-state"
-SETUP_COMPLETE="$HOME/.nixpi/.setup-complete"
+SYSTEM_READY="$WIZARD_STATE/system-ready"
 NIXPI_DIR="${NIXPI_DIR:-$HOME/nixpi}"
 NIXPI_CONFIG="${NIXPI_CONFIG_DIR:-${NIXPI_STATE_DIR:-$HOME/.config/nixpi}/services}"
 PI_DIR="${NIXPI_PI_DIR:-$HOME/.pi}"
@@ -737,17 +737,17 @@ finalize() {
 	if has_matrix_stack; then
 		root_command nixpi-bootstrap-matrix-systemctl try-restart continuwuity.service || echo "warning: failed to restart continuwuity.service" >&2
 	fi
-	touch "$SETUP_COMPLETE"
+	touch "$SYSTEM_READY"
 	if has_systemd_unit nixpi-daemon.service; then
-		if ! root_command nixpi-bootstrap-service-systemctl enable nixpi-daemon.service; then
+		if ! root_command nixpi-finalize-service-systemctl enable nixpi-daemon.service; then
 			echo "warning: failed to enable nixpi-daemon.service during wizard finalization" >&2
 		fi
-		if ! root_command nixpi-bootstrap-service-systemctl restart nixpi-daemon.service; then
+		if ! root_command nixpi-finalize-service-systemctl restart nixpi-daemon.service; then
 			echo "warning: failed to start nixpi-daemon.service during wizard finalization" >&2
 		fi
 	fi
 	if has_systemd_unit display-manager.service; then
-		root_command nixpi-bootstrap-service-systemctl start display-manager.service || echo "warning: failed to start display-manager.service" >&2
+		root_command nixpi-finalize-service-systemctl start display-manager.service || echo "warning: failed to start display-manager.service" >&2
 	fi
 
 	local mesh_ip
@@ -818,7 +818,7 @@ finalize() {
 # --- Main ---
 
 main() {
-	if [[ -f "$SETUP_COMPLETE" ]]; then
+	if [[ -f "$SYSTEM_READY" ]]; then
 		return 0
 	fi
 

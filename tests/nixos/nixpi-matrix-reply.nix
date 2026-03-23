@@ -1,4 +1,4 @@
-{ pkgs, lib, nixPiModulesNoShell, piAgent, appPackage, setupPackage, mkTestFilesystems, matrixTestClient, ... }:
+{ pkgs, lib, nixPiModulesNoShell, piAgent, appPackage, setupPackage, mkTestFilesystems, matrixRegisterScript, ... }:
 
 pkgs.testers.runNixOSTest {
   name = "nixpi-matrix-reply";
@@ -24,7 +24,7 @@ pkgs.testers.runNixOSTest {
       };
       users.groups.${username} = {};
 
-      environment.systemPackages = [ matrixTestClient pkgs.curl pkgs.jq ];
+      environment.systemPackages = [ pkgs.curl pkgs.jq ];
 
       systemd.services.netbird.wantedBy = lib.mkForce [ ];
       systemd.services.nixpi-home.wantedBy = lib.mkForce [ ];
@@ -102,6 +102,8 @@ import { createAssistantMessageEventStream } from "/usr/local/share/nixpi/node_m
 export default function registerTestProvider(pi) {
   pi.registerProvider("matrix-echo", {
     api: "matrix-echo-api",
+    baseUrl: "http://127.0.0.1:1",
+    apiKey: "test-key",
     models: [
       {
         id: "echo-v1",
@@ -156,7 +158,8 @@ EOF
 }
 EOF
 
-        touch ${homeDir}/.nixpi/.setup-complete
+        install -d -m 0755 -o ${username} -g ${username} ${homeDir}/.nixpi/wizard-state
+        touch ${homeDir}/.nixpi/wizard-state/system-ready
         chown -R ${username}:${username} ${homeDir}/.nixpi ${homeDir}/.pi ${homeDir}/nixpi
         chmod 600 ${homeDir}/.pi/settings.json
       '';
@@ -164,8 +167,9 @@ EOF
   };
 
   testScript = ''
-    import json
     import urllib.parse
+
+    ${matrixRegisterScript}
 
     homeserver = machines[0]
     nixpi = machines[1]
@@ -174,61 +178,9 @@ EOF
 
     homeserver.wait_for_unit("continuwuity.service", timeout=120)
     homeserver.wait_until_succeeds("curl -sf http://127.0.0.1:6167/_matrix/client/versions", timeout=60)
-
-    token = homeserver.succeed("get_matrix_token").strip()
-
-    def register(username, password):
-        response = homeserver.succeed(
-            "curl -s -X POST http://127.0.0.1:6167/_matrix/client/v3/register "
-            + "-H 'Content-Type: application/json' "
-            + "-d '{\"username\":\"" + username + "\",\"password\":\"" + password + "\",\"inhibit_login\":false}'"
-        )
-        data = json.loads(response)
-        if "access_token" in data:
-            return data
-        for _ in range(4):
-            session = data.get("session")
-            assert session, response
-
-            completed = set(data.get("completed", []))
-            auth = None
-            for flow in data.get("flows", []):
-                for stage in flow.get("stages", []):
-                    if stage in completed:
-                        continue
-                    if stage == "m.login.registration_token" and token:
-                        auth = {"type": stage, "session": session, "token": token}
-                        break
-                    if stage == "m.login.dummy":
-                        auth = {"type": stage, "session": session}
-                        break
-                if auth:
-                    break
-            if not auth and token and "m.login.registration_token" not in completed:
-                auth = {"type": "m.login.registration_token", "session": session, "token": token}
-            if not auth and "m.login.dummy" not in completed:
-                auth = {"type": "m.login.dummy", "session": session}
-            assert auth, response
-
-            payload = json.dumps({
-                "username": username,
-                "password": password,
-                "inhibit_login": False,
-                "auth": auth,
-            })
-            response = homeserver.succeed(
-                "curl -sf -X POST http://127.0.0.1:6167/_matrix/client/v3/register "
-                + "-H 'Content-Type: application/json' "
-                + "-d '" + payload + "'"
-            )
-            data = json.loads(response)
-            if "access_token" in data:
-                return data
-
-        raise AssertionError("Matrix registration did not complete: " + response)
-
-    host_creds = register("host", "hostpass123")
-    admin_creds = register("operator", "operatorpass123")
+    registration_token = homeserver.succeed("cat /var/lib/nixpi/secrets/matrix-registration-shared-secret").strip()
+    host_creds = register_matrix_user(homeserver, "http://127.0.0.1:6167", "host", "hostpass123", registration_token)
+    admin_creds = register_matrix_user(homeserver, "http://127.0.0.1:6167", "operator", "operatorpass123", registration_token)
 
     room = json.loads(homeserver.succeed(
         "curl -sf -X POST http://127.0.0.1:6167/_matrix/client/v3/createRoom "
@@ -294,16 +246,23 @@ EOF
     )
 
     homeserver.succeed(
-        "nixpi-matrix-client http://127.0.0.1:6167 clientuser clientpass123 '#general:nixpi' "
-        + "'hello from reply test' 'PI-ECHO-ACK'"
+        "curl -sf -X PUT http://127.0.0.1:6167/_matrix/client/v3/rooms/"
+        + room_id_enc
+        + "/send/m.room.message/reply-test "
+        + "-H 'Authorization: Bearer "
+        + admin_creds["access_token"]
+        + "' "
+        + "-H 'Content-Type: application/json' "
+        + "-d '{\"msgtype\":\"m.text\",\"body\":\"hello from reply test\"}'"
     )
 
-    homeserver.succeed(
+    homeserver.wait_until_succeeds(
         "curl -sf 'http://127.0.0.1:6167/_matrix/client/v3/rooms/"
         + room_id_enc
         + "/messages?dir=b&limit=20' -H 'Authorization: Bearer "
         + admin_creds["access_token"]
-        + "' | grep -q 'PI-ECHO-ACK'"
+        + "' | grep -q 'PI-ECHO-ACK'",
+        timeout=60,
     )
     nixpi.succeed("journalctl -u nixpi-daemon.service --no-pager | grep -q 'starting nixpi-daemon'")
     nixpi.fail("journalctl -u nixpi-daemon.service --no-pager | grep -q 'No model selected'")

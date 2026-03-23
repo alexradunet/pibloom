@@ -5,7 +5,7 @@ let
   primaryUser = config.nixpi.primaryUser;
   primaryHome = "/home/${primaryUser}";
   stateDir = config.nixpi.stateDir;
-  setupCompleteFile = "${primaryHome}/.nixpi/.setup-complete";
+  systemReadyFile = "${primaryHome}/.nixpi/wizard-state/system-ready";
   cfg = config.nixpi.services;
   securityCfg = config.nixpi.security;
   sshAllowUsers =
@@ -99,7 +99,7 @@ in
       '';
     };
     systemd.services.sshd.unitConfig = lib.mkIf (!config.nixpi.bootstrap.keepSshAfterSetup) {
-      ConditionPathExists = "!${setupCompleteFile}";
+      ConditionPathExists = "!${systemReadyFile}";
     };
 
     networking.firewall.enable = true;

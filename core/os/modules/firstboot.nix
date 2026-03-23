@@ -4,7 +4,7 @@ let
   primaryUser = config.nixpi.primaryUser;
   primaryHome = "/home/${primaryUser}";
   stateDir = config.nixpi.stateDir;
-  setupCompleteFile = "${primaryHome}/.nixpi/.setup-complete";
+  systemReadyFile = "${primaryHome}/.nixpi/wizard-state/system-ready";
   matrixRegistrationSecretFile =
     if config.nixpi.matrix.registrationSharedSecretFile != null then
       config.nixpi.matrix.registrationSharedSecretFile
@@ -13,7 +13,7 @@ let
   bootstrapPrimaryPasswordFile = "${stateDir}/bootstrap/primary-user-password";
   bootstrapAction = action: command: pkgs.writeShellScriptBin "nixpi-bootstrap-${action}" ''
     set -euo pipefail
-    if [ -f "${setupCompleteFile}" ]; then
+    if [ -f "${systemReadyFile}" ]; then
       echo "NixPI bootstrap access is disabled after setup completes" >&2
       exit 1
     fi
@@ -24,7 +24,7 @@ let
   bootstrapRemovePrimaryPassword = bootstrapAction "remove-primary-password" "/run/current-system/sw/bin/rm -f ${bootstrapPrimaryPasswordFile}";
   bootstrapInstallHostFlake = pkgs.writeShellScriptBin "nixpi-bootstrap-install-host-flake" ''
     set -euo pipefail
-    if [ -f "${setupCompleteFile}" ]; then
+    if [ -f "${systemReadyFile}" ]; then
       echo "NixPI bootstrap access is disabled after setup completes" >&2
       exit 1
     fi
@@ -92,7 +92,7 @@ EOF
   '';
   bootstrapNixosRebuildSwitch = pkgs.writeShellScriptBin "nixpi-bootstrap-nixos-rebuild-switch" ''
     set -euo pipefail
-    if [ -f "${setupCompleteFile}" ]; then
+    if [ -f "${systemReadyFile}" ]; then
       echo "NixPI bootstrap access is disabled after setup completes" >&2
       exit 1
     fi
@@ -110,13 +110,17 @@ EOF
   bootstrapNetbirdSystemctl = bootstrapAction "netbird-systemctl" "/run/current-system/sw/bin/systemctl";
   bootstrapMatrixSystemctl = bootstrapAction "matrix-systemctl" "/run/current-system/sw/bin/systemctl";
   bootstrapServiceSystemctl = bootstrapAction "service-systemctl" "/run/current-system/sw/bin/systemctl";
+  finalizeServiceSystemctl = pkgs.writeShellScriptBin "nixpi-finalize-service-systemctl" ''
+    set -euo pipefail
+    exec /run/current-system/sw/bin/systemctl "$@"
+  '';
   bootstrapSshdSystemctl = bootstrapAction "sshd-systemctl" "/run/current-system/sw/bin/systemctl";
   bootstrapPasswd = bootstrapAction "passwd" "/run/current-system/sw/bin/passwd ${primaryUser}";
   bootstrapChpasswd = bootstrapAction "chpasswd" "/run/current-system/sw/bin/chpasswd";
   bootstrapBroker = bootstrapAction "brokerctl" "/run/current-system/sw/bin/nixpi-brokerctl";
   bootstrapMatrixExecute = pkgs.writeShellScriptBin "nixpi-bootstrap-matrix-execute" ''
     set -euo pipefail
-    if [ -f "${setupCompleteFile}" ]; then
+    if [ -f "${systemReadyFile}" ]; then
       echo "NixPI bootstrap access is disabled after setup completes" >&2
       exit 1
     fi
@@ -158,6 +162,7 @@ in
     bootstrapNetbirdSystemctl
     bootstrapMatrixSystemctl
     bootstrapServiceSystemctl
+    finalizeServiceSystemctl
     bootstrapSshdSystemctl
     bootstrapPasswd
     bootstrapChpasswd
@@ -185,6 +190,9 @@ in
       { command = "/run/current-system/sw/bin/nixpi-bootstrap-service-systemctl enable nixpi-daemon.service"; options = [ "NOPASSWD" ]; }
       { command = "/run/current-system/sw/bin/nixpi-bootstrap-service-systemctl restart nixpi-daemon.service"; options = [ "NOPASSWD" ]; }
       { command = "/run/current-system/sw/bin/nixpi-bootstrap-service-systemctl start display-manager.service"; options = [ "NOPASSWD" ]; }
+      { command = "/run/current-system/sw/bin/nixpi-finalize-service-systemctl enable nixpi-daemon.service"; options = [ "NOPASSWD" ]; }
+      { command = "/run/current-system/sw/bin/nixpi-finalize-service-systemctl restart nixpi-daemon.service"; options = [ "NOPASSWD" ]; }
+      { command = "/run/current-system/sw/bin/nixpi-finalize-service-systemctl start display-manager.service"; options = [ "NOPASSWD" ]; }
       { command = "/run/current-system/sw/bin/nixpi-bootstrap-sshd-systemctl stop sshd.service"; options = [ "NOPASSWD" ]; }
       { command = "/run/current-system/sw/bin/nixpi-bootstrap-passwd"; options = [ "NOPASSWD" ]; }
       { command = "/run/current-system/sw/bin/nixpi-bootstrap-chpasswd"; options = [ "NOPASSWD" ]; }

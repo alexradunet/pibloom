@@ -74,6 +74,11 @@ export function getWizardStateDir(): string {
 	return path.join(getNixPiStateDir(), "wizard-state");
 }
 
+/** Resolve the system-ready marker path. */
+export function getSystemReadyPath(): string {
+	return path.join(getWizardStateDir(), "system-ready");
+}
+
 /** Resolve the persona-complete marker path. */
 export function getPersonaDonePath(): string {
 	return path.join(getWizardStateDir(), "persona-done");

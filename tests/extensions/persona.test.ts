@@ -65,8 +65,8 @@ describe("persona session_start", () => {
 	});
 
 	it("injects persona-setup guidance when machine setup is complete but persona is pending", async () => {
-		fs.mkdirSync(path.join(temp.nixPiDir, ".nixpi"), { recursive: true });
-		fs.writeFileSync(path.join(temp.nixPiDir, ".nixpi", ".setup-complete"), "done", "utf-8");
+		fs.mkdirSync(path.join(temp.nixPiDir, ".nixpi", "wizard-state"), { recursive: true });
+		fs.writeFileSync(path.join(temp.nixPiDir, ".nixpi", "wizard-state", "system-ready"), "done", "utf-8");
 
 		const result = (await api.fireEvent(
 			"before_agent_start",
@@ -83,7 +83,7 @@ describe("persona session_start", () => {
 
 	it("does not inject persona-setup guidance after persona customization is complete", async () => {
 		fs.mkdirSync(path.join(temp.nixPiDir, ".nixpi", "wizard-state"), { recursive: true });
-		fs.writeFileSync(path.join(temp.nixPiDir, ".nixpi", ".setup-complete"), "done", "utf-8");
+		fs.writeFileSync(path.join(temp.nixPiDir, ".nixpi", "wizard-state", "system-ready"), "done", "utf-8");
 		fs.writeFileSync(path.join(temp.nixPiDir, ".nixpi", "wizard-state", "persona-done"), "done", "utf-8");
 
 		const result = (await api.fireEvent(

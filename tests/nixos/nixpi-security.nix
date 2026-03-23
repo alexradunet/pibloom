@@ -89,12 +89,12 @@ pkgs.testers.runNixOSTest {
     bootstrap.wait_for_unit("multi-user.target", timeout=300)
     bootstrap.wait_for_unit("continuwuity.service", timeout=60)
     bootstrap.wait_for_unit("fail2ban.service", timeout=60)
-    bootstrap.wait_until_succeeds("test ! -f /home/pi/.nixpi/.setup-complete", timeout=30)
+    bootstrap.wait_until_succeeds("test ! -f /home/pi/.nixpi/wizard-state/system-ready", timeout=30)
 
     steady.start()
     steady.wait_for_unit("multi-user.target", timeout=300)
     steady.succeed("su - pi -c 'setup-wizard.sh'")
-    steady.wait_until_succeeds("test -f /home/pi/.nixpi/.setup-complete", timeout=120)
+    steady.wait_until_succeeds("test -f /home/pi/.nixpi/wizard-state/system-ready", timeout=120)
     steady.wait_for_unit("fail2ban.service", timeout=60)
 
     client.start()

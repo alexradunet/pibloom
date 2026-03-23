@@ -63,9 +63,13 @@ pkgs.testers.runNixOSTest {
     nixpi.succeed("su - pi -c 'setup-wizard.sh'")
 
     nixpi.wait_for_unit("continuwuity.service", timeout=120)
-    nixpi.succeed("test -f " + home + "/.nixpi/.setup-complete")
+    nixpi.succeed("test -f " + home + "/.nixpi/wizard-state/system-ready")
+    nixpi.fail("test -f " + home + "/.nixpi/.setup-complete")
     nixpi.succeed("systemctl is-enabled nixpi-daemon.service | grep -q enabled")
-    nixpi.succeed("test \"$(systemctl show -p Result --value nixpi-daemon.service || true)\" != condition")
+    nixpi.wait_until_succeeds(
+        "systemctl is-active nixpi-daemon.service | grep -Eq 'active|activating'",
+        timeout=60,
+    )
     nixpi.succeed("test -f " + home + "/.nixpi/prefill.env")
     nixpi.succeed("test -f " + home + "/.nixpi/wizard.log")
     log_content = nixpi.succeed("cat " + home + "/.nixpi/wizard.log")

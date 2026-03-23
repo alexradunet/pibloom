@@ -74,8 +74,9 @@ respond:
 You are Pi.
 EOF
         chown -R ${username}:${username} ${homeDir}/nixpi
-        touch ${homeDir}/.nixpi/.setup-complete
-        chown ${username}:${username} ${homeDir}/.nixpi/.setup-complete
+        install -d -m 0755 -o ${username} -g ${username} ${homeDir}/.nixpi/wizard-state
+        touch ${homeDir}/.nixpi/wizard-state/system-ready
+        chown ${username}:${username} ${homeDir}/.nixpi/wizard-state/system-ready
         install -d -m 0700 -o ${username} -g ${username} ${homeDir}/.pi/matrix-agents
       '';
 

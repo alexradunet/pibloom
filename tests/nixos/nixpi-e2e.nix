@@ -85,7 +85,8 @@ pkgs.testers.runNixOSTest {
     client.succeed("ping -c 3 pi")
 
     nixpi.succeed("su - pi -c 'setup-wizard.sh'")
-    nixpi.wait_until_succeeds("test -f " + home + "/.nixpi/.setup-complete", timeout=180)
+    nixpi.wait_until_succeeds("test -f " + home + "/.nixpi/wizard-state/system-ready", timeout=180)
+    nixpi.fail("test -f " + home + "/.nixpi/.setup-complete")
 
     nixpi.wait_for_unit("continuwuity.service", timeout=60)
     nixpi.succeed("curl -sf http://127.0.0.1:6167/_matrix/client/versions")

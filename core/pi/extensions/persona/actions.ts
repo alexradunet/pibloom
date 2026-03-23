@@ -8,6 +8,7 @@ import {
 	getNixPiDir,
 	getPersonaDonePath,
 	getPiDir,
+	getSystemReadyPath,
 	getUpdateStatusPath,
 	getWizardStateDir,
 	resolvePackageDir,
@@ -130,7 +131,7 @@ export function loadPersona(): string {
 }
 
 export function isPersonaSetupPending(): boolean {
-	return !existsSync(getPersonaDonePath());
+	return existsSync(getSystemReadyPath()) && !existsSync(getPersonaDonePath());
 }
 
 export function buildPersonaSetupBlock(): string {

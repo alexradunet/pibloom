@@ -66,7 +66,8 @@ pkgs.testers.runNixOSTest {
 
       systemd.tmpfiles.rules = [
         "d ${homeDir}/.nixpi 0755 ${username} ${username} -"
-        "f ${homeDir}/.nixpi/.setup-complete 0644 ${username} ${username} -"
+        "d ${homeDir}/.nixpi/wizard-state 0755 ${username} ${username} -"
+        "f ${homeDir}/.nixpi/wizard-state/system-ready 0644 ${username} ${username} -"
       ];
 
       system.activationScripts.nixpi-daemon-creds = lib.stringAfter [ "users" ] ''
@@ -115,8 +116,8 @@ pkgs.testers.runNixOSTest {
     agent.succeed("chown -R pi:pi /home/pi/.pi")
 
     agent.succeed(
-        "touch " + home + "/.nixpi/.setup-complete && chown "
-        + username + ":" + username + " " + home + "/.nixpi/.setup-complete"
+        "mkdir -p " + home + "/.nixpi/wizard-state && touch " + home + "/.nixpi/wizard-state/system-ready && chown -R "
+        + username + ":" + username + " " + home + "/.nixpi"
     )
     agent.succeed("mkdir -p " + home + "/nixpi && chown -R " + username + ":" + username + " " + home + "/nixpi")
 

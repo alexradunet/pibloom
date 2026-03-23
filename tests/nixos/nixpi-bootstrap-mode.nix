@@ -56,7 +56,7 @@ pkgs.testers.runNixOSTest {
     bootstrap.wait_for_unit("multi-user.target", timeout=300)
     bootstrap.wait_for_unit("continuwuity.service", timeout=120)
     bootstrap.succeed("command -v setup-wizard.sh")
-    bootstrap.wait_until_succeeds("test ! -f /home/pi/.nixpi/.setup-complete", timeout=60)
+    bootstrap.wait_until_succeeds("test ! -f /home/pi/.nixpi/wizard-state/system-ready", timeout=60)
 
     client.start()
     client.wait_for_unit("multi-user.target", timeout=120)

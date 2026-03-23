@@ -28,6 +28,12 @@ async function getSharedResources(): Promise<{
 	return { resourceLoader };
 }
 
+type SessionInternals = {
+	_modelRegistry?: {
+		find: (provider: string, modelId: string) => unknown;
+	};
+};
+
 export interface PiRoomSessionOptions {
 	roomId: string;
 	roomAlias: string;
@@ -69,6 +75,18 @@ export class PiRoomSession implements AgentSessionLike {
 			sessionManager: SessionManager.create(this.opts.sessionDir),
 			tools: createCodingTools(this.opts.sessionDir),
 		});
+
+		if (!session.model) {
+			const defaultProvider = settingsManager.getDefaultProvider();
+			const defaultModelId = settingsManager.getDefaultModel();
+			const modelRegistry = (session as unknown as SessionInternals)._modelRegistry;
+			if (defaultProvider && defaultModelId && modelRegistry) {
+				const configuredModel = modelRegistry.find(defaultProvider, defaultModelId);
+				if (configuredModel) {
+					await session.setModel(configuredModel as Parameters<typeof session.setModel>[0]);
+				}
+			}
+		}
 
 		this.session = session;
 		this.aliveState = true;

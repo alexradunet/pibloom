@@ -3,6 +3,7 @@
 let
   primaryUser = config.nixpi.primaryUser;
   primaryHome = "/home/${primaryUser}";
+  systemReadyFile = "${primaryHome}/.nixpi/wizard-state/system-ready";
 
   openHome = pkgs.writeShellScriptBin "nixpi-open-home" ''
     set -euo pipefail
@@ -59,7 +60,7 @@ let
     fi
 
     title="NixPI Terminal"
-    if [ ! -f "${primaryHome}/.nixpi/.setup-complete" ]; then
+    if [ ! -f "${systemReadyFile}" ]; then
       title="NixPI Setup"
     fi
 
@@ -73,7 +74,7 @@ let
       -e ${pkgs.bash}/bin/bash -lc '
         [ -f "${primaryHome}/.bashrc" ] && . "${primaryHome}/.bashrc"
 
-        if [ ! -f "${primaryHome}/.nixpi/.setup-complete" ]; then
+        if [ ! -f "${systemReadyFile}" ]; then
           if ! setup-wizard.sh; then
             echo ""
             echo "Setup paused because the last step failed."

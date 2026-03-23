@@ -7,7 +7,7 @@ description: Post-wizard persona customization — Pi helps the user personalize
 
 ## Prerequisite
 
-The bash wizard (`setup-wizard.sh`) has already completed OS-level setup: password, network, NetBird, Matrix, git identity, and services. The sentinel file `~/.nixpi/.setup-complete` exists.
+The bash wizard (`setup-wizard.sh`) has already completed OS-level setup: password, network, NetBird, Matrix, git identity, and services. The sentinel file `~/.nixpi/wizard-state/system-ready` exists.
 
 If `~/.nixpi/wizard-state/persona-done` exists, persona customization is also done. Skip this skill entirely. You can still help the user reconfigure their persona if they ask.
 

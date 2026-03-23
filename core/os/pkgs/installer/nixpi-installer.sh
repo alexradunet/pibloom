@@ -331,7 +331,7 @@ run_install_steps() {
   mkdir -p "$ROOT_MOUNT/boot"
   mount -o umask=077 "$boot_part" "$ROOT_MOUNT/boot"
 
-  echo "=== [4/5] Writing boot configuration ==="
+  echo "=== [3/5] Writing boot configuration ==="
   log_step "Generating base NixOS config"
   nixos-generate-config --no-filesystems --root "$ROOT_MOUNT"
 
@@ -344,7 +344,7 @@ run_install_steps() {
     >/tmp/nixpi-installer-artifacts.json
   log_step "Installer artifacts written to /tmp/nixpi-installer-artifacts.json"
 
-  echo "=== [3/5] Installing NixOS (this may take 10-20 minutes) ==="
+  echo "=== [4/5] Installing NixOS (this may take 10-20 minutes) ==="
   if [[ -n "$SYSTEM_CLOSURE" ]]; then
     log_step "Installing prebuilt system closure"
     nixos-install --no-root-passwd --system "$SYSTEM_CLOSURE" --root "$ROOT_MOUNT"

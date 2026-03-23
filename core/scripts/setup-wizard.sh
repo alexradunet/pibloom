@@ -133,6 +133,10 @@ wifi_is_active_connection() {
 }
 
 apply_wifi_preference() {
+	if ! has_wifi_device; then
+		log "no WiFi hardware detected, skipping WiFi preference"
+		return 0
+	fi
 	if command -v nixpi-prefer-wifi >/dev/null 2>&1; then
 		nixpi-prefer-wifi >/dev/null 2>&1 || true
 	fi

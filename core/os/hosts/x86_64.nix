@@ -21,7 +21,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelParams = [ "console=tty0" "console=ttyS0,115200" ];
-  systemd.services."serial-getty@ttyS0".enable = true;
+  systemd.services."serial-getty@ttyS0".enable = lib.mkDefault true;
   nixpi.security.ssh.passwordAuthentication = lib.mkDefault true;
   nixpi.bootstrap.keepSshAfterSetup = lib.mkDefault true;
   nixpi.primaryUser = lib.mkDefault "pi";

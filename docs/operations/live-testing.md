@@ -22,10 +22,9 @@ Use it to verify that setup, messaging, and recovery paths still match the shipp
 
 For VM validation:
 
-- Use `just vm-install-iso` when the host bridge is configured
-- The launcher auto-detects a usable host bridge and fails clearly if none exists
-- Use it to validate installer flow, desktop startup, and real mesh reachability
-- Once NetBird is connected, the advertised service URLs should be reachable from any other NetBird peer
+- Use `just vm-install-iso` for the simple local VM path
+- Use it to validate installer flow, desktop startup, and host-side access to the installed services
+- Use the printed localhost forwards for SSH, Home, Element Web, and Matrix
 
 ### First Boot
 

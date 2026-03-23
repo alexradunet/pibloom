@@ -5,33 +5,14 @@ disk="${NIXPI_INSTALL_VM_DISK_PATH:-$HOME/nixpi-install-vm.qcow2}"
 disk_size="${NIXPI_INSTALL_VM_DISK_SIZE:-32G}"
 memory_mb="${NIXPI_INSTALL_VM_MEMORY_MB:-8192}"
 vm_cpus="${NIXPI_INSTALL_VM_CPUS:-4}"
+ssh_port="${NIXPI_INSTALL_VM_SSH_PORT:-2222}"
+home_port="${NIXPI_INSTALL_VM_HOME_PORT:-18080}"
+element_port="${NIXPI_INSTALL_VM_ELEMENT_PORT:-18081}"
+matrix_port="${NIXPI_INSTALL_VM_MATRIX_PORT:-16167}"
 ovmf_code="${NIXPI_INSTALL_VM_OVMF_CODE:-/usr/share/edk2/ovmf/OVMF_CODE.fd}"
 ovmf_vars_template="${NIXPI_INSTALL_VM_OVMF_VARS_TEMPLATE:-/usr/share/edk2/ovmf/OVMF_VARS.fd}"
 ovmf_vars="${NIXPI_INSTALL_VM_OVMF_VARS_PATH:-$HOME/.cache/nixpi-install-ovmf-vars.fd}"
 iso_path=""
-
-detect_bridge() {
-    if ip link show br0 >/dev/null 2>&1; then
-        printf '%s\n' br0
-        return 0
-    fi
-
-    if command -v nmcli >/dev/null 2>&1; then
-        nmcli -t -f DEVICE,TYPE device status 2>/dev/null | awk -F: '$2 == "bridge" { print $1; exit }'
-        return 0
-    fi
-
-    ip -o link show | awk -F': ' '$2 ~ /^br/ { print $2; exit }'
-}
-
-bridge_name="$(detect_bridge)"
-
-if [ -z "$bridge_name" ]; then
-    echo "No usable host bridge was detected."
-    echo "The canonical VM path expects a real bridge so the guest behaves like a mini-PC on your network."
-    echo "This host appears to be missing a bridge, which is typical on WiFi-only setups."
-    exit 1
-fi
 
 if [ -f result ] && [[ "$(readlink -f result)" = *.iso ]]; then
     iso_path="$(readlink -f result)"
@@ -59,8 +40,12 @@ echo "Booting installer ISO: $iso_path"
 echo "ISO timestamp: $(stat -c '%y' "$iso_path")"
 echo "Disk: $disk"
 echo "Console: graphical"
-echo "Network mode: bridge ($bridge_name)"
-echo "Expectation: the VM behaves like a real LAN peer, so NetBird service URLs must be reachable from other mesh devices."
+echo "Network mode: user NAT"
+echo "SSH forward: localhost:$ssh_port -> guest:22"
+echo "Home forward: http://localhost:$home_port -> guest:80"
+echo "Element forward: http://localhost:$element_port -> guest:8081"
+echo "Matrix forward: http://localhost:$matrix_port -> guest:6167"
+echo "Use the localhost forwards above for host-side access to the guest."
 
 exec qemu-system-x86_64 \
     -enable-kvm \
@@ -71,5 +56,4 @@ exec qemu-system-x86_64 \
     -drive "file=$disk,format=qcow2,if=virtio" \
     -cdrom "$iso_path" \
     -boot "order=dc,once=d" \
-    -netdev "bridge,id=nixpi0,br=$bridge_name" \
-    -device "virtio-net-pci,netdev=nixpi0"
+    -nic "user,model=virtio-net-pci,hostfwd=tcp::$ssh_port-:22,hostfwd=tcp::$home_port-:80,hostfwd=tcp::$element_port-:8081,hostfwd=tcp::$matrix_port-:6167"

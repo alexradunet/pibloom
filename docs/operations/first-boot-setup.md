@@ -20,9 +20,9 @@ Before first-boot setup, you need a system installed from the NixPI installer im
 
 For VM install-flow testing:
 
-- `just vm-install-iso` runs the installer with auto-detected bridged networking
-- use this path only when the host bridge is configured and the VM is expected to behave like a real network peer
-- once NetBird is connected, the advertised Home, Element Web, and Matrix URLs should be reachable from any device on the mesh
+- `just vm-install-iso` runs the installer in the default user-mode NAT network with host forwards
+- use this path to validate install flow, Openbox startup, and local access from the host machine
+- use the printed localhost forwards for SSH, Home, Element Web, and Matrix access
 
 ## Security Note: NetBird Is Mandatory
 

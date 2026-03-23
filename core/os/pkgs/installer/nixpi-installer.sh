@@ -20,8 +20,8 @@ usage() {
 Usage: nixpi-installer [--disk /dev/sdX] [--hostname NAME] [--primary-user USER] [--password VALUE] [--layout no-swap|swap] [--swap-size 8GiB] [--yes] [--system PATH]
 
 Performs a destructive UEFI install with:
-- EFI system partition: 1 MiB - 512 MiB
-- ext4 root partition: 512 MiB - end of disk or swap
+- EFI system partition: 1 MiB - 1 GiB
+- ext4 root partition: 1 GiB - end of disk or swap
 
 The installer creates a minimal bootable NixPI base. The first-boot setup
 wizard handles WiFi, internet validation, and promotion into the full
@@ -269,9 +269,9 @@ confirm_install() {
   require_tty
   local layout_summary
   if [[ "$LAYOUT_MODE" == "swap" ]]; then
-    layout_summary="EFI 512 MiB + ext4 root + swap (${SWAP_SIZE})"
+    layout_summary="EFI 1 GiB + ext4 root + swap (${SWAP_SIZE})"
   else
-    layout_summary="EFI 512 MiB + ext4 root"
+    layout_summary="EFI 1 GiB + ext4 root"
   fi
   printf '%s\n' \
     "Target disk: ${TARGET_DISK}" \
@@ -303,13 +303,13 @@ run_install_steps() {
 
   log_step "Partitioning $TARGET_DISK"
   parted -s "$TARGET_DISK" mklabel gpt
-  parted -s "$TARGET_DISK" mkpart ESP fat32 1MiB 512MiB
+  parted -s "$TARGET_DISK" mkpart ESP fat32 1MiB 1GiB
   parted -s "$TARGET_DISK" set 1 esp on
   if [[ "$LAYOUT_MODE" == "swap" ]]; then
-    parted -s -- "$TARGET_DISK" mkpart root ext4 512MiB "-$SWAP_SIZE"
+    parted -s -- "$TARGET_DISK" mkpart root ext4 1GiB "-$SWAP_SIZE"
     parted -s -- "$TARGET_DISK" mkpart swap linux-swap "-$SWAP_SIZE" 100%
   else
-    parted -s "$TARGET_DISK" mkpart root ext4 512MiB 100%
+    parted -s "$TARGET_DISK" mkpart root ext4 1GiB 100%
   fi
   udevadm settle
 
@@ -331,7 +331,7 @@ run_install_steps() {
   mount -o umask=077 "$boot_part" "$ROOT_MOUNT/boot"
 
   log_step "Generating base NixOS config"
-  nixos-generate-config --root "$ROOT_MOUNT"
+  nixos-generate-config --no-filesystems --root "$ROOT_MOUNT"
 
   log_step "Writing NixPI install artifacts"
   "$HELPER_BIN" \

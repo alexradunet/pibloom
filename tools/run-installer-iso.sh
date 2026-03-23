@@ -25,6 +25,9 @@ if [ -z "$iso_path" ]; then
     exit 1
 fi
 
+echo "WARNING: This will delete ~/.nixpi (VM state reset). Continue? [y/N]"
+read -r confirm
+[[ "$confirm" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 1; }
 echo "Resetting installer VM state..."
 rm -f "$disk"
 rm -f "$ovmf_vars"

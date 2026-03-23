@@ -104,6 +104,10 @@ in
 
     networking.firewall.enable = true;
     networking.firewall.allowedTCPPorts = [ 22 ];
+    # trustedInterface defaults to "wt0" (NetBird mesh interface).
+    # These firewall rules are inert until NetBird connects and wt0 exists.
+    # During first-boot setup, SSH access relies on the physical interface,
+    # which is opened separately via nixpi.security.ssh options.
     networking.firewall.interfaces = lib.mkIf securityCfg.enforceServiceFirewall {
       "${securityCfg.trustedInterface}".allowedTCPPorts = exposedPorts;
     };

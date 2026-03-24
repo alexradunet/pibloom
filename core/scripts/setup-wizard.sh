@@ -366,15 +366,25 @@ step_locale() {
 	kb="${NIXPI_KEYBOARD:-}"
 
 	if [[ -z "$tz" ]]; then
-		read -rp "Timezone [UTC]: " tz
-		tz="${tz:-UTC}"
+		if [[ "$NONINTERACTIVE_SETUP" -eq 1 ]]; then
+			tz="UTC"
+			echo "Timezone: ${tz} [default for noninteractive setup]"
+		else
+			read -rp "Timezone [UTC]: " tz
+			tz="${tz:-UTC}"
+		fi
 	else
 		echo "Timezone (prefill): $tz"
 	fi
 
 	if [[ -z "$kb" ]]; then
-		read -rp "Keyboard layout [us]: " kb
-		kb="${kb:-us}"
+		if [[ "$NONINTERACTIVE_SETUP" -eq 1 ]]; then
+			kb="us"
+			echo "Keyboard layout: ${kb} [default for noninteractive setup]"
+		else
+			read -rp "Keyboard layout [us]: " kb
+			kb="${kb:-us}"
+		fi
 	else
 		echo "Keyboard layout (prefill): $kb"
 	fi

@@ -462,6 +462,30 @@ matrix_join_room_with_token() {
 	return 1
 }
 
+matrix_invite_user_to_room() {
+	local room_id="$1" invitee_user_id="$2" access_token="$3"
+	local body_file status body
+	body_file=$(mktemp)
+	status=$(jq -cn --arg user_id "$invitee_user_id" '{ user_id: $user_id }' \
+		| curl -sS -o "$body_file" -w "%{http_code}" -X POST \
+			"${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${room_id}/invite" \
+			-H "Authorization: Bearer ${access_token}" \
+			-H "Content-Type: application/json" \
+			-d @- || true)
+	body=$(cat "$body_file")
+	rm -f "$body_file"
+
+	if [[ "$status" == "200" ]] || [[ "$status" == "201" ]]; then
+		return 0
+	fi
+
+	if jq -e '.errcode == "M_FORBIDDEN"' >/dev/null 2>&1 <<< "$body"; then
+		return 1
+	fi
+
+	return 1
+}
+
 matrix_user_joined_room() {
 	local access_token="$1" room_id="$2"
 	local joined_rooms
@@ -472,7 +496,7 @@ matrix_user_joined_room() {
 }
 
 ensure_pi_bot_admin_room_membership() {
-	local bot_user_id="$1" bot_token="$2"
+	local bot_user_id="$1" bot_token="$2" user_token="$3"
 	local server_name admin_alias admin_room_id
 
 	if [[ ! "$bot_user_id" =~ ^@[^:]+:(.+)$ ]]; then
@@ -496,6 +520,15 @@ ensure_pi_bot_admin_room_membership() {
 	echo "Ensuring Pi bot can access ${admin_alias}..."
 	if matrix_join_room_with_token "$admin_alias" "$bot_token"; then
 		return 0
+	fi
+
+	if [[ -n "$user_token" ]]; then
+		echo "Inviting ${bot_user_id} to ${admin_alias} through the operator account..."
+		if matrix_invite_user_to_room "$admin_room_id" "$bot_user_id" "$user_token"; then
+			if matrix_join_room_with_token "$admin_alias" "$bot_token"; then
+				return 0
+			fi
+		fi
 	fi
 
 	if ! command -v nixpi-bootstrap-matrix-execute >/dev/null 2>&1; then
@@ -673,7 +706,7 @@ step_matrix() {
 	matrix_state_set bot_token "$bot_token"
 	matrix_state_set bot_user_id "$bot_user_id"
 
-	ensure_pi_bot_admin_room_membership "$bot_user_id" "$bot_token" || return 1
+	ensure_pi_bot_admin_room_membership "$bot_user_id" "$bot_token" "$user_token" || return 1
 
 	# Store credentials
 	mkdir -p "$PI_DIR"

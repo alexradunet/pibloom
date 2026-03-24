@@ -129,12 +129,14 @@ describe("handleNixosUpdate — rollback", () => {
 });
 
 describe("handleNixosUpdate — apply (missing system flake)", () => {
-	it("returns error when ~/nixpi/flake.nix is absent", async () => {
+	it("returns error when /etc/nixos/flake.nix is absent and guides operators to /srv/nixpi main", async () => {
 		vi.spyOn(fs, "existsSync").mockReturnValue(false);
 		const ctx = createMockExtensionContext();
 		const result = await handleNixosUpdate("apply", undefined, ctx as never);
 		expect(result.isError).toBe(true);
-		expect(result.content[0].text).toContain(`System flake not found at ${temp.nixPiDir}`);
+		expect(result.content[0].text).toContain("System flake not found at /etc/nixos");
+		expect(result.content[0].text).toContain("/srv/nixpi");
+		expect(result.content[0].text).toContain("switch to main");
 	});
 });
 

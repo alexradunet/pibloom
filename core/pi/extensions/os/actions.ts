@@ -46,7 +46,9 @@ export async function handleNixosUpdate(
 	// apply
 	const flake = getSystemFlakeDir();
 	if (!fs.existsSync(path.join(flake, "flake.nix"))) {
-		return errorResult(`System flake not found at ${flake}. NixPI updates require a local flake checkout with flake.nix.`);
+		return errorResult(
+			`System flake not found at ${flake}. Supported rebuilds use /etc/nixos with the canonical repo at /srv/nixpi; switch to main in /srv/nixpi and ensure ${flake}/flake.nix exists.`,
+		);
 	}
 	const args = ["nixos-update", "apply"];
 	args.push(flake);

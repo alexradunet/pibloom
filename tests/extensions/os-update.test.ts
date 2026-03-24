@@ -32,14 +32,14 @@ describe("os nixos_update handler", () => {
 		}
 	});
 
-	it("applies the canonical ~/nixpi flake checkout", async () => {
+	it("applies the canonical /etc/nixos flake checkout", async () => {
 		vi.spyOn(fs, "existsSync").mockReturnValue(true);
 		runMock.mockResolvedValueOnce({ stdout: "ok\n", stderr: "", exitCode: 0 });
 
 		const { handleNixosUpdate } = await import("../../core/pi/extensions/os/actions.js");
 		const ctx = createMockExtensionContext({ hasUI: true });
 		const result = await handleNixosUpdate("apply", undefined, ctx as never);
-		const expectedFlake = temp.nixPiDir;
+		const expectedFlake = "/etc/nixos";
 
 		expect(ctx.ui.confirm).toHaveBeenCalled();
 		expect(runMock).toHaveBeenCalledWith("nixpi-brokerctl", ["nixos-update", "apply", expectedFlake], undefined);
@@ -69,7 +69,9 @@ describe("os nixos_update handler", () => {
 
 		expect(runMock).not.toHaveBeenCalled();
 		expect(result.isError).toBe(true);
-		expect(result.content[0].text).toContain(`System flake not found at ${temp.nixPiDir}`);
+		expect(result.content[0].text).toContain("System flake not found at /etc/nixos");
+		expect(result.content[0].text).toContain("/srv/nixpi");
+		expect(result.content[0].text).toContain("switch to main");
 	});
 
 	it("returns error result when apply exits non-zero", async () => {

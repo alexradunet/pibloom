@@ -1,5 +1,4 @@
 import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
 import { atomicWriteFile } from "./filesystem.js";
 import { assertValidPrimaryUser, getCanonicalRepoDir, getPrimaryUser } from "./filesystem.js";
 
@@ -18,7 +17,8 @@ function assertCanonicalMetadataPath(metadata: CanonicalRepoMetadata, primaryUse
 }
 
 export function getCanonicalRepoMetadataPath(primaryUser = getPrimaryUser()): string {
-	return path.join("/home", assertValidPrimaryUser(primaryUser), ".nixpi", "canonical-repo.json");
+	assertValidPrimaryUser(primaryUser);
+	return "/etc/nixpi/canonical-repo.json";
 }
 
 export function readCanonicalRepoMetadata(

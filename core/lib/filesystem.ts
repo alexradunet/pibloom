@@ -16,6 +16,9 @@ export interface CanonicalRepoValidationArgs {
 	actualBranch?: string;
 }
 
+export const CANONICAL_REPO_DIR = "/srv/nixpi";
+export const SYSTEM_FLAKE_DIR = "/etc/nixos";
+
 /** Ensure a directory exists. */
 export function ensureDir(dir: string, mode?: number): void {
 	if (existsSync(dir)) return;
@@ -114,7 +117,8 @@ export function getPrimaryUser(): string {
 
 /** Resolve the canonical working repo path for the primary user. */
 export function getCanonicalRepoDir(primaryUser = getPrimaryUser()): string {
-	return path.join("/home", assertValidPrimaryUser(primaryUser), "nixpi");
+	assertValidPrimaryUser(primaryUser);
+	return CANONICAL_REPO_DIR;
 }
 
 /** Resolve the persona-complete marker path. */
@@ -134,7 +138,7 @@ export function getUpdateStatusPath(): string {
 
 /** Path to the canonical system flake checkout used for rebuilds. */
 export function getSystemFlakeDir(): string {
-	return process.env.NIXPI_SYSTEM_FLAKE_DIR ?? getCanonicalRepoDir();
+	return process.env.NIXPI_SYSTEM_FLAKE_DIR ?? SYSTEM_FLAKE_DIR;
 }
 
 /** Resolve the dedicated daemon state directory. */
@@ -145,6 +149,13 @@ export function getDaemonStateDir(): string {
 /** Path to the local repo clone used for local-only proposal workflows. */
 export function getNixPiRepoDir(): string {
 	return getCanonicalRepoDir();
+}
+
+/** Supported rebuilds only run from the canonical repo on main. */
+export function assertSupportedRebuildBranch(branch: string): void {
+	if (branch !== "main") {
+		throw new Error("Supported rebuilds require /srv/nixpi to be on main");
+	}
 }
 
 function getExpectedCanonicalRepoValues(args: CanonicalRepoValidationArgs) {

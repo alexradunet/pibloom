@@ -92,17 +92,21 @@ export function getSystemReadyPath(): string {
 }
 
 /** Resolve the primary account name used for the canonical repo checkout. */
-export function getPrimaryUser(): string {
-	const primaryUser = process.env.NIXPI_PRIMARY_USER ?? os.userInfo().username;
+export function assertValidPrimaryUser(primaryUser: string): string {
 	if (!/^[a-z_][a-z0-9_-]*[$]?$/i.test(primaryUser)) {
 		throw new Error(`Invalid primary user for canonical repo path: ${primaryUser}`);
 	}
 	return primaryUser;
 }
 
+/** Resolve the primary account name used for the canonical repo checkout. */
+export function getPrimaryUser(): string {
+	return assertValidPrimaryUser(process.env.NIXPI_PRIMARY_USER ?? os.userInfo().username);
+}
+
 /** Resolve the canonical working repo path for the primary user. */
 export function getCanonicalRepoDir(primaryUser = getPrimaryUser()): string {
-	return path.join("/home", primaryUser, "nixpi");
+	return path.join("/home", assertValidPrimaryUser(primaryUser), "nixpi");
 }
 
 /** Resolve the persona-complete marker path. */

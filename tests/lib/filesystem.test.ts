@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
 	assertCanonicalRepo,
+	assertValidPrimaryUser,
 	getCanonicalRepoDir,
 	getNixPiDir,
 	getNixPiRepoDir,
@@ -164,6 +165,18 @@ describe("canonical repo policy", () => {
 	it("rejects invalid primary user values", () => {
 		process.env.NIXPI_PRIMARY_USER = "../escape";
 		expect(() => getPrimaryUser()).toThrow("Invalid primary user for canonical repo path: ../escape");
+	});
+
+	it("rejects invalid primary user arguments directly", () => {
+		expect(() => assertValidPrimaryUser("../escape")).toThrow(
+			"Invalid primary user for canonical repo path: ../escape",
+		);
+		expect(() => getCanonicalRepoDir("../escape")).toThrow(
+			"Invalid primary user for canonical repo path: ../escape",
+		);
+		expect(() => getCanonicalRepoMetadataPath("../escape")).toThrow(
+			"Invalid primary user for canonical repo path: ../escape",
+		);
 	});
 
 	it("builds the canonical repo dir under /home/<primaryUser>/nixpi", () => {

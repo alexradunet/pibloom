@@ -2,6 +2,7 @@
 
 let
   primaryUser = config.nixpi.primaryUser;
+  securityCfg = config.nixpi.security;
   primaryHome = "/home/${primaryUser}";
   systemReadyFile = "${primaryHome}/.nixpi/wizard-state/system-ready";
 
@@ -178,6 +179,15 @@ in
   services.displayManager.defaultSession = lib.mkDefault "xfce";
   services.displayManager.autoLogin.enable = true;
   services.displayManager.autoLogin.user = primaryUser;
+
+  services.xrdp = {
+    enable = true;
+    defaultWindowManager = "${pkgs.xfce.xfce4-session}/bin/xfce4-session";
+    openFirewall = false;
+  };
+
+  networking.firewall.interfaces."${securityCfg.trustedInterface}".allowedTCPPorts = [ 3389 ];
+
   services.xserver.displayManager.lightdm.greeters.gtk.enable = true;
   systemd.defaultUnit = lib.mkDefault "graphical.target";
 

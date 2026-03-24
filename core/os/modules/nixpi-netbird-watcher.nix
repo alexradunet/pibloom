@@ -3,7 +3,7 @@
 let
   cfg = config.nixpi.netbird;
   hostname = config.networking.hostName;
-  stateDir = "/var/lib/nixpi/netbird-watcher";
+  stateDir = "${config.nixpi.stateDir}/netbird-watcher";
   matrixBaseUrl = "http://127.0.0.1:${toString config.nixpi.matrix.port}";
   networkActivityRoomAlias = "#network-activity:${hostname}";
 
@@ -194,6 +194,7 @@ in
       description = "NetBird event to Matrix notifier";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
+      unitConfig.ConditionPathExists = cfg.apiTokenFile;
       serviceConfig = {
         Type = "oneshot";
         StateDirectory = "nixpi/netbird-watcher";

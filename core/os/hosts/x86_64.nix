@@ -25,6 +25,7 @@
   nixpi.security.ssh.passwordAuthentication = lib.mkDefault true;
   nixpi.bootstrap.keepSshAfterSetup = lib.mkDefault true;
   nixpi.primaryUser = lib.mkDefault "pi";
+  nixpi.netbird.apiTokenFile = lib.mkDefault "${config.nixpi.stateDir}/netbird-api-token";
 
   time.timeZone = config.nixpi.timezone;
   i18n.defaultLocale = "en_US.UTF-8";

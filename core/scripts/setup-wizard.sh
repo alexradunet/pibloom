@@ -32,7 +32,8 @@ NIXPI_BOOTSTRAP_REPO="${NIXPI_BOOTSTRAP_REPO:-https://github.com/alexradunet/nix
 # --- Prefill (for VM/dev use) ---
 # Create ~/.nixpi/prefill.env on your host to skip manual prompts.
 # When running in a VM via `just vm`, this file is shared into the VM automatically.
-# Supported vars: PREFILL_NETBIRD_KEY, PREFILL_NAME, PREFILL_EMAIL,
+# Supported vars: PREFILL_NETBIRD_KEY, PREFILL_NETBIRD_API_TOKEN,
+#                 PREFILL_NAME, PREFILL_EMAIL,
 #                 PREFILL_USERNAME, PREFILL_MATRIX_PASSWORD,
 #                 PREFILL_PRIMARY_PASSWORD, NIXPI_TIMEZONE, NIXPI_KEYBOARD
 PREFILL_FILE="$HOME/.nixpi/prefill.env"
@@ -350,11 +351,6 @@ step_welcome() {
 	echo "Press Ctrl+C at any time to abort — you'll resume where you left off next login."
 	echo ""
 
-	# Set hostname (NixOS derives it from networking.hostName; this sets it at runtime)
-	if [[ "$(hostnamectl hostname 2>/dev/null)" != "nixpi" ]]; then
-		root_command hostnamectl set-hostname nixpi 2>/dev/null || true
-	fi
-
 	mark_done welcome
 }
 
@@ -623,6 +619,7 @@ step_netbird() {
 							if [[ -n "$mesh_ip" ]]; then
 								echo ""
 								echo "Connected! Mesh IP: ${mesh_ip}"
+								run_netbird_cloud_setup || true
 								mark_done_with netbird "$mesh_ip"
 								return
 							fi
@@ -663,6 +660,7 @@ step_netbird() {
 							if [[ -n "$mesh_ip" ]]; then
 								echo ""
 								echo "Connected! Mesh IP: ${mesh_ip}"
+								run_netbird_cloud_setup || true
 								mark_done_with netbird "$mesh_ip"
 								return
 							fi
@@ -682,6 +680,60 @@ step_netbird() {
 				;;
 		esac
 	done
+}
+
+run_netbird_cloud_setup() {
+	if ! command -v nixpi-bootstrap-write-netbird-token >/dev/null 2>&1; then
+		return 0
+	fi
+	if ! has_systemd_unit nixpi-netbird-provisioner.service; then
+		echo "NetBird cloud provisioning is not enabled in this profile."
+		return 0
+	fi
+
+	local api_token
+	api_token=""
+	echo ""
+	echo "Optional NetBird cloud provisioning:"
+	echo "  Paste a NetBird management API token to create groups, ACLs, DNS,"
+	echo "  and the #network-activity room now."
+	if [[ "$NONINTERACTIVE_SETUP" -eq 1 ]]; then
+		api_token="${PREFILL_NETBIRD_API_TOKEN:-}"
+		if [[ -z "$api_token" ]]; then
+			echo "Skipping NetBird cloud provisioning in noninteractive mode."
+			return 0
+		fi
+		echo "Management API token: [prefilled]"
+	else
+		read -rp "Management API token (leave blank to skip): " api_token
+		if [[ -z "$api_token" ]]; then
+			echo "Skipping NetBird cloud provisioning."
+			return 0
+		fi
+	fi
+
+	root_command nixpi-bootstrap-write-netbird-token "$api_token"
+	echo ""
+	echo "Applying NetBird cloud topology..."
+	if ! root_command nixpi-bootstrap-netbird-provisioner start nixpi-netbird-provisioner.service; then
+		echo "NetBird cloud provisioning failed. You can retry later with:"
+		echo "  sudo nixpi-bootstrap-netbird-provisioner start nixpi-netbird-provisioner.service"
+		return 0
+	fi
+
+	if has_matrix_stack; then
+		echo ""
+		echo "Creating Matrix network activity room..."
+		start_matrix_homeserver
+		if wait_for_matrix_homeserver 120 30; then
+			if ! root_command nixpi-bootstrap-create-network-activity-room; then
+				echo "Network activity room setup failed. Retry later with:"
+				echo "  sudo nixpi-bootstrap-create-network-activity-room"
+			fi
+		else
+			echo "Matrix did not become ready in time for network activity room setup."
+		fi
+	fi
 }
 
 step_git() {
@@ -819,6 +871,10 @@ finalize() {
 	services=$(read_checkpoint_data services)
 	local ai_provider
 	ai_provider=$(read_checkpoint_data ai)
+	local network_activity_room=""
+	if [[ -f /var/lib/nixpi/netbird-watcher/matrix-token ]]; then
+		network_activity_room="#network-activity:$(hostname -s)"
+	fi
 
 	# Security warning if NetBird is not connected
 	local netbird_connected=false
@@ -849,12 +905,14 @@ finalize() {
 	[[ -n "$mesh_ip" ]] && echo "  Mesh IP: ${mesh_ip} (access from any NetBird peer)"
 	[[ -n "$mesh_fqdn" ]] && echo "  NetBird name: ${mesh_fqdn}"
 	[[ -n "$matrix_user" ]] && echo "  Matrix user: @${matrix_user}:nixpi"
+	[[ -n "$network_activity_room" ]] && echo "  Network activity room: ${network_activity_room}"
 	if [[ "$services" != "skipped" ]]; then
 		echo "  Built-in services: ${services:-home chat}"
 		echo ""
 		print_service_access_summary "$services" "$mesh_ip" "$mesh_fqdn"
 		echo ""
 	fi
+	[[ -n "$network_activity_room" ]] && echo "  Future NetBird peer events will appear there."
 	echo ""
 	if has_command pi; then
 		echo "  Starting Pi — your AI companion."

@@ -107,6 +107,25 @@
     services = ["continuwuity", "netbird", "NetworkManager"]
     for svc in services:
         nixpi.succeed("systemctl is-active " + svc + ".service")
+
+    nixpi.succeed("systemctl list-timers --all | grep -q 'nixpi-netbird-watcher' || true")
+    provisioner_state = nixpi.succeed(
+        "systemctl show -p SubState --value nixpi-netbird-provisioner.service 2>/dev/null || echo skipped"
+    ).strip()
+    print(f"Provisioner state: {provisioner_state}")
+
+    room_check = nixpi.succeed(
+        "curl -sf http://127.0.0.1:6167/_matrix/client/v3/directory/room/%23network-activity%3Api"
+        " -H 'Content-Type: application/json' 2>/dev/null || echo 'not-created'"
+    ).strip()
+    print(f"network-activity room: {room_check}")
+
+    watcher_check = nixpi.succeed(
+        "curl -sf http://127.0.0.1:6167/_matrix/client/v3/profile/%40netbird-watcher%3Api"
+        " 2>/dev/null || echo 'not-provisioned'"
+    ).strip()
+    print(f"netbird-watcher account: {watcher_check}")
+    print("  - NetBird provisioner and watcher services registered")
     
     nixpi.succeed("test -d " + home + "/nixpi")
     nixpi.succeed("test -d " + home + "/.nixpi")

@@ -285,6 +285,7 @@ in
       wantedBy = [ "multi-user.target" ];
       restartIfChanged = true;
       unitConfig = {
+        ConditionPathExists = cfg.apiTokenFile;
         StartLimitBurst = 3;
         StartLimitIntervalSec = 120;
       };

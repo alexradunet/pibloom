@@ -70,6 +70,12 @@ export default function (pi: ExtensionAPI) {
             description: "How long to wait for a reply in milliseconds. Defaults to 15000.",
           }),
         ),
+        confirmed: Type.Optional(
+          Type.Boolean({
+            description:
+              "Set to true after the user has explicitly confirmed they want to run this dangerous command. Required for commands marked ⚠️.",
+          }),
+        ),
       }),
       async execute(_toolCallId, rawParams, _signal, _onUpdate, _ctx) {
         const params = rawParams as {
@@ -77,16 +83,17 @@ export default function (pi: ExtensionAPI) {
           body?: string;
           await_response?: boolean;
           timeout_ms?: number;
+          confirmed?: boolean;
         };
 
-        if (isDangerous(params.command)) {
+        if (isDangerous(params.command) && !params.confirmed) {
           return {
             content: [
               {
                 type: "text" as const,
                 text:
                   `Command '${params.command}' is dangerous (destructive or irreversible). ` +
-                  `Confirm with the user before running this command.`,
+                  `Ask the user to confirm, then re-call this tool with confirmed: true.`,
               },
             ],
             details: { command: params.command },

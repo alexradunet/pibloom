@@ -259,8 +259,13 @@ export class MatrixAdminClient {
           } catch {
             return { ok: false, error: "admin room not found" };
           }
-          since = await this.getSinceToken(roomId);
-          await this.sendAdminCommand(roomId, command, body);
+          try {
+            since = await this.getSinceToken(roomId);
+            await this.sendAdminCommand(roomId, command, body);
+          } catch (retryErr) {
+            const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
+            return { ok: false, error: retryMsg };
+          }
         } else {
           return { ok: false, error: msg };
         }

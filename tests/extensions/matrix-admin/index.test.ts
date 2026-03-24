@@ -122,6 +122,34 @@ describe("matrix_admin tool execute", () => {
     expect(result.content[0].text).toContain("User list: @alex:nixpi");
   });
 
+  it("executes dangerous commands when confirmed: true is passed", async () => {
+    const mockFetch = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ next_batch: "s1" }) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ event_id: "$e1" }) } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          next_batch: "s2",
+          rooms: { join: { "!admin:nixpi": { timeline: { events: [
+            { type: "m.room.message", sender: "@conduit:nixpi", content: { body: "Server restarting." } },
+          ] } } } },
+        }),
+      } as Response);
+
+    vi.stubGlobal("fetch", mockFetch);
+
+    const mod = await import("../../../core/pi/extensions/matrix-admin/index.js");
+    const api = createMockExtensionAPI();
+    mod.default(api as never);
+
+    const result = await executeTool(api, "matrix_admin", {
+      command: "server restart",
+      confirmed: true,
+    });
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0].text).toContain("Server restarting.");
+  });
+
   it("returns isError:true when runCommand returns ok:false", async () => {
     const mockFetch = vi.fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ next_batch: "s1" }) } as Response)

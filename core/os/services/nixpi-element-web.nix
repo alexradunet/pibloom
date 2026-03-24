@@ -1,6 +1,6 @@
 { pkgs }:
 
-{ config, lib, ... }:
+{ config, lib, options, ... }:
 
 let
   inherit (lib) mkOption types;
@@ -70,6 +70,10 @@ in
       "config.json".text = configJsonText;
     };
 
+    # `systemd.service` portability: guard systemd-specific config so this module
+    # can be consumed by non-systemd init systems if NixOS ever supports them.
+    # See nixpkgs nixos/README-modular-services.md.
+  } // lib.optionalAttrs (options ? systemd) {
     systemd.service = {
       description = "NixPI Element Web client";
       after = [ "network-online.target" ];

@@ -47,6 +47,7 @@ let
     nixpi-installer-smoke      = runInstallerTest ./nixpi-installer-smoke.nix;
     nixpi-update               = runTest ./nixpi-update.nix;
     nixpi-options-validation   = runTest ./nixpi-options-validation.nix;
+    nixpi-netbird-provisioner  = runTest ./nixpi-netbird-provisioner.nix;
   };
 
   smokeAliases = {

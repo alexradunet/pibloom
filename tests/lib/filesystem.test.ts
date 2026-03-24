@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -9,8 +10,13 @@ import {
 	getPrimaryUser,
 	getSystemFlakeDir,
 	safePath,
+	validateCanonicalRepo,
 } from "../../core/lib/filesystem.js";
-import { getCanonicalRepoMetadataPath } from "../../core/lib/repo-metadata.js";
+import {
+	getCanonicalRepoMetadataPath,
+	readCanonicalRepoMetadata,
+	writeCanonicalRepoMetadata,
+} from "../../core/lib/repo-metadata.js";
 
 const ROOT = path.join(os.tmpdir(), "nixpi-fs-test-root");
 
@@ -154,6 +160,15 @@ describe("canonical repo policy", () => {
 		expect(getCanonicalRepoMetadataPath("alex")).toBe("/home/alex/.nixpi/canonical-repo.json");
 	});
 
+	it("lets validateCanonicalRepo enforce the canonical path policy", () => {
+		process.env.NIXPI_PRIMARY_USER = "alex";
+		expect(() =>
+			validateCanonicalRepo({
+				path: "/tmp/pi-nixpi",
+			}),
+		).toThrow("Canonical repo path mismatch: expected /home/alex/nixpi, got /tmp/pi-nixpi");
+	});
+
 	it("rejects repos outside the canonical path", () => {
 		expect(() =>
 			assertCanonicalRepo({
@@ -174,14 +189,73 @@ describe("canonical repo policy", () => {
 		);
 	});
 
+	it("rejects origin checks without an expected origin", () => {
+		expect(() =>
+			assertCanonicalRepo({
+				path: "/home/alex/nixpi",
+				origin: "https://github.com/alexradunet/nixpi.git",
+			}),
+		).toThrow("Canonical repo origin expectation missing");
+	});
+
 	it("rejects repos on the wrong branch", () => {
 		expect(() =>
 			assertCanonicalRepo({
 				path: "/home/alex/nixpi",
 				origin: "https://github.com/alexradunet/nixpi.git",
 				branch: "feature/task-1",
+				expectedOrigin: "https://github.com/alexradunet/nixpi.git",
 				expectedBranch: "main",
 			}),
 		).toThrow("Canonical repo branch mismatch: expected main, got feature/task-1");
+	});
+
+	it("rejects branch checks without an expected branch", () => {
+		expect(() =>
+			assertCanonicalRepo({
+				path: "/home/alex/nixpi",
+				branch: "main",
+			}),
+		).toThrow("Canonical repo branch expectation missing");
+	});
+});
+
+describe("canonical repo metadata", () => {
+	let origPrimaryUser: string | undefined;
+	let metadataRoot: string;
+	let metadataPath: string;
+
+	beforeEach(() => {
+		origPrimaryUser = process.env.NIXPI_PRIMARY_USER;
+		process.env.NIXPI_PRIMARY_USER = "codex-test-user";
+		metadataRoot = path.join(os.tmpdir(), "codex-test-user");
+		metadataPath = path.join(metadataRoot, ".nixpi", "canonical-repo.json");
+		fs.rmSync(metadataRoot, { recursive: true, force: true });
+	});
+
+	afterEach(() => {
+		if (origPrimaryUser !== undefined) {
+			process.env.NIXPI_PRIMARY_USER = origPrimaryUser;
+		} else {
+			delete process.env.NIXPI_PRIMARY_USER;
+		}
+		fs.rmSync(metadataRoot, { recursive: true, force: true });
+	});
+
+	it("writes and reads canonical repo metadata via the shared API", () => {
+		const metadata = {
+			path: "/home/codex-test-user/nixpi",
+			origin: "https://github.com/example/nixpi.git",
+			branch: "main",
+		};
+
+		const writtenPath = writeCanonicalRepoMetadata(metadata, "codex-test-user", metadataPath);
+
+		expect(writtenPath).toBe(metadataPath);
+		expect(readCanonicalRepoMetadata("codex-test-user", metadataPath)).toEqual(metadata);
+	});
+
+	it("returns undefined when canonical repo metadata is absent", () => {
+		expect(readCanonicalRepoMetadata("codex-test-user", metadataPath)).toBeUndefined();
 	});
 });

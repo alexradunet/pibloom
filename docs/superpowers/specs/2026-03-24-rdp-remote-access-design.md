@@ -75,6 +75,8 @@ generated automatically by xrdp on first start; clients will need to accept it (
   via `~/startwm.sh` does not work reliably on NixOS. Not relevant here — we always want
   XFCE.
 - **xrdp service restart required** after config changes — `systemctl restart xrdp xrdp-sesman`.
+- **`~/.xprofile` not sourced in RDP sessions** — the keyboard layout (`setxkbmap`) and background colour set up for the LightDM auto-login path are not applied to xrdp sessions. RDP sessions will use server defaults. Cosmetic only.
+- **`xrdp-sesman` unit name** — since nixpkgs ~24.05, xrdp ships `xrdp.service` and `xrdp-sesman.service` as separate units. Verify this on the project's actual nixpkgs revision before relying on the unit name in the test.
 
 ---
 

@@ -2,7 +2,7 @@ import os from "node:os";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const createMultiAgentRuntimeMock = vi.fn();
-const startWithRetryMock = vi.fn();
+const withRetryMock = vi.fn();
 const loadRuntimeAgentsMock = vi.fn();
 const loadSchedulerStateMock = vi.fn();
 const saveSchedulerStateMock = vi.fn();
@@ -39,8 +39,8 @@ vi.mock("../../core/daemon/agent-registry.js", () => ({
 	loadRuntimeAgents: loadRuntimeAgentsMock,
 }));
 
-vi.mock("../../core/daemon/lifecycle.js", () => ({
-	startWithRetry: startWithRetryMock,
+vi.mock("../../core/lib/retry.js", () => ({
+	withRetry: withRetryMock,
 }));
 
 vi.mock("../../core/daemon/multi-agent-runtime.js", () => ({
@@ -72,8 +72,8 @@ describe("daemon bootstrap", () => {
 				registrationToken: "reg-token",
 			}),
 		);
-		startWithRetryMock.mockImplementation(async (start: () => Promise<void>) => {
-			await start();
+		withRetryMock.mockImplementation(async (fn: () => Promise<void>) => {
+			await fn();
 		});
 	});
 
@@ -118,7 +118,7 @@ describe("daemon bootstrap", () => {
 				sessionBaseDir: `${homeDir}/.pi/sessions/nixpi-rooms`,
 			}),
 		);
-		expect(startWithRetryMock).toHaveBeenCalledTimes(1);
+		expect(withRetryMock).toHaveBeenCalledTimes(1);
 		expect(runtime.start).toHaveBeenCalledTimes(1);
 	});
 
@@ -143,7 +143,7 @@ describe("daemon bootstrap", () => {
 				sessionBaseDir: `${homeDir}/.pi/sessions/nixpi-rooms`,
 			}),
 		);
-		expect(startWithRetryMock).toHaveBeenCalledTimes(1);
+		expect(withRetryMock).toHaveBeenCalledTimes(1);
 		expect(runtime.start).toHaveBeenCalledTimes(1);
 	});
 });

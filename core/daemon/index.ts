@@ -18,7 +18,7 @@ import { createLogger } from "../lib/shared.js";
 import type { AgentDefinition } from "./agent-registry.js";
 import { loadRuntimeAgents } from "./agent-registry.js";
 import { loadDaemonConfig } from "./config.js";
-import { startWithRetry } from "./lifecycle.js";
+import { withRetry } from "../lib/retry.js";
 import { createMultiAgentRuntime } from "./multi-agent-runtime.js";
 import { loadSchedulerState, saveSchedulerState } from "./proactive.js";
 
@@ -104,7 +104,7 @@ async function runDaemon(
 	process.on("SIGTERM", () => void shutdown("SIGTERM"));
 	process.on("SIGINT", () => void shutdown("SIGINT"));
 
-	await startWithRetry(
+	await withRetry(
 		async () => {
 			await runtime.start();
 			log.info("nixpi-daemon running", {
@@ -113,13 +113,13 @@ async function runDaemon(
 				proactiveJobs: runtime.proactiveJobs,
 			});
 		},
-		async () => {
-			await runtime.stop();
-		},
 		{
-			initialDelayMs: config.initialRetryDelayMs,
+			baseDelayMs: config.initialRetryDelayMs,
 			maxDelayMs: config.maxRetryDelayMs,
-			onRetry: (error, retryDelay) => {
+			onError: async () => {
+				await runtime.stop();
+			},
+			onRetry: (_attempt, retryDelay, error) => {
 				log.error("failed to start daemon transport, retrying", {
 					error: String(error),
 					retryMs: retryDelay,

@@ -16,7 +16,7 @@ import {
 	matrixCredentialsPath,
 	provisionMatrixAgentAccount,
 } from "../../../lib/matrix.js";
-import { errorResult, nowIso, truncate } from "../../../lib/shared.js";
+import { errorResult, nowIso, truncate } from "../../../lib/utils.js";
 import { readBlueprintVersions } from "./actions-blueprints.js";
 
 const NIXPI_DIRS = ["Persona", "Skills", "Evolutions", "Objects", "Episodes", "Agents", "audit"];

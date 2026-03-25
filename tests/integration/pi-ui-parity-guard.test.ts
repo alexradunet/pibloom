@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ROOT = path.resolve(process.cwd(), "core");
-const ALLOWED_FILES = new Set([path.join("lib", "shared.ts")]);
+const ALLOWED_FILES = new Set([path.join("lib", "interactions.ts")]);
 const BLOCKING_UI_PATTERN = /\bctx\.ui\.(confirm|select|input|editor|custom)\s*\(/g;
 
 function listTypeScriptFiles(dir: string): string[] {

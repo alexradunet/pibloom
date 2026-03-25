@@ -13,7 +13,7 @@ import {
 	matrixAgentCredentialsPath,
 	matrixCredentialsPath,
 } from "../lib/matrix.js";
-import { createLogger } from "../lib/shared.js";
+import { createLogger } from "../lib/logging.js";
 import type { AgentDefinition } from "./agent-registry.js";
 import { loadRuntimeAgents } from "./agent-registry.js";
 import { loadDaemonConfig } from "./config.js";

@@ -13,7 +13,9 @@ import {
 	getSystemFlakeDir,
 	getUpdateStatusPath,
 } from "../../../lib/filesystem.js";
-import { errorResult, guardServiceName, requireConfirmation, truncate } from "../../../lib/shared.js";
+import { requireConfirmation } from "../../../lib/interactions.js";
+import { errorResult, truncate } from "../../../lib/utils.js";
+import { guardServiceName } from "../../../lib/validation.js";
 import type { UpdateStatus } from "./types.js";
 
 // --- NixOS update handler ---

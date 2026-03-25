@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parseFrontmatter, stringifyFrontmatter } from "../../../lib/frontmatter.js";
-import { nowIso } from "../../../lib/shared.js";
+import { nowIso } from "../../../lib/utils.js";
 
 export interface MemoryRecord {
 	filepath: string;

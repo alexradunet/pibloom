@@ -7,7 +7,7 @@ import path from "node:path";
 import { textToolResult } from "../../../lib/extension-tools.js";
 import { getNixPiDir, safePath } from "../../../lib/filesystem.js";
 import { parseFrontmatter, stringifyFrontmatter } from "../../../lib/frontmatter.js";
-import { errorResult, nowIso, truncate } from "../../../lib/shared.js";
+import { errorResult, nowIso, truncate } from "../../../lib/utils.js";
 import { defaultObjectBody, mergeObjectState, readMemoryRecord, writeMemoryRecord } from "./memory.js";
 
 /** Parse a `type/slug` reference string into its components. Throws if format is invalid. */

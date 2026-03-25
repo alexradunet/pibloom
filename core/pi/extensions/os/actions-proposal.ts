@@ -3,7 +3,8 @@ import { dirname, join } from "node:path";
 import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { run } from "../../../lib/exec.js";
 import { getSystemFlakeDir } from "../../../lib/filesystem.js";
-import { errorResult, requireConfirmation, truncate } from "../../../lib/shared.js";
+import { requireConfirmation } from "../../../lib/interactions.js";
+import { errorResult, truncate } from "../../../lib/utils.js";
 
 export type NixConfigProposalAction = "status" | "validate" | "update_flake_lock";
 

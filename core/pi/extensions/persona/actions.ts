@@ -13,7 +13,7 @@ import {
 	getWizardStateDir,
 	resolvePackageDir,
 } from "../../../lib/filesystem.js";
-import { createLogger } from "../../../lib/shared.js";
+import { createLogger } from "../../../lib/logging.js";
 import type { NixPiContext, GuardrailsConfig } from "./types.js";
 
 const log = createLogger("persona");

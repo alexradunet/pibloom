@@ -64,8 +64,8 @@ vi.mock("../../core/lib/matrix.js", () => ({
 	matrixAgentCredentialsPath: mocks.matrixAgentCredentialsPathMock,
 }));
 
-vi.mock("../../core/lib/shared.js", async () => {
-	const actual = await vi.importActual<typeof import("../../core/lib/shared.js")>("../../core/lib/shared.js");
+vi.mock("../../core/lib/logging.js", async () => {
+	const actual = await vi.importActual<typeof import("../../core/lib/logging.js")>("../../core/lib/logging.js");
 	return {
 		...actual,
 		createLogger: () => ({

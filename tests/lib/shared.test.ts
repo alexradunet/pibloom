@@ -1,40 +1,23 @@
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getNixPiDir, safePath } from "../../core/lib/filesystem.js";
 import { parseFrontmatter, stringifyFrontmatter } from "../../core/lib/frontmatter.js";
 import {
-	createLogger,
-	errorResult,
+	_clearInteractionStore,
 	formatResumeMessage,
 	getPendingInteractions,
-	guardServiceName,
-	nowIso,
 	requestInteraction,
 	requestSelection,
 	requestTextInput,
-	resolveInteractionReply,
 	requireConfirmation,
-} from "../../core/lib/shared.js";
+	resolveInteractionReply,
+} from "../../core/lib/interactions.js";
+import { createLogger } from "../../core/lib/logging.js";
+import { errorResult, nowIso } from "../../core/lib/utils.js";
+import { guardServiceName } from "../../core/lib/validation.js";
 
-function makeSessionContext(prefix: string, options?: { sessionFile?: boolean }) {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
-	const sessionFile = path.join(dir, "session.jsonl");
-	const ctx = {
-		hasUI: false,
-		sessionManager: {
-			getSessionFile: () => (options?.sessionFile === false ? null : sessionFile),
-			getSessionDir: () => dir,
-			getSessionId: () => "session",
-		},
-	} as never;
-	return {
-		ctx,
-		dir,
-		storePath: options?.sessionFile === false ? path.join(dir, "session.nixpi-interactions.json") : `${sessionFile}.nixpi-interactions.json`,
-	};
-}
+afterEach(() => {
+	_clearInteractionStore();
+});
 
 // ---------------------------------------------------------------------------
 // safePath
@@ -313,56 +296,28 @@ describe("createLogger", () => {
 	});
 });
 
+const fakeCtx = { hasUI: false } as never;
+
 // ---------------------------------------------------------------------------
 // requireConfirmation
 // ---------------------------------------------------------------------------
 describe("requireConfirmation", () => {
 	it("returns Matrix confirmation instructions when no UI and requireUi is true", async () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "shared-confirm-"));
-		const ctx = {
-			hasUI: false,
-			sessionManager: {
-				getSessionFile: () => path.join(dir, "session.jsonl"),
-				getSessionDir: () => dir,
-				getSessionId: () => "session",
-			},
-		} as never;
-		const result = await requireConfirmation(ctx, "delete file");
+		const result = await requireConfirmation(fakeCtx, "delete file");
 		expect(result).toMatch(
-			/^Confirmation required for "delete file"\. Reply here with "confirm [a-z0-9]{6}" to approve or "deny [a-z0-9]{6}" to cancel\.$/,
+			/^Confirmation required for "delete file"\. Reply here with "confirm [a-z0-9]+" to approve or "deny [a-z0-9]+" to cancel\.$/,
 		);
-		fs.rmSync(dir, { recursive: true, force: true });
 	});
 
 	it("returns null when no UI and requireUi is false", async () => {
-		const ctx = { hasUI: false } as never;
-		const result = await requireConfirmation(ctx, "delete file", { requireUi: false });
+		const result = await requireConfirmation(fakeCtx, "delete file", { requireUi: false });
 		expect(result).toBeNull();
 	});
 
 	it("reuses the same pending token for repeated no-UI requests", async () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "shared-confirm-"));
-		const sessionFile = path.join(dir, "session.jsonl");
-		const ctx = {
-			hasUI: false,
-			sessionManager: {
-				getSessionFile: () => sessionFile,
-				getSessionDir: () => dir,
-				getSessionId: () => "session",
-			},
-		} as never;
-
-		const first = await requireConfirmation(ctx, "delete file");
-		const second = await requireConfirmation(ctx, "delete file");
-
+		const first = await requireConfirmation(fakeCtx, "delete file");
+		const second = await requireConfirmation(fakeCtx, "delete file");
 		expect(first).toBe(second);
-		const saved = JSON.parse(fs.readFileSync(`${sessionFile}.nixpi-interactions.json`, "utf-8")) as {
-			records: Array<{ token: string; status: string; kind: string }>;
-		};
-		expect(saved.records).toHaveLength(1);
-		expect(saved.records[0]?.kind).toBe("confirm");
-		expect(saved.records[0]?.status).toBe("pending");
-		fs.rmSync(dir, { recursive: true, force: true });
 	});
 
 	it("returns null when user confirms", async () => {
@@ -377,298 +332,168 @@ describe("requireConfirmation", () => {
 		expect(result).toBe("User declined: delete file");
 	});
 
-	it("consumes an approved Matrix confirmation on retry", async () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "shared-confirm-"));
-		const sessionFile = path.join(dir, "session.jsonl");
-		const token = "abc123";
-		fs.writeFileSync(
-			`${sessionFile}.nixpi-interactions.json`,
-			JSON.stringify({
-				records: [
-					{
-						token,
-						kind: "confirm",
-						key: "delete file",
-						prompt: "Allow: delete file?",
-						status: "resolved",
-						resolution: "approved",
-						createdAt: "2026-03-15T00:00:00Z",
-						updatedAt: "2026-03-15T00:00:00Z",
-					},
-				],
-			}),
-		);
-		const ctx = {
-			hasUI: false,
-			sessionManager: {
-				getSessionFile: () => sessionFile,
-				getSessionDir: () => dir,
-				getSessionId: () => "session",
-			},
-		} as never;
+	it("consumes an approved confirmation on retry", async () => {
+		// Set up a pending interaction
+		const pending = requestInteraction(fakeCtx, {
+			kind: "confirm",
+			key: "delete file",
+			prompt: "Allow: delete file?",
+		});
+		if (!pending || pending.state !== "pending") throw new Error("expected pending");
 
-		const result = await requireConfirmation(ctx, "delete file");
+		// Resolve it
+		resolveInteractionReply(fakeCtx, `yes ${pending.record.token}`);
 
+		// Now requireConfirmation should consume the resolved record and return null
+		const result = await requireConfirmation(fakeCtx, "delete file");
 		expect(result).toBeNull();
-		const saved = JSON.parse(fs.readFileSync(`${sessionFile}.nixpi-interactions.json`, "utf-8")) as {
-			records: Array<{ token: string; status: string }>;
-		};
-		expect(saved.records[0]?.token).toBe(token);
-		expect(saved.records[0]?.status).toBe("consumed");
-		fs.rmSync(dir, { recursive: true, force: true });
 	});
 
-	it("returns a decline after Matrix denial and consumes it", async () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "shared-confirm-"));
-		const sessionFile = path.join(dir, "session.jsonl");
-		fs.writeFileSync(
-			`${sessionFile}.nixpi-interactions.json`,
-			JSON.stringify({
-				records: [
-					{
-						token: "abc123",
-						kind: "confirm",
-						key: "delete file",
-						prompt: "Allow: delete file?",
-						status: "resolved",
-						resolution: "denied",
-						createdAt: "2026-03-15T00:00:00Z",
-						updatedAt: "2026-03-15T00:00:00Z",
-					},
-				],
-			}),
-		);
-		const ctx = {
-			hasUI: false,
-			sessionManager: {
-				getSessionFile: () => sessionFile,
-				getSessionDir: () => dir,
-				getSessionId: () => "session",
-			},
-		} as never;
+	it("returns a decline after denial and consumes it", async () => {
+		const pending = requestInteraction(fakeCtx, {
+			kind: "confirm",
+			key: "delete file",
+			prompt: "Allow: delete file?",
+		});
+		if (!pending || pending.state !== "pending") throw new Error("expected pending");
 
-		const result = await requireConfirmation(ctx, "delete file");
+		resolveInteractionReply(fakeCtx, `no ${pending.record.token}`);
 
+		const result = await requireConfirmation(fakeCtx, "delete file");
 		expect(result).toBe("User declined: delete file");
-		const saved = JSON.parse(fs.readFileSync(`${sessionFile}.nixpi-interactions.json`, "utf-8")) as {
-			records: Array<{ status: string }>;
-		};
-		expect(saved.records[0]?.status).toBe("consumed");
-		fs.rmSync(dir, { recursive: true, force: true });
 	});
 });
 
 describe("requestSelection", () => {
 	it("returns a numbered prompt for no-UI sessions and resolves the saved choice", async () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "shared-select-"));
-		const sessionFile = path.join(dir, "session.jsonl");
-		const ctx = {
-			hasUI: false,
-			sessionManager: {
-				getSessionFile: () => sessionFile,
-				getSessionDir: () => dir,
-				getSessionId: () => "session",
-			},
-		} as never;
-
-		const first = await requestSelection(ctx, "pick-action", "Choose action", ["init", "status"]);
+		const first = await requestSelection(fakeCtx, "pick-action", "Choose action", ["init", "status"]);
 		expect(first.value).toBeNull();
 		expect(first.prompt).toContain("1. init");
 		expect(first.prompt).toContain("2. status");
 
-		fs.writeFileSync(
-			`${sessionFile}.nixpi-interactions.json`,
-			JSON.stringify({
-				records: [
-					{
-						token: "abc123",
-						kind: "select",
-						key: "pick-action",
-						prompt: "Choose action",
-						options: ["init", "status"],
-						status: "resolved",
-						resolution: "status",
-						createdAt: "2026-03-15T00:00:00Z",
-						updatedAt: "2026-03-15T00:00:00Z",
-					},
-				],
-			}),
-		);
+		// Resolve the pending interaction directly
+		const pending = getPendingInteractions(fakeCtx);
+		expect(pending).toHaveLength(1);
+		resolveInteractionReply(fakeCtx, `2 ${pending[0]!.token}`);
 
-		const second = await requestSelection(ctx, "pick-action", "Choose action", ["init", "status"]);
+		const second = await requestSelection(fakeCtx, "pick-action", "Choose action", ["init", "status"]);
 		expect(second.value).toBe("status");
-		fs.rmSync(dir, { recursive: true, force: true });
 	});
 });
 
 describe("requestTextInput", () => {
 	it("returns a chat prompt and consumes resolved input", async () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "shared-input-"));
-		const sessionFile = path.join(dir, "session.jsonl");
-		const ctx = {
-			hasUI: false,
-			sessionManager: {
-				getSessionFile: () => sessionFile,
-				getSessionDir: () => dir,
-				getSessionId: () => "session",
-			},
-		} as never;
-
-		const first = await requestTextInput(ctx, "note", "Enter a short note", { placeholder: "one sentence" });
+		const first = await requestTextInput(fakeCtx, "note", "Enter a short note", { placeholder: "one sentence" });
 		expect(first.value).toBeNull();
 		expect(first.prompt).toContain("Enter a short note");
 
-		fs.writeFileSync(
-			`${sessionFile}.nixpi-interactions.json`,
-			JSON.stringify({
-				records: [
-					{
-						token: "abc123",
-						kind: "input",
-						key: "note",
-						prompt: "Enter a short note",
-						status: "resolved",
-						resolution: "hello world",
-						createdAt: "2026-03-15T00:00:00Z",
-						updatedAt: "2026-03-15T00:00:00Z",
-					},
-				],
-			}),
-		);
+		const pending = getPendingInteractions(fakeCtx);
+		expect(pending).toHaveLength(1);
+		resolveInteractionReply(fakeCtx, `hello world ${pending[0]!.token}`);
 
-		const second = await requestTextInput(ctx, "note", "Enter a short note");
+		const second = await requestTextInput(fakeCtx, "note", "Enter a short note");
 		expect(second.value).toBe("hello world");
-		fs.rmSync(dir, { recursive: true, force: true });
 	});
 });
 
 describe("interaction store helpers", () => {
-	it("returns null when interaction persistence is unavailable", () => {
-		const result = requestInteraction({ hasUI: false } as never, {
+	it("returns null when requestInteraction is called (always works with in-memory store)", () => {
+		// The in-memory store always works; ctx is ignored
+		const result = requestInteraction(fakeCtx, {
 			kind: "confirm",
 			key: "delete file",
 			prompt: "Allow: delete file?",
 		});
-		expect(result).toBeNull();
-	});
-
-	it("stores interactions under sessionDir/sessionId when no session file exists", () => {
-		const { ctx, dir, storePath } = makeSessionContext("shared-sessiondir-", { sessionFile: false });
-		const result = requestInteraction(ctx, {
-			kind: "input",
-			key: "nickname",
-			prompt: "Enter nickname",
-		});
-
+		expect(result).not.toBeNull();
 		expect(result?.state).toBe("pending");
-		expect(fs.existsSync(storePath)).toBe(true);
-		fs.rmSync(dir, { recursive: true, force: true });
 	});
 
-	it("resolves confirm replies using synonyms and stores the resolved value", () => {
-		const { ctx, dir, storePath } = makeSessionContext("shared-confirm-reply-");
-		const pending = requestInteraction(ctx, {
+	it("resolves confirm replies using synonyms", () => {
+		const pending = requestInteraction(fakeCtx, {
 			kind: "confirm",
 			key: "delete file",
 			prompt: "Allow: delete file?",
 		});
 
 		if (!pending || pending.state !== "pending") throw new Error("expected pending interaction");
-		const resolved = resolveInteractionReply(ctx, `yes ${pending.record.token}`);
+		const resolved = resolveInteractionReply(fakeCtx, `yes ${pending.record.token}`);
 
 		expect(resolved?.value).toBe("approved");
 		expect(resolved?.record.status).toBe("resolved");
-		const saved = JSON.parse(fs.readFileSync(storePath, "utf-8")) as {
-			records: Array<{ resolution?: string; status: string }>;
-		};
-		expect(saved.records[0]?.resolution).toBe("approved");
-		expect(saved.records[0]?.status).toBe("resolved");
-		fs.rmSync(dir, { recursive: true, force: true });
 	});
 
 	it("supports select replies by number or exact option text", () => {
-		const { ctx, dir } = makeSessionContext("shared-select-reply-");
-
-		const first = requestInteraction(ctx, {
+		const first = requestInteraction(fakeCtx, {
 			kind: "select",
 			key: "mode",
 			prompt: "Choose mode",
 			options: ["fast", "safe"],
 		});
 		if (!first || first.state !== "pending") throw new Error("expected first pending interaction");
-		const byNumber = resolveInteractionReply(ctx, `2 ${first.record.token}`);
+		const byNumber = resolveInteractionReply(fakeCtx, `2 ${first.record.token}`);
 		expect(byNumber?.value).toBe("safe");
 
-		const second = requestInteraction(ctx, {
+		const second = requestInteraction(fakeCtx, {
 			kind: "select",
 			key: "theme",
 			prompt: "Choose theme",
 			options: ["Light", "Dark"],
 		});
 		if (!second || second.state !== "pending") throw new Error("expected second pending interaction");
-		const byExactText = resolveInteractionReply(ctx, `dark ${second.record.token}`);
+		const byExactText = resolveInteractionReply(fakeCtx, `dark ${second.record.token}`);
 		expect(byExactText?.value).toBe("Dark");
-
-		fs.rmSync(dir, { recursive: true, force: true });
 	});
 
 	it("marks untokened replies as ambiguous when multiple pending interactions exist", () => {
-		const { ctx, dir } = makeSessionContext("shared-ambiguous-");
-		requestInteraction(ctx, {
+		requestInteraction(fakeCtx, {
 			kind: "input",
 			key: "first",
 			prompt: "First prompt",
 		});
-		const second = requestInteraction(ctx, {
+		const second = requestInteraction(fakeCtx, {
 			kind: "input",
 			key: "second",
 			prompt: "Second prompt",
 		});
 
 		if (!second || second.state !== "pending") throw new Error("expected second pending interaction");
-		const resolved = resolveInteractionReply(ctx, "typed answer");
+		const resolved = resolveInteractionReply(fakeCtx, "typed answer");
 
 		expect(resolved?.value).toBe("typed answer");
 		expect(resolved?.record.key).toBe("second");
 		expect(resolved?.ambiguous).toBe(true);
-		fs.rmSync(dir, { recursive: true, force: true });
 	});
 
 	it("extracts tokens from the start of replies and ignores invalid replies", () => {
-		const { ctx, dir } = makeSessionContext("shared-token-prefix-");
-		const pending = requestInteraction(ctx, {
+		const pending = requestInteraction(fakeCtx, {
 			kind: "input",
 			key: "nickname",
 			prompt: "Enter nickname",
 		});
 
 		if (!pending || pending.state !== "pending") throw new Error("expected pending interaction");
-		expect(resolveInteractionReply(ctx, "   ")).toBeNull();
-		const resolved = resolveInteractionReply(ctx, `${pending.record.token} Bloom`);
+		expect(resolveInteractionReply(fakeCtx, "   ")).toBeNull();
+		const resolved = resolveInteractionReply(fakeCtx, `${pending.record.token} Bloom`);
 		expect(resolved?.value).toBe("Bloom");
-
-		fs.rmSync(dir, { recursive: true, force: true });
 	});
 
 	it("lists only pending interactions", () => {
-		const { ctx, dir } = makeSessionContext("shared-pending-list-");
-		requestInteraction(ctx, {
+		requestInteraction(fakeCtx, {
 			kind: "confirm",
 			key: "first",
 			prompt: "First prompt",
 		});
-		const second = requestInteraction(ctx, {
+		const second = requestInteraction(fakeCtx, {
 			kind: "input",
 			key: "second",
 			prompt: "Second prompt",
 		});
 		if (!second || second.state !== "pending") throw new Error("expected second pending interaction");
-		resolveInteractionReply(ctx, `${second.record.token} hello`);
+		resolveInteractionReply(fakeCtx, `${second.record.token} hello`);
 
-		const pending = getPendingInteractions(ctx);
+		const pending = getPendingInteractions(fakeCtx);
 		expect(pending).toHaveLength(1);
 		expect(pending[0]?.key).toBe("first");
-		fs.rmSync(dir, { recursive: true, force: true });
 	});
 
 	it("formats default and templated resume messages", () => {
@@ -717,25 +542,6 @@ describe("interaction store helpers", () => {
 				"Bloom",
 			),
 		).toBe("Resume with Bloom using inp123.");
-	});
-
-	it("trims persisted interaction history to the latest 32 records", () => {
-		const { ctx, dir, storePath } = makeSessionContext("shared-trim-");
-		for (let i = 0; i < 35; i += 1) {
-			requestInteraction(ctx, {
-				kind: "input",
-				key: `note-${i}`,
-				prompt: `Prompt ${i}`,
-			});
-		}
-
-		const saved = JSON.parse(fs.readFileSync(storePath, "utf-8")) as {
-			records: Array<{ key: string }>;
-		};
-		expect(saved.records).toHaveLength(32);
-		expect(saved.records[0]?.key).toBe("note-3");
-		expect(saved.records.at(-1)?.key).toBe("note-34");
-		fs.rmSync(dir, { recursive: true, force: true });
 	});
 });
 

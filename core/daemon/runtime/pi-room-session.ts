@@ -9,7 +9,7 @@ import {
 	SessionManager,
 	SettingsManager,
 } from "@mariozechner/pi-coding-agent";
-import { createLogger } from "../../lib/shared.js";
+import { createLogger } from "../../lib/logging.js";
 import type { AgentSessionLike } from "../contracts/session.js";
 import { extractResponseText, type SessionEvent } from "../contracts/session.js";
 

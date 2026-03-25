@@ -3,7 +3,7 @@
  */
 import { textToolResult } from "../../../lib/extension-tools.js";
 import { run } from "../../../lib/exec.js";
-import { truncate } from "../../../lib/shared.js";
+import { truncate } from "../../../lib/utils.js";
 
 function nixosSection(result: Awaited<ReturnType<typeof run>>): string {
 	if (result.exitCode !== 0) return "## OS\n(nixos-rebuild unavailable)";

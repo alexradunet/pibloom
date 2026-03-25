@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { createLogger } from "../lib/shared.js";
+import { createLogger } from "../lib/logging.js";
 import type { AgentDefinition } from "./agent-registry.js";
 import type { DaemonConfig } from "./config.js";
 import type { AgentSessionLike, SessionEvent } from "./contracts/session.js";

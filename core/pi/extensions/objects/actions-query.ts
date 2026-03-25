@@ -7,7 +7,7 @@ import path from "node:path";
 import { textToolResult } from "../../../lib/extension-tools.js";
 import { getNixPiDir, safePath } from "../../../lib/filesystem.js";
 import { parseFrontmatter } from "../../../lib/frontmatter.js";
-import { errorResult, truncate } from "../../../lib/shared.js";
+import { errorResult, truncate } from "../../../lib/utils.js";
 import { walkMdFiles } from "./actions.js";
 import { readMemoryRecord, type ScopePreference, scoreRecord } from "./memory.js";
 

@@ -1,6 +1,6 @@
 import { ClientEvent, createClient, type MatrixClient, type MatrixEvent, MemoryStore, SyncState } from "matrix-js-sdk";
 import { renderMatrixHtml } from "../../lib/matrix-format.js";
-import type { MatrixBridge, MatrixIdentity, MatrixTextEvent } from "../contracts/matrix.js";
+import type { MatrixIdentity, MatrixTextEvent } from "../../lib/types.js";
 import { emitMatrixConnected, emitMatrixDisconnected, emitMatrixError } from "../metrics.js";
 import { enforceMapLimit, pruneExpiredEntries } from "../ordered-cache.js";
 
@@ -51,7 +51,7 @@ const DEFAULT_SEEN_EVENT_TTL_MS = 10 * 60 * 1000;
 const DEFAULT_MAX_SEEN_EVENT_IDS = 10_000;
 const NOOP = () => {};
 
-export class MatrixJsSdkBridge implements MatrixBridge {
+export class MatrixJsSdkBridge {
 	private readonly options: MatrixJsSdkBridgeOptions;
 	private readonly clients = new Map<string, ClientEntry>();
 	private readonly seenEventIds = new Map<string, number>();

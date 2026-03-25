@@ -62,7 +62,7 @@ export function sanitizeRoomAlias(alias: string): string {
 	return alias.replace(/^[#!]/, "").replaceAll(":", "_");
 }
 
-export interface MatrixBridgeLike {
+export interface MatrixClient {
 	sendText(agentId: string, roomId: string, text: string): Promise<void>;
 	setTyping(agentId: string, roomId: string, typing: boolean, timeoutMs?: number): Promise<void>;
 	getRoomAlias(agentId: string, roomId: string): Promise<string>;
@@ -71,7 +71,7 @@ export interface MatrixBridgeLike {
 
 export interface AgentSupervisorOptions {
 	agents: readonly AgentDefinition[];
-	matrixBridge?: MatrixBridgeLike;
+	matrixBridge?: MatrixClient;
 	sessionBaseDir: string;
 	idleTimeoutMs: number;
 	createSession?: (opts: AgentSessionOptions) => AgentSessionLike;
@@ -98,7 +98,7 @@ interface PendingProactiveJob {
 
 export class AgentSupervisor {
 	private readonly agents: readonly AgentDefinition[];
-	private readonly matrixBridge: MatrixBridgeLike;
+	private readonly matrixBridge: MatrixClient;
 	private readonly sessionBaseDir: string;
 	private readonly idleTimeoutMs: number;
 	private readonly config: DaemonConfig;

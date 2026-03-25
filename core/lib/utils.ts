@@ -2,15 +2,18 @@
  * Pure utility functions with no side effects.
  */
 
-const MAX_TRUNCATE_LENGTH = 500;
+import { truncateHead } from "@mariozechner/pi-coding-agent";
 
 export function truncate(text: string): string {
-	if (text.length <= MAX_TRUNCATE_LENGTH) return text;
-	return `${text.slice(0, MAX_TRUNCATE_LENGTH)}…`;
+	return truncateHead(text, { maxLines: 2000, maxBytes: 50000 }).content;
 }
 
-export function errorResult(message: string): { error: string } {
-	return { error: message };
+export function errorResult(message: string) {
+	return {
+		content: [{ type: "text" as const, text: message }],
+		details: {},
+		isError: true,
+	};
 }
 
 export function nowIso(): string {

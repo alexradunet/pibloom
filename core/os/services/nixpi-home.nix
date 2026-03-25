@@ -62,9 +62,9 @@ in
           <h2>Canonical access</h2>
           <p>Use the NetBird host over HTTPS during normal operation.</p>
           <ul>
-            <li>Home: <a data-page-link href="https://nixpi/">https://nixpi/</a></li>
-            <li>Element Web: <a data-element-link href="https://nixpi/element/">https://nixpi/element/</a></li>
-            <li>Matrix URL: <a data-matrix-link href="${config.nixpi-home.matrixClientBaseUrl}">${config.nixpi-home.matrixClientBaseUrl}</a></li>
+            <li>Home: <a data-page-link href="">canonical host not available on localhost recovery</a></li>
+            <li>Element Web: <a data-element-link href="">canonical host not available on localhost recovery</a></li>
+            <li>Matrix URL: <a data-matrix-link href="">canonical host not available on localhost recovery</a></li>
           </ul>
           <h2>Recovery</h2>
           <p>Use <a href="http://localhost/">http://localhost/</a> only when NetBird access is unavailable on the box.</p>
@@ -72,7 +72,10 @@ in
             (function () {
               const currentHost = window.location.hostname;
               if (!currentHost) return;
-              const canonicalHost = /^(localhost|127\.0\.0\.1)$/.test(currentHost) ? "nixpi" : currentHost;
+              if (/^(localhost|127\.0\.0\.1)$/.test(currentHost)) {
+                return;
+              }
+              const canonicalHost = currentHost;
               const pageUrl = "https://" + canonicalHost + "/";
               const elementUrl = "https://" + canonicalHost + "/element/";
               const matrixUrl = "https://" + canonicalHost;

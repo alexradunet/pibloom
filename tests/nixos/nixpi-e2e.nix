@@ -42,6 +42,14 @@ in
       users.groups.${username} = {};
       system.activationScripts.nixpi-e2e-prefill = lib.stringAfter [ "users" ] ''
         mkdir -p ${homeDir}/.nixpi
+        install -d -m 0755 /etc/nixos
+        cat > /etc/nixos/nixpi-install.nix <<'EOF'
+    { ... }:
+    {
+      networking.hostName = "pi";
+      nixpi.primaryUser = "${username}";
+    }
+    EOF
         rm -rf ${bootstrapRepoDir}
         mkdir -p ${bootstrapRepoDir}/worktree
         cp -R ${repoSource}/. ${bootstrapRepoDir}/worktree/

@@ -34,6 +34,14 @@ let
     users.groups.${username} = { };
     system.activationScripts.nixpi-prefill = ''
       mkdir -p ${homeDir}/.nixpi
+      install -d -m 0755 /etc/nixos
+      cat > /etc/nixos/nixpi-install.nix <<'EOF'
+    { ... }:
+    {
+      networking.hostName = "${hostName}";
+      nixpi.primaryUser = "${username}";
+    }
+    EOF
       ${if prefill then ''
         cat > ${homeDir}/.nixpi/prefill.env << 'EOF'
 PREFILL_USERNAME=testuser

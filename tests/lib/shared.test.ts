@@ -240,7 +240,7 @@ describe("getNixPiDir", () => {
 		expect(getNixPiDir()).toBe("/custom");
 	});
 
-	it("defaults to ~/nixpi when NIXPI_DIR is not set", () => {
+	it("defaults to ~/nixpi for the user workspace when NIXPI_DIR is not set", () => {
 		delete process.env.NIXPI_DIR;
 		const result = getNixPiDir();
 		expect(result).toMatch(/\/nixpi$/);

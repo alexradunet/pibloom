@@ -175,7 +175,13 @@ class SetupWizardCheckoutTests(unittest.TestCase):
                     "mark_done() { :; }",
                     "mark_done_with() { :; }",
                     "read_checkpoint_data() { :; }",
-                    "root_command() { \"$@\"; }",
+                    "root_command() {",
+                    "  if [[ \"$1\" == \"/run/current-system/sw/bin/nixpi-bootstrap-ensure-repo-target\" ]]; then",
+                    "    mkdir -p \"$2\"",
+                    "    return 0",
+                    "  fi",
+                    "  \"$@\"",
+                    "}",
                     "write_element_web_runtime_config() { :; }",
                     "write_service_home_runtime() { :; }",
                     "install_home_infrastructure() { return 0; }",
@@ -216,14 +222,14 @@ set -euo pipefail
 export HOME={home_dir}
 export PATH={fake_bin}:$PATH
 export SETUP_LIB={fake_setup_lib}
-export NIXPI_DIR={nixpi_dir}
 export NIXPI_BOOTSTRAP_REPO={remote}
 export NIXPI_BOOTSTRAP_BRANCH={branch}
 source <(sed '$d' {self.setup_wizard_path})
-clone_nixpi_checkout
+export NIXPI_DIR={nixpi_dir}
+clone_nixpi_checkout testuser
 """
         return subprocess.run(
-            ["bash", "-lc", command],
+            ["bash", "--noprofile", "--norc", "-c", command],
             capture_output=True,
             text=True,
         )
@@ -243,7 +249,7 @@ clone_nixpi_checkout
             output = result.stdout + result.stderr
 
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("Refusing to overwrite existing non-git directory", output)
+            self.assertIn("canonical repo checkout is missing .git", output)
 
     def test_clone_nixpi_checkout_accepts_matching_existing_checkout(self):
         with tempfile.TemporaryDirectory() as tmpdir:

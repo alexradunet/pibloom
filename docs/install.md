@@ -47,7 +47,7 @@ setup-wizard.sh
   </div>
   <div class="quick-card">
     <strong>4. Finish first boot</strong>
-    The wizard brings up WiFi, prefers it over Ethernet when both are available, clones `~/nixpi`, writes `/etc/nixos`, and promotes the machine into the full appliance.
+    The wizard brings up WiFi, prefers it over Ethernet when both are available, prepares `/srv/nixpi` as the canonical system repo, writes `/etc/nixos`, and promotes the machine into the full appliance.
   </div>
 </div>
 
@@ -56,12 +56,12 @@ The installed system now boots into the official NixPI XFCE desktop automaticall
 <PresentationBand
   eyebrow="After install"
   title="Operate the machine from the local checkout"
-  lede="Once the system is live, you edit and sync NixPI in `~/nixpi`, while `/etc/nixos` remains the deployed host flake used for rebuilds."
+  lede="Once the system is live, you edit and sync the canonical NixPI repo in `/srv/nixpi`, while `/etc/nixos` remains the deployed host flake used for rebuilds."
 >
 
 <TerminalFrame title="Post-install workflow">
 ```bash
-cd ~/nixpi
+cd /srv/nixpi
 git fetch upstream
 git rebase upstream/main
 sudo nixos-rebuild switch --flake /etc/nixos#$(hostname -s)
@@ -137,7 +137,7 @@ The wizard walks through these steps in order:
 4. **Timezone and keyboard** — sets locale preferences.
 5. **Matrix** — creates a local Matrix account used by the Pi AI agent.
 6. **NetBird** — joins the secure overlay network so you can reach the machine remotely.
-7. **System promotion** — clones `~/nixpi`, writes `/etc/nixos`, and runs a full `nixos-rebuild switch` to activate the complete appliance profile.
+7. **System promotion** — prepares `/srv/nixpi`, writes `/etc/nixos`, and runs a full `nixos-rebuild switch` to activate the complete appliance profile.
 
 The promotion step (step 7) downloads and compiles NixOS packages. On a fast connection this takes **10–20 minutes**. The screen shows a progress log throughout.
 

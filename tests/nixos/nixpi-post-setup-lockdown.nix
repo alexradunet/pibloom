@@ -29,6 +29,14 @@
       system.stateVersion = "25.05";
       system.activationScripts.nixpi-prefill = lib.stringAfter [ "users" ] ''
         mkdir -p ${homeDir}/.nixpi
+        install -d -m 0755 /etc/nixos
+        cat > /etc/nixos/nixpi-install.nix <<'EOF'
+{ ... }:
+{
+  networking.hostName = "nixpi-steady";
+  nixpi.primaryUser = "${username}";
+}
+EOF
         cat > ${homeDir}/.nixpi/prefill.env << 'EOF'
 PREFILL_USERNAME=steadyuser
 PREFILL_MATRIX_PASSWORD=steadypass123

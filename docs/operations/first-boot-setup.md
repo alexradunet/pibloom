@@ -15,7 +15,7 @@ Before first-boot setup, you need a system installed from the NixPI installer im
 3. Choose your target disk and layout, then enter your hostname and primary user in the terminal wizard
 4. Reboot into the installed system
 5. The installed machine initially boots a minimal NixPI base from `/etc/nixos`
-6. During first boot, the setup wizard creates the local `~/nixpi` checkout and the host-specific flake at `/etc/nixos`
+6. During first boot, the setup wizard prepares `/srv/nixpi` as the canonical system repo, keeps `~/nixpi` for Pi's editable workspace data, and writes the host-specific flake at `/etc/nixos`
 7. The installed system autologins into the official NixPI XFCE desktop and opens the NixPI terminal there
 
 For VM install-flow testing:
@@ -55,14 +55,14 @@ NixPI's first-boot experience has two phases.
 **Current responsibilities**:
 
 1. Password change and WiFi/internet setup, with WiFi preferred over Ethernet when available
-2. Clone `~/nixpi` and write the host-specific `/etc/nixos` flake
+2. Prepare `/srv/nixpi` and write the host-specific `/etc/nixos` flake
 3. Promote the minimal base into the full appliance with `nixos-rebuild switch`
 4. NetBird enrollment
    OAuth web login works from the desktop flow. Use a setup key only if a browser session is unavailable.
 5. Primary Matrix account bootstrap
 6. AI provider defaults for Pi
 7. Built-in service provisioning
-8. User-facing system update guidance for operating the local `~/nixpi` checkout
+8. User-facing system update guidance for operating the canonical `/srv/nixpi` repo
 
 **Built-in services provisioned**:
 
@@ -88,7 +88,7 @@ Pi injects setup guidance until that step is marked complete.
 During that Pi-side first conversation, Pi should also orient the user to the platform:
 
 - NixPI keeps durable state in `~/nixpi/` using inspectable files
-- `~/nixpi` is the canonical git working tree for syncing with a fork and pulling from upstream, while `/etc/nixos` is the deployed host flake used for rebuilds
+- `/srv/nixpi` is the canonical git working tree for syncing and rebuilding the system, while `~/nixpi` remains the user-editable workspace for Pi data such as persona, objects, episodes, guardrails, and agent overlays
 - NixPI can propose persona or workflow changes through tracked evolutions instead of silently changing itself
 - Matrix is the native messaging surface, with `nixpi-daemon.service` keeping Pi active in rooms outside the local terminal session as a system service running under the primary operator account
 - Multi-agent rooms are optional and activate when valid overlays exist in `~/nixpi/Agents/*/AGENTS.md`

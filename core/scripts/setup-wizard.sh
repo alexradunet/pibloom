@@ -212,7 +212,13 @@ print_recent_appliance_log() {
 }
 
 clone_nixpi_checkout() {
+	local primary_user="$1"
 	local actual_remote actual_branch repo_preexisted=0
+
+	if [[ -z "$primary_user" ]]; then
+		echo "Configured primary user is required before preparing the canonical repo checkout." >&2
+		return 1
+	fi
 
 	if [[ -e "$NIXPI_DIR" ]]; then
 		repo_preexisted=1
@@ -240,7 +246,7 @@ clone_nixpi_checkout() {
 		return 1
 	fi
 
-	root_command /run/current-system/sw/bin/nixpi-bootstrap-ensure-repo-target "$NIXPI_DIR" "$(whoami)"
+	root_command /run/current-system/sw/bin/nixpi-bootstrap-ensure-repo-target "$NIXPI_DIR" "$primary_user"
 	if [[ ! -d "$NIXPI_DIR" ]] || [[ ! -w "$NIXPI_DIR" ]]; then
 		echo "Canonical repo target is not writable: ${NIXPI_DIR}" >&2
 		return 1
@@ -260,7 +266,7 @@ promote_full_appliance() {
 	: > "$BOOTSTRAP_UPGRADE_LOG_FILE"
 
 	write_appliance_status "Cloning the NixPI checkout..."
-	if ! clone_nixpi_checkout 2>&1 | tee -a "$BOOTSTRAP_UPGRADE_LOG_FILE"; then
+	if ! clone_nixpi_checkout "$primary_user" 2>&1 | tee -a "$BOOTSTRAP_UPGRADE_LOG_FILE"; then
 		write_appliance_status "Failed to prepare the NixPI checkout."
 		return 1
 	fi
@@ -313,11 +319,15 @@ step_appliance() {
 	echo "This can take several minutes on slower hardware."
 	echo "A canonical checkout will be cloned into /srv/nixpi."
 
-	local current_hostname current_user
+	local current_hostname current_user configured_user
 	current_hostname=$(hostnamectl --static 2>/dev/null || hostname -s)
 	current_user=$(whoami)
+	configured_user="$(configured_primary_user)" || {
+		echo "ERROR: Could not determine the configured primary user before appliance promotion." >&2
+		return 1
+	}
 
-	if ! promote_full_appliance "$current_hostname" "$current_user"; then
+	if ! promote_full_appliance "$current_hostname" "$configured_user"; then
 		echo "Appliance promotion failed. Review ${BOOTSTRAP_UPGRADE_LOG_FILE}." >&2
 		print_recent_appliance_log >&2
 		return 1
@@ -327,7 +337,7 @@ step_appliance() {
 	mark_done appliance
 
 	local target_user
-	target_user=$(configured_primary_user)
+	target_user="$configured_user"
 	if [[ -n "$target_user" && "$target_user" != "$current_user" ]]; then
 		echo ""
 		echo "Appliance promotion switched the primary user from ${current_user} to ${target_user}."
@@ -1023,7 +1033,7 @@ finalize() {
 			echo "  Use /model in Pi to select a model."
 		fi
 	else
-		echo "  Next: restore ~/nixpi and rebuild from the canonical checkout if you want the full NixPI profile again."
+		echo "  Next: restore the Pi runtime under ~/nixpi and rebuild from /srv/nixpi if you want the full NixPI profile again."
 	fi
 	echo "========================================="
 	echo ""

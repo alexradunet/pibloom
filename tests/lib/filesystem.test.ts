@@ -79,7 +79,7 @@ describe("getNixPiDir", () => {
 		expect(getNixPiDir()).toBe("/custom/nixpi");
 	});
 
-	it("falls back to ~/nixpi when env var is not set", () => {
+it("falls back to ~/nixpi for the user workspace when env var is not set", () => {
 		delete process.env.NIXPI_DIR;
 		const expected = path.join(os.homedir(), "nixpi");
 		expect(getNixPiDir()).toBe(expected);
@@ -113,7 +113,7 @@ describe("getSystemFlakeDir", () => {
 		}
 	});
 
-	it("defaults to the canonical ~/nixpi checkout", () => {
+	it("defaults to /etc/nixos for the system flake dir", () => {
 		delete process.env.NIXPI_SYSTEM_FLAKE_DIR;
 		delete process.env.NIXPI_DIR;
 		expect(getSystemFlakeDir()).toBe("/etc/nixos");

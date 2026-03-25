@@ -11,7 +11,7 @@
 #   MATRIX_HOMESERVER   — Matrix homeserver URL (e.g. http://localhost:6167)
 #   PI_DIR              — path to Pi config dir (typically ~/.pi)
 #   NIXPI_CONFIG        — path to NixPI service config dir
-#   NIXPI_DIR           — path to NixPI home dir
+#   NIXPI_DIR           — path to the user-editable NixPI workspace (typically ~/nixpi)
 
 # --- Checkpoint helpers ---
 

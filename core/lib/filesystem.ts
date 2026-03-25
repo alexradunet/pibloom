@@ -69,7 +69,7 @@ export function safePath(root: string, ...segments: string[]): string {
 	return safePathWithin(root, ...segments);
 }
 
-/** Resolve the configured app data directory. Checks `NIXPI_DIR`, then falls back to `~/nixpi`. */
+/** Resolve the configured user workspace directory. Checks `NIXPI_DIR`, then falls back to `~/nixpi`. */
 export function getNixPiDir(): string {
 	return process.env.NIXPI_DIR ?? path.join(os.homedir(), "nixpi");
 }

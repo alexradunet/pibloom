@@ -40,6 +40,14 @@
 
     system.activationScripts.nixpi-prefill = lib.stringAfter [ "users" ] ''
       mkdir -p ${homeDir}/.nixpi
+      install -d -m 0755 /etc/nixos
+      cat > /etc/nixos/nixpi-install.nix <<'EOF'
+    { ... }:
+    {
+      networking.hostName = "nixpi-home-test";
+      nixpi.primaryUser = "${username}";
+    }
+    EOF
       cat > ${homeDir}/.nixpi/prefill.env << 'EOF'
     PREFILL_USERNAME=testuser
     PREFILL_MATRIX_PASSWORD=testpassword123
@@ -67,6 +75,8 @@
     nixpi.succeed("grep -q 'Element Web' /etc/system-services/nixpi-home/webroot/index.html")
     nixpi.succeed("grep -q 'Matrix' /etc/system-services/nixpi-home/webroot/index.html")
     nixpi.succeed("grep -q 'Canonical access' /etc/system-services/nixpi-home/webroot/index.html")
+    nixpi.succeed("grep -q 'canonical host not available on localhost recovery' /etc/system-services/nixpi-home/webroot/index.html")
+    nixpi.fail("grep -q 'https://nixpi/' /etc/system-services/nixpi-home/webroot/index.html")
     nixpi.succeed("grep -q 'http://localhost/' " + home + "/.config/nixpi/services/home/index.html")
     nixpi.succeed("grep -q 'use localhost only as an on-box recovery path' " + home + "/.config/nixpi/services/home/index.html")
     nixpi.fail("grep -q 'Home direct port' " + home + "/.config/nixpi/services/home/index.html")

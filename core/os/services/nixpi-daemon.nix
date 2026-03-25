@@ -5,6 +5,7 @@
 let
   inherit (lib) mkOption types;
   primaryHome = "/home/${config.nixpi-daemon.primaryUser}";
+  nixpiDir = "${primaryHome}/nixpi";
   canonicalRepoDir = "/srv/nixpi";
   systemReadyFile = "${primaryHome}/.nixpi/wizard-state/system-ready";
 in
@@ -56,10 +57,11 @@ in
         WorkingDirectory = canonicalRepoDir;
         Environment = [
           "HOME=${primaryHome}"
-          "NIXPI_DIR=${canonicalRepoDir}"
+          "NIXPI_DIR=${nixpiDir}"
           "NIXPI_STATE_DIR=${config.nixpi-daemon.stateDir}"
           "NIXPI_PI_DIR=${config.nixpi-daemon.agentStateDir}"
           "PI_CODING_AGENT_DIR=${config.nixpi-daemon.agentStateDir}"
+          "NIXPI_CANONICAL_REPO_DIR=${canonicalRepoDir}"
           "NIXPI_DAEMON_STATE_DIR=${config.nixpi-daemon.stateDir}/nixpi-daemon"
           "NIXPI_PRIMARY_USER=${config.nixpi-daemon.primaryUser}"
           "PATH=${lib.makeBinPath config.nixpi-daemon.path}:/run/current-system/sw/bin"

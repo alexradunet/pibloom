@@ -54,6 +54,14 @@ let
       system.activationScripts.nixpi-prefill = lib.stringAfter [ "users" ] (
         ''
           mkdir -p ${homeDir}/.nixpi
+          install -d -m 0755 /etc/nixos
+          cat > /etc/nixos/nixpi-install.nix <<'EOF'
+        { ... }:
+        {
+          networking.hostName = "${hostName}";
+          nixpi.primaryUser = "${username}";
+        }
+        EOF
           rm -rf ${bootstrapRepoDir}
           mkdir -p ${bootstrapRepoDir}/worktree
           cp -R ${repoSource}/. ${bootstrapRepoDir}/worktree/

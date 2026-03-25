@@ -151,7 +151,8 @@
     working_directory = agent.succeed("systemctl show -p WorkingDirectory --value nixpi-daemon.service").strip()
     assert "node" in exec_start and "/usr/local/share/nixpi/dist/core/daemon/index.js" in exec_start, \
         "Unexpected ExecStart in nixpi-daemon service: " + exec_start
-    assert "NIXPI_DIR=/srv/nixpi" in environment, "Expected NIXPI_DIR environment in nixpi-daemon service"
+    assert "NIXPI_DIR=/home/pi/nixpi" in environment, "Expected NIXPI_DIR workspace environment in nixpi-daemon service"
+    assert "NIXPI_CANONICAL_REPO_DIR=/srv/nixpi" in environment, "Expected canonical repo environment in nixpi-daemon service"
     assert "PI_CODING_AGENT_DIR=/home/pi/.pi" in environment, \
         "Expected PI_CODING_AGENT_DIR environment in nixpi-daemon service"
     assert working_directory == "/srv/nixpi", "Unexpected WorkingDirectory: " + working_directory

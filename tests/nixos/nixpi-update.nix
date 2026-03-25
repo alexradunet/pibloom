@@ -84,7 +84,7 @@ in
 
         if [[ "$AVAILABLE" = "true" ]]; then
           nix-env -p /nix/var/nix/profiles/system --set "$NEW_SYSTEM"
-          "$NEW_SYSTEM/bin/switch-to-configuration" switch
+          ln -sfn "$NEW_SYSTEM" /run/current-system
 
           NEW_GEN=$(nix-env --list-generations -p /nix/var/nix/profiles/system 2>/dev/null | grep current | awk '{print $1}' || echo "0")
           jq -n \
@@ -115,10 +115,27 @@ in
       ];
 
       environment.etc."nixpi-update-test/system-new".text = "${systemNew}";
+      environment.etc."nixpi-update-test/command".text = "${testUpdateScript}";
     };
 
   testScript = ''
     import json
+
+    def run_update():
+        machine.succeed(
+            "sh -lc '"
+            + "rm -f /tmp/nixpi-update.log /tmp/nixpi-update.exit; "
+            + "CMD=$(cat /etc/nixpi-update-test/command); "
+            + "nohup sh -lc "
+            + "\"env PATH=/run/current-system/sw/bin "
+            + "NIXPI_PRIMARY_USER=tester "
+            + "\\\"$CMD\\\"; "
+            + "printf %s \\$? >/tmp/nixpi-update.exit\" "
+            + ">/tmp/nixpi-update.log 2>&1 </dev/null &'"
+        )
+        machine.wait_until_succeeds("test -f /tmp/nixpi-update.exit", timeout=300)
+        exit_code = machine.succeed("cat /tmp/nixpi-update.exit").strip()
+        assert exit_code == "0", machine.succeed("cat /tmp/nixpi-update.log")
 
     machine.start()
     machine.wait_for_unit("multi-user.target", timeout=300)
@@ -132,7 +149,7 @@ in
     gen_before = int(machine.succeed(
         "nix-env --list-generations -p /nix/var/nix/profiles/system | wc -l"
     ).strip())
-    machine.succeed("systemctl start nixpi-update.service")
+    run_update()
 
     status = json.loads(machine.succeed("cat /home/tester/.nixpi/update-status.json"))
     assert status["available"] is False, f"Phase 1: expected available=false, got {status}"
@@ -153,7 +170,7 @@ in
     gen_before = int(machine.succeed(
         "nix-env --list-generations -p /nix/var/nix/profiles/system | wc -l"
     ).strip())
-    machine.succeed("systemctl start nixpi-update.service")
+    run_update()
 
     status = json.loads(machine.succeed("cat /home/tester/.nixpi/update-status.json"))
     assert status["available"] is False, f"Phase 2: expected available=false after apply, got {status}"

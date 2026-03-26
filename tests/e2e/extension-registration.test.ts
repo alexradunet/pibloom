@@ -38,7 +38,6 @@ describe("runtime package extension list", () => {
 			"./core/pi/extensions/episodes",
 			"./core/pi/extensions/objects",
 			"./core/pi/extensions/nixpi",
-			"./core/pi/extensions/matrix-admin",
 		]);
 		expect(extensionList).not.toContain("./core/pi/extensions/nixpi-dev");
 		expect(extensionList).not.toContain("./core/pi/extensions/nixpi-repo");

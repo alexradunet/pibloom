@@ -61,9 +61,7 @@
     defaults.wait_for_unit("nixpi-home.service", timeout=60)
     defaults.succeed("curl -sf http://localhost:8080/")
 
-    defaults.wait_for_unit("nixpi-element-web.service", timeout=60)
-    defaults.succeed("curl -sf http://localhost:8081/")
-    defaults.wait_until_succeeds("curl -skf https://localhost/ | grep -q 'NixPI Home'", timeout=60)
+    defaults.wait_until_succeeds("curl -skf https://localhost/ | grep -q 'NixPI'", timeout=60)
 
     broker_cfg = defaults.succeed(
         "systemctl show nixpi-broker.service -p Environment --value"

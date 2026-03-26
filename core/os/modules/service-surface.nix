@@ -1,9 +1,7 @@
 { pkgs, lib, config, ... }:
 
 let
-  primaryUser = config.nixpi.primaryUser;
   cfg = config.nixpi.services;
-  securityCfg = config.nixpi.security;
   tlsDir = "/var/lib/nixpi-tls";
   tlsCertPath = "${tlsDir}/nixpi-secure.crt";
   tlsKeyPath = "${tlsDir}/nixpi-secure.key";
@@ -81,33 +79,6 @@ in
       }
     ];
 
-    system.services = lib.mkMerge [
-      (lib.mkIf cfg.home.enable {
-        nixpi-home = {
-          imports = [ (lib.modules.importApply ../services/nixpi-home.nix { inherit pkgs; }) ];
-          nixpi-home = {
-            port = cfg.home.port;
-            bindAddress = "127.0.0.1";
-            inherit primaryUser;
-            elementWebPort = cfg.elementWeb.port;
-            trustedInterface = securityCfg.trustedInterface;
-          };
-        };
-      })
-      (lib.mkIf cfg.elementWeb.enable {
-        nixpi-element-web = {
-          imports = [ (lib.modules.importApply ../services/nixpi-element-web.nix { inherit pkgs; }) ];
-          nixpi-element-web = {
-            port = cfg.elementWeb.port;
-            bindAddress = "127.0.0.1";
-            inherit primaryUser;
-            matrixServerName = "matrix.org";
-            matrixClientBaseUrl = "https://matrix.org";
-          };
-        };
-      })
-    ];
-
     systemd.tmpfiles.rules = lib.mkIf cfg.secureWeb.enable [
       "d ${tlsDir} 0750 nginx nginx -"
     ];
@@ -162,8 +133,6 @@ in
           sslCertificate = tlsCertPath;
           sslCertificateKey = tlsKeyPath;
           locations."/".proxyPass = "http://127.0.0.1:${toString cfg.home.port}";
-          locations."= /element".return = "302 /element/";
-          locations."/element/".proxyPass = "http://127.0.0.1:${toString cfg.elementWeb.port}/";
         };
       })
     ];

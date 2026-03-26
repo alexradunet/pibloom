@@ -117,8 +117,6 @@ in
         type = lib.types.listOf lib.types.str;
         default = [
           "netbird.service"
-          "nixpi-home.service"
-          "nixpi-element-web.service"
           "nixpi-update.service"
         ];
         description = ''
@@ -161,17 +159,12 @@ in
       };
 
       home = {
-        enable = lib.mkEnableOption "NixPI Home service" // { default = true; };
-        port = mkPortOption 8080 "TCP port for the NixPI Home landing page.";
-      };
-
-      elementWeb = {
-        enable = lib.mkEnableOption "NixPI Element Web service" // { default = true; };
-        port = mkPortOption 8081 "TCP port for the NixPI Element Web client.";
+        enable = lib.mkEnableOption "NixPI Chat service" // { default = true; };
+        port = mkPortOption 8080 "TCP port for the NixPI Chat server.";
       };
 
       secureWeb = {
-        enable = lib.mkEnableOption "canonical HTTPS gateway for Home, Element Web, and Matrix" // { default = true; };
+        enable = lib.mkEnableOption "canonical HTTPS gateway for NixPI Chat" // { default = true; };
         port = mkPortOption 443 "TCP port for the canonical HTTPS NixPI entry point.";
       };
     };

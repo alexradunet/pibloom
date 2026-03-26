@@ -29,7 +29,6 @@ let
     nixpi-firstboot            = runTest ./nixpi-firstboot.nix;
     nixpi-network              = runTest ./nixpi-network.nix;
     nixpi-e2e                  = runTest ./nixpi-e2e.nix;
-    nixpi-home                 = runTest ./nixpi-home.nix;
     nixpi-desktop              = runTest ./nixpi-desktop.nix;
     nixpi-rdp                  = runTest ./nixpi-rdp.nix;
     nixpi-security             = runTest ./nixpi-security.nix;

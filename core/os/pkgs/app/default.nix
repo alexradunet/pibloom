@@ -38,7 +38,6 @@ buildNpmPackage {
     cp -r core/pi/skills  $out/share/nixpi/core/pi/skills
 
     mkdir -p $out/bin
-    install -m 644 ${../../services/home-template.html} $out/share/nixpi/home-template.html
 
     # Replace @mariozechner/pi-coding-agent with symlinks into piAgent store path.
     # Do NOT remove other @mariozechner packages (e.g. jiti) — only replace pi-coding-agent.

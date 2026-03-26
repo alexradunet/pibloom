@@ -43,15 +43,6 @@ let
     exec /run/current-system/sw/bin/systemctl "$@"
   '';
 
-  bootstrapMatrixSystemctl = pkgs.writeShellScriptBin "nixpi-bootstrap-matrix-systemctl" ''
-    set -euo pipefail
-    if [ -f "${systemReadyFile}" ]; then
-      echo "NixPI bootstrap access is disabled after setup completes" >&2
-      exit 1
-    fi
-    exec /run/current-system/sw/bin/systemctl "$@"
-  '';
-
   bootstrapServiceSystemctl = pkgs.writeShellScriptBin "nixpi-bootstrap-service-systemctl" ''
     set -euo pipefail
     if [ -f "${systemReadyFile}" ]; then
@@ -147,7 +138,6 @@ in
     bootstrapRemovePrimaryPassword
     bootstrapNetbird
     bootstrapNetbirdSystemctl
-    bootstrapMatrixSystemctl
     bootstrapServiceSystemctl
     finalizeServiceSystemctl
     bootstrapSshdSystemctl
@@ -164,8 +154,6 @@ in
       { command = "/run/current-system/sw/bin/nixpi-bootstrap-remove-primary-password"; options = [ "NOPASSWD" ]; }
       { command = "/run/current-system/sw/bin/nixpi-bootstrap-netbird-up --setup-key *"; options = [ "NOPASSWD" ]; }
       { command = "/run/current-system/sw/bin/nixpi-bootstrap-netbird-systemctl * netbird.service"; options = [ "NOPASSWD" ]; }
-      { command = "/run/current-system/sw/bin/nixpi-bootstrap-service-systemctl restart nixpi-home.service"; options = [ "NOPASSWD" ]; }
-      { command = "/run/current-system/sw/bin/nixpi-bootstrap-service-systemctl restart nixpi-element-web.service"; options = [ "NOPASSWD" ]; }
       { command = "/run/current-system/sw/bin/nixpi-bootstrap-service-systemctl start display-manager.service"; options = [ "NOPASSWD" ]; }
       { command = "/run/current-system/sw/bin/nixpi-finalize-service-systemctl start display-manager.service"; options = [ "NOPASSWD" ]; }
       { command = "/run/current-system/sw/bin/nixpi-bootstrap-sshd-systemctl stop sshd.service"; options = [ "NOPASSWD" ]; }

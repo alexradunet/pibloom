@@ -11,11 +11,6 @@ let
     exec ${pkgs.chromium}/bin/chromium --app=http://127.0.0.1
   '';
 
-  openElementWeb = pkgs.writeShellScriptBin "nixpi-open-element-web" ''
-    set -euo pipefail
-    exec ${pkgs.chromium}/bin/chromium --app=http://127.0.0.1:${toString config.nixpi.services.elementWeb.port}
-  '';
-
   restartDesktop = pkgs.writeShellScriptBin "nixpi-restart-desktop-shell" ''
     set -euo pipefail
     ${pkgs.dunst}/bin/dunst >/tmp/nixpi-dunst.log 2>&1 &
@@ -34,15 +29,6 @@ let
     exec = "${openHome}/bin/nixpi-open-home";
     terminal = false;
     categories = [ "Network" ];
-  };
-
-  elementWebDesktopItem = pkgs.makeDesktopItem {
-    name = "nixpi-element-web";
-    desktopName = "NixPI Element Web";
-    genericName = "Element Web";
-    exec = "${openElementWeb}/bin/nixpi-open-element-web";
-    terminal = false;
-    categories = [ "Network" "Chat" ];
   };
 
   restartDesktopItem = pkgs.makeDesktopItem {
@@ -165,11 +151,9 @@ in
     xterm
     scrot
     openHome
-    openElementWeb
     restartDesktop
     desktopTerminal
     homeDesktopItem
-    elementWebDesktopItem
     restartDesktopItem
   ];
 

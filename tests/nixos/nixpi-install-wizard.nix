@@ -105,7 +105,6 @@ EOF
           ${pkgs.git}/bin/git -C ${bootstrapRepoDir}/worktree push ${bootstrapOriginDir} main
           cat > ${homeDir}/.nixpi/prefill.env <<'EOF'
 PREFILL_USERNAME=testuser
-PREFILL_MATRIX_PASSWORD=testpassword123
 NIXPI_BOOTSTRAP_REPO=${bootstrapRepoUrl}
 PREFILL_PASSWORD_DONE=1
 EOF
@@ -129,9 +128,6 @@ EOF
     nixpi.succeed("command -v wizard-matrix.sh")
     nixpi.succeed("command -v wizard-repo.sh")
     nixpi.succeed("command -v wizard-promote.sh")
-
-    # Matrix is not available on this minimal install — stop continuwuity if present.
-    nixpi.succeed("systemctl stop continuwuity.service 2>/dev/null || true")
 
     # Run the wizard as the primary user (non-interactive via prefill.env).
     nixpi.succeed("su - ${username} -c 'setup-wizard.sh'")

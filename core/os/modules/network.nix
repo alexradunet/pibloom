@@ -53,23 +53,6 @@ let
         connection.autoconnect-priority "$priority" >/dev/null 2>&1 || true
     done < <(nmcli -t -f UUID,TYPE connection show 2>/dev/null || true)
   '';
-  # Commented out: DNS proxy deleted in NetBird simplification (Task 3)
-  # netbirdDnsProxy = pkgs.writeShellScriptBin "nixpi-netbird-dns-proxy" ''
-  #   set -euo pipefail
-  #
-  #   ${pkgs.socat}/bin/socat \
-  #     UDP4-LISTEN:53,bind=127.0.0.1,fork,reuseaddr \
-  #     UDP4:127.0.0.1:${toString config.nixpi.netbird.dns.localForwarderPort} &
-  #   udp_pid=$!
-  #
-  #   ${pkgs.socat}/bin/socat \
-  #     TCP4-LISTEN:53,bind=127.0.0.1,fork,reuseaddr \
-  #     TCP4:127.0.0.1:${toString config.nixpi.netbird.dns.localForwarderPort} &
-  #   tcp_pid=$!
-  #
-  #   trap 'kill "$udp_pid" "$tcp_pid" >/dev/null 2>&1 || true' EXIT INT TERM
-  #   wait "$udp_pid" "$tcp_pid"
-  # '';
 in
 
 {
@@ -88,7 +71,7 @@ in
         }
         {
           assertion = lib.length (lib.unique exposedPorts) == lib.length exposedPorts;
-          message = "NixPI service ports must be unique across built-in services and Matrix.";
+          message = "NixPI service ports must be unique across built-in services.";
         }
       ];
 
@@ -151,30 +134,6 @@ in
         };
       };
 
-      # Removed: NetBird DNS and resolved config deleted in simplification
-      # services.resolved.enable = lib.mkIf (config.nixpi.netbird.apiTokenFile != null) true;
-      # services.resolved.settings = lib.mkIf (config.nixpi.netbird.apiTokenFile != null) {
-      #   Resolve = {
-      #     DNS = [ "127.0.0.1" ];
-      #     Domains = [ "~${config.nixpi.netbird.dns.domain}" ];
-      #   };
-      # };
-
-      # systemd.services.nixpi-netbird-dns-proxy = lib.mkIf (config.nixpi.netbird.apiTokenFile != null) {
-      #   description = "Loopback DNS proxy for NetBird local forwarder";
-      #   after = [ "netbird.service" ];
-      #   wants = [ "netbird.service" ];
-      #   wantedBy = [ "multi-user.target" ];
-      #   serviceConfig = {
-      #     ExecStart = "${netbirdDnsProxy}/bin/nixpi-netbird-dns-proxy";
-      #     Restart = "on-failure";
-      #     RestartSec = "5s";
-      #     AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
-      #     CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
-      #     NoNewPrivileges = false;
-      #   };
-      # };
-
       systemd.tmpfiles.rules = [
         "d ${primaryHome}/nixpi 2775 ${primaryUser} ${primaryUser} -"
       ];
@@ -182,7 +141,6 @@ in
       environment.systemPackages = with pkgs; [
         jq
         netbird
-        # netbirdDnsProxy  # Removed in simplification
         preferWifi
       ];
       warnings =

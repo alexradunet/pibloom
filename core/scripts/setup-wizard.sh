@@ -19,8 +19,6 @@ SYSTEM_READY="$WIZARD_STATE/system-ready"
 NIXPI_DIR="/srv/nixpi"
 NIXPI_CONFIG="${NIXPI_CONFIG_DIR:-${NIXPI_STATE_DIR:-$HOME/.config/nixpi}/services}"
 PI_DIR="${NIXPI_PI_DIR:-$HOME/.pi}"
-MATRIX_HOMESERVER="http://localhost:6167"
-MATRIX_STATE_DIR="$WIZARD_STATE/matrix-state"
 LEGACY_SETUP_STATE="$HOME/.nixpi/setup-state.json"
 BOOTSTRAP_STATE_DIR="$HOME/.nixpi/bootstrap"
 BOOTSTRAP_UPGRADE_STATUS_FILE="${BOOTSTRAP_STATE_DIR}/full-appliance-upgrade.status"
@@ -71,10 +69,6 @@ has_runtime_stack() {
 	[[ -d /usr/local/share/nixpi ]] && has_command pi
 }
 
-has_matrix_stack() {
-	has_systemd_unit continuwuity.service && has_command curl
-}
-
 has_service_stack() {
 	[[ -f /usr/local/share/nixpi/home-template.html ]] && has_systemd_unit nixpi-home.service && has_systemd_unit nixpi-element-web.service
 }
@@ -84,7 +78,7 @@ has_git() {
 }
 
 has_full_appliance() {
-	has_runtime_stack && has_matrix_stack && has_service_stack && has_command chromium
+	has_runtime_stack && has_service_stack && has_command chromium
 }
 
 configured_primary_user() {
@@ -227,13 +221,7 @@ main() {
 	step_done appliance || step_appliance
 	refresh_group_session_if_needed "$PI_DIR"
 	step_done netbird || step_netbird
-	if step_done matrix; then
-		:
-	elif has_matrix_stack; then
-		step_matrix
-	else
-		mark_done_with matrix "skipped"
-	fi
+	step_done matrix || step_matrix
 	step_done git || step_git
 	step_done ai || step_ai
 	step_done services || step_services

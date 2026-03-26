@@ -138,6 +138,63 @@ step_netbird() {
 	done
 }
 
+step_matrix() {
+	echo ""
+	echo "--- Matrix Credentials ---"
+	echo "Pi uses a bot account on matrix.org to send you messages."
+	echo "Register a bot account at https://app.element.io and generate an access token."
+	echo ""
+
+	if [[ "$NONINTERACTIVE_SETUP" -eq 1 ]]; then
+		if [[ -n "${PREFILL_MATRIX_BOT_USER_ID:-}" && -n "${PREFILL_MATRIX_BOT_ACCESS_TOKEN:-}" ]]; then
+			local bot_user_id="$PREFILL_MATRIX_BOT_USER_ID"
+			local bot_access_token="$PREFILL_MATRIX_BOT_ACCESS_TOKEN"
+		else
+			echo "Skipping Matrix credentials in noninteractive mode."
+			mark_done_with matrix "skipped"
+			return
+		fi
+	else
+		local bot_user_id bot_access_token
+		while true; do
+			read -rp "Bot Matrix user ID (e.g. @mypi:matrix.org): " bot_user_id
+			if [[ -z "$bot_user_id" ]]; then
+				echo "User ID cannot be empty."
+				continue
+			fi
+			if [[ ! "$bot_user_id" =~ ^@[^:]+:.+$ ]]; then
+				echo "User ID must be in the format @username:server (e.g. @mypi:matrix.org)."
+				continue
+			fi
+			break
+		done
+		while true; do
+			read -rsp "Bot access token: " bot_access_token
+			echo ""
+			if [[ -z "$bot_access_token" ]]; then
+				echo "Access token cannot be empty."
+				continue
+			fi
+			break
+		done
+	fi
+
+	mkdir -p "$PI_DIR"
+	cat > "$PI_DIR/matrix-credentials.json" <<-CREDS
+	{
+	  "homeserver": "https://matrix.org",
+	  "botUserId": "${bot_user_id}",
+	  "botAccessToken": "${bot_access_token}"
+	}
+	CREDS
+	chmod 600 "$PI_DIR/matrix-credentials.json"
+
+	echo ""
+	echo "Matrix credentials saved."
+	echo "DM ${bot_user_id} from any Matrix client to talk to Pi."
+	mark_done_with matrix "$bot_user_id"
+}
+
 step_services() {
 	echo ""
 	echo "--- Built-In Services ---"

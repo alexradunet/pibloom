@@ -45,7 +45,7 @@
 	},
 	"scripts": {
 		"test": "vitest run",
-		"test:unit": "vitest run tests/lib tests/extensions",
+		"test:unit": "vitest run tests/lib tests/extensions tests/chat-server",
 		"test:integration": "vitest run tests/integration",
 		"test:e2e": "vitest run tests/e2e",
 		"test:system:smoke": "nix build .#checks.x86_64-linux.nixos-smoke --no-link -L",

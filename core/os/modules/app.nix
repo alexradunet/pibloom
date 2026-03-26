@@ -18,8 +18,15 @@ in
     "d /etc/nixpi/appservices 0755 root root -"
     "d ${stateDir} 0770 ${primaryUser} ${primaryUser} -"
     "d ${stateDir}/services 0770 ${primaryUser} ${primaryUser} -"
-    "d ${stateDir}/services/home 0770 ${primaryUser} ${primaryUser} -"
   ];
+
+  system.services.nixpi-chat = {
+    imports = [ (lib.modules.importApply ../services/nixpi-chat.nix { inherit pkgs; }) ];
+    nixpi-chat = {
+      package = appPackage;
+      inherit primaryUser agentStateDir;
+    };
+  };
 
   systemd.services.nixpi-app-setup = {
     description = "NixPI app setup: create agent state dir and seed default settings";

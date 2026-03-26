@@ -20,7 +20,7 @@ buildNpmPackage {
           || lib.hasSuffix ".iso" rel);
   };
 
-  npmDepsHash = "sha256-kxagRT1BeszO6vg26/gtQDQbDwGuIC4MZrOOJuyI01k=";
+  npmDepsHash = "sha256-e/3UDUxgnusL8XUoIL3kSR8W/udpBXFsW695cWHw3NA=";
   npmDepsFetcherVersion = 2;
 
   buildPhase = ''
@@ -36,6 +36,9 @@ buildNpmPackage {
     cp -r dist package.json node_modules $out/share/nixpi/
     cp -r core/pi/persona $out/share/nixpi/core/pi/persona
     cp -r core/pi/skills  $out/share/nixpi/core/pi/skills
+
+    mkdir -p $out/share/nixpi/core/chat-server/frontend
+    cp -r core/chat-server/frontend/dist $out/share/nixpi/core/chat-server/frontend/
 
     mkdir -p $out/bin
 

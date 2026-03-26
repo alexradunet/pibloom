@@ -117,6 +117,7 @@ in
         type = lib.types.listOf lib.types.str;
         default = [
           "netbird.service"
+          "nixpi-chat.service"
           "nixpi-update.service"
         ];
         description = ''

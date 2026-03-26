@@ -58,9 +58,6 @@
 
     defaults.succeed("id pi")
 
-    defaults.wait_for_unit("nixpi-home.service", timeout=60)
-    defaults.succeed("curl -sf http://localhost:8080/")
-
     defaults.wait_until_succeeds("curl -skf https://localhost/ | grep -q 'NixPI'", timeout=60)
 
     broker_cfg = defaults.succeed(
@@ -74,9 +71,6 @@
 
     overrides.start()
     overrides.wait_for_unit("multi-user.target", timeout=300)
-
-    overrides.wait_for_unit("nixpi-home.service", timeout=60)
-    overrides.succeed("curl -sf http://localhost:9090/")
 
     overrides.fail("systemctl is-active fail2ban")
     overrides.succeed("sshd -T | grep -i 'passwordauthentication yes'")

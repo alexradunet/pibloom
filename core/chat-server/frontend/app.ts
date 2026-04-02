@@ -115,9 +115,8 @@ function makeCustomStreamFn(sid: string) {
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
-        let contentIndex = 0;
 
-        stream.push({ type: "text_start", contentIndex, partial });
+        stream.push({ type: "text_start", contentIndex: 0, partial });
 
         while (true) {
           const { done, value } = await reader.read();
@@ -127,11 +126,12 @@ function makeCustomStreamFn(sid: string) {
           buffer = lines.pop() ?? "";
           for (const line of lines) {
             if (!line.trim()) continue;
-            const event = JSON.parse(line) as {
-              type: string;
-              content?: string;
-              message?: string;
-            };
+            let event: { type: string; content?: string; message?: string };
+            try {
+              event = JSON.parse(line) as { type: string; content?: string; message?: string };
+            } catch {
+              continue;
+            }
             if (event.type === "text" && event.content) {
               accText += event.content;
               const updatedPartial: AssistantMessage = {
@@ -140,7 +140,7 @@ function makeCustomStreamFn(sid: string) {
               };
               stream.push({
                 type: "text_delta",
-                contentIndex,
+                contentIndex: 0,
                 delta: event.content,
                 partial: updatedPartial,
               });
@@ -164,7 +164,7 @@ function makeCustomStreamFn(sid: string) {
           content: [{ type: "text", text: accText }],
           stopReason: "stop",
         };
-        stream.push({ type: "text_end", contentIndex, content: accText, partial: finalPartial });
+        stream.push({ type: "text_end", contentIndex: 0, content: accText, partial: finalPartial });
         stream.push({ type: "done", reason: "stop", message: finalPartial });
         stream.end(finalPartial);
       } catch (err: unknown) {

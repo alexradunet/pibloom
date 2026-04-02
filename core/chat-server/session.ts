@@ -172,22 +172,38 @@ export class ChatSessionManager {
   }
 }
 
-function chatEventsFromAgentEvent(event: AgentSessionEvent): ChatEvent[] {
+// Tracks the last-seen full text per content-block index so we can emit only
+// the incremental delta rather than the full accumulated string.
+const textCursors = new Map<string, Map<number, number>>();
+
+function chatEventsFromAgentEvent(event: AgentSessionEvent, sessionId: string): ChatEvent[] {
   if (event.type !== "message_update") return [];
   const events: ChatEvent[] = [];
   // message_update has a `message` field (AgentMessage), which is an AssistantMessage
   const msg = (event as { message?: { role?: string; content?: unknown[] } })
     .message;
   if (!msg?.content) return [];
-  for (const block of msg.content as {
+
+  let cursors = textCursors.get(sessionId);
+  if (!cursors) {
+    cursors = new Map<number, number>();
+    textCursors.set(sessionId, cursors);
+  }
+
+  (msg.content as {
     type: string;
     text?: string;
     name?: string;
     input?: unknown;
     content?: unknown;
-  }[]) {
+  }[]).forEach((block, idx) => {
     if (block.type === "text" && block.text) {
-      events.push({ type: "text", content: block.text });
+      const prev = cursors!.get(idx) ?? 0;
+      const delta = block.text.slice(prev);
+      if (delta) {
+        cursors!.set(idx, block.text.length);
+        events.push({ type: "text", content: delta });
+      }
     } else if (block.type === "tool_use" && block.name) {
       events.push({
         type: "tool_call",
@@ -201,6 +217,6 @@ function chatEventsFromAgentEvent(event: AgentSessionEvent): ChatEvent[] {
         output: String(block.content ?? ""),
       });
     }
-  }
+  });
   return events;
 }

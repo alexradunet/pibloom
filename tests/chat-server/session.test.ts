@@ -5,7 +5,9 @@ import { ChatSessionManager } from "../../core/chat-server/session.js";
 vi.mock("@mariozechner/pi-coding-agent", () => ({
 	createAgentSession: vi.fn(),
 	createCodingTools: vi.fn(() => []),
-	DefaultResourceLoader: vi.fn().mockImplementation(() => ({ reload: vi.fn().mockResolvedValue(undefined) })),
+	DefaultResourceLoader: vi.fn().mockImplementation(function () {
+		return { reload: vi.fn().mockResolvedValue(undefined) };
+	}),
 	SessionManager: { create: vi.fn(() => ({})) },
 	SettingsManager: {
 		create: vi.fn(() => ({

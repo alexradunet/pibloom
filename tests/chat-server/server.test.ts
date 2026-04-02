@@ -3,13 +3,15 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 // Mock the session manager so the server test doesn't start real Pi sessions.
 vi.mock("../../core/chat-server/session.js", () => ({
-	ChatSessionManager: vi.fn().mockImplementation(() => ({
-		sendMessage: vi.fn(async function* () {
-			yield { type: "text", content: "Hello from Pi" };
-			yield { type: "done" };
-		}),
-		delete: vi.fn(),
-	})),
+	ChatSessionManager: vi.fn().mockImplementation(function () {
+		return {
+			sendMessage: vi.fn(async function* () {
+				yield { type: "text", content: "Hello from Pi" };
+				yield { type: "done" };
+			}),
+			delete: vi.fn(),
+		};
+	}),
 }));
 
 import { createChatServer } from "../../core/chat-server/index.js";

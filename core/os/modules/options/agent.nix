@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, config, ... }:
 
 {
   options.nixpi.agent = {
@@ -66,4 +66,7 @@
       '';
     };
   };
+
+  config.nixpi.agent.workspaceDir =
+    lib.mkDefault "/home/${config.nixpi.primaryUser}/nixpi";
 }

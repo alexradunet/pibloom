@@ -55,8 +55,6 @@ in
     }
   ];
 
-  nixpi.agent.workspaceDir = lib.mkDefault "${primaryHome}/nixpi";
-
   environment.etc = {
     "skel/.bashrc".source = bashrc;
     "skel/.bash_profile".source = bashProfile;

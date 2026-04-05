@@ -15,7 +15,7 @@ in
       commands = [
         {
           command = "${setupApplyPackage}/bin/nixpi-setup-apply";
-          options = [ "NOPASSWD" ];
+          options = [ "NOPASSWD" "SETENV" ];
         }
       ];
     }

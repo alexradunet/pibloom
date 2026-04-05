@@ -11,8 +11,7 @@ let
       nixPiModules
       nixPiModulesNoShell
       mkTestFilesystems
-      mkManagedUserConfig
-      mkPrefillActivation;
+      mkManagedUserConfig;
   };
 
   runTest = testFile: pkgs.testers.runNixOSTest {

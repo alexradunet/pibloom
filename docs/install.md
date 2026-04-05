@@ -113,7 +113,7 @@ Eject the drive and boot the target machine from it. In the UEFI boot menu selec
 
    The installer lists available disks and prompts you to pick one. All data on the selected disk will be erased.
 
-3. Confirm the disk selection. The installer partitions the disk (EFI partition + ext4 root), installs the base NixOS closure, and writes a bootloader.
+3. Confirm the disk selection. The installer partitions the disk (EFI partition + ext4 root + fixed 8 GiB swap), installs the base NixOS closure, and writes a bootloader.
 
 4. When the installer finishes it prints a success message. Remove the USB stick and reboot:
 
@@ -141,29 +141,6 @@ The wizard walks through these steps in order:
 The promotion step (step 6) downloads and compiles NixOS packages. On a fast connection this takes **10–20 minutes**. The screen shows a progress log throughout.
 
 After the wizard completes the machine reboots one final time into the fully configured appliance. The default login credentials are whatever username and password you entered during the wizard.
-
----
-
-## Setting up for a friend
-
-If you are installing NixPI on behalf of someone else you can pre-fill the wizard answers so the machine sets itself up without manual input. Create a file at `~/.nixpi/prefill.env` (on the target machine, before first boot, or place it there via USB):
-
-```bash
-# ~/.nixpi/prefill.env
-PREFILL_NAME="Alice Smith"
-PREFILL_EMAIL="alice@example.com"
-PREFILL_USERNAME="alice"
-PREFILL_PRIMARY_PASSWORD="change-me-on-first-login"
-NIXPI_TIMEZONE="America/New_York"
-NIXPI_KEYBOARD="us"
-```
-
-All variables are optional — the wizard will prompt interactively for any that are missing. When the file exists the wizard runs non-interactively and the machine finishes setup without any input from the person sitting in front of it.
-
-Common timezone values: `Europe/London`, `Europe/Berlin`, `America/Los_Angeles`, `Asia/Tokyo`.
-Common keyboard values: `us`, `uk`, `de`, `fr`, `es`.
-
-To deliver the machine: complete the physical install, place the `prefill.env` file, and hand it over. The recipient just needs to power it on and wait.
 
 ---
 

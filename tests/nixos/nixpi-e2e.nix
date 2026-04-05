@@ -34,7 +34,7 @@
         shell = pkgs.bash;
       };
       users.groups.${username} = {};
-      system.activationScripts.nixpi-e2e-prefill = lib.stringAfter [ "users" ] ''
+      system.activationScripts.nixpi-e2e-bootstrap = lib.stringAfter [ "users" ] ''
         mkdir -p ${homeDir}/.nixpi
         install -d -m 0755 /etc/nixos
         cat > /etc/nixos/nixpi-install.nix <<'EOF'
@@ -44,12 +44,8 @@
       nixpi.primaryUser = "${username}";
     }
     EOF
-        cat > ${homeDir}/.nixpi/prefill.env << 'EOF'
-    PREFILL_PRIMARY_PASSWORD=testpass123
-    EOF
         chown -R ${username}:${username} ${homeDir}/.nixpi
         chmod 755 ${homeDir}/.nixpi
-        chmod 644 ${homeDir}/.nixpi/prefill.env
       '';
     };
 

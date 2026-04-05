@@ -1,5 +1,5 @@
-# Disko layout: UEFI GPT, 1 GiB EFI partition, ext4 root, swap partition.
-# @DISK@ and @SWAP_SIZE@ are substituted by the installer script at runtime.
+# Disko layout: UEFI GPT, 1 GiB EFI partition, ext4 root, fixed 8 GiB swap.
+# @DISK@ is substituted by the installer script at runtime.
 { ... }:
 {
   disko.devices = {
@@ -21,7 +21,7 @@
           };
           root = {
             size = "100%";
-            end = "-@SWAP_SIZE@";
+            end = "-8G";
             content = {
               type = "filesystem";
               format = "ext4";
@@ -30,7 +30,7 @@
             };
           };
           swap = {
-            size = "@SWAP_SIZE@";
+            size = "8G";
             content = {
               type = "swap";
             };

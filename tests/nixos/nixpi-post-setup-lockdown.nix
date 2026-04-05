@@ -27,7 +27,7 @@
       time.timeZone = "UTC";
       i18n.defaultLocale = "en_US.UTF-8";
       system.stateVersion = "25.05";
-      system.activationScripts.nixpi-prefill = lib.stringAfter [ "users" ] ''
+      system.activationScripts.nixpi-bootstrap = lib.stringAfter [ "users" ] ''
         mkdir -p ${homeDir}/.nixpi
         install -d -m 0755 /etc/nixos
         cat > /etc/nixos/nixpi-install.nix <<'EOF'
@@ -37,13 +37,8 @@
   nixpi.primaryUser = "${username}";
 }
 EOF
-        cat > ${homeDir}/.nixpi/prefill.env << 'EOF'
-PREFILL_USERNAME=steadyuser
-PREFILL_PRIMARY_PASSWORD=steadypass123
-EOF
         chown -R ${username}:${username} ${homeDir}/.nixpi
         chmod 755 ${homeDir}/.nixpi
-        chmod 644 ${homeDir}/.nixpi/prefill.env
       '';
     } // (mkManagedUserConfig { inherit username homeDir; });
 

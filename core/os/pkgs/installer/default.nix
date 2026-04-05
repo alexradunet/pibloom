@@ -18,8 +18,7 @@ pkgs.stdenvNoCC.mkDerivation {
     mkdir -p "$out/bin" "$out/share/nixpi-installer/layouts" "$out/share/nixpi-installer/nixpi-config/core"
 
     install -m 0755 ${./nixpi-installer.sh} "$out/share/nixpi-installer/nixpi-installer.sh"
-    install -m 0644 ${layoutsDir}/standard.nix "$out/share/nixpi-installer/layouts/standard.nix"
-    install -m 0644 ${layoutsDir}/swap.nix "$out/share/nixpi-installer/layouts/swap.nix"
+    install -m 0644 ${layoutsDir}/default.nix "$out/share/nixpi-installer/layouts/default.nix"
     cp -R ${nixpiSource}/core/os "$out/share/nixpi-installer/nixpi-config/core/"
     cp -R ${nixpiSource}/core/scripts "$out/share/nixpi-installer/nixpi-config/core/"
 
@@ -29,8 +28,7 @@ pkgs.stdenvNoCC.mkDerivation {
       --replace-fail "@piAgentPath@" "${piAgent}" \
       --replace-fail "@appPackagePath@" "${appPackage}" \
       --replace-fail "@setupApplyPackagePath@" "${setupApplyPackage}" \
-      --replace-fail "@layoutStandard@" "$out/share/nixpi-installer/layouts/standard.nix" \
-      --replace-fail "@layoutSwap@" "$out/share/nixpi-installer/layouts/swap.nix"
+      --replace-fail "@layoutTemplate@" "$out/share/nixpi-installer/layouts/default.nix"
 
     makeWrapper ${pkgs.bash}/bin/bash "$out/bin/nixpi-installer" \
       --prefix PATH : "${pkgs.lib.makeBinPath [ pkgs.openssl ]}" \

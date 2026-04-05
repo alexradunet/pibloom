@@ -7,7 +7,6 @@ memory_mb="${NIXPI_INSTALL_VM_MEMORY_MB:-8192}"
 vm_cpus="${NIXPI_INSTALL_VM_CPUS:-4}"
 ssh_port="${NIXPI_INSTALL_VM_SSH_PORT:-2222}"
 home_port="${NIXPI_INSTALL_VM_HOME_PORT:-18080}"
-prefill_path="${NIXPI_INSTALL_PREFILL_PATH:-$PWD/prefill.env}"
 ovmf_code="${NIXPI_INSTALL_VM_OVMF_CODE:-/usr/share/edk2/ovmf/OVMF_CODE.fd}"
 ovmf_vars_template="${NIXPI_INSTALL_VM_OVMF_VARS_TEMPLATE:-/usr/share/edk2/ovmf/OVMF_VARS.fd}"
 ovmf_vars="${NIXPI_INSTALL_VM_OVMF_VARS_PATH:-$HOME/.cache/nixpi-install-ovmf-vars.fd}"
@@ -57,15 +56,8 @@ echo "Network mode: user NAT"
 echo "SSH forward: localhost:$ssh_port -> guest:22"
 echo "Home forward: http://localhost:$home_port -> guest:80"
 echo "Use the localhost forwards above for host-side access to the guest."
-if [[ -f "$prefill_path" ]]; then
-    prefill_path="$(readlink -f "$prefill_path")"
-    echo "Using prefill file: $prefill_path"
-    echo "After the ISO boots, run:"
-    echo "  sudo nixpi-installer --prefill $prefill_path --disk /dev/sdX"
-else
-    echo "No prefill file found at: $prefill_path"
-    echo "Create one from ./prefill.env.example if you want a non-interactive password."
-fi
+echo "After the ISO boots, run:"
+echo "  sudo nixpi-installer --disk /dev/sdX"
 
 exec qemu-system-x86_64 \
     -enable-kvm \

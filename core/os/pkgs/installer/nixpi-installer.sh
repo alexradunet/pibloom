@@ -6,9 +6,7 @@ CONFIG_SOURCE_DIR="@configSourceDir@"
 PI_AGENT_PATH="@piAgentPath@"
 APP_PACKAGE_PATH="@appPackagePath@"
 SETUP_APPLY_PACKAGE_PATH="@setupApplyPackagePath@"
-PREFILL_FILE=""
-LAYOUT_STANDARD="@layoutStandard@"
-LAYOUT_SWAP="@layoutSwap@"
+LAYOUT_TEMPLATE="@layoutTemplate@"
 
 ROOT_MOUNT="/mnt"
 HOSTNAME_VALUE="nixpi"
@@ -17,18 +15,16 @@ PRIMARY_PASSWORD_VALUE=""
 TARGET_DISK=""
 FORCE_YES=0
 SYSTEM_CLOSURE=""
-LAYOUT_MODE=""
-SWAP_SIZE=""
 INSTALLER_LOG="/tmp/nixpi-installer.log"
 LOG_REDIRECTED=0
 
 usage() {
   cat <<'EOF'
-Usage: nixpi-installer [--prefill /path/to/prefill.env] [--disk /dev/sdX] [--password VALUE] [--layout no-swap|swap] [--swap-size 8GiB] [--yes] [--system PATH]
+Usage: nixpi-installer [--disk /dev/sdX] [--password VALUE] [--yes] [--system PATH]
 
 Performs a destructive UEFI install with:
 - EFI system partition: 1 GiB
-- ext4 root partition: remainder (or remainder minus swap)
+- ext4 root partition: remainder minus 8 GiB swap
 
 The installer lays down the fixed NixPI appliance closure for the default
 human operator account and applies the chosen password inside the target root.
@@ -113,10 +109,6 @@ choose_disk() {
   done
 }
 
-prompt_inputs() {
-  :
-}
-
 prompt_password() {
   if [[ -n "$PRIMARY_PASSWORD_VALUE" ]]; then
     return
@@ -148,33 +140,6 @@ prompt_password() {
   done
 }
 
-load_prefill() {
-  local prefill_path="$1"
-  local line key value
-  [[ -n "$prefill_path" ]] || return 0
-  if [[ ! -f "$prefill_path" ]]; then
-    echo "Prefill file not found: $prefill_path" >&2
-    exit 1
-  fi
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    line="${line#"${line%%[![:space:]]*}"}"
-    [[ -z "$line" || "${line:0:1}" == "#" ]] && continue
-    key="${line%%=*}"
-    value="${line#*=}"
-    value="${value%\"}"
-    value="${value#\"}"
-    value="${value%\'}"
-    value="${value#\'}"
-    case "$key" in
-      PREFILL_PASSWORD|PREFILL_PRIMARY_PASSWORD)
-        if [[ -z "$PRIMARY_PASSWORD_VALUE" && -n "$value" ]]; then
-          PRIMARY_PASSWORD_VALUE="$value"
-        fi
-        ;;
-    esac
-  done < "$prefill_path"
-}
-
 validate_system_closure() {
   if [[ -z "$SYSTEM_CLOSURE" ]]; then
     return
@@ -183,86 +148,6 @@ validate_system_closure() {
     echo "--system only supports the baked desktop closure: $DESKTOP_SYSTEM" >&2
     exit 1
   fi
-}
-
-validate_swap_size() {
-  local size="$1"
-  [[ "$size" =~ ^[1-9][0-9]*(MiB|GiB|MB|GB)$ ]]
-}
-
-# Convert user-friendly sizes (8GiB, 4096MiB) to disko-compatible format (8G, 4096M).
-# Disko's size field requires [0-9]+[KMGTP]? — the "iB" suffix is not accepted.
-disko_swap_size() {
-  local size="$1"
-  size="${size/GiB/G}"
-  size="${size/MiB/M}"
-  size="${size/GB/G}"
-  size="${size/MB/M}"
-  echo "$size"
-}
-
-choose_layout() {
-  if [[ -n "$LAYOUT_MODE" ]]; then
-    return
-  fi
-
-  if [[ "$FORCE_YES" -eq 1 ]]; then
-    LAYOUT_MODE="no-swap"
-    return
-  fi
-
-  require_tty
-
-  echo "Choose the disk layout:"
-  echo "  1) EFI + ext4 root"
-  echo "  2) EFI + ext4 root + 8GiB swap"
-  echo "  3) EFI + ext4 root + custom swap"
-
-  local choice=""
-  while true; do
-    read -rp "Select option [1/2/3]: " choice
-    case "$choice" in
-      1) LAYOUT_MODE="no-swap"; break ;;
-      2) LAYOUT_MODE="swap"; SWAP_SIZE="8GiB"; break ;;
-      3)
-        LAYOUT_MODE="swap"
-        while true; do
-          read -rp "Swap size [8GiB]: " SWAP_SIZE
-          SWAP_SIZE="${SWAP_SIZE:-8GiB}"
-          if validate_swap_size "$SWAP_SIZE"; then
-            break
-          fi
-          printf '%s\n' "Swap size must look like 8GiB, 4096MiB, 8GB, or 4096MB." >&2
-        done
-        break
-        ;;
-      *) echo "Invalid option." >&2 ;;
-    esac
-  done
-}
-
-normalize_layout_inputs() {
-  if [[ -z "$LAYOUT_MODE" ]]; then
-    LAYOUT_MODE="no-swap"
-  fi
-
-  case "$LAYOUT_MODE" in
-    no-swap) SWAP_SIZE="" ;;
-    swap)
-      if [[ -z "$SWAP_SIZE" ]]; then
-        SWAP_SIZE="8GiB"
-      fi
-      if ! validate_swap_size "$SWAP_SIZE"; then
-        echo "Invalid --swap-size value: $SWAP_SIZE" >&2
-        exit 1
-      fi
-      SWAP_SIZE="$(disko_swap_size "$SWAP_SIZE")"
-      ;;
-    *)
-      echo "Invalid --layout value: $LAYOUT_MODE" >&2
-      exit 1
-      ;;
-  esac
 }
 
 write_install_config() {
@@ -330,15 +215,9 @@ confirm_install() {
   fi
 
   require_tty
-  local layout_summary
-  if [[ "$LAYOUT_MODE" == "swap" ]]; then
-    layout_summary="EFI 1 GiB + ext4 root + swap (${SWAP_SIZE})"
-  else
-    layout_summary="EFI 1 GiB + ext4 root"
-  fi
   printf '%s\n' \
     "Target disk: ${TARGET_DISK}" \
-    "Layout: ${layout_summary}" \
+    "Layout: EFI 1 GiB + ext4 root + 8 GiB swap" \
     "Hostname: ${HOSTNAME_VALUE}" \
     "Primary user: ${PRIMARY_USER_VALUE}" \
     "Primary user password: [set]" \
@@ -358,16 +237,7 @@ run_install() {
   local disko_config
   disko_config="$(mktemp /tmp/nixpi-disko-XXXXXX.nix)"
 
-  if [[ "$LAYOUT_MODE" == "swap" ]]; then
-    sed \
-      -e "s|@DISK@|${TARGET_DISK}|g" \
-      -e "s|@SWAP_SIZE@|${SWAP_SIZE}|g" \
-      "$LAYOUT_SWAP" > "$disko_config"
-  else
-    sed \
-      -e "s|@DISK@|${TARGET_DISK}|g" \
-      "$LAYOUT_STANDARD" > "$disko_config"
-  fi
+  sed -e "s|@DISK@|${TARGET_DISK}|g" "$LAYOUT_TEMPLATE" > "$disko_config"
 
   log_step "Running disko on $TARGET_DISK"
   disko --mode destroy,format,mount "$disko_config"
@@ -395,25 +265,19 @@ run_install() {
 main() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --prefill) PREFILL_FILE="$2"; shift 2 ;;
       --disk) TARGET_DISK="$2"; shift 2 ;;
       --password) PRIMARY_PASSWORD_VALUE="$2"; shift 2 ;;
-      --layout) LAYOUT_MODE="$2"; shift 2 ;;
-      --swap-size) SWAP_SIZE="$2"; shift 2 ;;
       --yes) FORCE_YES=1; shift ;;
       --system) SYSTEM_CLOSURE="$2"; shift 2 ;;
       -h|--help) usage; exit 0 ;;
-      *) echo "Unknown argument: $1" >&2; usage >&2; exit 1 ;;
+      *) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
     esac
   done
 
   ensure_root
-  load_prefill "$PREFILL_FILE"
   echo "=== [1/5] Disk selection ==="
   choose_disk
   prompt_password
-  choose_layout
-  normalize_layout_inputs
   validate_system_closure
   confirm_install
   run_install

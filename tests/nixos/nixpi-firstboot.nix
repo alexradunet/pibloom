@@ -2,10 +2,7 @@
 
 let
   mkNode =
-    { prefillEnv ? ''
-        PREFILL_PRIMARY_PASSWORD=testpass123
-      ''
-    , hostName ? "nixpi-firstboot-test"
+    { hostName ? "nixpi-firstboot-test"
     }:
     { pkgs, ... }:
     let
@@ -39,10 +36,7 @@ let
       };
       users.groups.${username} = {};
       environment.systemPackages = [ pkgs.curl pkgs.jq ];
-      systemd.tmpfiles.rules = [
-        "d ${homeDir}/.nixpi 0755 ${username} ${username} -"
-        "f ${homeDir}/.nixpi/prefill.env 0644 ${username} ${username} -"
-      ];
+      systemd.tmpfiles.rules = [ "d ${homeDir}/.nixpi 0755 ${username} ${username} -" ];
 
       system.activationScripts.nixpi-prefill = lib.stringAfter [ "users" ] (
         ''
@@ -55,12 +49,8 @@ let
           nixpi.primaryUser = "${username}";
         }
         EOF
-          cat > ${homeDir}/.nixpi/prefill.env << 'EOF'
-        ${prefillEnv}
-        EOF
           chown -R ${username}:${username} ${homeDir}/.nixpi
           chmod 755 ${homeDir}/.nixpi
-          chmod 644 ${homeDir}/.nixpi/prefill.env
         ''
       );
     };
@@ -92,8 +82,6 @@ in
 
     nixpi.succeed("test -f " + home + "/.nixpi/wizard-state/system-ready")
     nixpi.fail("test -f " + home + "/.nixpi/.setup-complete")
-    nixpi.succeed("test -f " + home + "/.nixpi/prefill.env")
-
     nixpi.succeed("test -d " + home + "/.nixpi/wizard-state")
 
     checkpoints = nixpi.succeed("ls " + home + "/.nixpi/wizard-state/ 2>/dev/null || true").strip().split('\n')

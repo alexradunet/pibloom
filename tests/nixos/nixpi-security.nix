@@ -1,7 +1,7 @@
 { nixPiModulesNoShell, piAgent, appPackage, setupApplyPackage, mkTestFilesystems, ... }:
 
 let
-  mkNode = { hostName, username, prefill ? false }: { pkgs, ... }: let
+  mkNode = { hostName, username }: { pkgs, ... }: let
     homeDir = "/home/${username}";
   in {
     imports = nixPiModulesNoShell ++ [
@@ -32,7 +32,7 @@ let
       shell = pkgs.bash;
     };
     users.groups.${username} = { };
-    system.activationScripts.nixpi-prefill = ''
+    system.activationScripts.nixpi-bootstrap = ''
       mkdir -p ${homeDir}/.nixpi
       install -d -m 0755 /etc/nixos
       cat > /etc/nixos/nixpi-install.nix <<'EOF'
@@ -42,14 +42,6 @@ let
       nixpi.primaryUser = "${username}";
     }
     EOF
-      ${if prefill then ''
-        cat > ${homeDir}/.nixpi/prefill.env << 'EOF'
-PREFILL_USERNAME=testuser
-EOF
-        chmod 644 ${homeDir}/.nixpi/prefill.env
-      '' else ''
-        rm -f ${homeDir}/.nixpi/prefill.env
-      ''}
       chown -R ${username}:${username} ${homeDir}/.nixpi
       chmod 755 ${homeDir}/.nixpi
     '';
@@ -62,13 +54,11 @@ in
     bootstrap = mkNode {
       hostName = "nixpi-bootstrap";
       username = "pi";
-      prefill = false;
     };
 
     steady = mkNode {
       hostName = "nixpi-steady";
       username = "pi";
-      prefill = true;
     };
 
     client = { pkgs, ... }: {

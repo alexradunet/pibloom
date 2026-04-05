@@ -40,20 +40,14 @@ sudo dd if=./result/iso/*.iso of=/dev/<usb-device> bs=4M status=progress oflag=s
 2. Open a root shell with `sudo -i`
 3. Run `nixpi-installer`
 4. Choose the target disk
-5. Choose the disk layout:
-   - `EFI + ext4 root`
-   - `EFI + ext4 root + 8GiB swap`
-   - `EFI + ext4 root + custom swap`
-6. Confirm the destructive install
-7. Reboot into the installed system
+5. Confirm the destructive install. The installer always creates `EFI + ext4 root + 8 GiB swap`.
+6. Reboot into the installed system
 
 The installer writes `/etc/nixos/nixpi-install.nix` (hashed password, hostname, primary user) and a `configuration.nix` that imports the pre-built desktop closure carried in the ISO. No git clone or `nixos-rebuild` happens after reboot.
 
 ### 4. Complete Setup
 
 After reboot, the system autologins into the XFCE desktop. Open a browser to `http://nixpi.local:8080/setup` (or `http://localhost:8080/setup`). The web wizard shows a single optional field: a Netbird setup key. Submit the form to configure Netbird and mark the system ready. The page redirects to `/` when done.
-
-If `~/.nixpi/prefill.env` exists when the chat server starts, the wizard auto-submits (with an empty Netbird key) and skips the manual form entirely.
 
 After setup, log in via the terminal and run `pi /login` and `pi /model`.
 
@@ -86,9 +80,7 @@ just check-config    # Fast: validate NixOS config
 just check-boot      # Thorough: boot test in VM
 ```
 
-For automated installs, create a `prefill.env` from `prefill.env.example` before running `vm-install-iso`. The installer will pick it up and skip interactive prompts.
-
-**Default operator user**: `human` (hardcoded). The primary account is set up by the installer with the password from `prefill.env` or via the interactive prompt.
+**Default operator user**: `human` (hardcoded). The primary account password is set during the interactive installer run.
 
 ## OTA Updates
 

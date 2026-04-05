@@ -75,7 +75,6 @@ Do not let root files become secondary architecture documents. If a detail is on
 - `NIXPI_INSTALL_VM_DISK_PATH` - VM disk path override
 - `NIXPI_INSTALL_VM_MEMORY_MB` - VM RAM override
 - `NIXPI_INSTALL_VM_CPUS` - VM CPU override
-- `NIXPI_INSTALL_PREFILL_PATH` - Prefill env file for automated installs
 
 **Inbound Dependencies**:
 - Called by developers for all common tasks

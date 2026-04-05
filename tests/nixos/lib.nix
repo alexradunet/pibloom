@@ -32,22 +32,6 @@
     users.groups.${username} = {};
   };
 
-  mkPrefillActivation = {
-    username,
-    homeDir ? "/home/${username}",
-    prefillUsername ? "testuser",
-    prefillPassword ? "testpassword123",
-  }: lib.stringAfter [ "users" ] ''
-    mkdir -p ${homeDir}/.nixpi
-    cat > ${homeDir}/.nixpi/prefill.env << 'EOF'
-PREFILL_USERNAME=${prefillUsername}
-PREFILL_PRIMARY_PASSWORD=${prefillPassword}
-EOF
-    chown -R ${username}:${username} ${homeDir}/.nixpi
-    chmod 755 ${homeDir}/.nixpi
-    chmod 644 ${homeDir}/.nixpi/prefill.env
-  '';
-
   mkTestFilesystems = {
     fileSystems."/" = { device = "/dev/vda"; fsType = "ext4"; };
     fileSystems."/boot" = { device = "/dev/vda1"; fsType = "vfat"; };

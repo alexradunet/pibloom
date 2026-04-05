@@ -148,12 +148,43 @@
     ).strip()
     assert target_disk_device, "failed to resolve target disk device"
 
-    def run_install_case(name, layout_args, expect_swap, use_prefill):
+    installer.succeed(
+        "bash -lc "
+        + shlex.quote(
+            "! nixpi-installer --prefill /tmp/does-not-matter --password installerpass123 --disk "
+            + target_disk_device
+            + " --yes --system "
+            + shlex.quote("${self.nixosConfigurations.desktop.config.system.build.toplevel}")
+            + " >/tmp/nixpi-installer-invalid-option.log 2>&1"
+        )
+    )
+    installer.succeed("grep -Eq 'Usage: nixpi-installer|Unknown option: --prefill' /tmp/nixpi-installer-invalid-option.log")
+    installer.succeed(
+        "bash -lc "
+        + shlex.quote(
+            "! nixpi-installer --layout no-swap --password installerpass123 --disk "
+            + target_disk_device
+            + " --yes --system "
+            + shlex.quote("${self.nixosConfigurations.desktop.config.system.build.toplevel}")
+            + " >/tmp/nixpi-installer-invalid-layout.log 2>&1"
+        )
+    )
+    installer.succeed("grep -Eq 'Usage: nixpi-installer|Unknown option: --layout' /tmp/nixpi-installer-invalid-layout.log")
+    installer.succeed(
+        "bash -lc "
+        + shlex.quote(
+            "! nixpi-installer --swap-size 16GiB --password installerpass123 --disk "
+            + target_disk_device
+            + " --yes --system "
+            + shlex.quote("${self.nixosConfigurations.desktop.config.system.build.toplevel}")
+            + " >/tmp/nixpi-installer-invalid-swap-size.log 2>&1"
+        )
+    )
+    installer.succeed("grep -Eq 'Usage: nixpi-installer|Unknown option: --swap-size' /tmp/nixpi-installer-invalid-swap-size.log")
+
+    def run_install_case(name):
         installer.succeed("rm -f /tmp/nixpi-installer.log")
         password_args = "--password installerpass123"
-        if use_prefill:
-            installer.succeed("printf 'PREFILL_PASSWORD=installerpass123\\n' > /tmp/nixpi-installer-prefill.env")
-            password_args = "--prefill /tmp/nixpi-installer-prefill.env"
         installer.succeed(
             "bash -lc "
             + shlex.quote(
@@ -161,8 +192,6 @@
                 + target_disk_device
                 + " "
                 + password_args
-                + " "
-                + layout_args
                 + " --yes --system "
                 + shlex.quote("${self.nixosConfigurations.desktop.config.system.build.toplevel}")
                 + " > /tmp/nixpi-installer.log 2>&1 || { cat /tmp/nixpi-installer.log >&2; exit 1; }"
@@ -204,10 +233,7 @@
         installer.fail("test -e " + target_mount + "/etc/nixos/nixpkgs")
         installer.fail("test -e " + target_mount + "/etc/nixos/flake.nix")
 
-        if expect_swap:
-            installer.succeed("lsblk -nrpo FSTYPE " + target_disk_device + " | grep -qx swap")
-        else:
-            installer.fail("lsblk -nrpo FSTYPE " + target_disk_device + " | grep -qx swap")
+        installer.succeed("lsblk -nrpo FSTYPE " + target_disk_device + " | grep -qx swap")
 
         installer.succeed("nixos-enter --root " + target_mount + " -c 'getent passwd human'")
         installer.succeed("nixos-enter --root " + target_mount + " -c 'grep -q \"^human:[^!*]\" /etc/shadow'")
@@ -220,7 +246,6 @@
         installer.fail("nixos-enter --root " + target_mount + " -c 'test -e /etc/nixos/flake.nix'")
         installer.fail("nixos-enter --root " + target_mount + " -c 'getent passwd agent'")
 
-    run_install_case("no-swap", "--layout no-swap", False, False)
-    run_install_case("swap", "--layout swap --swap-size 8GiB", True, True)
+    run_install_case("default")
   '';
 }

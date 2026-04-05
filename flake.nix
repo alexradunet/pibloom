@@ -256,15 +256,12 @@
             nativeBuildInputs = [ pkgs.nix ];
           } ''
             nix-instantiate --parse \
-              ${./core/os/installer/layouts/standard.nix} >/dev/null
-            nix-instantiate --parse \
-              ${./core/os/installer/layouts/swap.nix} >/dev/null
+              ${./core/os/installer/layouts/default.nix} >/dev/null
 
-            grep -F '"@DISK@"' ${./core/os/installer/layouts/standard.nix} >/dev/null
-            grep -F '"@DISK@"' ${./core/os/installer/layouts/swap.nix} >/dev/null
-            grep -F '"@SWAP_SIZE@"' ${./core/os/installer/layouts/swap.nix} >/dev/null
-            grep -F 'disko.devices' ${./core/os/installer/layouts/standard.nix} >/dev/null
-            grep -F 'disko.devices' ${./core/os/installer/layouts/swap.nix} >/dev/null
+            grep -F '"@DISK@"' ${./core/os/installer/layouts/default.nix} >/dev/null
+            grep -F 'end = "-8G";' ${./core/os/installer/layouts/default.nix} >/dev/null
+            grep -F 'size = "8G";' ${./core/os/installer/layouts/default.nix} >/dev/null
+            grep -F 'disko.devices' ${./core/os/installer/layouts/default.nix} >/dev/null
             touch "$out"
           '';
         in
@@ -278,9 +275,16 @@
           installer-frontend = pkgs.runCommandLocal "installer-frontend-check" { } ''
             bash -n "${installerFrontendSource}"
             ! test -e "${installerHelper}/share/nixpi-installer/nixpi-install-module.nix.in"
-            grep -F 'PREFILL_FILE=""' "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
+            ! grep -F -- '--prefill' ${./core/os/pkgs/installer/nixpi-installer.sh} >/dev/null
+            ! grep -F 'PREFILL_' ${./core/os/pkgs/installer/nixpi-installer.sh} >/dev/null
+            ! grep -F -- '--layout' ${./core/os/pkgs/installer/nixpi-installer.sh} >/dev/null
+            ! grep -F -- '--swap-size' ${./core/os/pkgs/installer/nixpi-installer.sh} >/dev/null
             grep -F 'HOSTNAME_VALUE="nixpi"' "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
             grep -F 'PRIMARY_USER_VALUE="human"' "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
+            ! grep -F -- '--prefill' "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
+            ! grep -F 'PREFILL_' "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
+            ! grep -F -- '--layout' "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
+            ! grep -F -- '--swap-size' "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
             grep -F 'CONFIG_SOURCE_DIR="@configSourceDir@"' "${installerFrontendSource}" >/dev/null
             grep -F 'validate_system_closure()' "${installerFrontendSource}" >/dev/null
             grep -F -- '--system only supports the baked desktop closure:' "${installerFrontendSource}" >/dev/null

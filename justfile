@@ -37,7 +37,6 @@ iso:
 #   NIXPI_INSTALL_VM_MEMORY_MB=8192
 #   NIXPI_INSTALL_VM_CPUS=4
 #   NIXPI_INSTALL_VM_SSH_PORT=2222
-#   NIXPI_INSTALL_PREFILL_PATH=$PWD/prefill.env
 vm-install-iso: iso
     NIXPI_INSTALL_VM_OVMF_CODE={{ ovmf }} NIXPI_INSTALL_VM_OVMF_VARS_TEMPLATE={{ ovmf_vars }} bash tools/run-installer-iso.sh
 

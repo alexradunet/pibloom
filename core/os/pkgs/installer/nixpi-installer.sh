@@ -268,7 +268,7 @@ write_install_config() {
 { ... }: {
   nixpi.primaryUser = "${PRIMARY_USER_VALUE}";
   networking.hostName = "${HOSTNAME_VALUE}";
-  users.users.${PRIMARY_USER_VALUE}.hashedPassword = "${hashed_password}";
+  users.users."${PRIMARY_USER_VALUE}".hashedPassword = "${hashed_password}";
   nixpi.security.ssh.passwordAuthentication = true;
 }
 EOF
@@ -287,7 +287,7 @@ EOF
 }
 
 install_system() {
-  nixos-install --no-channel-copy --system "${SYSTEM_CLOSURE:-$DESKTOP_SYSTEM}" --root "$ROOT_MOUNT"
+  nixos-install --no-root-passwd --no-channel-copy --system "${SYSTEM_CLOSURE:-$DESKTOP_SYSTEM}" --root "$ROOT_MOUNT"
 }
 
 confirm_install() {

@@ -293,6 +293,8 @@
             grep -F 'PREFILL_FILE=""' "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
             grep -F 'DESKTOP_SYSTEM="@desktopSystem@"' "${installerFrontendSource}" >/dev/null
             grep -F 'DESKTOP_HOST_MODULE="@desktopHostModule@"' "${installerFrontendSource}" >/dev/null
+            grep -F "${self.nixosConfigurations.desktop.config.system.build.toplevel}" "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
+            grep -F "${nixpiSource}/core/os/hosts/x86_64.nix" "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
             touch "$out"
           '';
 

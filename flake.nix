@@ -292,6 +292,7 @@
             grep -F 'PREFILL_FILE=""' "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
             grep -F 'HOSTNAME_VALUE="nixpi"' "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
             grep -F 'PRIMARY_USER_VALUE="human"' "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
+            grep -F 'CONFIG_SOURCE_DIR="@configSourceDir@"' "${installerFrontendSource}" >/dev/null
             grep -F 'validate_system_closure()' "${installerFrontendSource}" >/dev/null
             grep -F -- '--system only supports the baked desktop closure:' "${installerFrontendSource}" >/dev/null
             ! grep -F '. "$prefill_path"' "${installerFrontendSource}" >/dev/null
@@ -300,9 +301,10 @@
             ! grep -F -- '--hostname)' "${installerFrontendSource}" >/dev/null
             ! grep -F -- '--primary-user)' "${installerFrontendSource}" >/dev/null
             grep -F 'DESKTOP_SYSTEM="@desktopSystem@"' "${installerFrontendSource}" >/dev/null
-            grep -F 'DESKTOP_HOST_MODULE="@desktopHostModule@"' "${installerFrontendSource}" >/dev/null
             grep -F "${self.nixosConfigurations.desktop.config.system.build.toplevel}" "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
-            grep -F "${nixpiSource}/core/os/hosts/x86_64.nix" "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
+            test -e "${installerHelper}/share/nixpi-installer/nixpi-config/core/os/hosts/x86_64.nix"
+            grep -F './nixpi-config/core/os/hosts/x86_64.nix' "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
+            grep -F '_module.args = {' "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
             touch "$out"
           '';
 

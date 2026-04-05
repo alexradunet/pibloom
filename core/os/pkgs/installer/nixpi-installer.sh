@@ -2,7 +2,10 @@
 set -euo pipefail
 
 DESKTOP_SYSTEM="@desktopSystem@"
-DESKTOP_HOST_MODULE="@desktopHostModule@"
+CONFIG_SOURCE_DIR="@configSourceDir@"
+PI_AGENT_PATH="@piAgentPath@"
+APP_PACKAGE_PATH="@appPackagePath@"
+SETUP_APPLY_PACKAGE_PATH="@setupApplyPackagePath@"
 PREFILL_FILE=""
 LAYOUT_STANDARD="@layoutStandard@"
 LAYOUT_SWAP="@layoutSwap@"
@@ -291,14 +294,28 @@ write_bootstrap_primary_password_file() {
   chroot "$ROOT_MOUNT" /nix/var/nix/profiles/system/sw/bin/chmod 0600 /var/lib/nixpi/bootstrap/primary-user-password
 }
 
+copy_configuration_source() {
+  local target_dir="${ROOT_MOUNT}/etc/nixos/nixpi-config"
+  rm -rf "$target_dir"
+  mkdir -p "$target_dir"
+  cp -R "${CONFIG_SOURCE_DIR}/." "$target_dir/"
+}
+
 write_configuration_nix() {
   cat >"${ROOT_MOUNT}/etc/nixos/configuration.nix" <<EOF
 { ... }: {
   imports = [
     ./hardware-configuration.nix
     ./nixpi-install.nix
-    ${DESKTOP_HOST_MODULE}
+    ./nixpi-config/core/os/hosts/x86_64.nix
   ];
+  _module.args = {
+    piAgent = ${PI_AGENT_PATH};
+    appPackage = ${APP_PACKAGE_PATH};
+    setupApplyPackage = ${SETUP_APPLY_PACKAGE_PATH};
+  };
+  nixpkgs.hostPlatform = "x86_64-linux";
+  nixpkgs.config.allowUnfree = true;
 }
 EOF
 }
@@ -358,6 +375,9 @@ run_install() {
   echo "=== [3/5] Writing boot configuration ==="
   log_step "Generating NixOS hardware config"
   nixos-generate-config --root "$ROOT_MOUNT"
+
+  log_step "Copying bundled NixPI config sources"
+  copy_configuration_source
 
   log_step "Writing NixPI install config"
   write_install_config

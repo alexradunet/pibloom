@@ -166,8 +166,17 @@
         installer.succeed("test -f " + target_mount + "/etc/nixos/configuration.nix")
         installer.succeed("test -f " + target_mount + "/etc/nixos/hardware-configuration.nix")
         installer.succeed("test -f " + target_mount + "/etc/nixos/nixpi-install.nix")
+        installer.succeed("test -f " + target_mount + "/etc/nixos/nixpi-config/core/os/hosts/x86_64.nix")
         installer.succeed("nix-instantiate --parse " + target_mount + "/etc/nixos/configuration.nix >/tmp/nixpi-installer-configuration.parse")
         installer.succeed("nix-instantiate --parse " + target_mount + "/etc/nixos/nixpi-install.nix >/tmp/nixpi-installer-install.parse")
+        installer.succeed(
+            "NIXPKGS_ALLOW_UNFREE=1 nix-instantiate '<nixpkgs/nixos>'"
+            + " -A config.system.build.toplevel"
+            + " -I nixos-config="
+            + target_mount
+            + "/etc/nixos/configuration.nix"
+            + " >/tmp/nixpi-installer-eval.drv"
+        )
         installer.succeed("grep -q './hardware-configuration.nix' " + target_mount + "/etc/nixos/configuration.nix")
         installer.succeed("grep -q 'fileSystems\\.\"/\"' " + target_mount + "/etc/nixos/hardware-configuration.nix")
         installer.succeed("grep -q 'nixpi.primaryUser = \"human\";' " + target_mount + "/etc/nixos/nixpi-install.nix")
@@ -179,10 +188,10 @@
         installer.fail("grep -q 'bootstrap-upgrade.nix' " + target_mount + "/etc/nixos/nixpi-install.nix")
         installer.succeed("grep -q 'imports = \\[' " + target_mount + "/etc/nixos/configuration.nix")
         installer.succeed("grep -q './nixpi-install.nix' " + target_mount + "/etc/nixos/configuration.nix")
-        installer.succeed("grep -q '/core/os/hosts/x86_64.nix' " + target_mount + "/etc/nixos/configuration.nix")
+        installer.succeed("grep -q './nixpi-config/core/os/hosts/x86_64.nix' " + target_mount + "/etc/nixos/configuration.nix")
+        installer.succeed("grep -q '_module.args = {' " + target_mount + "/etc/nixos/configuration.nix")
         installer.succeed("test -f " + target_mount + "/var/lib/nixpi/bootstrap/primary-user-password")
         installer.succeed("test \"$(cat " + target_mount + "/var/lib/nixpi/bootstrap/primary-user-password)\" = installerpass123")
-        installer.fail("test -e " + target_mount + "/etc/nixos/nixpi")
         installer.fail("test -e " + target_mount + "/etc/nixos/nixpkgs")
         installer.fail("test -e " + target_mount + "/etc/nixos/flake.nix")
 

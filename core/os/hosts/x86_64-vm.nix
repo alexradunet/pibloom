@@ -8,7 +8,7 @@
 
   # Pre-authorize the committed dev keypair for passwordless agent SSH.
   # tools/dev-key is intentionally committed — this is a dev-only VM.
-  users.users.pi.openssh.authorizedKeys.keyFiles = [ ../../../tools/dev-key.pub ];
+  users.users.human.openssh.authorizedKeys.keyFiles = [ ../../../tools/dev-key.pub ];
 
   # VM dev share: mount host's ~/.nixpi into /mnt/host-nixpi via 9p virtfs.
   fileSystems."/mnt/host-nixpi" = {

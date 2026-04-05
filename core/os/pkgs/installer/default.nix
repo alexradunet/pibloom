@@ -3,7 +3,6 @@
 let
   layoutsDir = ../../installer/layouts;
   desktopSystem = self.nixosConfigurations.desktop.config.system.build.toplevel;
-  desktopHostModule = "${nixpiSource}/core/os/hosts/x86_64.nix";
 in
 
 pkgs.stdenvNoCC.mkDerivation {
@@ -16,15 +15,20 @@ pkgs.stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p "$out/bin" "$out/share/nixpi-installer/layouts"
+    mkdir -p "$out/bin" "$out/share/nixpi-installer/layouts" "$out/share/nixpi-installer/nixpi-config/core"
 
     install -m 0755 ${./nixpi-installer.sh} "$out/share/nixpi-installer/nixpi-installer.sh"
     install -m 0644 ${layoutsDir}/standard.nix "$out/share/nixpi-installer/layouts/standard.nix"
     install -m 0644 ${layoutsDir}/swap.nix "$out/share/nixpi-installer/layouts/swap.nix"
+    cp -R ${nixpiSource}/core/os "$out/share/nixpi-installer/nixpi-config/core/"
+    cp -R ${nixpiSource}/core/scripts "$out/share/nixpi-installer/nixpi-config/core/"
 
     substituteInPlace "$out/share/nixpi-installer/nixpi-installer.sh" \
       --replace-fail "@desktopSystem@" "${desktopSystem}" \
-      --replace-fail "@desktopHostModule@" "${desktopHostModule}" \
+      --replace-fail "@configSourceDir@" "$out/share/nixpi-installer/nixpi-config" \
+      --replace-fail "@piAgentPath@" "${piAgent}" \
+      --replace-fail "@appPackagePath@" "${appPackage}" \
+      --replace-fail "@setupApplyPackagePath@" "${setupApplyPackage}" \
       --replace-fail "@layoutStandard@" "$out/share/nixpi-installer/layouts/standard.nix" \
       --replace-fail "@layoutSwap@" "$out/share/nixpi-installer/layouts/swap.nix"
 

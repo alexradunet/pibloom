@@ -5,9 +5,10 @@ ARTIFACT_DIR="${NIXPI_DESKTOP_PROBE_DIR:-/tmp/nixpi-desktop-probe}"
 WINDOW_TITLE="${NIXPI_DESKTOP_PROBE_WINDOW_TITLE:-NixPIDesktopProbe}"
 SCREENSHOT_PATH="${ARTIFACT_DIR}/root.png"
 RESULT_PATH="${ARTIFACT_DIR}/result.json"
+PRIMARY_HOME="${NIXPI_DESKTOP_PROBE_HOME:-/home/human}"
 
 export DISPLAY="${DISPLAY:-:0}"
-export XAUTHORITY="${XAUTHORITY:-/home/pi/.Xauthority}"
+export XAUTHORITY="${XAUTHORITY:-${PRIMARY_HOME}/.Xauthority}"
 
 mkdir -p "${ARTIFACT_DIR}"
 

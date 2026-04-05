@@ -191,6 +191,8 @@
         installer.succeed("grep -q './nixpi-config/core/os/hosts/x86_64.nix' " + target_mount + "/etc/nixos/configuration.nix")
         installer.succeed("grep -q '_module.args = {' " + target_mount + "/etc/nixos/configuration.nix")
         installer.succeed("test -f " + target_mount + "/var/lib/nixpi/bootstrap/primary-user-password")
+        installer.succeed("test \"$(stat -c '%U:%G %a' " + target_mount + "/var/lib/nixpi/bootstrap)\" = 'root:root 755'")
+        installer.succeed("test \"$(stat -c '%U:%G %a' " + target_mount + "/var/lib/nixpi/bootstrap/primary-user-password)\" = 'root:root 600'")
         installer.succeed("test \"$(cat " + target_mount + "/var/lib/nixpi/bootstrap/primary-user-password)\" = installerpass123")
         installer.fail("test -e " + target_mount + "/etc/nixos/nixpkgs")
         installer.fail("test -e " + target_mount + "/etc/nixos/flake.nix")

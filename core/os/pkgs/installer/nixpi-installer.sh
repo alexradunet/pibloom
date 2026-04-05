@@ -287,10 +287,10 @@ write_bootstrap_primary_password_file() {
   mkdir -p "$bootstrap_dir"
   printf '%s\n' "$PRIMARY_PASSWORD_VALUE" > "$bootstrap_file"
   chroot "$ROOT_MOUNT" /nix/var/nix/profiles/system/sw/bin/chown \
-    "${PRIMARY_USER_VALUE}:${PRIMARY_USER_VALUE}" \
+    "root:root" \
     /var/lib/nixpi/bootstrap \
     /var/lib/nixpi/bootstrap/primary-user-password
-  chroot "$ROOT_MOUNT" /nix/var/nix/profiles/system/sw/bin/chmod 0770 /var/lib/nixpi/bootstrap
+  chroot "$ROOT_MOUNT" /nix/var/nix/profiles/system/sw/bin/chmod 0755 /var/lib/nixpi/bootstrap
   chroot "$ROOT_MOUNT" /nix/var/nix/profiles/system/sw/bin/chmod 0600 /var/lib/nixpi/bootstrap/primary-user-password
 }
 

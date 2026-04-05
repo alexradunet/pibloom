@@ -8,6 +8,7 @@ fi
 
 target="$1"
 ssh_opts="-o StrictHostKeyChecking=no -o ConnectTimeout=10 -o BatchMode=yes"
+ssh_user="${NIXPI_CHECK_REAL_HARDWARE_SSH_USER:-human}"
 
 pass_count=0
 fail_count=0
@@ -15,7 +16,7 @@ fail_count=0
 run_check() {
     local label="$1"
     local cmd="$2"
-    if ssh $ssh_opts "pi@$target" "$cmd" &>/dev/null; then
+    if ssh $ssh_opts "${ssh_user}@$target" "$cmd" &>/dev/null; then
         echo "PASS  $label"
         pass_count=$((pass_count + 1))
     else
@@ -39,7 +40,7 @@ run_check "Chat UI accessible"        "curl -sf http://localhost:8080"
 
 # Setup wizard state check (non-binary: report status either way)
 echo -n "INFO  Setup wizard state — "
-if ssh $ssh_opts "pi@$target" "[ -f ~/.nixpi/wizard-state/system-ready ]" &>/dev/null; then
+if ssh $ssh_opts "${ssh_user}@$target" "[ -f ~/.nixpi/wizard-state/system-ready ]" &>/dev/null; then
     echo "setup complete"
 else
     echo "setup pending"

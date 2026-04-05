@@ -48,10 +48,6 @@ check-config:
 check-bootstrap-script:
     nix {{ nix_opts }} build {{ flake }}#checks.{{ system }}.bootstrap-script --no-link
 
-# PR-oriented headless VPS smoke lane.
-check-headless-smoke:
-    nix {{ nix_vm_lane_opts }} build {{ flake }}#checks.{{ system }}.nixpi-vps-bootstrap --no-link -L
-
 # Fast installer helper regression tests without booting the ISO.
 check-installer:
     nix {{ nix_opts }} build {{ flake }}#checks.{{ system }}.installer-frontend --no-link

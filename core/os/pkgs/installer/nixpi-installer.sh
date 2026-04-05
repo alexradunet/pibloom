@@ -287,7 +287,7 @@ EOF
 }
 
 install_system() {
-  nixos-install --no-channel-copy --system "${SYSTEM_CLOSURE:-$DESKTOP_SYSTEM}"
+  nixos-install --no-channel-copy --system "${SYSTEM_CLOSURE:-$DESKTOP_SYSTEM}" --root "$ROOT_MOUNT"
 }
 
 confirm_install() {

@@ -292,6 +292,7 @@
             ! test -e "${installerHelper}/share/nixpi-installer/nixpi-install-module.nix.in"
             grep -F 'PREFILL_FILE=""' "${installerHelper}/share/nixpi-installer/nixpi-installer.sh" >/dev/null
             grep -F 'DESKTOP_SYSTEM="@desktopSystem@"' "${installerFrontendSource}" >/dev/null
+            grep -F 'DESKTOP_HOST_MODULE="@desktopHostModule@"' "${installerFrontendSource}" >/dev/null
             touch "$out"
           '';
 

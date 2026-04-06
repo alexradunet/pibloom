@@ -1,5 +1,8 @@
 { pkgs, lib, config, ... }:
 
+let
+  nixpiRebuild = pkgs.callPackage ../pkgs/nixpi-rebuild { };
+in
 {
   imports = [ ./options.nix ];
 
@@ -23,5 +26,6 @@
     typescript
     qemu
     OVMF
+    nixpiRebuild
   ] ++ lib.optionals config.nixpi.security.fail2ban.enable [ pkgs.fail2ban ];
 }

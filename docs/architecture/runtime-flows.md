@@ -16,15 +16,15 @@ Understanding how control and data move through NixPI helps with:
 | Entry Point | Command | Purpose |
 |-------------|---------|---------|
 | Local build | `nix build .#app` | Build the packaged app and bundled assets |
-| System switch | `sudo nixos-rebuild switch --flake .#nixpi` | Apply the local flake to the running machine |
-| Remote update | `sudo nixos-rebuild switch --flake /srv/nixpi` | Pull and apply the configured remote flake |
+| System switch | `sudo nixos-rebuild switch --flake /etc/nixos --impure` | Apply the host-owned system flake that imports NixPI from `/srv/nixpi` |
+| Canonical rebuild | `sudo nixpi-rebuild` | Run the same host-owned rebuild through the operator wrapper |
 
 ### Flow Steps
 
-1. **Nix evaluation** (`flake.nix`)
-   - Imports the NixPI module set
-   - Resolves `piAgent`, `appPackage`, and system checks
-   - Produces the machine closure
+1. **Host flake evaluation** (`/etc/nixos/flake.nix`)
+   - Imports the machine's existing host modules
+   - Imports `./nixpi-integration.nix`, which layers NixPI from `/srv/nixpi`
+   - Produces the machine closure without replacing host-specific hardware settings
 
 2. **App build** (`npm run build`)
    - Compiles TypeScript into `dist/`
@@ -40,7 +40,8 @@ Understanding how control and data move through NixPI helps with:
 
 | File | Role |
 |------|------|
-| `flake.nix` | Module aggregation, packages, checks |
+| `/etc/nixos/flake.nix` | Host-owned rebuild root used for applied systems |
+| `flake.nix` | NixPI development flake for packages, checks, and CI |
 | `core/os/modules/app.nix` | App package install and chat service wiring |
 | `core/os/services/nixpi-chat.nix` | `nixpi-chat.service` wrapper |
 | `package.json` | Build scripts, extensions, runtime dependencies |

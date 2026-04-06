@@ -27,6 +27,10 @@
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = config.nixpi.keyboard;
 
+  # Include redistributable GPU firmware (Intel, AMD) for reliable KMS
+  # initialization on monitor-attached hardware such as mini PCs.
+  hardware.enableRedistributableFirmware = lib.mkDefault true;
+
   fileSystems."/" = lib.mkDefault {
     device = "/dev/disk/by-label/nixos";
     fsType = "ext4";

@@ -74,3 +74,4 @@ run_as_root bash "$REPO_DIR/core/scripts/nixpi-init-host-flake.sh" \
 
 log "Running nixos-rebuild switch --flake /etc/nixos --impure"
 run_as_root nixos-rebuild switch --flake /etc/nixos --impure
+log "Bootstrap complete. Use 'nixpi-rebuild' to rebuild or update your system."

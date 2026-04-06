@@ -18,6 +18,38 @@ import {
 	saveContext,
 } from "./actions.js";
 
+function appendRestoredContext(
+	systemPrompt: string,
+	restoredContext: ReturnType<typeof loadContext> | undefined,
+): string {
+	if (!restoredContext) {
+		return systemPrompt;
+	}
+	return systemPrompt + buildRestoredContextBlock(restoredContext);
+}
+
+function appendMemoryDigest(systemPrompt: string, memoryDigest: string | undefined): string {
+	return memoryDigest ? systemPrompt + memoryDigest : systemPrompt;
+}
+
+function appendPersonaSetup(systemPrompt: string): string {
+	return isPersonaSetupPending() ? systemPrompt + buildPersonaSetupBlock() : systemPrompt;
+}
+
+function buildCompactionSummary(tokensBefore: number): string {
+	return [
+		"COMPACTION GUIDANCE — preserve the following across summarization:",
+		"1. Pi persona identity: values, voice, growth stage, and boundaries.",
+		"2. Human context: name, preferences, recurring topics, and active projects.",
+		"3. Task state: in-progress tasks, open threads, and decisions pending.",
+		`Tokens before compaction: ${tokensBefore}.`,
+	].join("\n");
+}
+
+function normalizeBashCommand(input: unknown): string {
+	return normalizeCommand((input as { command?: string }).command ?? "");
+}
+
 export default function (pi: ExtensionAPI) {
 	let personaBlock: string | undefined;
 	let guardrails: ReturnType<typeof loadGuardrails> | undefined;
@@ -30,46 +62,30 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.on("before_agent_start", async (event, ctx) => {
-		if (personaBlock === undefined) {
-			personaBlock = loadPersona();
-		}
-
+		personaBlock ??= loadPersona();
 		let systemPrompt = `${personaBlock}\n\n${event.systemPrompt}`;
 
 		// Inject restored context once after compaction
-		if (restoredContext === undefined) {
-			restoredContext = loadContext();
-		}
-		if (restoredContext) {
-			systemPrompt += buildRestoredContextBlock(restoredContext);
-			restoredContext = null;
-		}
+		restoredContext ??= loadContext();
+		systemPrompt = appendRestoredContext(systemPrompt, restoredContext);
+		restoredContext = null;
 
-		if (memoryDigest === undefined) {
-			memoryDigest = buildMemoryDigest(ctx.cwd);
-		}
-		if (memoryDigest) {
-			systemPrompt += memoryDigest;
-		}
+		memoryDigest ??= buildMemoryDigest(ctx.cwd);
+		systemPrompt = appendMemoryDigest(systemPrompt, memoryDigest);
 
-		if (isPersonaSetupPending()) {
-			systemPrompt += buildPersonaSetupBlock();
-		}
+		systemPrompt = appendPersonaSetup(systemPrompt);
 
 		return { systemPrompt };
 	});
 
 	pi.on("tool_call", async (event) => {
-		if (guardrails === undefined) {
-			guardrails = loadGuardrails();
-		}
+		guardrails ??= loadGuardrails();
 
 		for (const rule of guardrails) {
 			if (rule.tool !== event.toolName) continue;
 
 			if (event.toolName === "bash") {
-				const raw: string = (event.input as { command?: string }).command ?? "";
-				const command = normalizeCommand(raw);
+				const command = normalizeBashCommand(event.input);
 				if (rule.pattern.test(command)) {
 					return { block: true, reason: `Blocked dangerous command: ${rule.label}` };
 				}
@@ -79,23 +95,12 @@ export default function (pi: ExtensionAPI) {
 
 	pi.on("session_before_compact", async (event) => {
 		const { firstKeptEntryId, tokensBefore } = event.preparation;
-
-		const updateAvailable = checkUpdateAvailable();
-
 		saveContext({
 			savedAt: new Date().toISOString(),
-			updateAvailable,
+			updateAvailable: checkUpdateAvailable(),
 		});
-
-		const summary = [
-			"COMPACTION GUIDANCE — preserve the following across summarization:",
-			"1. Pi persona identity: values, voice, growth stage, and boundaries.",
-			"2. Human context: name, preferences, recurring topics, and active projects.",
-			"3. Task state: in-progress tasks, open threads, and decisions pending.",
-			`Tokens before compaction: ${tokensBefore}.`,
-		].join("\n");
 		return {
-			compaction: { summary, firstKeptEntryId, tokensBefore },
+			compaction: { summary: buildCompactionSummary(tokensBefore), firstKeptEntryId, tokensBefore },
 		};
 	});
 }

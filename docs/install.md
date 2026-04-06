@@ -94,12 +94,14 @@ The public product boundary is VPS-first. The default story is one-command boots
    sudo nixos-rebuild switch --flake /srv/nixpi#nixpi
    ```
 
-5. Open the remote app and verify both paths:
+5. Open the remote app and verify the public paths:
 
    - `/` for chat
    - `/terminal/` for the browser terminal
 
-6. Enroll and verify NetBird before treating the deployment as ready for routine remote use.
+6. From the host, use `http://127.0.0.1:8080/` only as an internal chat backend health probe when you need to distinguish backend availability from the public nginx surface.
+
+7. Enroll and verify NetBird before treating the deployment as ready for routine remote use.
 
 ---
 
@@ -114,8 +116,13 @@ systemctl status nixpi-chat.service
 systemctl status nixpi-ttyd.service
 systemctl status nginx.service
 systemctl status netbird.service
-curl -I http://127.0.0.1:8080/
+
+# Public surface through nginx
+curl -I http://127.0.0.1/
 curl -I http://127.0.0.1/terminal/
+
+# Internal chat backend health probe (bypasses nginx)
+curl -I http://127.0.0.1:8080/
 ```
 
 If those pass, continue normal operation from `/srv/nixpi` and the remote web app.
@@ -148,7 +155,7 @@ sudo nixos-rebuild switch --flake /srv/nixpi#nixpi
 
 ### Common issues
 
-**The remote app does not load** — check `nixpi-chat.service`, `nixpi-ttyd.service`, and `nginx.service`, then verify the local probes on `127.0.0.1` still respond.
+**The remote app does not load** — check `nixpi-chat.service`, `nixpi-ttyd.service`, and `nginx.service`, then verify `/` and `/terminal/` on `127.0.0.1`; if needed, use `http://127.0.0.1:8080/` as the internal backend health probe.
 
 **NetBird is not connected** — run `netbird status`, verify `wt0` exists, and complete enrollment before exposing the system for routine use.
 

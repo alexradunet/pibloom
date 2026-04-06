@@ -1,54 +1,54 @@
 # Live Testing
 
-> Validating a fresh NixPI release
+> Validating a fresh NixPI release against the headless VPS operator path
 
 ## Audience
 
-Operators validating a fresh NixPI image on real hardware or a realistic VM.
+Operators validating a fresh NixPI release on a NixOS-capable VPS or a matching headless VM.
 
 ## Why This Checklist Exists
 
-This is the acceptance checklist for first real NixPI runs.
+This is the release-acceptance checklist for the current public deployment story.
 
-Use it to verify that setup and local chat behavior still match the shipped documentation.
+Use it to verify that bootstrap, the remote app surface, and the canonical `/srv/nixpi` workflow still match the shipped docs.
 
 ## How To Run The Check
 
-### Clean Install
+### Fresh Bootstrap
 
-1. Install the image from a freshly built artifact
-2. Boot the machine and confirm login works on the local console
-3. Verify the first-login wizard starts automatically
+1. Start from a fresh NixOS-capable VPS or headless VM.
+2. Run `nix run github:alexradunet/nixpi#nixpi-bootstrap-vps`.
+3. Confirm the command prepares `/srv/nixpi` and completes `sudo nixos-rebuild switch --flake /srv/nixpi#nixpi`.
 
-For VM validation:
+If you are validating a branch from a local checkout instead of GitHub, `just bootstrap-vps` is the equivalent repo-local path.
 
-- Use `just vm-install-iso` for the simple local VM path
-- Use it to validate installer flow, desktop startup, and the local chat/runtime path inside the guest
-- Treat any host-side forwards as optional debugging aids, not part of the active local-only test path
+### First Remote Validation
 
-### First Boot
+1. Confirm `nixpi-chat.service`, `nixpi-ttyd.service`, `nginx.service`, and `netbird.service` reach their expected state.
+2. Verify the public HTTP surface responds on `http://127.0.0.1/` and `http://127.0.0.1/terminal/`.
+3. Use `http://127.0.0.1:8080/` only as the internal chat backend health probe when you need to distinguish backend availability from the public nginx surface.
+4. Confirm outbound networking works and finish NetBird enrollment before treating the host as ready for routine remote use.
+5. Reboot once and repeat the public-surface checks.
 
-1. Complete the password step
-2. Bring the machine online and confirm outbound network access works
-3. Complete the local chat step and confirm `http://localhost:8080/` responds
-4. Reboot once before finishing release notes
-
-**Expected result**: Pi resumes cleanly after reboot and does not require manual cleanup of partial wizard state.
+**Expected result:** the remote app and browser terminal return after reboot, and the system remains operable from the canonical checkout without any local-session setup flow.
 
 ### Core Runtime
 
-1. Confirm `nixpi-chat.service` is active
-2. Verify the local web chat loads and Pi replies to a message
-3. If agent overlays exist, confirm malformed overlays are skipped without breaking chat availability
+1. Confirm the remote app loads on `/`.
+2. Confirm the browser terminal loads on `/terminal/`.
+3. Verify the chat runtime replies to a basic message through the remote app.
+4. If agent overlays exist, confirm malformed overlays are skipped without breaking chat availability.
 
 ## Reference
 
 ### Ship Gate
 
-- First-boot completes on a clean machine
-- One reboot cycle preserves expected state
-- Local web chat works end to end
-- Known risks for any optional packaged workloads are documented
+- Fresh bootstrap completes on a clean host.
+- `/srv/nixpi` is present and usable for rebuilds after install.
+- The public app surface works on `/` and `/terminal/`.
+- The internal backend health probe on `127.0.0.1:8080` still responds when needed for debugging.
+- One reboot cycle preserves the expected remote operator workflow.
+- Known risks for any optional packaged workloads are documented.
 
 ## Related
 

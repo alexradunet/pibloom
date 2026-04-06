@@ -39,19 +39,24 @@ systemctl status netbird.service
 
 Expected result: all four services are active or activatable without any desktop login step.
 
-### 2. Verify the Remote App Paths
+### 2. Verify the Public App Surface and Internal Backend Probe
 
 From the host itself:
 
 ```bash
-curl -I http://127.0.0.1:8080/
+# Public surface through nginx
+curl -I http://127.0.0.1/
 curl -I http://127.0.0.1/terminal/
+
+# Internal chat backend health probe (bypasses nginx)
+curl -I http://127.0.0.1:8080/
 ```
 
 Expected result:
 
 - the main app responds on `/`
 - the browser terminal responds on `/terminal/`
+- `http://127.0.0.1:8080/` responds as the internal chat backend health probe
 
 ### 3. Verify NetBird Before Normal Use
 

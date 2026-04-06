@@ -26,7 +26,7 @@ NixPI exists to give Pi a durable, inspectable home on a machine you control:
 
 Current platform capabilities:
 
-- canonical headless `vps` / `nixpi` NixOS profile for installed systems
+- canonical headless `nixpi` NixOS host profile for installed systems
 - one-command VPS bootstrap via `nixpi-bootstrap-vps`
 - a remote web app with chat plus a browser terminal
 - Pi SDK mode inside the application process

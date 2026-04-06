@@ -16,8 +16,8 @@ This section covers the headless operator workflow for NixPI:
 | Topic | Description |
 |-------|-------------|
 | [Quick Deploy](./quick-deploy) | Bootstrap a VPS, enroll NetBird, and open the remote app |
-| [First Boot Setup](./first-boot-setup) | Validate first boot for the chat + terminal control plane |
-| [Live Testing](./live-testing) | Runtime validation checklists |
+| [First Boot Setup](./first-boot-setup) | Validate the public app surface plus the internal backend probe |
+| [Live Testing](./live-testing) | Release-time validation for the headless VPS operator path |
 
 ## Quick Reference
 

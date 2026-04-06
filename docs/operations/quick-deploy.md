@@ -104,15 +104,26 @@ sudo nixos-rebuild switch --rollback
 
 ## 5. Validate the Headless Surface
 
-Smoke-check the core services on a running host:
+Smoke-check the core services on a running host. Keep the public HTTP surface separate from the internal chat backend probe:
 
 ```bash
 systemctl status nixpi-chat.service
 systemctl status nixpi-ttyd.service
 systemctl status nginx.service
-curl -I http://127.0.0.1:8080/
+
+# Public surface through nginx
+curl -I http://127.0.0.1/
 curl -I http://127.0.0.1/terminal/
+
+# Internal chat backend health probe (bypasses nginx)
+curl -I http://127.0.0.1:8080/
 ```
+
+Expected result:
+
+- `/` responds from the main chat surface
+- `/terminal/` responds from the browser terminal route
+- `http://127.0.0.1:8080/` responds as the internal chat backend health probe
 
 For repo-side validation during development:
 

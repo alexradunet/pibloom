@@ -21,6 +21,8 @@ const MIME_TYPES: Record<string, string> = {
 	".ico": "image/x-icon",
 };
 
+type RouteMatch = "chat" | "reset" | "static" | "method_not_allowed";
+
 function warmSession(piSession: PiSessionBridge): void {
 	// Pre-create the in-process Pi SDK session so first request latency stays low.
 	piSession.start().catch((err: unknown) => {
@@ -55,6 +57,10 @@ function writeJsonError(res: http.ServerResponse, statusCode: number, error: str
 	res.writeHead(statusCode).end(JSON.stringify({ error }));
 }
 
+function writeEmpty(res: http.ServerResponse, statusCode: number): void {
+	res.writeHead(statusCode).end();
+}
+
 function beginEventStream(res: http.ServerResponse): void {
 	res.writeHead(200, {
 		"Content-Type": "application/x-ndjson",
@@ -85,6 +91,19 @@ function isSessionResetRequest(req: http.IncomingMessage, url: URL): boolean {
 	return req.method === "DELETE" && /^\/chat\/[^/]+$/.test(url.pathname);
 }
 
+function matchRoute(req: http.IncomingMessage, url: URL): RouteMatch {
+	if (req.method === "POST" && url.pathname === "/chat") {
+		return "chat";
+	}
+	if (isSessionResetRequest(req, url)) {
+		return "reset";
+	}
+	if (req.method === "GET") {
+		return "static";
+	}
+	return "method_not_allowed";
+}
+
 function resolveStaticFilePath(staticDir: string, pathname: string): string | null {
 	const filePath = path.join(staticDir, pathname === "/" ? "index.html" : pathname);
 	const root = staticDir.endsWith(path.sep) ? staticDir : `${staticDir}${path.sep}`;
@@ -102,42 +121,63 @@ function serveStaticFile(res: http.ServerResponse, filePath: string): void {
 	}
 }
 
+async function handleChatRoute(
+	req: http.IncomingMessage,
+	res: http.ServerResponse,
+	piSession: PiSessionBridge,
+): Promise<void> {
+	const parsed = parseChatRequest(await readRequestBody(req));
+	if (!parsed.ok) {
+		writeJsonError(res, 400, parsed.error);
+		return;
+	}
+
+	await streamChatResponse(res, piSession, parsed.message);
+}
+
+async function handleResetRoute(res: http.ServerResponse, piSession: PiSessionBridge): Promise<void> {
+	await piSession.reset();
+	writeEmpty(res, 204);
+}
+
+function handleStaticRoute(res: http.ServerResponse, staticDir: string, pathname: string): void {
+	const filePath = resolveStaticFilePath(staticDir, pathname);
+	if (!filePath) {
+		writeEmpty(res, 403);
+		return;
+	}
+	serveStaticFile(res, filePath);
+}
+
+function readServerConfig(moduleUrl: string) {
+	return {
+		port: parseInt(process.env.NIXPI_CHAT_PORT ?? "8080", 10),
+		piDir: process.env.PI_DIR ?? `${process.env.HOME}/.pi`,
+		staticDir: path.join(path.dirname(fileURLToPath(moduleUrl)), "frontend/dist"),
+	};
+}
+
 export function createChatServer(opts: ChatServerOptions): http.Server {
 	const piSession = new PiSessionBridge({ cwd: opts.agentCwd });
 	warmSession(piSession);
 
 	const server = http.createServer(async (req, res) => {
 		const url = new URL(req.url ?? "/", `http://${req.headers.host}`);
-
-		if (req.method === "POST" && url.pathname === "/chat") {
-			const parsed = parseChatRequest(await readRequestBody(req));
-			if (!parsed.ok) {
-				writeJsonError(res, 400, parsed.error);
+		switch (matchRoute(req, url)) {
+			case "chat":
+				await handleChatRoute(req, res, piSession);
 				return;
-			}
-
-			await streamChatResponse(res, piSession, parsed.message);
-			return;
-		}
-
-		// Session id in the URL is tolerated for compatibility but ignored.
-		if (isSessionResetRequest(req, url)) {
-			await piSession.reset();
-			res.writeHead(204).end();
-			return;
-		}
-
-		if (req.method === "GET") {
-			const filePath = resolveStaticFilePath(opts.staticDir, url.pathname);
-			if (!filePath) {
-				res.writeHead(403).end();
+			case "reset":
+				// Session id in the URL is tolerated for compatibility but ignored.
+				await handleResetRoute(res, piSession);
 				return;
-			}
-			serveStaticFile(res, filePath);
-			return;
+			case "static":
+				handleStaticRoute(res, opts.staticDir, url.pathname);
+				return;
+			case "method_not_allowed":
+				writeEmpty(res, 405);
+				return;
 		}
-
-		res.writeHead(405).end();
 	});
 
 	server.on("close", () => {
@@ -162,9 +202,7 @@ export function isMainModule(argv1: string | undefined, moduleUrl: string): bool
 }
 
 if (isMainModule(process.argv[1], import.meta.url)) {
-	const port = parseInt(process.env.NIXPI_CHAT_PORT ?? "8080", 10);
-	const piDir = process.env.PI_DIR ?? `${process.env.HOME}/.pi`;
-	const staticDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "frontend/dist");
+	const { port, piDir, staticDir } = readServerConfig(import.meta.url);
 
 	const server = createChatServer({
 		agentCwd: piDir,

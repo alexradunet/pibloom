@@ -1,126 +1,128 @@
 # Quick Deploy
 
-> Build, install, and validate NixPI
+> Bootstrap NixPI onto a headless VPS and operate it from the remote web app
 
 ## Audience
 
-Operators and maintainers installing NixPI from the official installer image or validating local builds.
+Operators and maintainers deploying NixPI onto a NixOS-capable VPS or equivalent headless VM.
 
 ## Security Note: NetBird Is Mandatory
 
-NetBird is the network security boundary for all NixPI services. The firewall trusts only the NetBird interface (`wt0`). Without NetBird running, the local web chat surface is exposed to the local network.
+NetBird is the network security boundary for NixPI services. The firewall trusts only the NetBird interface (`wt0`). Without NetBird running, the remote app is exposed to whatever network can reach the host.
 
-**Complete NetBird setup and verify `wt0` is active before exposing this machine to any network.** See [Security Model](../reference/security-model) for the full threat model.
+**Complete NetBird setup and verify `wt0` is active before treating the deployment as ready for normal use.** See [Security Model](../reference/security-model) for the full threat model.
 
-## Installation Workflow
+## Canonical Deployment Path
 
-NixPI ships as a minimal NixOS installer image. It boots to a console and exposes a destructive terminal installer wizard as `nixpi-installer`.
+NixPI is now VPS-first and headless-first. The standard public deployment flow is:
 
-### 1. Build or Download the Installer ISO
+1. provision a NixOS-capable VPS
+2. run the bootstrap command once
+3. open the remote web app for chat and terminal access
+4. keep operating from the canonical checkout at `/srv/nixpi`
 
-Build locally:
+## 1. Provision a NixOS-Capable VPS
 
-```bash
-nix build .#installerIso
-```
+Bring up a fresh x86_64 VPS or headless VM with:
 
-The resulting image is in `./result/iso/`.
+- SSH access
+- `sudo` privileges
+- outbound internet access
+- enough disk and RAM to complete a `nixos-rebuild switch`
 
-### 2. Write the Image to USB
+If you are evaluating changes locally, a headless NixOS VM is fine. The public docs still optimize for the same remote operator contract used on a VPS.
 
-Use your preferred image writer, or from a Linux host:
+## 2. Run the Bootstrap Command
 
-```bash
-sudo dd if=./result/iso/*.iso of=/dev/<usb-device> bs=4M status=progress oflag=sync
-```
-
-### 3. Install NixPI
-
-1. Boot the USB stick
-2. Open a root shell with `sudo -i`
-3. Run `nixpi-installer`
-4. Choose the target disk
-5. Confirm the destructive install. The installer always creates `EFI + ext4 root + 8 GiB swap`.
-6. Reboot into the installed system
-
-The installer writes `/etc/nixos/nixpi-install.nix` (hashed password, hostname, primary user) and a `configuration.nix` that imports the pre-built desktop closure carried in the ISO. No git clone or `nixos-rebuild` happens after reboot.
-
-### 4. Complete Setup
-
-After reboot, the system autologins into the XFCE desktop. Open a browser to `http://nixpi.local:8080/setup` (or `http://localhost:8080/setup`). The web wizard shows a single optional field: a Netbird setup key. Submit the form to configure Netbird and mark the system ready. The page redirects to `/` when done.
-
-After setup, log in via the terminal and run `pi /login` and `pi /model`.
-
-## Development: Local Builds and VM Testing
-
-For development and testing, use the ISO install workflow in QEMU.
-
-### Prerequisites
-
-Install [Nix](https://determinate.systems/posts/determinate-nix-installer/) and `just`:
+From the target host:
 
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-sudo dnf install -y just qemu-system-x86 edk2-ovmf   # Fedora build host
+nix run github:alexradunet/nixpi#nixpi-bootstrap-vps
 ```
 
-Or install all deps at once:
+If you already have a local checkout of this branch, you can use the repo-local command instead:
 
 ```bash
-just deps
+just bootstrap-vps
 ```
 
-### Common Commands
+The bootstrap package:
+
+- clones the repo into `/srv/nixpi` if it does not exist
+- refreshes that checkout from `origin/main`
+- runs `sudo nixos-rebuild switch --flake /srv/nixpi#nixpi`
+
+> Warning: rerunning the bootstrap command on a host with local commits in `/srv/nixpi` will reset that checkout to `origin/main`. Commit or export local work first.
+
+## 3. Connect to the Remote App
+
+After the switch completes, NixPI runs as a headless service set. The default operator surface is the remote web app:
+
+- `/` — main chat surface
+- `/terminal/` — browser terminal
+
+Preferred access is over NetBird. In practice that means:
+
+1. enroll the host in NetBird
+2. confirm `netbird status` reports a connected peer
+3. verify the `wt0` interface exists
+4. open the remote app over the NetBird-reachable host name or IP
+
+Useful checks:
 
 ```bash
-just iso             # Build the installer ISO
-just vm-install-iso  # Boot the ISO in QEMU and run the full install flow
-just vm-ssh          # SSH into the installer VM or installed system
-just check-config    # Fast: validate NixOS config
-just check-boot      # Thorough: boot test in VM
+systemctl status netbird.service
+netbird status
+ip link show wt0
 ```
 
-**Default operator user**: `human` (hardcoded). The primary account password is set during the interactive installer run.
+## 4. Operate from `/srv/nixpi`
 
-## OTA Updates
+Treat `/srv/nixpi` as the installed source of truth. Use it for edits, sync, and rebuilds.
 
-Use `~/nixpi` as the canonical editable source of truth for an installed system. Treat `/etc/nixos` as deployed compatibility state, not the repo you edit or sync.
-
-The recommended fork-first workflow is:
+Apply local changes manually:
 
 ```bash
-git clone <your-fork-url> ~/nixpi
-cd ~/nixpi
-git remote add upstream https://github.com/alexradunet/nixpi.git
+cd /srv/nixpi
+sudo nixos-rebuild switch --flake /srv/nixpi#nixpi
 ```
 
-To apply local changes manually:
+Sync with the default remote and rebuild:
 
 ```bash
-cd ~/nixpi
-sudo nixos-rebuild switch --flake /etc/nixos#$(hostname -s)
+cd /srv/nixpi
+git fetch origin
+git rebase origin/main
+sudo nixos-rebuild switch --flake /srv/nixpi#nixpi
 ```
 
-To sync with upstream and rebuild:
-
-```bash
-cd ~/nixpi
-git fetch upstream
-git rebase upstream/main
-git push origin main
-sudo nixos-rebuild switch --flake /etc/nixos#$(hostname -s)
-```
-
-Automatic updates remain local-only and do not `git pull` for the user. Syncing a fork with upstream stays a manual step so local customizations remain under the operator's control.
-
-To roll back:
+Roll back if needed:
 
 ```bash
 sudo nixos-rebuild switch --rollback
 ```
 
+## 5. Validate the Headless Surface
+
+Smoke-check the core services on a running host:
+
+```bash
+systemctl status nixpi-chat.service
+systemctl status nixpi-ttyd.service
+systemctl status nginx.service
+curl -I http://127.0.0.1:8080/
+curl -I http://127.0.0.1/terminal/
+```
+
+For repo-side validation during development:
+
+```bash
+just check-config
+nix build .#checks.x86_64-linux.nixpi-vps-bootstrap --no-link -L
+```
+
 ## Related
 
 - [First Boot Setup](./first-boot-setup)
-- [Live Testing](./live-testing)
+- [Install NixPI](../install)
 - [Security Model](../reference/security-model)

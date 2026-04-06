@@ -1,48 +1,53 @@
 # Operations
 
-> Deploy, operate, and maintain NixPI
+> Deploy, operate, and maintain NixPI as a headless VPS service
 
 ## What's In This Section
 
-This section covers operational procedures for NixPI:
+This section covers the headless operator workflow for NixPI:
 
-- Installing and deploying NixPI
-- First-boot setup procedures
-- Testing and validation
-- Day-to-day operations
+- bootstrapping a fresh VPS
+- validating first boot and remote service readiness
+- running updates and rollbacks from `/srv/nixpi`
+- day-to-day service inspection and smoke testing
 
 ## Operations Topics
 
 | Topic | Description |
 |-------|-------------|
-| [Quick Deploy](./quick-deploy) | Build, deploy, and VM testing |
-| [First Boot Setup](./first-boot-setup) | Initial setup procedures |
-| [Live Testing](./live-testing) | Validation checklists |
+| [Quick Deploy](./quick-deploy) | Bootstrap a VPS, enroll NetBird, and open the remote app |
+| [First Boot Setup](./first-boot-setup) | Validate first boot for the chat + terminal control plane |
+| [Live Testing](./live-testing) | Runtime validation checklists |
 
 ## Quick Reference
 
 ### Common Commands
 
 ```bash
-# Deploy
-just iso             # Build installer ISO
-cd ~/nixpi
-git fetch upstream
-git rebase upstream/main
-sudo nixos-rebuild switch --flake /etc/nixos#$(hostname -s)
+# Fresh VPS bootstrap
+nix run github:alexradunet/nixpi#nixpi-bootstrap-vps
+
+# Rebuild from the canonical installed checkout
+cd /srv/nixpi
+git fetch origin
+git rebase origin/main
+sudo nixos-rebuild switch --flake /srv/nixpi#nixpi
 sudo nixos-rebuild switch --rollback
 
-# VMs
-just vm-install-iso  # Boot installer ISO in QEMU
-just vm-ssh          # SSH into running installer VM
+# Service inspection
+systemctl status nixpi-chat.service
+systemctl status nixpi-ttyd.service
+systemctl status nginx.service
+systemctl status netbird.service
 
-# Testing
-just check-config    # Validate NixOS config
-just check-boot      # VM boot test
+# Validation
+just check-config
+nix build .#checks.x86_64-linux.nixpi-vps-bootstrap --no-link -L
 ```
 
 ## Related
 
-- [Architecture](../architecture/) - System design
-- [Codebase](../codebase/) - Implementation details
-- [Reference](../reference/) - Deep technical docs
+- [Install NixPI](../install) - public install path
+- [Architecture](../architecture/) - system design
+- [Codebase](../codebase/) - implementation details
+- [Reference](../reference/) - deep technical docs

@@ -1,105 +1,113 @@
 # First Boot Setup
 
-> Bringing up a fresh NixPI host
+> Validating a fresh headless NixPI host after bootstrap
 
 ## Audience
 
-Operators bringing up a fresh NixPI host.
+Operators bringing up a fresh NixPI VPS or headless VM.
 
 ## Prerequisites
 
-Before first-boot setup, you need a system installed from the NixPI installer image:
+Before this checklist, you should already have:
 
-1. Build or download the NixPI installer ISO
-2. Boot the installer and run `sudo -i && nixpi-installer`
-3. Choose your target disk and layout, then enter your hostname and primary user in the terminal wizard
-4. Reboot into the installed system
-5. The installed machine initially boots a minimal NixPI base from `/etc/nixos`
-6. During first boot, the setup wizard prepares `/srv/nixpi` as the canonical system repo, keeps `~/nixpi` for Pi's editable workspace data, and writes the host-specific flake at `/etc/nixos`
-7. The installed system autologins into the official NixPI XFCE desktop and opens the NixPI terminal there
+1. a NixOS-capable VPS or headless VM
+2. a successful `nixpi-bootstrap-vps` run
+3. the canonical checkout present at `/srv/nixpi`
+4. a completed `sudo nixos-rebuild switch --flake /srv/nixpi#nixpi`
 
-For VM install-flow testing:
+## What First Boot Means Now
 
-- `just vm-install-iso` runs the installer in the default user-mode NAT network with host forwards
-- use this path to validate install flow, XFCE startup, and the local chat/runtime path inside the guest
-- host-side forwards are optional debugging aids, not part of the active operator workflow
+NixPI now expects the host to come up as a remote, headless service platform.
 
-## Why Setup Is Split In Two
+A fresh system should come up with one remote operator surface:
 
-NixPI separates deterministic machine setup from Pi-guided personalization.
+- chat in the main web app
+- a browser terminal at `/terminal/`
+- Pi running in SDK mode inside the application process
+- system management still anchored in `/srv/nixpi`
 
-That split keeps:
+## First-Boot Checklist
 
-- Host provisioning in a predictable bash flow
-- Persona customization in Pi where it belongs
-- Interrupted setup resumable without redoing the entire host bootstrap
+### 1. Verify the Base Services
 
-## How First Boot Works
+```bash
+systemctl status nixpi-chat.service
+systemctl status nixpi-ttyd.service
+systemctl status nginx.service
+systemctl status netbird.service
+```
 
-NixPI's first-boot experience has two phases.
+Expected result: all four services are active or activatable without any desktop login step.
 
-### Phase 1: Bash Wizard
+### 2. Verify the Remote App Paths
 
-`setup-wizard.sh` handles deterministic machine setup from the XFCE-launched NixPI terminal.
+From the host itself:
 
-**Current responsibilities**:
+```bash
+curl -I http://127.0.0.1:8080/
+curl -I http://127.0.0.1/terminal/
+```
 
-1. Password change and WiFi/internet setup, with WiFi preferred over Ethernet when available
-2. Prepare `/srv/nixpi` and write the host-specific `/etc/nixos` flake
-3. Promote the minimal base into the full appliance with `nixos-rebuild switch`
-4. Local web chat bootstrap
-5. AI provider defaults for Pi
-6. Built-in service provisioning
-7. User-facing system update guidance for operating the canonical `/srv/nixpi` repo
+Expected result:
 
-**Built-in services provisioned**:
+- the main app responds on `/`
+- the browser terminal responds on `/terminal/`
 
-- Pi Web Chat on `:8080` through `nixpi-chat.service`
+### 3. Verify NetBird Before Normal Use
 
-**Bootstrap security lifecycle**:
+```bash
+netbird status
+ip link show wt0
+```
 
-- Pi Web Chat is brought up during bootstrap and refreshed as part of setup completion
-- The active operator path remains on-box through the local desktop and web chat surface
+Expected result:
 
-### Phase 2: Pi Persona Step
+- NetBird reports a connected peer when enrollment is complete
+- `wt0` exists before you rely on the deployment as your secure operator path
 
-After the wizard is complete, `setup` tracks a single Pi-side step:
+If NetBird is not enrolled yet, finish that step before treating the host as ready for routine remote access.
 
-- `persona`
+### 4. Verify the Canonical Repo Flow
 
-Pi injects setup guidance until that step is marked complete.
+```bash
+cd /srv/nixpi
+git status --short
+sudo nixos-rebuild switch --flake /srv/nixpi#nixpi
+```
 
-During that Pi-side first conversation, Pi should also orient the user to the platform:
+Expected result: the installed system rebuilds from `/srv/nixpi` without depending on a separate `/etc/nixos` checkout.
 
-- NixPI keeps durable state in `~/nixpi/` using inspectable files
-- `/srv/nixpi` is the canonical git working tree for syncing and rebuilding the system, while `~/nixpi` remains the user-editable workspace for Pi data such as persona, objects, episodes, guardrails, and agent overlays
-- NixPI can propose persona or workflow changes through tracked evolutions instead of silently changing itself
-- Pi Web Chat is the native interaction surface, served by `nixpi-chat.service` under the primary operator account
-- Multi-agent overlays are optional and activate when valid definitions exist in `~/nixpi/Agents/*/AGENTS.md`
+## Operator Orientation
+
+After first boot, keep these boundaries in mind:
+
+- `/srv/nixpi` is the canonical git working tree for sync, review, and rebuilds
+- the remote web app is the default operator control plane
+- `/terminal/` exists for shell-first recovery and administration
+- Pi runs in SDK mode inside the app runtime rather than through a separate local-session story
+- system services remain inspectable with normal NixOS and systemd tooling
 
 ## Reference
 
-### Relevant Files
+### Relevant Services
 
-| Path | Purpose |
+| Service | Purpose |
 |------|---------|
-| `~/.nixpi/.setup-complete` | Wizard complete sentinel |
-| `~/.nixpi/wizard-state/persona-done` | Persona step complete marker |
-| `nixpi-chat.service` | Local web chat service exposed on the machine itself |
+| `nixpi-chat.service` | Main remote app runtime |
+| `nixpi-ttyd.service` | Browser terminal backend |
+| `nginx.service` | HTTP/HTTPS entry point |
+| `netbird.service` | Mesh networking and remote security boundary |
 
 ### Current Behavior
 
-- Before the wizard completes, Pi does not start normal conversation
-- After the wizard completes, opening Pi checks only for `persona-done`
-- If persona setup is still pending, Pi starts that flow first and defers unrelated conversation
-- After `persona-done` exists, Pi resumes normal conversation
-- If you need to restart persona setup, remove `~/.nixpi/wizard-state/persona-done` and open Pi again
-- XFCE is the only supported automatic first-boot entry path
-- The wizard enables `nixpi-chat.service` as part of setup completion
-- The wizard refreshes the local chat config so the on-box interaction surface is ready after reboot
-- The wizard leaves the machine ready for local web-chat use without requiring any additional access layer
+- the machine boots to a normal headless multi-user target
+- no desktop session is required to start operating NixPI
+- the primary user workflow is remote web app plus browser terminal
+- updates and rollbacks are run from `/srv/nixpi`
+- if the remote surface fails, service status and logs remain the first recovery tools
 
 ## Related
 
 - [Quick Deploy](./quick-deploy)
+- [Install NixPI](../install)
 - [Live Testing](./live-testing)

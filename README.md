@@ -1,71 +1,62 @@
 # NixPI
 
-> Pi-native AI companion OS on NixOS
+> VPS-first, headless AI companion OS on NixOS
 
-Very opinionated NixOS build personally for me and my workflows and how I imagine a PC will be in the future. My goal is to leverage the current AI Agents Technology to build an AI Firsts OS designed specifically for one end user to act like a personal life assistant and knowledge management system.
+NixPI packages Pi, host integration, durable files, and a remote operator surface into one self-hosted NixOS system.
 
-It is very experimental and I am still currently developing it based on my needs and my own code engineering preferences.
+The primary product story is now:
 
-I plan to keep this project as minimal as possible so the end user can evolve the OS through Pi without carrying a large default runtime surface.
+- deploy to a NixOS-capable VPS
+- operate it headlessly
+- use one remote web app for chat plus a browser terminal
+- keep `/srv/nixpi` as the canonical installed checkout
+- run Pi in SDK mode inside the app runtime
 
 ## 🌱 Why NixPI Exists
 
-NixPI packages Pi, host integration, memory, and a small set of built-in user services into one self-hosted system.
+NixPI exists to give Pi a durable, inspectable home on a machine you control:
 
-NixPI exists to give Pi:
-
-- a durable home directory under `~/nixpi/`
+- a canonical system repo at `/srv/nixpi`
+- a remote web control plane for chat and terminal access
 - first-class host tools for NixOS workflows
-- a local repo proposal workflow for human-reviewed system changes
-- a local web-chat surface for talking to Pi on the machine itself
-- a minimal but inspectable operating model based on files, NixOS, and systemd
+- a minimal operating model based on files, NixOS, and systemd
+- a small default runtime surface that can evolve through Pi
 
 ## 🚀 What Ships Today
 
 Current platform capabilities:
 
-- NixPI directory management and blueprint seeding for `~/nixpi/`
-- persona injection, shell guardrails, durable-memory digest injection, and compaction context persistence
-- local-only Nix proposal support for checking the seeded repo clone, refreshing `flake.lock`, and validating config before review
-- host OS management tools for NixOS updates, local rebuild/switch, systemd, health, and reboot scheduling
-- a built-in local web chat service
-- markdown-native durable memory in `~/nixpi/Objects/`
-- append-only episodic memory in `~/nixpi/Episodes/`
-- a local-first Pi runtime focused on web chat, host tools, and durable files
-- proactive daemon jobs for heartbeat and simple cron-style scheduled turns
-- a first-boot flow split between a bash wizard and a Pi-guided persona step
+- canonical headless `vps` / `nixpi` NixOS profile for installed systems
+- one-command VPS bootstrap via `nixpi-bootstrap-vps`
+- a remote web app with chat plus a browser terminal
+- Pi SDK mode inside the application process
+- host OS management through NixOS rebuild, rollback, systemd, and health tooling
+- NetBird-based remote access and security perimeter
+- headless NixOS VM coverage for bootstrap and service readiness
 
 ## 🚀 Quick Start
 
-Install NixPI from the standard minimal NixPI installer image:
+Deploy NixPI to a fresh NixOS VPS:
 
 ```bash
-# 1. Build the installer ISO
-nix build .#installerIso
-
-# 2. Write ./result/iso/*.iso to a USB stick and boot it
-# 3. In the live environment:
-#    sudo -i
-#    nixpi-installer
-#    choose the target disk and layout in the terminal wizard
-# 4. Reboot into NixPI, then finish first boot
-setup-wizard.sh
+nix run github:alexradunet/nixpi#nixpi-bootstrap-vps
 ```
 
-After install, edit and sync NixPI from the canonical `/srv/nixpi` git checkout, and rebuild the machine through the host flake in `/etc/nixos`:
+That bootstrap command prepares the canonical checkout at `/srv/nixpi` and switches the system to the NixPI host profile.
+
+After bootstrap, open the remote web app and use the built-in chat plus browser terminal. For later changes, work from `/srv/nixpi` and rebuild with:
 
 ```bash
 cd /srv/nixpi
-sudo nixos-rebuild switch --flake /etc/nixos#$(hostname -s)
+git fetch origin
+git rebase origin/main
+sudo nixos-rebuild switch --flake /srv/nixpi#nixpi
 ```
 
-To sync with upstream later:
+To roll back:
 
 ```bash
-cd /srv/nixpi
-git fetch upstream
-git rebase upstream/main
-sudo nixos-rebuild switch --flake /etc/nixos#$(hostname -s)
+sudo nixos-rebuild switch --rollback
 ```
 
 See the [documentation site](https://alexradunet.github.io/NixPI) for detailed instructions.
@@ -78,8 +69,9 @@ Or browse by topic:
 
 | Your Goal | Start Here |
 |-----------|------------|
-| Installing NixPI | [Quick Deploy](https://alexradunet.github.io/NixPI/operations/quick-deploy) |
-| First-time setup | [First Boot Setup](https://alexradunet.github.io/NixPI/operations/first-boot-setup) |
+| Deploy NixPI to a VPS | [Quick Deploy](https://alexradunet.github.io/NixPI/operations/quick-deploy) |
+| Validate first boot | [First Boot Setup](https://alexradunet.github.io/NixPI/operations/first-boot-setup) |
+| Install from the public path | [Install NixPI](https://alexradunet.github.io/NixPI/install) |
 | Understanding the system | [Architecture Overview](https://alexradunet.github.io/NixPI/architecture/) |
 | Reading the code | [Codebase Guide](https://alexradunet.github.io/NixPI/codebase/) |
 | Operating a running system | [Operations](https://alexradunet.github.io/NixPI/operations/) |
@@ -91,21 +83,24 @@ To run the docs locally:
 npm run docs:dev
 ```
 
-## 💻 Default Install
+## 💻 Default Service Surface
 
 Installed by default:
 
 - `nixpi-chat.service`
+- `nixpi-ttyd.service`
+- `nginx.service`
+- `netbird.service`
 
 ## 🌿 Repository Layout
 
 | Path | Purpose |
 |------|---------|
-| `core/` | NixPI core: NixOS modules, chat server, persona, skills, built-in extensions, and shared runtime code |
-| `core/os/` | NixOS modules and host configurations |
-| `core/chat-server/` | Local Pi chat runtime and web interface |
+| `core/` | NixPI core: NixOS modules, app runtime, persona, skills, built-in extensions, and shared code |
+| `core/os/` | NixOS modules, host configurations, and bootstrap packages |
+| `core/chat-server/` | Remote app runtime and frontend shell |
 | `core/pi/extensions/` | Pi-facing NixPI extensions shipped in the default runtime |
-| `tests/` | unit, integration, chat-server, and extension tests |
+| `tests/` | unit, integration, chat-server, and NixOS VM tests |
 | `docs/` | live project documentation (VitePress site) |
 
 ## 🧩 Capability Model
@@ -119,7 +114,8 @@ NixPI extends Pi through two active runtime layers:
 
 Built-in service surface is part of the base NixOS system:
 
-- `Pi Web Chat` on `:8080`
+- main remote app on `/`
+- browser terminal on `/terminal/`
 
 ## 📚 Documentation Structure
 
@@ -129,7 +125,7 @@ Built-in service surface is part of the base NixOS system:
 | [Getting Started](https://alexradunet.github.io/NixPI/getting-started/) | New maintainer orientation |
 | [Architecture](https://alexradunet.github.io/NixPI/architecture/) | Subsystem boundaries and runtime flows |
 | [Codebase](https://alexradunet.github.io/NixPI/codebase/) | File-by-file responsibility guide |
-| [Operations](https://alexradunet.github.io/NixPI/operations/) | Deploy, setup, and run procedures |
+| [Operations](https://alexradunet.github.io/NixPI/operations/) | Deploy, validate, and run procedures |
 | [Reference](https://alexradunet.github.io/NixPI/reference/) | Deep technical documentation |
 | [Contributing](https://alexradunet.github.io/NixPI/contributing/) | Maintainer guidelines |
 

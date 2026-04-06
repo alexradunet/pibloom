@@ -1,70 +1,63 @@
 ---
 title: Install NixPI
-description: Build the installer, boot into NixPI, and finish the first-boot flow.
+description: Bootstrap NixPI onto a NixOS-capable VPS and operate it from the remote web app.
 ---
 
 <SectionHeading
   label="Install path"
-  title="The shortest path from repository to running machine"
-  lede="NixPI currently assumes a technical operator. The install flow is direct: build the installer image, boot it, run the installer, then finish the first-boot setup inside the new system."
+  title="The shortest path from repository to a running VPS"
+  lede="NixPI now targets a VPS-first, headless operator flow. The public install path is a one-command bootstrap that prepares `/srv/nixpi`, switches the host to the NixPI profile, and leaves you with one remote web app for chat plus terminal access."
 />
 
 <PresentationBand
   eyebrow="Quick path"
-  title="From source tree to live system"
-  lede="This is the fastest public-facing install narrative. The full operational detail remains in the docs section."
+  title="From host access to live NixPI"
+  lede="This is the fastest public-facing install narrative. The more detailed operational guidance lives in the Operations section."
 >
 
 <TerminalFrame title="Quick Install">
 ```bash
-nix build .#installerIso
-
-# write the generated ISO to a USB stick and boot it
-sudo -i
-nixpi-installer
-
-# after reboot
-setup-wizard.sh
+nix run github:alexradunet/nixpi#nixpi-bootstrap-vps
 ```
 </TerminalFrame>
 
 </PresentationBand>
 
-## What happens during setup
+## What happens during bootstrap
 
 <div class="quick-grid">
   <div class="quick-card">
-    <strong>1. Build the installer</strong>
-    The repository produces a NixPI installer ISO through the flake output.
+    <strong>1. Start with a NixOS-capable VPS</strong>
+    Provision a fresh x86_64 VPS or headless VM with SSH, sudo, and outbound internet access.
   </div>
   <div class="quick-card">
-    <strong>2. Boot the live environment</strong>
-    Use the generated image on a USB stick or test it inside a VM first.
+    <strong>2. Run the bootstrap command</strong>
+    The bootstrap package clones or refreshes the canonical checkout in <code>/srv/nixpi</code>.
   </div>
   <div class="quick-card">
-    <strong>3. Run the installer</strong>
-    The installer prepares a minimal bootable NixPI base on the target system.
+    <strong>3. Switch the system</strong>
+    Bootstrap runs <code>sudo nixos-rebuild switch --flake /srv/nixpi#nixpi</code> to activate the headless NixPI profile.
   </div>
   <div class="quick-card">
-    <strong>4. Finish first boot</strong>
-    The wizard brings up WiFi, prefers it over Ethernet when both are available, prepares `/srv/nixpi` as the canonical system repo, writes `/etc/nixos`, and promotes the machine into the full appliance.
+    <strong>4. Operate through the remote app</strong>
+    After the switch, use the main app for chat and the built-in browser terminal for shell access.
   </div>
 </div>
 
-The installed system now boots into the official NixPI XFCE desktop automatically. That desktop remains intentionally minimal and agent-friendly, and it is the only supported automatic first-boot entry path: XFCE opens the NixPI terminal, the terminal runs setup if needed, and later launches Pi.
+NixPI does not require a desktop session as part of the primary install narrative. The intended operator surface is remote and headless from the start.
 
 <PresentationBand
   eyebrow="After install"
-  title="Operate the machine from the local checkout"
-  lede="Once the system is live, you edit and sync the canonical NixPI repo in `/srv/nixpi`, while `/etc/nixos` remains the deployed host flake used for rebuilds."
+  title="Operate the machine from the canonical checkout"
+  lede="Once the system is live, edit and sync the canonical NixPI repo in `/srv/nixpi`, then rebuild from that same checkout."
 >
 
 <TerminalFrame title="Post-install workflow">
 ```bash
 cd /srv/nixpi
-git fetch upstream
-git rebase upstream/main
-sudo nixos-rebuild switch --flake /etc/nixos#$(hostname -s)
+git fetch origin
+git rebase origin/main
+sudo nixos-rebuild switch --flake /srv/nixpi#nixpi
 ```
 </TerminalFrame>
 
@@ -72,120 +65,98 @@ sudo nixos-rebuild switch --flake /etc/nixos#$(hostname -s)
 
 ---
 
-## Supported hardware
+## Supported targets
 
-NixPI runs on any **x86_64 UEFI PC** with:
+NixPI currently targets **x86_64 NixOS-capable VPSes or headless VMs** with:
 
 - 4 GB RAM or more
-- 32 GB storage or more
-- A wired or wireless network interface
+- enough storage for a full `nixos-rebuild switch`
+- outbound internet access
+- SSH access and `sudo` privileges during bootstrap
 
-The reference machine is a **Beelink EQ14** (Intel N100, 16 GB RAM, 500 GB NVMe). Any similar mini-PC or laptop with a UEFI firmware will work. Legacy BIOS boot is not supported.
-
----
-
-## Creating the installer USB
-
-Build the ISO from the repository root:
-
-```bash
-nix build .#installerIso
-```
-
-The ISO lands at `result/iso/nixpi-installer.iso`. Write it to a USB stick (replace `/dev/sdX` with your actual device — double-check with `lsblk`):
-
-```bash
-sudo dd if=result/iso/nixpi-installer.iso of=/dev/sdX bs=4M status=progress oflag=sync
-```
-
-Eject the drive and boot the target machine from it. In the UEFI boot menu select the USB entry; the live environment drops to a root shell automatically.
+The public product boundary is VPS-first. The default story is one-command bootstrap onto a remote, headless host.
 
 ---
 
 ## Step-by-step install
 
-1. Boot the USB. You land at a root shell in the NixPI live environment.
-2. Run the installer:
+1. Provision a fresh VPS or headless VM.
+2. SSH into the host with a user that can run `sudo`.
+3. Run the bootstrap command:
 
    ```bash
-   nixpi-installer
+   nix run github:alexradunet/nixpi#nixpi-bootstrap-vps
    ```
 
-   The installer lists available disks and prompts you to pick one. All data on the selected disk will be erased.
-
-3. Confirm the disk selection. The installer partitions the disk (EFI partition + ext4 root + fixed 8 GiB swap), installs the base NixOS closure, and writes a bootloader.
-
-4. When the installer finishes it prints a success message. Remove the USB stick and reboot:
+4. Wait for the bootstrap to finish. It will prepare `/srv/nixpi` and run:
 
    ```bash
-   reboot
+   sudo nixos-rebuild switch --flake /srv/nixpi#nixpi
    ```
 
-The installer log is written to `/tmp/nixpi-installer.log` during the install session. If something goes wrong, read that file before rebooting.
+5. Open the remote app and verify both paths:
+
+   - `/` for chat
+   - `/terminal/` for the browser terminal
+
+6. Enroll and verify NetBird before treating the deployment as ready for routine remote use.
 
 ---
 
 ## First boot
 
-After the reboot the machine boots into the NixPI XFCE desktop and opens a terminal automatically. The terminal runs `setup-wizard` if the system has not been set up yet.
+After the first switch, the host should already behave like a headless NixPI system.
 
-The wizard walks through these steps in order:
+Use these checks:
 
-1. **Network** — connects to WiFi (or uses Ethernet if already connected) and validates internet access.
-2. **Identity** — prompts for a display name, email address, and Linux username.
-3. **Password** — sets the primary account password.
-4. **Timezone and keyboard** — sets locale preferences.
-5. **Pi chat** — prepares the local web chat surface used to talk to Pi on the machine itself.
-6. **System promotion** — prepares `/srv/nixpi`, writes `/etc/nixos`, and runs a full `nixos-rebuild switch` to activate the complete appliance profile.
+```bash
+systemctl status nixpi-chat.service
+systemctl status nixpi-ttyd.service
+systemctl status nginx.service
+systemctl status netbird.service
+curl -I http://127.0.0.1:8080/
+curl -I http://127.0.0.1/terminal/
+```
 
-The promotion step (step 6) downloads and compiles NixOS packages. On a fast connection this takes **10–20 minutes**. The screen shows a progress log throughout.
-
-After the wizard completes the machine reboots one final time into the fully configured appliance. The default login credentials are whatever username and password you entered during the wizard.
+If those pass, continue normal operation from `/srv/nixpi` and the remote web app.
 
 ---
 
 ## Troubleshooting
 
-### Log files
+### Bootstrap refresh behavior
 
-| Log | What it covers |
-|-----|----------------|
-| `/tmp/nixpi-installer.log` | Installer output (disk partitioning, NixOS base install). Available only during the live USB session. |
-| `~/.nixpi/wizard.log` | First-boot wizard output. Persists on the installed system across reboots. |
-| `~/.nixpi/bootstrap/full-appliance-upgrade.log` | NixOS rebuild log from the promotion step. |
+The bootstrap command is meant for fresh hosts or disposable test machines. If `/srv/nixpi` already exists, the command refreshes it from `origin/main`.
 
-### Re-running the wizard
+If you have local work there, commit or export it first.
 
-If the wizard was interrupted or you want to re-run a step:
+### Service checks
 
 ```bash
-setup-wizard
+journalctl -u nixpi-chat.service -n 100
+journalctl -u nixpi-ttyd.service -n 100
+journalctl -u nginx.service -n 100
+journalctl -u netbird.service -n 100
 ```
 
-The wizard uses checkpoints stored in `~/.nixpi/wizard-state/`. It resumes from the last incomplete step. To force a full re-run, remove the state directory:
+### Rebuild manually
 
 ```bash
-rm -rf ~/.nixpi/wizard-state
-setup-wizard
-```
-
-### Checking service status
-
-```bash
-# Check a specific service, e.g. the local chat service
-systemctl status nixpi-chat.service
-
-# Follow wizard log in real time
-tail -f ~/.nixpi/wizard.log
+cd /srv/nixpi
+sudo nixos-rebuild switch --flake /srv/nixpi#nixpi
 ```
 
 ### Common issues
 
-**Machine does not boot from USB** — enter the UEFI firmware (usually F2, F12, or Del at power-on) and confirm that Secure Boot is disabled and the USB device is first in the boot order.
+**The remote app does not load** — check `nixpi-chat.service`, `nixpi-ttyd.service`, and `nginx.service`, then verify the local probes on `127.0.0.1` still respond.
 
-**Installer cannot find any disks** — run `lsblk` to list disks. If the NVMe drive is not visible the storage controller may need a different AHCI/NVMe mode in UEFI settings.
+**NetBird is not connected** — run `netbird status`, verify `wt0` exists, and complete enrollment before exposing the system for routine use.
 
-**Wizard fails during promotion** — check `~/.nixpi/bootstrap/full-appliance-upgrade.log` for the error. The most common cause is a temporary network interruption. Re-run `setup-wizard` to retry from the last checkpoint.
+**I need to recover from a bad switch** — use:
+
+```bash
+sudo nixos-rebuild switch --rollback
+```
 
 ---
 

@@ -39,8 +39,10 @@ Current platform capabilities:
 Deploy NixPI to a fresh NixOS VPS:
 
 ```bash
-nix run github:alexradunet/nixpi#nixpi-bootstrap-vps
+nix --extra-experimental-features 'nix-command flakes' run github:alexradunet/nixpi#nixpi-bootstrap-vps
 ```
+
+The `--extra-experimental-features` flag is required on a stock NixOS host where flakes are not yet enabled. The bootstrap script enables them permanently in `/etc/nix/nix.conf` before switching the system configuration.
 
 That bootstrap command prepares the canonical checkout at `/srv/nixpi` and switches the system to the NixPI host profile.
 

@@ -29,5 +29,13 @@ run_as_root git -C "$REPO_DIR" fetch origin "$BRANCH"
 run_as_root git -C "$REPO_DIR" checkout "$BRANCH"
 run_as_root git -C "$REPO_DIR" reset --hard "origin/$BRANCH"
 
+# Ensure nix experimental features are enabled so nixos-rebuild can use flakes.
+# A fresh NixOS host has no experimental-features configured by default.
+NIXCONF=/etc/nix/nix.conf
+if ! run_as_root grep -q 'experimental-features' "$NIXCONF" 2>/dev/null; then
+  log "Enabling nix experimental features in $NIXCONF"
+  run_as_root sh -c "echo 'experimental-features = nix-command flakes' >> $NIXCONF"
+fi
+
 log "Running nixos-rebuild switch --flake /srv/nixpi#nixpi"
 run_as_root nixos-rebuild switch --flake /srv/nixpi#nixpi

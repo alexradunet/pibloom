@@ -1,119 +1,34 @@
-# Getting Started with NixPI
+# Getting Started
 
-> Orienting new maintainers to the NixPI codebase
+Use this page to orient yourself quickly.
 
-## How To Read This Repository
+## What NixPI is
 
-NixPI is organized as a multi-layer system. Understanding these layers will help you navigate the codebase effectively.
+NixPI is a headless NixOS system that runs Pi with:
+- a remote web app (chat + terminal)
+- a canonical repo at `/srv/nixpi`
+- host operations through `nixos-rebuild` and systemd
 
-### Runtime Layers
+## Read in this order
 
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| **OS Layer** | NixOS/Nix | System provisioning, services, packaging |
-| **Runtime Layer** | TypeScript/Node.js | Local web chat runtime and session management |
-| **Extension Layer** | TypeScript | Pi-facing tools, commands, hooks |
-| **Memory Layer** | Markdown | Durable and episodic storage |
-| **Documentation** | VitePress | This documentation site |
+1. [Install](../install)
+2. [Operations](../operations/)
+3. [Architecture](../architecture/)
+4. [Codebase Guide](../codebase/)
+5. [Reference](../reference/)
 
-### Key Directory Map
-
-```
-NixPI/
-├── core/
-│   ├── os/          # NixOS modules, services, packages
-│   ├── chat-server/ # Local chat backend and frontend
-│   ├── lib/         # Shared runtime helpers
-│   └── pi/          # Pi-facing extensions and persona
-│       ├── extensions/  # Built-in Pi extensions
-│       ├── persona/     # Persona configuration
-│       └── skills/      # Built-in skill definitions
-├── tests/           # Unit, integration, and E2E tests
-├── docs/            # This documentation
-├── tools/           # VM and testing helpers
-└── flake.nix        # Nix entry point
-```
-
-## Common Commands
-
-### Development Workflow
+## Core commands
 
 ```bash
-# Run all tests
+# Tests
 npm run test
 
-# Run specific test suites
-npm run test:unit
-npm run test:integration
-npm run test:e2e
-
-# Build TypeScript
+# Build
 npm run build
 
-# Lint and format
-npm run check
-npm run check:fix
-```
-
-### Nix/NixOS Workflow
-
-```bash
-# Apply local config to running system
-just switch
-
-# Apply remote config
-just update
-
-# Build and run test VM
-just vm
-
-# SSH into running VM
-just vm-ssh
-
-# Validate NixOS config
-just check-config
-
-# Full VM boot test
-just check-boot
-```
-
-### Documentation Workflow
-
-```bash
-# Start development server
+# Docs
 npm run docs:dev
 
-# Build documentation
-npm run docs:build
-
-# Preview built documentation
-npm run docs:preview
+# Rebuild on host
+sudo nixos-rebuild switch --flake /srv/nixpi#nixpi
 ```
-
-## Reading Order For New Maintainers
-
-If you're diving into the codebase, this order will help you build mental models:
-
-1. **Start with the big picture**
-   - Read [Architecture Overview](../architecture/)
-   - Understand [Runtime Flows](../architecture/runtime-flows)
-
-2. **Understand the control surfaces**
-   - Read [Root Files](../codebase/root-files)
-   - Understand `flake.nix` and `package.json`
-
-3. **Dive into subsystems**
-   - [Core Library](../codebase/core-lib) - shared primitives
-   - [Daemon](../codebase/daemon) - local runtime
-   - [Pi Extensions](../codebase/pi-extensions) - tool surface
-   - [OS Modules](../codebase/os) - NixOS integration
-
-4. **Reference as needed**
-   - [Operations](../operations/) for deployment
-   - [Reference](../reference/) for deep details
-
-## Related
-
-- [Architecture Overview](../architecture/)
-- [Codebase Guide](../codebase/)
-- [Operations: Quick Deploy](../operations/quick-deploy)

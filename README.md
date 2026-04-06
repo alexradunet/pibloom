@@ -22,7 +22,7 @@ Then operate from `/srv/nixpi`:
 cd /srv/nixpi
 git fetch origin
 git rebase origin/main
-sudo nixos-rebuild switch --flake /etc/nixos --impure
+sudo nixpi-rebuild
 ```
 
 Rollback if needed:

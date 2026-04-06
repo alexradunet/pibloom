@@ -104,14 +104,14 @@ if ! run_as_root grep -q 'experimental-features' "$NIXCONF" 2>/dev/null; then
   run_as_root sh -c "echo 'experimental-features = nix-command flakes' >> $NIXCONF"
 fi
 
-log "Initializing host-owned /etc/nixos flake"
-run_as_root env "NIXPI_NIXPKGS_FLAKE_URL=${NIXPI_NIXPKGS_FLAKE_URL:-}" bash "$REPO_DIR/core/scripts/nixpi-init-host-flake.sh" \
+log "Initializing standard /etc/nixos flake"
+run_as_root env "NIXPI_NIXPKGS_FLAKE_URL=${NIXPI_NIXPKGS_FLAKE_URL:-}" bash "$REPO_DIR/core/scripts/nixpi-init-system-flake.sh" \
   "$REPO_DIR" \
   "$HOSTNAME_VALUE" \
   "$PRIMARY_USER_VALUE" \
   "$TIMEZONE_VALUE" \
   "$KEYBOARD_VALUE"
 
-log "Running nixos-rebuild switch --flake /etc/nixos --impure"
-run_as_root nixos-rebuild switch --flake /etc/nixos --impure
+log "Running nixos-rebuild switch --flake /etc/nixos#nixos"
+run_as_root nixos-rebuild switch --flake /etc/nixos#nixos
 log "Bootstrap complete. Use 'nixpi-rebuild' to rebuild or update your system."

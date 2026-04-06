@@ -10,7 +10,6 @@
     in {
       imports = nixPiModulesNoShell ++ [
         ../../core/os/modules/broker.nix
-        ../../core/os/modules/firstboot
         mkTestFilesystems
       ];
       _module.args = { inherit piAgent appPackage setupApplyPackage; };
@@ -29,14 +28,6 @@
       system.stateVersion = "25.05";
       system.activationScripts.nixpi-bootstrap = lib.stringAfter [ "users" ] ''
         mkdir -p ${homeDir}/.nixpi
-        install -d -m 0755 /etc/nixos
-        cat > /etc/nixos/nixpi-install.nix <<'EOF'
-{ ... }:
-{
-  networking.hostName = "nixpi-steady";
-  nixpi.primaryUser = "${username}";
-}
-EOF
         chown -R ${username}:${username} ${homeDir}/.nixpi
         chmod 755 ${homeDir}/.nixpi
       '';
@@ -83,9 +74,8 @@ EOF
     # Local services remain available on loopback.
     nixpi.succeed("nc -z 127.0.0.1 8080")
 
-    # Bootstrap wrappers refuse to run after setup.
-    nixpi.fail("su - pi -c 'sudo -n /run/current-system/sw/bin/nixpi-bootstrap-brokerctl status >/tmp/broker.out 2>/tmp/broker.err'")
-    nixpi.succeed("grep -Eq 'bootstrap access is disabled after setup completes|a password is required' /tmp/broker.err")
+    # No legacy first-boot helper wrapper remains after setup.
+    nixpi.fail("command -v nixpi-bootstrap")
 
     # App ports are still blocked from an untrusted peer.
     for port in [8080]:

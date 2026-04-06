@@ -9,7 +9,6 @@
     ./collab.nix
     ./tooling.nix
     ./shell.nix
-    ./firstboot
     ./ttyd.nix
     ./setup-apply.nix
   ];

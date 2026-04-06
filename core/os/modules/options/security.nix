@@ -50,7 +50,7 @@
       default = false;
       description = ''
         Deprecated blanket passwordless sudo escape hatch. Keep disabled in
-        favor of narrow bootstrap rules and the broker service.
+        favor of normal sudo prompts and the broker service.
       '';
     };
   };

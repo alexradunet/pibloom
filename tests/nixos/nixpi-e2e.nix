@@ -1,5 +1,8 @@
 { lib, nixPiModulesNoShell, piAgent, appPackage, setupApplyPackage, mkTestFilesystems, ... }:
 
+let
+  initSystemFlake = ../../core/scripts/nixpi-init-system-flake.sh;
+in
 {
   name = "nixpi-e2e";
 
@@ -9,7 +12,6 @@
       homeDir = "/home/${username}";
     in {
       imports = nixPiModulesNoShell ++ [ 
-        ../../core/os/modules/firstboot
         mkTestFilesystems 
       ];
       _module.args = { inherit piAgent appPackage setupApplyPackage; };
@@ -47,6 +49,7 @@
     { ... }:
     {}
     EOF
+        ${lib.getExe' pkgs.bash "bash"} ${initSystemFlake} /srv/nixpi pi ${username} UTC us
         chown -R ${username}:${username} ${homeDir}/.nixpi
         chmod 755 ${homeDir}/.nixpi
       '';
@@ -83,8 +86,6 @@
     nixpi.wait_for_unit("multi-user.target", timeout=300)
     nixpi.wait_until_succeeds("ip -4 addr show dev eth1 | grep -q 'inet '", timeout=60)
     nixpi.wait_until_succeeds("curl -sf http://127.0.0.1:8080/ | grep -q 'nixpi-shell'", timeout=60)
-    nixpi.succeed("nixpi-bootstrap write-host-nix pi pi UTC us")
-    
     client.start()
     client.wait_until_succeeds("ip -4 addr show dev eth1 | grep -q 'inet '", timeout=60)
     
@@ -111,8 +112,9 @@
     nixpi.succeed("test ! -L " + home + "/.pi")
     nixpi.succeed("test -d /usr/local/share/nixpi")
     nixpi.succeed("test -f /etc/nixos/flake.nix")
-    nixpi.succeed("test -f /etc/nixos/nixpi-host.nix")
-    nixpi.succeed("test -f /etc/nixos/nixpi-integration.nix")
+    nixpi.fail("test -e /etc/nixos/nixpi-host.nix")
+    nixpi.fail("test -e /etc/nixos/nixpi-integration.nix")
+    nixpi.succeed("grep -q 'nixosConfigurations.nixos' /etc/nixos/flake.nix")
     nixpi.fail("command -v nixpi-bootstrap-ensure-repo-target")
     nixpi.fail("command -v nixpi-bootstrap-prepare-repo")
     nixpi.fail("command -v nixpi-bootstrap-nixos-rebuild-switch")

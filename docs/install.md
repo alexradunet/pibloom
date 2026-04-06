@@ -26,13 +26,13 @@ If you want to force the freshest copy from GitHub (skip flake fetch cache), use
 nix --extra-experimental-features 'nix-command flakes' run --refresh github:alexradunet/nixpi?ref=main#nixpi-bootstrap-vps
 ```
 
-The bootstrap process prepares `/srv/nixpi`, initializes a host-owned flake in `/etc/nixos`, and runs:
+The bootstrap process prepares `/srv/nixpi`, initializes a standard flake-based `/etc/nixos`, and runs:
 
 ```bash
-sudo nixos-rebuild switch --flake /etc/nixos --impure
+sudo nixos-rebuild switch --flake /etc/nixos#nixos
 ```
 
-The generated `/etc/nixos/flake.nix` follows the configured stable NixOS line by default. Today that means `nixos-25.11`, not `nixos-unstable` or a 26.x pre-release branch. If you need a different base explicitly, set `NIXPI_NIXPKGS_FLAKE_URL` before running bootstrap.
+The generated `/etc/nixos/flake.nix` follows the standard NixOS flake pattern more closely: it keeps the existing `/etc/nixos/configuration.nix`, layers NixPI on top, and exposes a single `#nixos` configuration. It follows the configured stable NixOS line by default. Today that means `nixos-25.11`, not `nixos-unstable` or a 26.x pre-release branch. If you need a different base explicitly, set `NIXPI_NIXPKGS_FLAKE_URL` before running bootstrap.
 
 On a monitor-attached mini PC, the installed system also keeps a local `tty1` login prompt after reboot, so local recovery remains available if remote access is unavailable.
 
@@ -44,7 +44,7 @@ Operate from the canonical checkout:
 cd /srv/nixpi
 git fetch origin
 git rebase origin/main
-sudo nixos-rebuild switch --flake /etc/nixos --impure
+sudo nixpi-rebuild
 ```
 
 Check core services:

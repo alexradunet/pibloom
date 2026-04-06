@@ -1,6 +1,7 @@
 { lib, nixPiModulesNoShell, piAgent, appPackage, setupApplyPackage, mkTestFilesystems, ... }:
 
 let
+  initSystemFlake = ../../core/scripts/nixpi-init-system-flake.sh;
   mkNode =
     { hostName ? "nixpi-firstboot-test"
     }:
@@ -11,7 +12,6 @@ let
     in
     {
       imports = nixPiModulesNoShell ++ [
-        ../../core/os/modules/firstboot
         ../../core/os/modules/ttyd.nix
         ../../core/os/modules/service-surface.nix
         mkTestFilesystems
@@ -54,6 +54,7 @@ let
         { ... }:
         {}
         EOF
+          ${lib.getExe' pkgs.bash "bash"} ${initSystemFlake} /srv/nixpi ${hostName} ${username} UTC us
           chown -R ${username}:${username} ${homeDir}/.nixpi
           chmod 755 ${homeDir}/.nixpi
         ''
@@ -85,8 +86,6 @@ in
         timeout=60,
     )
     nixpi.wait_until_succeeds("curl -sf http://127.0.0.1/terminal/ >/dev/null", timeout=60)
-    nixpi.succeed("nixpi-bootstrap write-host-nix nixpi-firstboot-test pi UTC us")
-
     nixpi.succeed("test -d " + home + "/.nixpi")
     nixpi.wait_until_succeeds("test ! -f " + home + "/.nixpi/wizard-state/system-ready", timeout=60)
     nixpi.fail("test -f " + home + "/.nixpi/.setup-complete")
@@ -99,8 +98,9 @@ in
     nixpi.fail("test -e " + home + "/nixpi/flake.nix")
     nixpi.fail("test -e /var/lib/nixpi/pi-nixpi")
     nixpi.succeed("test -f /etc/nixos/flake.nix")
-    nixpi.succeed("test -f /etc/nixos/nixpi-host.nix")
-    nixpi.succeed("test -f /etc/nixos/nixpi-integration.nix")
+    nixpi.fail("test -e /etc/nixos/nixpi-host.nix")
+    nixpi.fail("test -e /etc/nixos/nixpi-integration.nix")
+    nixpi.succeed("grep -q 'nixosConfigurations.nixos' /etc/nixos/flake.nix")
     nixpi.fail("test -e /etc/nixpi/canonical-repo.json")
     nixpi.fail("command -v nixpi-bootstrap-ensure-repo-target")
     nixpi.fail("command -v nixpi-bootstrap-prepare-repo")

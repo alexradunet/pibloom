@@ -62,7 +62,7 @@ function ensureSystemFlakeExists(flake: string): OsActionResult | null {
 	}
 
 	return errorResult(
-		`System flake not found at ${flake}. NixPI now rebuilds through a host-owned flake in /etc/nixos. ` +
+		`System flake not found at ${flake}. NixPI now rebuilds through the standard /etc/nixos flake. ` +
 			`Run bootstrap again or initialize /etc/nixos/flake.nix so it imports /srv/nixpi before applying updates.`,
 	);
 }
@@ -98,8 +98,8 @@ async function ensureCanonicalMainBranch(signal: AbortSignal | undefined): Promi
 }
 
 async function handleNixosApply(signal: AbortSignal | undefined): Promise<OsActionResult> {
-	const flake = getSystemFlakeDir();
-	const flakeError = ensureSystemFlakeExists(flake);
+	const flakeDir = getSystemFlakeDir();
+	const flakeError = ensureSystemFlakeExists(flakeDir);
 	if (flakeError) {
 		return flakeError;
 	}
@@ -109,6 +109,7 @@ async function handleNixosApply(signal: AbortSignal | undefined): Promise<OsActi
 		return branchCheck.errorResult;
 	}
 
+	const flake = `${flakeDir}#nixos`;
 	const result = await run("nixpi-brokerctl", ["nixos-update", "apply", flake], signal);
 	const text =
 		result.exitCode === 0
@@ -116,7 +117,7 @@ async function handleNixosApply(signal: AbortSignal | undefined): Promise<OsActi
 			: `Update failed: ${result.stderr}`;
 	return {
 		content: [{ type: "text" as const, text: truncate(text) }],
-		details: { exitCode: result.exitCode, flake },
+		details: { exitCode: result.exitCode, flake, flakeDir },
 		isError: result.exitCode !== 0,
 	} satisfies OsActionResult;
 }

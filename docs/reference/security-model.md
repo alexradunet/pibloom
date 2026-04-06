@@ -93,7 +93,7 @@ sudo nixpi-brokerctl status
 sudo nixpi-brokerctl revoke-admin
 ```
 
-Bootstrap-only passwordless sudo is also gated on setup state. The narrow first-boot helper commands stop working once `~/.nixpi/.setup-complete` exists.
+There is no separate first-boot helper sudo surface anymore. Privileged operations should go through normal `sudo` or the broker service.
 
 ## Pre-Deployment Checklist
 

@@ -37,7 +37,6 @@
     )
     nixpi.wait_until_succeeds("curl -sf http://127.0.0.1/terminal/ >/dev/null", timeout=60)
 
-    nixpi.succeed("command -v nixpi-bootstrap")
     nixpi.succeed("test -d " + home + "/.pi")
     nixpi.succeed("systemctl is-enabled nixpi-chat.service")
     nixpi.succeed("grep -Eq '(^| )console=tty0($| )' /run/current-system/kernel-params")

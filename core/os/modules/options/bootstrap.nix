@@ -10,14 +10,5 @@
         completes. By default SSH is treated as a bootstrap-only path.
       '';
     };
-
-    passwordlessSudo.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = ''
-        Whether NixPI grants narrow passwordless sudo rules needed by the
-        first-boot bootstrap flow.
-      '';
-    };
   };
 }

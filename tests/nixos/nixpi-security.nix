@@ -5,7 +5,6 @@ let
     homeDir = "/home/${username}";
   in {
     imports = nixPiModulesNoShell ++ [
-      ../../core/os/modules/firstboot
       mkTestFilesystems
     ];
     _module.args = { inherit piAgent appPackage setupApplyPackage; };
@@ -34,14 +33,6 @@ let
     users.groups.${username} = { };
     system.activationScripts.nixpi-bootstrap = ''
       mkdir -p ${homeDir}/.nixpi
-      install -d -m 0755 /etc/nixos
-      cat > /etc/nixos/nixpi-install.nix <<'EOF'
-    { ... }:
-    {
-      networking.hostName = "${hostName}";
-      nixpi.primaryUser = "${username}";
-    }
-    EOF
       chown -R ${username}:${username} ${homeDir}/.nixpi
       chmod 755 ${homeDir}/.nixpi
     '';

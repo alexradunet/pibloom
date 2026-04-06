@@ -16,14 +16,14 @@ Understanding how control and data move through NixPI helps with:
 | Entry Point | Command | Purpose |
 |-------------|---------|---------|
 | Local build | `nix build .#app` | Build the packaged app and bundled assets |
-| System switch | `sudo nixos-rebuild switch --flake /etc/nixos --impure` | Apply the host-owned system flake that imports NixPI from `/srv/nixpi` |
-| Canonical rebuild | `sudo nixpi-rebuild` | Run the same host-owned rebuild through the operator wrapper |
+| System switch | `sudo nixos-rebuild switch --flake /etc/nixos#nixos` | Apply the standard system flake in `/etc/nixos`, which imports NixPI from `/srv/nixpi` |
+| Canonical rebuild | `sudo nixpi-rebuild` | Run the same rebuild through the operator wrapper |
 
 ### Flow Steps
 
-1. **Host flake evaluation** (`/etc/nixos/flake.nix`)
-   - Imports the machine's existing host modules
-   - Imports `./nixpi-integration.nix`, which layers NixPI from `/srv/nixpi`
+1. **System flake evaluation** (`/etc/nixos/flake.nix`)
+   - Keeps the machine's standard `/etc/nixos/configuration.nix` entrypoint
+   - Layers `nixpi.nixosModules.nixpi` from `/srv/nixpi` into the single `#nixos` configuration
    - Produces the machine closure without replacing host-specific hardware settings
 
 2. **App build** (`npm run build`)
@@ -40,7 +40,7 @@ Understanding how control and data move through NixPI helps with:
 
 | File | Role |
 |------|------|
-| `/etc/nixos/flake.nix` | Host-owned rebuild root used for applied systems |
+| `/etc/nixos/flake.nix` | Standard rebuild root used for applied systems |
 | `flake.nix` | NixPI development flake for packages, checks, and CI |
 | `core/os/modules/app.nix` | App package install and chat service wiring |
 | `core/os/services/nixpi-chat.nix` | `nixpi-chat.service` wrapper |
@@ -144,7 +144,7 @@ Yes: continue with normal conversation
 
 | File | Role |
 |------|------|
-| `core/os/modules/firstboot/` | First-boot users, repo, and marker flow |
+| `core/scripts/nixpi-setup-apply.sh` | Minimal first-boot completion marker write |
 | `core/pi/extensions/persona/` | Persona-completion prompt injection |
 | `core/scripts/` | Wizard and install helpers |
 

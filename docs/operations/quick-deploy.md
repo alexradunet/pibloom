@@ -50,12 +50,12 @@ The bootstrap package:
 
 - clones the repo into `/srv/nixpi` if it does not exist
 - refreshes that checkout from `origin/main`
-- initializes a host-owned flake in `/etc/nixos`
-- runs `sudo nixos-rebuild switch --flake /etc/nixos --impure`
+- initializes a standard flake-based `/etc/nixos`
+- runs `sudo nixos-rebuild switch --flake /etc/nixos#nixos`
 
-`/etc/nixos` remains the host-owned system layer for hardware, boot, filesystems, display, and desktop settings. `/srv/nixpi` provides the NixPI layer imported by that host flake, so rebuilds preserve machine-specific behavior instead of replacing it.
+`/etc/nixos` remains the standard system layer for hardware, boot, filesystems, display, and desktop settings. `/srv/nixpi` provides the NixPI layer imported by that system flake, so rebuilds preserve machine-specific behavior instead of replacing it. The generated flake keeps the normal `configuration.nix` entrypoint and exposes a single `#nixos` target.
 
-The generated host flake also follows the configured stable NixOS line by default. Today that means `nixos-25.11`, which prevents bootstrap from silently jumping onto `nixos-unstable` or a 26.x pre-release line while NixPI is layered on top.
+The generated system flake also follows the configured stable NixOS line by default. Today that means `nixos-25.11`, which prevents bootstrap from silently jumping onto `nixos-unstable` or a 26.x pre-release line while NixPI is layered on top.
 
 On monitor-attached hardware, the resulting system keeps a `tty1` login prompt after reboot. The remote web app remains the primary operator surface; the monitor is a recovery path.
 
@@ -91,7 +91,7 @@ Apply local changes manually:
 
 ```bash
 cd /srv/nixpi
-sudo nixos-rebuild switch --flake /etc/nixos --impure
+sudo nixpi-rebuild
 ```
 
 Sync with the default remote and rebuild:
@@ -100,7 +100,7 @@ Sync with the default remote and rebuild:
 cd /srv/nixpi
 git fetch origin
 git rebase origin/main
-sudo nixos-rebuild switch --flake /etc/nixos --impure
+sudo nixpi-rebuild
 ```
 
 Roll back if needed:

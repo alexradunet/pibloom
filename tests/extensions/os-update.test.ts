@@ -32,7 +32,7 @@ describe("os nixos_update handler", () => {
 		}
 	});
 
-	it("applies the canonical /etc/nixos flake checkout", async () => {
+	it("applies the canonical /etc/nixos#nixos flake checkout", async () => {
 		vi.spyOn(fs, "existsSync").mockReturnValue(true);
 		runMock.mockResolvedValueOnce({ stdout: "main\n", stderr: "", exitCode: 0 });
 		runMock.mockResolvedValueOnce({ stdout: "ok\n", stderr: "", exitCode: 0 });
@@ -40,7 +40,7 @@ describe("os nixos_update handler", () => {
 		const { handleNixosUpdate } = await import("../../core/pi/extensions/os/actions.js");
 		const ctx = createMockExtensionContext({ hasUI: true });
 		const result = await handleNixosUpdate("apply", undefined, ctx as never);
-		const expectedFlake = "/etc/nixos";
+		const expectedFlake = "/etc/nixos#nixos";
 
 		expect(ctx.ui.confirm).toHaveBeenCalled();
 		expect(runMock).toHaveBeenNthCalledWith(1, "git", ["-C", "/srv/nixpi", "branch", "--show-current"], undefined);
@@ -64,7 +64,7 @@ describe("os nixos_update handler", () => {
 		expect(runMock).toHaveBeenNthCalledWith(
 			2,
 			"nixpi-brokerctl",
-			["nixos-update", "apply", explicitFlakeDir],
+			["nixos-update", "apply", `${explicitFlakeDir}#nixos`],
 			undefined,
 		);
 	});
@@ -79,7 +79,7 @@ describe("os nixos_update handler", () => {
 		expect(runMock).not.toHaveBeenCalled();
 		expect(result.isError).toBe(true);
 		expect(result.content[0].text).toContain("System flake not found at /etc/nixos");
-		expect(result.content[0].text).toContain("host-owned flake");
+		expect(result.content[0].text).toContain("standard /etc/nixos flake");
 		expect(result.content[0].text).toContain("/srv/nixpi");
 		expect(result.content[0].text).toContain("bootstrap");
 	});
@@ -106,7 +106,11 @@ describe("os nixos_update handler", () => {
 		const result = await handleNixosUpdate("apply", undefined, ctx as never);
 
 		expect(runMock).toHaveBeenCalledWith("git", ["-C", "/srv/nixpi", "branch", "--show-current"], undefined);
-		expect(runMock).not.toHaveBeenCalledWith("nixpi-brokerctl", ["nixos-update", "apply", "/etc/nixos"], undefined);
+		expect(runMock).not.toHaveBeenCalledWith(
+			"nixpi-brokerctl",
+			["nixos-update", "apply", "/etc/nixos#nixos"],
+			undefined,
+		);
 		expect(result.isError).toBe(true);
 		expect(result.content[0].text).toContain("Supported rebuilds require /srv/nixpi to be on main");
 		expect(result.content[0].text).toContain("switch to main");

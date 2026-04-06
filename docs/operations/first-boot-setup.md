@@ -13,7 +13,7 @@ Before this checklist, you should already have:
 1. a NixOS-capable x86_64 machine
 2. a successful `nixpi-bootstrap-vps` run
 3. the canonical checkout present at `/srv/nixpi`
-4. a completed `sudo nixos-rebuild switch --flake /etc/nixos --impure`
+4. a completed `sudo nixos-rebuild switch --flake /etc/nixos#nixos`
 
 ## What First Boot Means Now
 
@@ -77,7 +77,7 @@ If NetBird is not enrolled yet, finish that step before treating the host as rea
 ```bash
 cd /srv/nixpi
 git status --short
-sudo nixos-rebuild switch --flake /etc/nixos --impure
+sudo nixpi-rebuild
 ```
 
 Expected result: the machine rebuilds from `/etc/nixos` while importing NixPI from `/srv/nixpi`, preserving the host's existing hardware and desktop configuration.
@@ -87,7 +87,7 @@ Expected result: the machine rebuilds from `/etc/nixos` while importing NixPI fr
 After first boot, keep these boundaries in mind:
 
 - `/srv/nixpi` is the canonical git working tree for sync, review, and rebuilds
-- `/etc/nixos` is the host-owned flake root used for system rebuilds
+- `/etc/nixos` is the standard flake root used for system rebuilds
 - the remote web app is the default operator control plane
 - `/terminal/` exists for shell-first recovery and administration
 - a connected monitor on x86_64 hardware lands on a local `tty1` login prompt after boot

@@ -36,14 +36,13 @@ let
 
   tests = {
     nixpi-firstboot = runTest ./nixpi-firstboot.nix;
-    nixpi-host-owned-flake = runTest ./nixpi-host-owned-flake.nix;
+    nixpi-system-flake = runTest ./nixpi-system-flake.nix;
     nixpi-vps-bootstrap = runTest ./nixpi-vps-bootstrap.nix;
     nixpi-chat = runTest ./nixpi-chat.nix;
     nixpi-network = runTest ./nixpi-network.nix;
     nixpi-e2e = runTest ./nixpi-e2e.nix;
     nixpi-security = runTest ./nixpi-security.nix;
     nixpi-modular-services = runTest ./nixpi-modular-services.nix;
-    nixpi-bootstrap-mode = runTest ./nixpi-bootstrap-mode.nix;
     nixpi-post-setup-lockdown = runTest ./nixpi-post-setup-lockdown.nix;
     nixpi-broker = runTest ./nixpi-broker.nix;
     nixpi-update = runTest ./nixpi-update.nix;

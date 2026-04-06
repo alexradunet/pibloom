@@ -11,7 +11,7 @@ This directory contains NixOS integration tests for the NixPI platform. These te
   - `nixpi-security`
   - `nixpi-broker`
 - `nixos-full`: comprehensive headless VPS VM lane
-  - registered tests: `nixpi-firstboot`, `nixpi-chat`, `nixpi-network`, `nixpi-e2e`, `nixpi-security`, `nixpi-modular-services`, `nixpi-bootstrap-mode`, `nixpi-post-setup-lockdown`, `nixpi-broker`, `nixpi-update`, `nixpi-options-validation`
+  - registered tests: `nixpi-firstboot`, `nixpi-chat`, `nixpi-network`, `nixpi-e2e`, `nixpi-security`, `nixpi-modular-services`, `nixpi-post-setup-lockdown`, `nixpi-broker`, `nixpi-update`, `nixpi-options-validation`
 - `nixos-destructive`: slower install/lockdown/broker cases intended for manual or scheduled runs
   - `nixpi-post-setup-lockdown`
   - `nixpi-broker`
@@ -62,7 +62,6 @@ $(nix-build -A checks.x86_64-linux.nixpi-chat.driverInteractive)/bin/nixos-test-
 tests/nixos/
 ├── lib.nix              # Shared test helpers and module lists
 ├── default.nix          # Test suite entry point
-├── nixpi-bootstrap-mode.nix      # bootstrap-state contract before setup completes
 ├── nixpi-broker.nix              # broker autonomy and privilege boundaries
 ├── nixpi-chat.nix                # built-in local chat surface test
 ├── nixpi-e2e.nix                 # end-to-end integration test

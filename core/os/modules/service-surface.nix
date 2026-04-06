@@ -5,6 +5,16 @@ let
   tlsDir = "/var/lib/nixpi-tls";
   tlsCertPath = "${tlsDir}/nixpi-secure.crt";
   tlsKeyPath = "${tlsDir}/nixpi-secure.key";
+  terminalProxyLocation = {
+    proxyPass = "http://127.0.0.1:7681/";
+    extraConfig = ''
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+      proxy_read_timeout 3600s;
+      proxy_send_timeout 3600s;
+    '';
+  };
   secureWebTlsSetup = pkgs.writeShellScript "nixpi-secure-web-tls-setup" ''
     set -euo pipefail
 
@@ -109,16 +119,7 @@ in
               port = 80;
             }
           ];
-          locations."/terminal" = {
-            proxyPass = "http://127.0.0.1:7681/";
-            extraConfig = ''
-              proxy_http_version 1.1;
-              proxy_set_header Upgrade $http_upgrade;
-              proxy_set_header Connection "upgrade";
-              proxy_read_timeout 3600s;
-              proxy_send_timeout 3600s;
-            '';
-          };
+          locations."/terminal" = terminalProxyLocation;
           locations."/".proxyPass = "http://127.0.0.1:${toString cfg.home.port}";
           locations."/".extraConfig = lib.optionalString cfg.secureWeb.enable ''
             if ($host !~* ^(localhost|127\.0\.0\.1)$) {
@@ -142,16 +143,7 @@ in
           ];
           sslCertificate = tlsCertPath;
           sslCertificateKey = tlsKeyPath;
-          locations."/terminal" = {
-            proxyPass = "http://127.0.0.1:7681/";
-            extraConfig = ''
-              proxy_http_version 1.1;
-              proxy_set_header Upgrade $http_upgrade;
-              proxy_set_header Connection "upgrade";
-              proxy_read_timeout 3600s;
-              proxy_send_timeout 3600s;
-            '';
-          };
+          locations."/terminal" = terminalProxyLocation;
           locations."/".proxyPass = "http://127.0.0.1:${toString cfg.home.port}";
         };
       })

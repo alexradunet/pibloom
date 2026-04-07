@@ -2,8 +2,11 @@
 # Canonical NixPI headless VPS profile used for the default installed system shape.
 { lib, config, ... }:
 
+let
+  moduleSets = import ../modules/module-sets.nix;
+in
 {
-  imports = [ ../modules ];
+  imports = moduleSets.nixpi;
 
   system.stateVersion = "25.05";
 

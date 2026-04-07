@@ -36,7 +36,7 @@ At startup:
 | `core/chat-server/index.ts` | HTTP entry point, route wiring, static asset serving |
 | `core/chat-server/pi-session.ts` | Pi SDK session creation, reset, and event translation |
 | `core/chat-server/frontend/app.ts` | Browser-side chat client (NDJSON event consumer) |
-| `core/os/services/nixpi-chat.nix` | systemd service wrapper |
+| `core/os/modules/app.nix` | systemd service definition and runtime wiring |
 
 **Current behavior**:
 

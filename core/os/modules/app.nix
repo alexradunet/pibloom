@@ -57,11 +57,37 @@ in
   };
 
   system.services.nixpi-chat = {
-    imports = [ (lib.modules.importApply ../services/nixpi-chat.nix { inherit pkgs; }) ];
-    nixpi-chat = {
-      package = appPackage;
-      inherit primaryUser agentStateDir;
-      inherit (config.nixpi.agent) workspaceDir;
+    process.argv = [
+      "${pkgs.nodejs}/bin/node"
+      "/usr/local/share/nixpi/dist/core/chat-server/index.js"
+    ];
+    systemd.service = {
+      description = "NixPI Chat Server";
+      after = [ "network.target" "nixpi-app-setup.service" ];
+      wants = [ "nixpi-app-setup.service" ];
+      wantedBy = [ "multi-user.target" ];
+      environment = {
+        NIXPI_CHAT_PORT = toString config.nixpi.services.home.port;
+        NIXPI_SHARE_DIR = "/usr/local/share/nixpi";
+        PI_DIR = toString agentStateDir;
+        NIXPI_PRIMARY_USER = primaryUser;
+      } // lib.optionalAttrs (config.nixpi.agent.workspaceDir != "") {
+        NIXPI_DIR = config.nixpi.agent.workspaceDir;
+      };
+      serviceConfig = {
+        Environment = [
+          "PATH=${lib.makeBinPath [ appPackage pkgs.nodejs ]}:/run/wrappers/bin:/run/current-system/sw/bin"
+        ];
+        User = primaryUser;
+        Group = primaryUser;
+        WorkingDirectory = toString agentStateDir;
+        Restart = "on-failure";
+        RestartSec = "10";
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectSystem = "strict";
+        ProtectHome = false;
+      };
     };
   };
 

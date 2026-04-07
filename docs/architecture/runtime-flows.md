@@ -43,7 +43,7 @@ Understanding how control and data move through NixPI helps with:
 | `/etc/nixos/flake.nix` | Standard rebuild root used for applied systems |
 | `flake.nix` | NixPI development flake for packages, checks, and CI |
 | `core/os/modules/app.nix` | App package install and chat service wiring |
-| `core/os/services/nixpi-chat.nix` | `nixpi-chat.service` wrapper |
+| `core/os/modules/app.nix` | `nixpi-chat.service` definition and runtime wiring |
 | `package.json` | Build scripts, extensions, runtime dependencies |
 
 ## Boot/Service Startup Flow
@@ -89,7 +89,7 @@ multi-user.target
 |------|------|
 | `core/chat-server/index.ts` | HTTP entry point for local chat |
 | `core/chat-server/pi-session.ts` | Pi SDK event translation and reset lifecycle |
-| `core/os/services/nixpi-chat.nix` | Systemd unit wrapper and env wiring |
+| `core/os/modules/app.nix` | Systemd unit definition and env wiring |
 | `core/os/modules/service-surface.nix` | Reverse proxy and TLS setup |
 
 ## First-Boot/Setup Flow
@@ -267,7 +267,7 @@ Apply on next window or manual trigger
 |------|------|
 | `core/pi/extensions/nixpi/` | NixOS operations |
 | `core/os/modules/update.nix` | Update service |
-| `core/os/services/nixpi-update.nix` | Update timer/service |
+| `core/os/modules/update.nix` | Update service and timer wiring |
 
 ## Session Reset / Cleanup Flow
 

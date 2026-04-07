@@ -28,23 +28,37 @@ in
   ];
 
   system.services.nixpi-update = {
-    imports = [ ../services/nixpi-update.nix ];
-    nixpi-update = {
-      command = pkgs.writeShellScript "nixpi-update" (
+    process.argv = [
+      (pkgs.writeShellScript "nixpi-update" (
         builtins.readFile ../../../core/scripts/system-update.sh
-      );
-      inherit primaryUser;
-      flakeDir = "/etc/nixos";
-      path = "/run/current-system/sw/bin:${
-        lib.makeBinPath (
-          with pkgs;
-          [
-            nix
-            git
-            jq
-          ]
-        )
-      }";
+      ))
+    ];
+    systemd.service = {
+      description = "NixPI NixOS update";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      unitConfig = {
+        ConditionPathExists = "/etc/nixos/flake.nix";
+      };
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = false;
+        Restart = "no";
+        Environment = [
+          "PATH=/run/current-system/sw/bin:${
+            lib.makeBinPath (
+              with pkgs;
+              [
+                nix
+                git
+                jq
+              ]
+            )
+          }"
+          "NIXPI_PRIMARY_USER=${primaryUser}"
+          "NIXPI_SYSTEM_FLAKE_DIR=/etc/nixos"
+        ];
+      };
     };
   };
 

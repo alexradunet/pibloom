@@ -62,10 +62,22 @@ in
     };
 
     system.services.nixpi-broker = {
-      imports = [ ../services/nixpi-broker.nix ];
-      nixpi-broker = {
-        command = "${brokerCtl}/bin/nixpi-brokerctl";
-        inherit brokerConfig stateDir;
+      process.argv = [
+        "${brokerCtl}/bin/nixpi-brokerctl"
+        "server"
+      ];
+      systemd.service = {
+        description = "NixPI privileged operations broker";
+        after = [ "network.target" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          User = "root";
+          Group = "root";
+          RuntimeDirectory = "nixpi-broker";
+          RuntimeDirectoryMode = "0770";
+          UMask = "0007";
+          Environment = [ "NIXPI_BROKER_CONFIG=${brokerConfig}" ];
+        };
       };
     };
 

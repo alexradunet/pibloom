@@ -510,9 +510,18 @@
         }
         // nixosTests; # Merge in the new test suite
 
-      apps.${system}.nixpi-bootstrap-fresh-install-harness = {
-        type = "app";
-        program = "${self.packages.${system}.nixpi-bootstrap-fresh-install-harness}/bin/nixos-test-driver";
+      apps.${system} = {
+        nixpi-bootstrap-fresh-install-harness = {
+          type = "app";
+          program = "${self.packages.${system}.nixpi-bootstrap-fresh-install-harness}/bin/nixos-test-driver";
+        };
+
+        qemu-installer = {
+          type = "app";
+          program = "${pkgs.writeShellScript "qemu-installer" ''
+            exec ${./tools/qemu}/run-installer.sh "$@"
+          ''}";
+        };
       };
 
       devShells = forAllSystems (

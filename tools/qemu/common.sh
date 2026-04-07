@@ -2,7 +2,22 @@
 set -euo pipefail
 
 TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_DIR="$(cd "${TOOLS_DIR}/../.." && pwd)"
+
+resolve_repo_dir() {
+  if [ -n "${NIXPI_QEMU_REPO_DIR:-}" ]; then
+    printf '%s\n' "${NIXPI_QEMU_REPO_DIR}"
+    return 0
+  fi
+
+  if git_root="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+    printf '%s\n' "${git_root}"
+    return 0
+  fi
+
+  cd "${TOOLS_DIR}/../.." && pwd
+}
+
+REPO_DIR="$(resolve_repo_dir)"
 LAB_DIR="${NIXPI_QEMU_DIR:-${REPO_DIR}/.omx/qemu-lab}"
 DISK_DIR="${LAB_DIR}/disks"
 LOG_DIR="${LAB_DIR}/logs"

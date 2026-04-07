@@ -452,6 +452,10 @@
               path = nixosTests.nixpi-bootstrap-fresh-install;
             }
             {
+              name = "nixpi-bootstrap-fresh-install-stable";
+              path = nixosTests.nixpi-bootstrap-fresh-install-stable;
+            }
+            {
               name = "nixpi-system-flake";
               path = nixosTests.nixpi-system-flake;
             }

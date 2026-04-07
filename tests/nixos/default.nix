@@ -29,6 +29,7 @@ let
 
   tests = {
     nixpi-bootstrap-fresh-install = runTest ./nixpi-bootstrap-fresh-install.nix;
+    nixpi-bootstrap-fresh-install-stable = runTest ./nixpi-bootstrap-fresh-install-stable.nix;
     nixpi-bootstrap-fresh-install-external = runTest ./nixpi-bootstrap-fresh-install-external.nix;
     nixpi-firstboot = runTest ./nixpi-firstboot.nix;
     nixpi-system-flake = runTest ./nixpi-system-flake.nix;

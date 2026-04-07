@@ -50,6 +50,55 @@ virtiofsd_bin() {
   command -v virtiofsd || true
 }
 
+resolve_ovmf_dir() {
+  local candidate
+  for candidate in \
+    "${NIXPI_QEMU_OVMF_DIR:-}" \
+    /run/libvirt/nix-ovmf \
+    /usr/share/OVMF \
+    /usr/share/edk2/ovmf \
+    /run/current-system/sw/share/OVMF \
+    /run/current-system/sw/share/edk2-ovmf
+  do
+    [ -n "${candidate}" ] || continue
+    if [ -f "${candidate}/OVMF_CODE.fd" ] && [ -f "${candidate}/OVMF_VARS.fd" ]; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+  done
+
+  echo "missing OVMF firmware. Set OVMF_CODE_PATH/OVMF_VARS_PATH or NIXPI_QEMU_OVMF_DIR." >&2
+  return 1
+}
+
+default_ovmf_code_path() {
+  local ovmf_dir
+  ovmf_dir="$(resolve_ovmf_dir)" || return 1
+  printf '%s\n' "${ovmf_dir}/OVMF_CODE.fd"
+}
+
+default_ovmf_vars_template_path() {
+  local ovmf_dir
+  ovmf_dir="$(resolve_ovmf_dir)" || return 1
+  printf '%s\n' "${ovmf_dir}/OVMF_VARS.fd"
+}
+
+ensure_ovmf_vars_file() {
+  local target_path="$1"
+  local template_path="$2"
+
+  if [ -f "${target_path}" ]; then
+    return 0
+  fi
+
+  if [ ! -f "${template_path}" ]; then
+    echo "missing OVMF vars template: ${template_path}" >&2
+    return 1
+  fi
+
+  cp "${template_path}" "${target_path}"
+}
+
 create_qcow2() {
   local disk_path="$1"
   if [ ! -f "${disk_path}" ]; then

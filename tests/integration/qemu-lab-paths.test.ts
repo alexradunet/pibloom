@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -40,6 +40,41 @@ describe("QEMU lab path guards", () => {
 		} finally {
 			rmSync(tempRepoRoot, { recursive: true, force: true });
 			rmSync(stubBinDir, { recursive: true, force: true });
+		}
+	});
+
+	it("uses a discovered OVMF directory when the old libvirt path is absent", () => {
+		const tempRepoRoot = mkdtempSync(path.join(os.tmpdir(), "nixpi-qemu-root-"));
+		const stubBinDir = mkdtempSync(path.join(os.tmpdir(), "nixpi-qemu-bin-"));
+		const tempOvmfDir = mkdtempSync(path.join(os.tmpdir(), "nixpi-qemu-ovmf-"));
+		const labDir = path.join(tempRepoRoot, "qemu-lab");
+
+		try {
+			mkdirSync(labDir, { recursive: true });
+			writeFileSync(path.join(labDir, "nixos-stable-installer.iso"), "fake iso", "utf8");
+			writeFileSync(path.join(tempOvmfDir, "OVMF_CODE.fd"), "code", "utf8");
+			writeFileSync(path.join(tempOvmfDir, "OVMF_VARS.fd"), "vars", "utf8");
+			writeStubExecutable(stubBinDir, "qemu-system-x86_64");
+			writeStubExecutable(stubBinDir, "qemu-img");
+
+			const result = spawnSync(path.join(repoRoot, "tools/qemu/run-installer.sh"), [], {
+				cwd: repoRoot,
+				encoding: "utf8",
+				env: {
+					...process.env,
+					PATH: `${stubBinDir}:${process.env.PATH ?? ""}`,
+					NIXPI_QEMU_REPO_DIR: tempRepoRoot,
+					NIXPI_QEMU_OVMF_DIR: tempOvmfDir,
+				},
+			});
+
+			expect(result.status).toBe(0);
+			expect(result.stdout).toContain(`file=${path.join(tempOvmfDir, "OVMF_CODE.fd")}`);
+			expect(existsSync(path.join(labDir, "OVMF_VARS-installer.fd"))).toBe(true);
+		} finally {
+			rmSync(tempRepoRoot, { recursive: true, force: true });
+			rmSync(stubBinDir, { recursive: true, force: true });
+			rmSync(tempOvmfDir, { recursive: true, force: true });
 		}
 	});
 

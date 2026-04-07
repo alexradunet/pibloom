@@ -5,8 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
 DISK_PATH="${DISK_DIR}/preinstalled-stable.qcow2"
-OVMF_CODE="${OVMF_CODE_PATH:-/run/libvirt/nix-ovmf/OVMF_CODE.fd}"
+OVMF_CODE="${OVMF_CODE_PATH:-$(default_ovmf_code_path)}"
 OVMF_VARS="${OVMF_VARS_PATH:-${LAB_DIR}/OVMF_VARS-preinstalled.fd}"
+OVMF_VARS_TEMPLATE="${OVMF_VARS_TEMPLATE_PATH:-$(default_ovmf_vars_template_path)}"
 
 require_cmd "$(qemu_bin)"
 
@@ -16,9 +17,7 @@ if [ ! -f "${DISK_PATH}" ]; then
   exit 1
 fi
 
-if [ ! -f "${OVMF_VARS}" ] && [ -f /run/libvirt/nix-ovmf/OVMF_VARS.fd ]; then
-  cp /run/libvirt/nix-ovmf/OVMF_VARS.fd "${OVMF_VARS}"
-fi
+ensure_ovmf_vars_file "${OVMF_VARS}" "${OVMF_VARS_TEMPLATE}"
 
 run_qemu "preinstalled-stable" \
   -enable-kvm \

@@ -6,8 +6,9 @@ source "${SCRIPT_DIR}/common.sh"
 
 ISO_PATH="${1:-${LAB_DIR}/nixos-stable-installer.iso}"
 DISK_PATH="${DISK_DIR}/installer-scratch.qcow2"
-OVMF_CODE="${OVMF_CODE_PATH:-/run/libvirt/nix-ovmf/OVMF_CODE.fd}"
+OVMF_CODE="${OVMF_CODE_PATH:-$(default_ovmf_code_path)}"
 OVMF_VARS="${OVMF_VARS_PATH:-${LAB_DIR}/OVMF_VARS-installer.fd}"
+OVMF_VARS_TEMPLATE="${OVMF_VARS_TEMPLATE_PATH:-$(default_ovmf_vars_template_path)}"
 
 require_cmd "$(qemu_bin)"
 require_cmd "$(qemu_img_bin)"
@@ -20,9 +21,7 @@ fi
 
 create_qcow2 "${DISK_PATH}"
 
-if [ ! -f "${OVMF_VARS}" ] && [ -f /run/libvirt/nix-ovmf/OVMF_VARS.fd ]; then
-  cp /run/libvirt/nix-ovmf/OVMF_VARS.fd "${OVMF_VARS}"
-fi
+ensure_ovmf_vars_file "${OVMF_VARS}" "${OVMF_VARS_TEMPLATE}"
 
 run_qemu "installer" \
   -enable-kvm \

@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 const packageJsonPath = path.join(repoRoot, "package.json");
-const readmePath = path.join(repoRoot, "README.md");
 const rebuildPullScriptPath = path.join(repoRoot, "core/scripts/nixpi-rebuild-pull.sh");
 const brokerModulePath = path.join(repoRoot, "core/os/modules/broker.nix");
 const setupApplyScriptPath = path.join(repoRoot, "core/scripts/nixpi-setup-apply.sh");
@@ -185,18 +184,18 @@ describe("repo standards guards", () => {
 		expect(liveTestingDoc).toContain("/srv/nixpi");
 	});
 	it("wires a declarative Zellij terminal UI as the default operator interface", () => {
+		expect(existsSync(terminalUiOptionPath)).toBe(true);
+		expect(existsSync(terminalUiModulePath)).toBe(true);
+
 		const terminalOptions = readFileSync(terminalUiOptionPath, "utf8");
 		const terminalModule = readFileSync(terminalUiModulePath, "utf8");
 		const shellModule = readFileSync(shellModulePath, "utf8");
 		const moduleSets = readFileSync(moduleSetsPath, "utf8");
 		const vpsHost = readFileSync(path.join(repoRoot, "core/os/hosts/vps.nix"), "utf8");
-		const readme = readFileSync(readmePath, "utf8");
 		const runtimeFlows = readFileSync(runtimeFlowsPath, "utf8");
 		const daemonArchitecture = readFileSync(daemonArchitecturePath, "utf8");
 		const serviceArchitecture = readFileSync(serviceArchitecturePath, "utf8");
 
-		expect(existsSync(terminalUiOptionPath)).toBe(true);
-		expect(existsSync(terminalUiModulePath)).toBe(true);
 		expect(terminalOptions).toContain("options.nixpi.terminal");
 		expect(terminalOptions).toContain('"plain-shell"');
 		expect(terminalOptions).toContain('"zellij"');
@@ -213,12 +212,12 @@ describe("repo standards guards", () => {
 		expect(vpsHost).toContain('terminal.interface = lib.mkDefault "zellij";');
 		expect(vpsHost).toContain("terminal.zellij.enable = lib.mkDefault true;");
 
-		expect(readme).toContain("Zellij");
-		expect(readme).toContain("NIXPI_NO_ZELLIJ=1");
 		expect(runtimeFlows).toContain("Zellij");
 		expect(runtimeFlows).toContain("NIXPI_NO_ZELLIJ=1");
 		expect(daemonArchitecture).toContain("Zellij");
+		expect(daemonArchitecture).toContain("NIXPI_NO_ZELLIJ=1");
 		expect(serviceArchitecture).toContain("Zellij");
+		expect(serviceArchitecture).toContain("NIXPI_NO_ZELLIJ=1");
 	});
 
 });

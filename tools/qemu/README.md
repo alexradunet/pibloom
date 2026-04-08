@@ -10,8 +10,9 @@
 
 ## Installer flow
 
-1. Put a stable NixOS installer ISO at `qemu-lab/nixos-stable-installer.iso`.
-2. Run `tools/qemu/run-installer.sh`.
+1. Run `tools/qemu/run-installer.sh`.
+   - If `qemu-lab/nixos-stable-installer.iso` is missing, it is downloaded automatically from:
+     `https://channels.nixos.org/nixos-25.11/latest-nixos-graphical-x86_64-linux.iso`
 3. In the guest, install NixOS manually onto `qemu-lab/disks/installer-scratch.qcow2`.
 4. Reboot, log in, and validate the base install.
 
@@ -33,3 +34,10 @@ qemu-img convert -f qcow2 -O qcow2 \
 
 The repo is exposed to the guest as a 9p share with mount tag `nixpi-repo`.
 Mount it manually in the guest when needed.
+
+## Cleanup
+
+- Clean VM artifacts while keeping the cached installer ISO:
+  - `tools/qemu/clean-lab.sh`
+- Clean everything including the installer ISO:
+  - `tools/qemu/clean-lab.sh --all`

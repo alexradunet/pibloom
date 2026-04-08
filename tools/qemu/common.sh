@@ -22,6 +22,9 @@ LAB_DIR="${NIXPI_QEMU_DIR:-${REPO_DIR}/qemu-lab}"
 DISK_DIR="${LAB_DIR}/disks"
 LOG_DIR="${LAB_DIR}/logs"
 SHARE_DIR="${REPO_DIR}"
+INSTALLER_ISO_PATH="${LAB_DIR}/nixos-stable-installer.iso"
+INSTALLER_ISO_URL="${NIXPI_QEMU_INSTALLER_ISO_URL:-https://channels.nixos.org/nixos-25.11/latest-nixos-graphical-x86_64-linux.iso}"
+AUTO_DOWNLOAD_INSTALLER_ISO="${NIXPI_QEMU_AUTO_DOWNLOAD_ISO:-1}"
 SSH_PORT="${NIXPI_QEMU_SSH_PORT:-2222}"
 HTTP_PORT="${NIXPI_QEMU_HTTP_PORT:-8081}"
 HTTPS_PORT="${NIXPI_QEMU_HTTPS_PORT:-8444}"
@@ -44,6 +47,14 @@ qemu_bin() {
 
 qemu_img_bin() {
   command -v qemu-img
+}
+
+curl_bin() {
+  command -v curl || true
+}
+
+wget_bin() {
+  command -v wget || true
 }
 
 virtiofsd_bin() {
@@ -104,6 +115,53 @@ create_qcow2() {
   if [ ! -f "${disk_path}" ]; then
     "$(qemu_img_bin)" create -f qcow2 "${disk_path}" "${DISK_SIZE}"
   fi
+}
+
+download_installer_iso() {
+  local iso_path="$1"
+  local downloader part_path
+  part_path="${iso_path}.part"
+
+  if [ "${AUTO_DOWNLOAD_INSTALLER_ISO}" = "0" ] || [ "${AUTO_DOWNLOAD_INSTALLER_ISO}" = "false" ]; then
+    return 1
+  fi
+
+  downloader="$(curl_bin)"
+  if [ -n "${downloader}" ]; then
+    echo "installer ISO missing; downloading via curl:"
+    echo "  ${INSTALLER_ISO_URL}"
+    "${downloader}" -fL --retry 3 --output "${part_path}" "${INSTALLER_ISO_URL}"
+    mv "${part_path}" "${iso_path}"
+    return 0
+  fi
+
+  downloader="$(wget_bin)"
+  if [ -n "${downloader}" ]; then
+    echo "installer ISO missing; downloading via wget:"
+    echo "  ${INSTALLER_ISO_URL}"
+    "${downloader}" --tries=3 --output-document="${part_path}" "${INSTALLER_ISO_URL}"
+    mv "${part_path}" "${iso_path}"
+    return 0
+  fi
+
+  return 1
+}
+
+ensure_installer_iso() {
+  local iso_path="$1"
+
+  if [ -f "${iso_path}" ]; then
+    return 0
+  fi
+
+  if download_installer_iso "${iso_path}"; then
+    return 0
+  fi
+
+  echo "missing installer ISO: ${iso_path}" >&2
+  echo "Auto-download URL: ${INSTALLER_ISO_URL}" >&2
+  echo "Enable curl/wget or place the ISO manually at the path above." >&2
+  return 1
 }
 
 print_access() {

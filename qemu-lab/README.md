@@ -14,10 +14,18 @@ Only this README is committed. All other files in `qemu-lab/` are local runtime 
 
 ## Expected workflow
 
-1. Put a stable NixOS installer ISO at `qemu-lab/nixos-stable-installer.iso`.
-2. Run `nix run .#qemu-installer`.
+1. Run `nix run .#qemu-installer`.
+   - If `qemu-lab/nixos-stable-installer.iso` is missing, it is downloaded automatically from:
+     `https://channels.nixos.org/nixos-25.11/latest-nixos-graphical-x86_64-linux.iso`
 3. If you want the reusable base image path, run `nix run .#qemu-prepare-preinstalled-stable`.
 4. Reuse the installed disk with `nix run .#qemu-preinstalled-stable`.
+
+## Cleanup
+
+- Reset local VM artifacts (keep installer ISO cached):
+  - `nix run .#qemu-clean`
+- Full cleanup including installer ISO:
+  - `nix run .#qemu-clean -- --all`
 
 ## Notes
 

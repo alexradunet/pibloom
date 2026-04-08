@@ -41,11 +41,21 @@ Scratch installer lab:
 nix run .#qemu-installer
 ```
 
+If `qemu-lab/nixos-stable-installer.iso` is missing, this command downloads:
+`https://channels.nixos.org/nixos-25.11/latest-nixos-graphical-x86_64-linux.iso`
+
 Reusable preinstalled stable disk:
 
 ```bash
 nix run .#qemu-prepare-preinstalled-stable
 nix run .#qemu-preinstalled-stable
+```
+
+Cleanup helpers:
+
+```bash
+nix run .#qemu-clean
+nix run .#qemu-clean -- --all
 ```
 
 These commands standardize the host-side QEMU environment only. Local runtime artifacts live under `qemu-lab/`. Install, bootstrap, reboot, and service validation remain manual inside the guest. See `tools/qemu/README.md` for the exact disk paths and scratch-to-reusable image flow.

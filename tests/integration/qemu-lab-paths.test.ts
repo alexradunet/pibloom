@@ -13,8 +13,35 @@ function writeStubExecutable(binDir: string, name: string) {
 	chmodSync(stubPath, 0o755);
 }
 
+function writeStubCurlDownloader(binDir: string) {
+	const stubPath = path.join(binDir, "curl");
+	writeFileSync(
+		stubPath,
+		[
+			"#!/usr/bin/env sh",
+			"set -eu",
+			'out=""',
+			'while [ "$#" -gt 0 ]; do',
+			'  case "$1" in',
+			"    --output|-o)",
+			'      out="$2"',
+			"      shift 2",
+			"      ;;",
+			"    *)",
+			"      shift",
+			"      ;;",
+			"  esac",
+			"done",
+			'[ -n "$out" ] || exit 1',
+			"printf 'fake iso' > \"$out\"",
+		].join("\n"),
+		"utf8",
+	);
+	chmodSync(stubPath, 0o755);
+}
+
 describe("QEMU lab path guards", () => {
-	it("reports the missing installer ISO under qemu-lab by default", () => {
+	it("reports the missing installer ISO under qemu-lab by default when auto-download is disabled", () => {
 		const tempRepoRoot = mkdtempSync(path.join(os.tmpdir(), "nixpi-qemu-root-"));
 		const stubBinDir = mkdtempSync(path.join(os.tmpdir(), "nixpi-qemu-bin-"));
 
@@ -29,6 +56,7 @@ describe("QEMU lab path guards", () => {
 					...process.env,
 					PATH: `${stubBinDir}:${process.env.PATH ?? ""}`,
 					NIXPI_QEMU_REPO_DIR: tempRepoRoot,
+					NIXPI_QEMU_AUTO_DOWNLOAD_ISO: "0",
 				},
 			});
 
@@ -36,10 +64,46 @@ describe("QEMU lab path guards", () => {
 			expect(result.stderr).toContain(
 				`missing installer ISO: ${path.join(tempRepoRoot, "qemu-lab", "nixos-stable-installer.iso")}`,
 			);
+			expect(result.stderr).toContain("Auto-download URL:");
 			expect(result.stderr).not.toContain(oldLabPath);
 		} finally {
 			rmSync(tempRepoRoot, { recursive: true, force: true });
 			rmSync(stubBinDir, { recursive: true, force: true });
+		}
+	});
+
+	it("auto-downloads the installer ISO when missing", () => {
+		const tempRepoRoot = mkdtempSync(path.join(os.tmpdir(), "nixpi-qemu-root-"));
+		const stubBinDir = mkdtempSync(path.join(os.tmpdir(), "nixpi-qemu-bin-"));
+		const tempOvmfDir = mkdtempSync(path.join(os.tmpdir(), "nixpi-qemu-ovmf-"));
+		const labDir = path.join(tempRepoRoot, "qemu-lab");
+
+		try {
+			mkdirSync(labDir, { recursive: true });
+			writeFileSync(path.join(tempOvmfDir, "OVMF_CODE.fd"), "code", "utf8");
+			writeFileSync(path.join(tempOvmfDir, "OVMF_VARS.fd"), "vars", "utf8");
+			writeStubExecutable(stubBinDir, "qemu-system-x86_64");
+			writeStubExecutable(stubBinDir, "qemu-img");
+			writeStubCurlDownloader(stubBinDir);
+
+			const result = spawnSync(path.join(repoRoot, "tools/qemu/run-installer.sh"), [], {
+				cwd: repoRoot,
+				encoding: "utf8",
+				env: {
+					...process.env,
+					PATH: `${stubBinDir}:${process.env.PATH ?? ""}`,
+					NIXPI_QEMU_REPO_DIR: tempRepoRoot,
+					NIXPI_QEMU_OVMF_DIR: tempOvmfDir,
+				},
+			});
+
+			expect(result.status).toBe(0);
+			expect(result.stdout).toContain("installer ISO missing; downloading via curl:");
+			expect(existsSync(path.join(labDir, "nixos-stable-installer.iso"))).toBe(true);
+		} finally {
+			rmSync(tempRepoRoot, { recursive: true, force: true });
+			rmSync(stubBinDir, { recursive: true, force: true });
+			rmSync(tempOvmfDir, { recursive: true, force: true });
 		}
 	});
 
@@ -95,8 +159,11 @@ describe("QEMU lab path guards", () => {
 
 		expect(qemuReadme).toContain("lab root: `qemu-lab/`");
 		expect(qemuReadme).toContain("qemu-lab/nixos-stable-installer.iso");
+		expect(qemuReadme).toContain("latest-nixos-graphical-x86_64-linux.iso");
+		expect(qemuReadme).toContain("clean-lab.sh");
 		expect(qemuReadme).not.toContain(oldLabPath);
 		expect(liveTesting).toContain("`qemu-lab/`");
+		expect(liveTesting).toContain("nix run .#qemu-clean");
 		expect(liveTesting).not.toContain(oldLabPath);
 	});
 });

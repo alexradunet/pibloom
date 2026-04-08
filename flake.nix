@@ -547,6 +547,13 @@
             exec ${./tools/qemu}/prepare-preinstalled-stable.sh "$@"
           ''}";
         };
+
+        qemu-clean = {
+          type = "app";
+          program = "${pkgs.writeShellScript "qemu-clean" ''
+            exec ${./tools/qemu}/clean-lab.sh "$@"
+          ''}";
+        };
       };
 
       devShells = forAllSystems (

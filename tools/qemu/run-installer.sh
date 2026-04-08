@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
-ISO_PATH="${1:-${LAB_DIR}/nixos-stable-installer.iso}"
+ISO_PATH="${1:-${INSTALLER_ISO_PATH}}"
 DISK_PATH="${DISK_DIR}/installer-scratch.qcow2"
 OVMF_CODE="${OVMF_CODE_PATH:-$(default_ovmf_code_path)}"
 OVMF_VARS="${OVMF_VARS_PATH:-${LAB_DIR}/OVMF_VARS-installer.fd}"
@@ -13,11 +13,7 @@ OVMF_VARS_TEMPLATE="${OVMF_VARS_TEMPLATE_PATH:-$(default_ovmf_vars_template_path
 require_cmd "$(qemu_bin)"
 require_cmd "$(qemu_img_bin)"
 
-if [ ! -f "${ISO_PATH}" ]; then
-  echo "missing installer ISO: ${ISO_PATH}" >&2
-  echo "Place a stable NixOS installer ISO there before launching." >&2
-  exit 1
-fi
+ensure_installer_iso "${ISO_PATH}"
 
 create_qcow2 "${DISK_PATH}"
 

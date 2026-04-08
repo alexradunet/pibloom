@@ -98,6 +98,28 @@ resolve_primary_user() {
   return 1
 }
 
+resolve_primary_group() {
+  if getent group "$PRIMARY_USER_VALUE" >/dev/null 2>&1; then
+    printf '%s\n' "$PRIMARY_USER_VALUE"
+    return 0
+  fi
+
+  local discovered_group
+  discovered_group="$(id -gn "$PRIMARY_USER_VALUE" 2>/dev/null || true)"
+  if [ -n "$discovered_group" ]; then
+    printf '%s\n' "$discovered_group"
+    return 0
+  fi
+
+  log "Could not infer primary group for user $PRIMARY_USER_VALUE."
+  log "Set up the primary user and group before running bootstrap."
+  return 1
+}
+
+ensure_repo_permissions() {
+  run_as_root chown -R "$PRIMARY_USER_VALUE:$PRIMARY_GROUP_VALUE" "$REPO_DIR"
+}
+
 default_git_email() {
   local mail_user host_label
   mail_user="$(sanitize_mail_token "$PRIMARY_USER_VALUE")"
@@ -130,6 +152,7 @@ ensure_repo_git_identity_defaults() {
 }
 
 PRIMARY_USER_VALUE="$(resolve_primary_user)"
+PRIMARY_GROUP_VALUE="$(resolve_primary_group)"
 COMBINED_NIX_CONFIG="$(compose_nix_config)"
 
 if [ ! -d "$REPO_DIR/.git" ]; then
@@ -143,6 +166,7 @@ fi
 run_as_root git -C "$REPO_DIR" fetch origin "$BRANCH"
 run_as_root git -C "$REPO_DIR" checkout "$BRANCH"
 run_as_root git -C "$REPO_DIR" reset --hard "origin/$BRANCH"
+ensure_repo_permissions
 ensure_repo_git_identity_defaults
 
 log "Initializing standard /etc/nixos flake"

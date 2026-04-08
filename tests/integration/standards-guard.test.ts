@@ -62,6 +62,8 @@ describe("repo standards guards", () => {
 		expect(appModule).toContain("pkgs.bash");
 		expect(appModule).toContain("shellPath =");
 		expect(appModule).toContain("/bin/bash");
+		expect(appModule).toContain("chown -R");
+		expect(appModule).toContain("/srv/nixpi");
 	});
 
 	it("removes the old chat-first browser artifacts from the runtime path", () => {
@@ -95,6 +97,7 @@ describe("repo standards guards", () => {
 		expect(bootstrapScript).toContain('config user.name "$PRIMARY_USER_VALUE"');
 		expect(bootstrapScript).toContain('config user.email "$fallback_email"');
 		expect(bootstrapScript).toContain(".local");
+		expect(bootstrapScript).toContain('chown -R "$PRIMARY_USER_VALUE:$PRIMARY_GROUP_VALUE" "$REPO_DIR"');
 
 		expect(osActions).toContain("/srv/nixpi");
 		expect(osActions).toContain("nixpi-rebuild-pull");

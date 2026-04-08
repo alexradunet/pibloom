@@ -82,6 +82,10 @@ in
           ln -s ../auth.json ${agentStateDir}/agent/auth.json
         fi
 
+        if [ -d /srv/nixpi ]; then
+          chown -R ${primaryUser}:"$primary_group" /srv/nixpi
+        fi
+
         chown -R ${primaryUser}:"$primary_group" ${agentStateDir}
         chmod 0700 ${agentStateDir}
       ''}";

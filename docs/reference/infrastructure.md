@@ -31,7 +31,7 @@ WireGuard is the supported remote-access layer for the default deployment path.
 
 ### Setup
 
-NixPI enables a native WireGuard hub interface by default. You complete the operator path by:
+NixPI enables a native WireGuard hub interface by default, backed by `systemd-networkd`. You complete the operator path by:
 
 1. reading the host public key with `wg show wg0 public-key`
 2. generating a keypair for your laptop/phone/admin device
@@ -46,7 +46,9 @@ Configure a standard WireGuard client on your laptop, phone, or admin workstatio
 
 ```bash
 systemctl status wireguard-wg0.service
+systemctl status systemd-networkd.service
 journalctl -u wireguard-wg0.service -n 100
+networkctl status wg0
 wg show wg0
 sudo systemctl restart wireguard-wg0.service
 ```

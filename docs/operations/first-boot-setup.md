@@ -34,6 +34,7 @@ A fresh system should come up with one remote operator surface:
 systemctl status nixpi-ttyd.service
 systemctl status nginx.service
 systemctl status wireguard-wg0.service
+systemctl status systemd-networkd.service
 ```
 
 Expected result: all four services are active or activatable without any desktop login step.
@@ -57,6 +58,8 @@ Expected result:
 
 ```bash
 systemctl status wireguard-wg0.service
+systemctl status systemd-networkd.service
+networkctl status wg0
 wg show wg0
 ip link show wg0
 ```
@@ -64,7 +67,9 @@ ip link show wg0
 Expected result:
 
 - `wireguard-wg0.service` is active
+- `systemd-networkd.service` is active
 - `wg0` exists before you rely on the deployment as your secure operator path
+- `networkctl status wg0` shows the interface as networkd-managed
 - `wg show wg0` lists at least one peer once you have added your admin device
 
 If WireGuard peers are not configured yet, finish that step before treating the host as ready for routine remote access.
@@ -106,7 +111,7 @@ After first boot, keep these boundaries in mind:
 |------|---------|
 | `nixpi-ttyd.service` | Pi terminal surface |
 | `nginx.service` | HTTP/HTTPS entry point |
-| `wireguard-wg0.service` | WireGuard remote-access boundary |
+| `wireguard-wg0.service` | Compatibility control unit for the WireGuard remote-access boundary |
 
 ### Current Behavior
 

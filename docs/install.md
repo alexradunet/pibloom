@@ -60,10 +60,13 @@ Check core services:
 
 ```bash
 systemctl status nixpi-ttyd.service
-systemctl status nixpi-ttyd.service
 systemctl status nginx.service
 systemctl status wireguard-wg0.service
+networkctl status wg0
 ```
+
+`wireguard-wg0.service` remains the operator-facing compatibility unit, but the
+interface is now backed by native `systemd-networkd` configuration.
 
 Rollback if needed:
 

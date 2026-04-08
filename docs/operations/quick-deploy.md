@@ -83,14 +83,16 @@ After the switch completes, NixPI runs as a remote-first service set. The defaul
 Preferred access is over WireGuard. In practice that means:
 
 1. add your admin device as a WireGuard peer
-2. confirm `wireguard-wg0.service` is active
-3. verify the `wg0` interface exists
+2. confirm `wireguard-wg0.service` and `systemd-networkd.service` are active
+3. verify the `wg0` interface exists and is managed by networkd
 4. open the Pi terminal over the WireGuard-reachable host IP
 
 Useful checks:
 
 ```bash
 systemctl status wireguard-wg0.service
+systemctl status systemd-networkd.service
+networkctl status wg0
 wg show wg0
 ip link show wg0
 ```

@@ -26,6 +26,7 @@ systemd boot
 multi-user.target
     ↓
 ├─ wireguard-wg0.service
+├─ systemd-networkd.service
 ├─ nixpi-app-setup.service
 ├─ nixpi-ttyd.service
 ├─ nixpi-update.service

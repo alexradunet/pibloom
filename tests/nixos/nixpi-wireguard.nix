@@ -153,7 +153,12 @@ in
 
     nixpi.start()
     nixpi.wait_for_unit("multi-user.target", timeout=300)
+    nixpi.wait_for_unit("systemd-networkd.service", timeout=120)
     nixpi.wait_for_unit("wireguard-wg0.service", timeout=120)
+    nixpi.succeed("test -f /etc/systemd/network/50-wg0.netdev")
+    nixpi.succeed("test -f /etc/systemd/network/50-wg0.network")
+    nixpi.succeed("grep -q '^Kind=wireguard$' /etc/systemd/network/50-wg0.netdev")
+    nixpi.succeed("grep -q '^Name=wg0$' /etc/systemd/network/50-wg0.netdev")
     nixpi.wait_for_unit("nginx.service", timeout=120)
     nixpi.wait_until_succeeds("curl -sf http://127.0.0.1/ >/dev/null", timeout=60)
 

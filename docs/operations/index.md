@@ -42,6 +42,8 @@ sudo nixos-rebuild switch --rollback
 systemctl status nixpi-ttyd.service
 systemctl status nginx.service
 systemctl status wireguard-wg0.service
+systemctl status systemd-networkd.service
+networkctl status wg0
 
 # Validation
 nix --option substituters https://cache.nixos.org/ build .#checks.x86_64-linux.config --no-link

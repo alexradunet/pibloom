@@ -58,6 +58,7 @@ The setup sequence is:
 3. complete `/model`
 4. guide Git identity setup for work in `/srv/nixpi`
 5. guide WireGuard configuration
+   - operationally this should align with a `systemd-networkd`-backed `wg0` interface
 6. guide OS security configuration
 7. guide the NixPI introduction/tutorial
 8. write the final `system-ready` marker only when the whole flow is complete

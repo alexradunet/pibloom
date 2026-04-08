@@ -91,7 +91,7 @@ NixPI combines several technologies to create a self-hosted AI companion OS. The
 
 ### WireGuard as Security Perimeter
 
-The `wg0` interface (native WireGuard tunnel) is the only trusted interface for the remote app surface. Services are only accessible through this interface.
+The `wg0` interface (native WireGuard tunnel) is the only trusted interface for the remote app surface. It is now configured through `systemd-networkd`, with `wireguard-wg0.service` kept as a compatibility control unit. Services are only accessible through this interface.
 
 **Critical**: Without WireGuard peers configured, the remote app surface stays closed and only SSH plus the WireGuard UDP port remain reachable.
 

@@ -26,16 +26,44 @@ let
   wireguardPeers = map (
     peer:
     {
-      inherit (peer) publicKey allowedIPs;
+      PublicKey = peer.publicKey;
+      AllowedIPs = peer.allowedIPs;
     }
-    // lib.optionalAttrs (peer.name != "") { inherit (peer) name; }
-    // lib.optionalAttrs (peer.endpoint != null) { inherit (peer) endpoint; }
-    // lib.optionalAttrs (peer.presharedKeyFile != null) { inherit (peer) presharedKeyFile; }
-    // lib.optionalAttrs (peer.persistentKeepalive != null) { inherit (peer) persistentKeepalive; }
-    // lib.optionalAttrs (peer.dynamicEndpointRefreshSeconds != null) {
-      inherit (peer) dynamicEndpointRefreshSeconds;
-    }
+    // lib.optionalAttrs (peer.endpoint != null) { Endpoint = peer.endpoint; }
+    // lib.optionalAttrs (peer.presharedKeyFile != null) { PresharedKeyFile = peer.presharedKeyFile; }
+    // lib.optionalAttrs (peer.persistentKeepalive != null) { PersistentKeepalive = peer.persistentKeepalive; }
   ) wgCfg.peers;
+  wireguardSecretFiles =
+    lib.unique ([ wgCfg.privateKeyFile ] ++ lib.filter (path: path != null) (map (peer: peer.presharedKeyFile) wgCfg.peers));
+  wireguardSecretDirs = lib.unique (map builtins.dirOf wireguardSecretFiles);
+  networkctlBin = lib.getExe' pkgs.systemd "networkctl";
+  wireguardKeySetup = pkgs.writeShellScript "nixpi-wireguard-key-setup" ''
+    set -euo pipefail
+
+    ${lib.concatMapStringsSep "\n" (dir: ''
+      ${lib.getExe' pkgs.coreutils "install"} -d -m 0750 -o root -g systemd-network "${dir}"
+    '') wireguardSecretDirs}
+
+    if [ ! -f "${wgCfg.privateKeyFile}" ]; then
+      if ${if wgCfg.generatePrivateKeyFile then "true" else "false"}; then
+        umask 027
+        ${lib.getExe' pkgs.wireguard-tools "wg"} genkey > "${wgCfg.privateKeyFile}"
+      fi
+    fi
+
+    ${lib.concatMapStringsSep "\n" (file: ''
+      if [ -e "${file}" ]; then
+        ${lib.getExe' pkgs.coreutils "chgrp"} systemd-network "${file}"
+        ${lib.getExe' pkgs.coreutils "chmod"} 0640 "${file}"
+      fi
+    '') wireguardSecretFiles}
+  '';
+  wireguardCompatService = pkgs.writeShellScript "nixpi-wireguard-up" ''
+    set -euo pipefail
+
+    ${networkctlBin} up ${lib.escapeShellArg wgCfg.interface} >/dev/null 2>&1 || true
+    ${pkgs.iproute2}/bin/ip link show dev ${lib.escapeShellArg wgCfg.interface} >/dev/null
+  '';
   preferWifi = pkgs.writeShellScriptBin "nixpi-prefer-wifi" ''
     set -euo pipefail
 
@@ -88,6 +116,14 @@ in
           assertion = lib.length (lib.unique exposedPorts) == lib.length exposedPorts;
           message = "NixPI service ports must be unique across built-in services.";
         }
+        {
+          assertion = lib.all (peer: peer.dynamicEndpointRefreshSeconds == null) wgCfg.peers;
+          message = ''
+            nixpi.wireguard.peers.*.dynamicEndpointRefreshSeconds is not supported by the
+            native systemd.network WireGuard backend. Use static IP endpoints or leave
+            peer endpoints unset for roaming clients.
+          '';
+        }
       ];
 
       hardware.enableAllFirmware = true;
@@ -127,14 +163,56 @@ in
       networking.firewall.interfaces = lib.mkIf securityCfg.enforceServiceFirewall {
         "${securityCfg.trustedInterface}".allowedTCPPorts = exposedPorts;
       };
+      networking.useDHCP = lib.mkDefault false;
       networking.networkmanager.enable = true;
-      networking.wireguard.interfaces = lib.mkIf wgCfg.enable {
-        "${wgCfg.interface}" = {
-          ips = [ wgCfg.address ];
-          listenPort = wgCfg.listenPort;
-          privateKeyFile = wgCfg.privateKeyFile;
-          generatePrivateKeyFile = wgCfg.generatePrivateKeyFile;
-          peers = wireguardPeers;
+      systemd.network = lib.mkIf wgCfg.enable {
+        enable = true;
+        wait-online.enable = false;
+        netdevs."50-${wgCfg.interface}" = {
+          netdevConfig = {
+            Kind = "wireguard";
+            Name = wgCfg.interface;
+          };
+          wireguardConfig = {
+            ListenPort = wgCfg.listenPort;
+            PrivateKeyFile = wgCfg.privateKeyFile;
+            RouteTable = "main";
+          };
+          wireguardPeers = wireguardPeers;
+        };
+        networks."50-${wgCfg.interface}" = {
+          matchConfig.Name = wgCfg.interface;
+          address = [ wgCfg.address ];
+          linkConfig.RequiredForOnline = "no";
+          networkConfig.ConfigureWithoutCarrier = true;
+        };
+      };
+
+      systemd.services.nixpi-wireguard-key = lib.mkIf wgCfg.enable {
+        description = "Prepare NixPI WireGuard key material for systemd-networkd";
+        before = [ "systemd-networkd.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        script = builtins.readFile wireguardKeySetup;
+      };
+      systemd.services.systemd-networkd = lib.mkIf wgCfg.enable {
+        wants = [ "nixpi-wireguard-key.service" ];
+        after = [ "nixpi-wireguard-key.service" ];
+      };
+
+      systemd.services."wireguard-${wgCfg.interface}" = lib.mkIf wgCfg.enable {
+        description = "NixPI WireGuard interface ${wgCfg.interface}";
+        wants = [ "systemd-networkd.service" ];
+        after = [ "systemd-networkd.service" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = wireguardCompatService;
+          ExecReload = "${networkctlBin} reconfigure ${wgCfg.interface}";
+          ExecStop = "${networkctlBin} down ${wgCfg.interface}";
         };
       };
 
@@ -171,7 +249,7 @@ in
       environment.systemPackages = with pkgs; [
         jq
         preferWifi
-      ];
+      ] ++ lib.optionals wgCfg.enable [ wireguard-tools ];
       warnings = lib.optional (!securityCfg.enforceServiceFirewall && !bindsLocally) ''
         NixPI's built-in service surface is bound to `${cfg.bindAddress}` without
         the trusted-interface firewall restriction. Backend service ports may

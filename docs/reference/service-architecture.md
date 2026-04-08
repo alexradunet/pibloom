@@ -18,14 +18,16 @@ The current built-in service set is:
 |---------|------|---------|
 | `nginx` | `:80`, `:443` | Public entrypoint for the Pi terminal surface |
 | `nixpi-ttyd.service` | proxied via `/` and `/terminal/` | Browser terminal session |
-| `wireguard-wg0.service` | native WireGuard | Required remote-access and firewall trust boundary |
+| `wireguard-wg0.service` | compatibility unit over `systemd-networkd` WireGuard | Required remote-access and firewall trust boundary |
 
 These services are declared in the OS layer and are expected to exist on every deployed NixPI host.
 
 ## Operational Notes
 
 - The public operator surface is `/`, with `/terminal/` as an alias to the same ttyd session.
+- WireGuard is configured through native `systemd.network` `.netdev` / `.network` units.
 - Use `systemctl status nixpi-ttyd.service`, `nginx.service`, and `wireguard-wg0.service` for host-level inspection.
+- Use `networkctl status wg0` when you need backend-level WireGuard status.
 - Use `journalctl -u <unit>` when you need service logs during deployment or troubleshooting.
 
 ## Related

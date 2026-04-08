@@ -43,6 +43,8 @@ in
       default = "/var/lib/nixpi/wireguard/private.key";
       description = ''
         Runtime path to the WireGuard private key for the NixPI hub.
+        The native systemd-networkd backend will ensure this file is readable
+        by the `systemd-network` group.
       '';
     };
 

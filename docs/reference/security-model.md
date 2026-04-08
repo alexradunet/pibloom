@@ -10,7 +10,7 @@ Operators deploying NixPI and template forkers who need to understand the securi
 
 **WireGuard is the load-bearing remote-access boundary.**
 
-NixPI is designed as a NixOS-based personal AI-first OS where the primary operator path is a native WireGuard interface. This is explicitly codified in the firewall configuration:
+NixPI is designed as a NixOS-based personal AI-first OS where the primary operator path is a native WireGuard interface. The interface is now backed by `systemd-networkd`, while `wireguard-wg0.service` remains as a compatibility control surface. This is explicitly codified in the firewall configuration:
 
 ```nix
 networking.firewall.interfaces.wg0.allowedTCPPorts = [ 80 443 ];
@@ -100,7 +100,9 @@ After setup is complete, direct blanket passwordless sudo is removed. Privileged
 Before exposing a NixPI host to any network:
 
 - [ ] `wireguard-wg0.service` is active
+- [ ] `systemd-networkd.service` is active
 - [ ] The `wg0` interface exists (`ip link show wg0`)
+- [ ] `networkctl status wg0` shows the interface as managed by networkd
 - [ ] `wg show wg0` lists your expected peers
 - [ ] You have verified services are NOT accessible from non-WireGuard devices
 - [ ] SSH keys are provisioned (recommended)

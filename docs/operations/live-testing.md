@@ -62,7 +62,7 @@ These commands standardize the host-side QEMU environment only. Local runtime ar
 
 ### First Remote Validation
 
-1. Confirm `nixpi-ttyd.service`, `nginx.service`, and `wireguard-wg0.service` reach their expected state.
+1. Confirm `nixpi-ttyd.service`, `nginx.service`, `wireguard-wg0.service`, and `systemd-networkd.service` reach their expected state.
 2. Verify the public HTTP surface responds on `http://127.0.0.1/` and `http://127.0.0.1/terminal/`.
 3. Confirm the same Pi workflow also works over SSH or a local terminal when needed.
 4. Confirm outbound networking works and add at least one WireGuard peer before treating the host as ready for routine remote use.

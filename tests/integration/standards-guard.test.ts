@@ -260,13 +260,13 @@ describe("repo standards guards", () => {
 		expect(quickDeployDoc).toContain("Booting from Hard Disk...");
 		expect(quickDeployDoc).toContain("rescue environment");
 		expect(quickDeployDoc).toContain("password-authenticated SSH flow");
-		expect(quickDeployDoc).toContain("trusted WireGuard");
+		expect(quickDeployDoc).toContain("trusted admin tailnet");
 
 		expect(liveTestingDoc).toContain("/dev/disk/by-id");
 		expect(liveTestingDoc).toContain("installer-side target disk ID");
 		expect(liveTestingDoc).toContain("hybrid BIOS+EFI");
 		expect(liveTestingDoc).toContain("normal disk boot");
-		expect(liveTestingDoc).toContain("trusted WireGuard interface");
+		expect(liveTestingDoc).toContain("trusted tailnet path");
 	});
 
 	it("keeps headless VPS deployment as the documented install story", () => {

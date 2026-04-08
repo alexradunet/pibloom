@@ -25,11 +25,19 @@ If KVM hangs at SeaBIOS `Booting from Hard Disk...` after an apparently
 successful install, fail the release check and confirm the deployed image was
 built from the hybrid BIOS+EFI OVH disk layout.
 
+If the machine reappears in the OVH rescue environment after reboot, fail the
+release check and verify the provider boot mode was switched back from rescue to
+normal disk boot.
+
+Once the host joins the admin tailnet, confirm the SSH management path is
+reachable from the trusted tailnet path and no longer relies on the public
+interface being open.
+
 ## First Remote Validation
 
-1. Confirm `nixpi-app-setup.service`, `sshd.service`, `wireguard-wg0.service`, and `nixpi-update.timer` reach their expected state.
+1. Confirm `nixpi-app-setup.service`, `sshd.service`, `tailscaled.service`, and `nixpi-update.timer` reach their expected state.
 2. Confirm `pi` works from SSH.
-3. Confirm outbound networking works and add at least one WireGuard peer before treating the host as ready for routine remote use.
+3. Confirm outbound networking works and enroll the host in the admin tailnet before treating it as ready for routine remote use.
 4. If you keep an operator checkout such as `/srv/nixpi`, confirm it remains usable for rebuilds after reboot.
 
 **Expected result:** the Pi runtime returns after reboot, the host remains operable without first-boot repo seeding or runtime host-flake generation, and no second install path is needed for recovery.

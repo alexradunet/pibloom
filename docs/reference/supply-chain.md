@@ -12,7 +12,7 @@ The important supply-chain boundary is:
 - The selected Nixpkgs revision
 - NixPI's own source tree
 
-Built-in services such as `nixpi-app-setup`, `wireguard-wg0`, and the Pi runtime packages are provisioned from those sources rather than from a mutable runtime package catalog.
+Built-in services such as `nixpi-app-setup`, `tailscaled`, `headscale`, and the Pi runtime packages are provisioned from those sources rather than from a mutable runtime package catalog.
 
 ## Dependency Sources
 

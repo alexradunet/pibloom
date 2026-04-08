@@ -27,7 +27,7 @@ const baseConfig: BrokerConfig = {
 	defaultAutonomy: "maintain",
 	elevationDuration: "30m",
 	osUpdateEnable: true,
-	allowedUnits: ["wireguard-wg0.service", "nixpi-update.service"],
+	allowedUnits: ["tailscaled.service", "nixpi-update.service"],
 	defaultFlake: "/etc/nixos#nixos",
 };
 

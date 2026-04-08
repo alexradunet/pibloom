@@ -34,7 +34,7 @@ A fresh system should provide:
 ```bash
 systemctl status nixpi-app-setup.service
 systemctl status sshd.service
-systemctl status wireguard-wg0.service
+systemctl status tailscaled.service
 systemctl status nixpi-update.timer
 ```
 
@@ -58,19 +58,18 @@ Expected result:
 
 After the first successful login, the default operator-facing interface is Zellij. The generated layout opens Pi and a shell tab. If you need a plain shell for recovery, use `NIXPI_NO_ZELLIJ=1` before starting the login shell.
 
-### 3. Verify WireGuard Before Normal Use
+### 3. Verify the Admin Tailnet Before Normal Use
 
 ```bash
-systemctl status wireguard-wg0.service
-wg show wg0
-ip link show wg0
+systemctl status tailscaled.service
+tailscale status
 ```
 
 Expected result:
 
-- `wireguard-wg0.service` is active
-- `wg0` exists before you rely on the deployment as your preferred private operator path
-- `wg show wg0` lists at least one peer once you have added your admin device
+- `tailscaled.service` is active
+- the host can join and report its state on the admin tailnet
+- `tailscale status` shows the local node and any expected peers once you have enrolled your admin devices
 
 ### 4. Optional: Verify the Operator Rebuild Path
 
@@ -121,7 +120,7 @@ After first boot, keep these boundaries in mind:
 |------|---------|
 | `nixpi-app-setup.service` | Provides the Pi runtime entry path |
 | `sshd.service` | Remote shell access |
-| `wireguard-wg0.service` | Compatibility control unit for the WireGuard management network |
+| `tailscaled.service` | Tailnet client for the private admin network |
 
 ### Current Behavior Target
 

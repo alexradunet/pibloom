@@ -22,9 +22,9 @@ The primary surface is the shell runtime. The same setup should work from SSH or
      - `git config --global user.name "$(id -un)"`
      - `git config --global user.email "$(id -un)@$(hostname -s).local"`
      - if the operator already chose a checkout path, those same values can be written there instead (for example `git -C /srv/nixpi config ...`)
-   - WireGuard configuration
-     - treat WireGuard as the native NixOS `networking.wireguard.interfaces` path
-     - prefer checks like `systemctl status wireguard-wg0.service`, `wg show wg0`, and `ip link show wg0`
+   - admin tailnet configuration
+     - treat the private management path as a Headscale-managed tailnet rather than raw WireGuard peer plumbing
+     - prefer checks like `systemctl status tailscaled.service`, `tailscale status`, and, on the control-plane host, `systemctl status headscale.service`
    - OS security configuration
    - a short NixPI intro/tutorial
 5. When onboarding is complete, have the operator switch the host to steady-state config (for example `nixpi.bootstrap.enable = false` or equivalent explicit settings) and rebuild. Do not write runtime completion markers.

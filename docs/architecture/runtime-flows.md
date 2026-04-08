@@ -10,7 +10,7 @@
 ## Runtime Entry Flow
 
 1. Boot selects bootstrap or steady-state behavior from declarative NixOS config.
-2. `sshd.service` and `wireguard-wg0.service` provide operator entry.
+2. `sshd.service` and `tailscaled.service` provide operator entry on enrolled hosts.
 3. `nixpi-app-setup.service` exposes the Pi runtime entry path.
 4. Interactive operator sessions enter Zellij by default.
 5. The generated Zellij layout opens Pi and a plain shell workspace.
@@ -21,7 +21,7 @@
 ```text
 multi-user.target
 ├─ sshd.service
-├─ wireguard-wg0.service
+├─ tailscaled.service
 ├─ nixpi-app-setup.service
 └─ nixpi-update.timer
 ```
@@ -53,8 +53,9 @@ Interactive SSH and local tty logins pass through the NixPI terminal-ui launcher
 ```bash
 systemctl status nixpi-app-setup.service
 systemctl status sshd.service
-systemctl status wireguard-wg0.service
+systemctl status tailscaled.service
 systemctl status nixpi-update.timer
+tailscale status
 command -v pi
 pi --help
 ```

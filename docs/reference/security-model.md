@@ -8,24 +8,24 @@ NixPI no longer ships an HTTP terminal surface. The supported operator paths are
 
 - SSH for remote administration
 - local terminal login on monitor-attached hardware
-- optional WireGuard for a private management overlay
+- optional Headscale-managed admin tailnet for a private management overlay
 
 ## Network Exposure
 
 By default, the host keeps:
 
 - SSH reachable for the primary operator
-- the WireGuard UDP listen port reachable when WireGuard is enabled
+- the Headscale HTTPS and STUN ports reachable on the dedicated control-plane host when the admin tailnet is self-hosted
 - no built-in HTTP/HTTPS Pi surface
 
-## What WireGuard Protects
+## What The Admin Tailnet Protects
 
-WireGuard remains the preferred private management network for operator devices and future trusted-service traffic. It is not required for the local shell runtime to function.
+The admin tailnet remains the preferred private management network for operator devices and future trusted-service traffic. It is not required for the local shell runtime to function.
 
 ## Threat Actors Within Scope
 
 1. **Compromised SSH client or admin device**
-2. **Compromised device on the WireGuard network**
+2. **Compromised device on the admin tailnet**
 3. **Template forker who deploys without verifying shell-access hardening**
 
 ## Agent Privilege Boundary

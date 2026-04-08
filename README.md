@@ -24,8 +24,9 @@ After install, validate the running host:
 
 ```bash
 systemctl status sshd.service
-systemctl status wireguard-wg0.service
+systemctl status tailscaled.service
 systemctl status nixpi-app-setup.service
+tailscale status
 ```
 
 Operator rebuild path and repo semantics are separate:

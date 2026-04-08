@@ -6,14 +6,14 @@
 
 Operators and maintainers deploying NixPI onto a headless x86_64 VPS.
 
-## Security Note: WireGuard Is the Preferred Private Management Network
+## Security Note: The Admin Tailnet Is the Preferred Private Management Network
 
-WireGuard remains the preferred private network path for NixPI hosts. SSH stays available for administration, while WireGuard provides the trusted management overlay for host-to-device access.
+The Headscale-managed admin tailnet is the preferred private network path for NixPI hosts. SSH stays available for administration, while the tailnet provides the trusted admin overlay for host-to-device access.
 
-When the host has at least one configured WireGuard peer, NixPI should prefer a
-password-authenticated SSH flow that is reachable only on the trusted WireGuard
-interface rather than from the public internet. Bootstrap installs can still
-use public SSH temporarily until the private management path exists.
+Once a host is enrolled, NixPI should prefer a password-authenticated SSH flow
+that is reachable from the trusted admin tailnet rather than from the public
+internet. Bootstrap installs can still use public SSH temporarily until the
+private management path exists.
 
 ## Canonical Deployment Path
 
@@ -70,11 +70,10 @@ Useful checks:
 
 ```bash
 systemctl status sshd.service
-systemctl status wireguard-wg0.service
+systemctl status tailscaled.service
 systemctl status nixpi-update.timer
 systemctl status nixpi-app-setup.service
-wg show wg0
-ip link show wg0
+tailscale status
 ```
 
 ## 4. Use the standard rebuild path, or sync an operator checkout when needed

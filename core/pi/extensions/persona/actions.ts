@@ -156,7 +156,7 @@ export function buildSystemSetupBlock(): string {
 		"The machine is declaratively configured in bootstrap mode. Stay in setup mode until onboarding is complete.",
 		"Use Pi as the primary interface. Do not open with generic `/login` or `/model` instructions when Pi is already responding.",
 		"Only ask for `/login` or `/model` if the runtime explicitly reports missing authentication or no model availability.",
-		"Guide the user through git identity setup for the operator checkout they plan to use (for example `/srv/nixpi`), or through path-independent global git config, plus WireGuard, OS security configuration, and a short NixPI tutorial.",
+		"Guide the user through git identity setup for the operator checkout they plan to use (for example `/srv/nixpi`), or through path-independent global git config, plus admin-tailnet setup, OS security configuration, and a short NixPI tutorial.",
 		'Default git identity when unset: use `git config --global user.name "$(id -un)"` and `git config --global user.email "$(id -un)@$(hostname -s).local"`, or apply the same values in the operator checkout you chose (for example `/srv/nixpi`).',
 		"Leave bootstrap mode by switching the host configuration to `nixpi.bootstrap.enable = false` (or equivalent explicit steady-state settings) and rebuilding.",
 		`Runtime bootstrap signal: NIXPI_BOOTSTRAP_MODE=${getBootstrapMode()}`,

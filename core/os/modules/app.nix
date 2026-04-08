@@ -16,6 +16,7 @@ let
     export PI_SKIP_VERSION_CHECK=1
     export PATH="${
       lib.makeBinPath [
+        pkgs.bash
         pkgs.fd
         pkgs.ripgrep
       ]
@@ -23,7 +24,10 @@ let
     exec ${appPackage}/share/nixpi/node_modules/.bin/pi "$@"
   '';
   defaultSettings = pkgs.writeText "pi-settings.json" (
-    builtins.toJSON { packages = config.nixpi.agent.packagePaths; }
+    builtins.toJSON {
+      packages = config.nixpi.agent.packagePaths;
+      shellPath = "${pkgs.bash}/bin/bash";
+    }
   );
 in
 

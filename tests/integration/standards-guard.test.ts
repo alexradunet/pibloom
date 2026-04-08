@@ -10,6 +10,7 @@ const terminalBootstrapScriptPath = path.join(repoRoot, "core/scripts/nixpi-term
 const serviceSurfaceModulePath = path.join(repoRoot, "core/os/modules/service-surface.nix");
 const selfEvolutionSkillPath = path.join(repoRoot, "core/pi/skills/self-evolution/SKILL.md");
 const appPackagePath = path.join(repoRoot, "core/os/pkgs/app/default.nix");
+const appModulePath = path.join(repoRoot, "core/os/modules/app.nix");
 const piPackagePath = path.join(repoRoot, "core/os/pkgs/pi/default.nix");
 const retiredBrowserRuntimePath = path.join(repoRoot, "core", "chat-server");
 const viteConfigPath = path.join(repoRoot, "vite.config.ts");
@@ -56,7 +57,11 @@ describe("repo standards guards", () => {
 
 	it("keeps Pi command execution shell-capable by including bash in wrapper PATH", () => {
 		const piPackage = readFileSync(piPackagePath, "utf8");
+		const appModule = readFileSync(appModulePath, "utf8");
 		expect(piPackage).toContain("makeBinPath [ bash fd ripgrep ]");
+		expect(appModule).toContain("pkgs.bash");
+		expect(appModule).toContain("shellPath =");
+		expect(appModule).toContain("/bin/bash");
 	});
 
 	it("removes the old chat-first browser artifacts from the runtime path", () => {

@@ -78,10 +78,31 @@ nix run .#nixpi-deploy-ovh -- \
   --hostname bloom-eu-1
 ```
 
+If you want a single bootstrap user for first login, generate a SHA-512
+bootstrap password hash locally and pass it to the wrapper.
+
+For example, to create a bootstrap user named `human` with the password
+`change123#@!`:
+
+```bash
+PASSWORD_HASH="$(python3 - <<'PY'
+import crypt
+print(crypt.crypt("change123#@!", crypt.mksalt(crypt.METHOD_SHA512)))
+PY
+)"
+
+nix run .#nixpi-deploy-ovh -- \
+  --target-host root@SERVER_IP \
+  --disk /dev/sda \
+  --bootstrap-user human \
+  --bootstrap-password-hash "$PASSWORD_HASH"
+```
+
 What the wrapper does:
 
 - uses the repo's `ovh-vps` configuration as the base system
 - overrides the target disk explicitly for `disko`
+- can create a single bootstrap user with `initialHashedPassword`
 - runs `nixos-anywhere` against the OVH rescue host
 
 ## 4. Reconnect after the reinstall
@@ -94,7 +115,7 @@ Remove the old host key and reconnect:
 
 ```bash
 ssh-keygen -R SERVER_IP
-ssh root@SERVER_IP
+ssh human@SERVER_IP
 ```
 
 ## 5. Switch to the canonical day-2 workflow
@@ -125,6 +146,9 @@ sudo nixos-rebuild switch --rollback
 - If the machine is already a NixOS-capable host and you only need to layer
   NixPI onto it, use the existing bootstrap workflow instead.
 - The current first-class OVH path assumes a simple single-disk layout.
+- The install connection can use the OVH rescue root password via
+  `SSHPASS=...` and `--env-password`, but post-install login should use the
+  bootstrap user you configured.
 
 ## Related
 

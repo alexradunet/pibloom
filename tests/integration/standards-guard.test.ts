@@ -140,4 +140,17 @@ describe("repo standards guards", () => {
 		expect(ovhDisko).toContain('size = "100%"');
 		expect(ovhDisko).not.toContain('end = "100%"');
 	});
+
+	it("supports a single bootstrap user with a hashed first-login password for OVH installs", () => {
+		const deployScript = readFileSync(deployOvhScriptPath, "utf8");
+		const deployDoc = readFileSync(ovhDeployDocPath, "utf8");
+
+		expect(deployScript).toContain("--bootstrap-user");
+		expect(deployScript).toContain("--bootstrap-password-hash");
+		expect(deployScript).toContain("nixpi.primaryUser = lib.mkForce");
+		expect(deployScript).toContain("initialHashedPassword");
+		expect(deployDoc).toContain("bootstrap user");
+		expect(deployDoc).toContain("bootstrap password hash");
+		expect(deployDoc).toContain("initialHashedPassword");
+	});
 });

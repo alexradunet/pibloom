@@ -1,15 +1,24 @@
 ---
 title: Install NixPI
-description: Install NixPI on a NixOS-capable x86_64 machine.
+description: Install NixPI on a fresh OVH VPS or a NixOS-capable x86_64 machine.
 ---
 
 # Install NixPI
 
-## Requirements
+## Bootstrap requirements
 
 - NixOS-capable x86_64 machine: VPS, headless VM, or mini PC with an attached monitor
 - SSH access with `sudo`
 - Outbound internet access
+
+## Install paths
+
+Choose the path that matches the machine you are starting from:
+
+- **Fresh OVH VPS from rescue mode**:
+  [OVH Rescue Deploy](./operations/ovh-rescue-deploy)
+- **Already NixOS-capable machine**:
+  use the bootstrap command below
 
 ## Install command
 

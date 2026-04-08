@@ -5,6 +5,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.11";
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs-stable";
+    nixos-anywhere.url = "github:nix-community/nixos-anywhere";
+    nixos-anywhere.inputs.nixpkgs.follows = "nixpkgs-stable";
   };
 
   outputs =
@@ -12,6 +16,8 @@
       self,
       nixpkgs,
       nixpkgs-stable,
+      disko,
+      nixos-anywhere,
       ...
     }:
     let
@@ -41,6 +47,9 @@
           nixpi-bootstrap-vps = pkgs.callPackage ./core/os/pkgs/bootstrap { };
           nixpi-rebuild = pkgs.callPackage ./core/os/pkgs/nixpi-rebuild { };
           nixpi-rebuild-pull = pkgs.callPackage ./core/os/pkgs/nixpi-rebuild-pull { };
+          nixpi-deploy-ovh = pkgs.callPackage ./core/os/pkgs/nixpi-deploy-ovh {
+            nixosAnywherePackage = nixos-anywhere.packages.${system}.nixos-anywhere;
+          };
           nixpi-setup-apply = pkgs.callPackage ./core/os/pkgs/nixpi-setup-apply { };
         };
       pkgs = mkPkgs system;
@@ -140,6 +149,15 @@
         vps = mkConfiguredSystem {
           inherit system;
           modules = [ ./core/os/hosts/vps.nix ];
+        };
+
+        ovh-vps = mkConfiguredStableSystem {
+          inherit system;
+          modules = [
+            disko.nixosModules.disko
+            ./core/os/disko/ovh-single-disk.nix
+            ./core/os/hosts/ovh-vps.nix
+          ];
         };
 
         # Host-owned system-flake composition used by bootstrap-generated installs:
@@ -553,6 +571,11 @@
           program = "${pkgs.writeShellScript "qemu-clean" ''
             exec ${./tools/qemu}/clean-lab.sh "$@"
           ''}";
+        };
+
+        nixpi-deploy-ovh = {
+          type = "app";
+          program = "${self.packages.${system}.nixpi-deploy-ovh}/bin/nixpi-deploy-ovh";
         };
       };
 

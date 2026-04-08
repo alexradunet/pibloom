@@ -15,6 +15,7 @@ This section covers the headless operator workflow for NixPI:
 
 | Topic | Description |
 |-------|-------------|
+| [OVH Rescue Deploy](./ovh-rescue-deploy) | Fresh-install NixPI onto an OVH VPS from rescue mode |
 | [Quick Deploy](./quick-deploy) | Bootstrap a VPS, configure WireGuard, and open the Pi terminal surface |
 | [First Boot Setup](./first-boot-setup) | Validate the public Pi terminal surface and service readiness |
 | [Live Testing](./live-testing) | Release-time validation for the headless VPS operator path |
@@ -24,6 +25,9 @@ This section covers the headless operator workflow for NixPI:
 ### Common Commands
 
 ```bash
+# Fresh OVH rescue-mode install
+nix run .#nixpi-deploy-ovh -- --target-host root@SERVER_IP --disk /dev/sda
+
 # Fresh VPS bootstrap
 nix run github:alexradunet/nixpi#nixpi-bootstrap-vps
 

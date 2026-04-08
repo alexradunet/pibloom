@@ -8,6 +8,12 @@ const ttydModulePath = path.join(repoRoot, "core/os/modules/ttyd.nix");
 const rebuildPullScriptPath = path.join(repoRoot, "core/scripts/nixpi-rebuild-pull.sh");
 const terminalBootstrapScriptPath = path.join(repoRoot, "core/scripts/nixpi-terminal-bootstrap.sh");
 const serviceSurfaceModulePath = path.join(repoRoot, "core/os/modules/service-surface.nix");
+const brokerModulePath = path.join(repoRoot, "core/os/modules/broker.nix");
+const setupApplyScriptPath = path.join(repoRoot, "core/scripts/nixpi-setup-apply.sh");
+const deployOvhScriptPath = path.join(repoRoot, "core/scripts/nixpi-deploy-ovh.sh");
+const ovhHostPath = path.join(repoRoot, "core/os/hosts/ovh-vps.nix");
+const ovhDiskoPath = path.join(repoRoot, "core/os/disko/ovh-single-disk.nix");
+const ovhDeployDocPath = path.join(repoRoot, "docs/operations/ovh-rescue-deploy.md");
 const selfEvolutionSkillPath = path.join(repoRoot, "core/pi/skills/self-evolution/SKILL.md");
 const appPackagePath = path.join(repoRoot, "core/os/pkgs/app/default.nix");
 const appModulePath = path.join(repoRoot, "core/os/modules/app.nix");
@@ -104,5 +110,59 @@ describe("repo standards guards", () => {
 
 		expect(selfEvolutionSkill).toContain("/srv/nixpi");
 		expect(selfEvolutionSkill).toContain("nixpi-rebuild-pull");
+	});
+
+	it("keeps direct sudo temporary during setup and removes it after completion", () => {
+		const brokerModule = readFileSync(brokerModulePath, "utf8");
+		const setupApplyScript = readFileSync(setupApplyScriptPath, "utf8");
+
+		expect(brokerModule).toContain('firstBootSudoersDir = "${stateDir}/sudoers.d";');
+		expect(brokerModule).toContain('firstBootSudoersPath = "${firstBootSudoersDir}/nixpi-first-boot";');
+		expect(brokerModule).toContain("#includedir ${firstBootSudoersDir}");
+		expect(brokerModule).toContain("NOPASSWD: ALL");
+		expect(brokerModule).toContain("wizard-state/system-ready");
+		expect(setupApplyScript).toContain('FIRST_BOOT_SUDOERS_FILE="/var/lib/nixpi/sudoers.d/nixpi-first-boot"');
+		expect(setupApplyScript).toMatch(/rm -f "\$\{FIRST_BOOT_SUDOERS_FILE\}"/);
+	});
+
+	it("keeps the OVH deployment lane wired into the repo", () => {
+		const flake = readFileSync(path.join(repoRoot, "flake.nix"), "utf8");
+		const installDoc = readFileSync(path.join(repoRoot, "docs/install.md"), "utf8");
+		const quickDeployDoc = readFileSync(path.join(repoRoot, "docs/operations/quick-deploy.md"), "utf8");
+
+		expect(flake).toContain('disko.url = "github:nix-community/disko"');
+		expect(flake).toContain('nixos-anywhere.url = "github:nix-community/nixos-anywhere"');
+		expect(flake).toContain("ovh-vps = mkConfiguredStableSystem");
+		expect(flake).toContain("./core/os/hosts/ovh-vps.nix");
+		expect(flake).toContain("./core/os/disko/ovh-single-disk.nix");
+		expect(flake).toContain("nixpi-deploy-ovh");
+
+		expect(existsSync(ovhHostPath)).toBe(true);
+		expect(existsSync(ovhDiskoPath)).toBe(true);
+		expect(existsSync(deployOvhScriptPath)).toBe(true);
+		expect(existsSync(ovhDeployDocPath)).toBe(true);
+
+		expect(installDoc).toContain("OVH Rescue Deploy");
+		expect(quickDeployDoc).toContain("Fresh OVH install");
+	});
+
+	it("documents an explicit destructive OVH deploy script contract", () => {
+		const flake = readFileSync(path.join(repoRoot, "flake.nix"), "utf8");
+		const deployScript = readFileSync(deployOvhScriptPath, "utf8");
+		const deployDoc = readFileSync(ovhDeployDocPath, "utf8");
+
+		expect(deployScript).toContain("Destructive fresh install for an OVH VPS in rescue mode.");
+		expect(deployScript).toContain("--target-host");
+		expect(deployScript).toContain("--disk");
+		expect(deployScript).toContain("--flake");
+		expect(flake).toContain("nixos-anywhere.packages.${system}.nixos-anywhere");
+
+		expect(deployDoc).toContain("rescue mode");
+		expect(deployDoc).toContain("nix run .#nixpi-deploy-ovh --");
+		expect(deployDoc).toContain("--target-host");
+		expect(deployDoc).toContain("--disk");
+		expect(deployDoc).toContain("destructive");
+		expect(deployDoc).toContain("ssh-keygen -R");
+		expect(deployDoc).toContain("/srv/nixpi");
 	});
 });

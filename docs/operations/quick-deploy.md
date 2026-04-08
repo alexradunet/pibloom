@@ -21,6 +21,18 @@ NixPI is bootstrap-first and remote-first. The standard public deployment flow i
 3. open the browser Pi terminal
 4. keep operating from the canonical checkout at `/srv/nixpi`
 
+## Two Supported Deployment Paths
+
+### Fresh OVH install
+
+For a brand-new OVH VPS that starts from rescue mode, use the dedicated
+[`nixos-anywhere` path](./ovh-rescue-deploy).
+
+### Existing NixOS-capable machine
+
+For a VPS, headless VM, or mini PC that is already NixOS-capable and reachable
+over SSH, use the bootstrap workflow documented below.
+
 ## 1. Provision a NixOS-Capable Machine
 
 Bring up a fresh x86_64 VPS, headless VM, or mini PC with:

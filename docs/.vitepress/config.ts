@@ -60,6 +60,7 @@ export default defineConfig({
 					text: "Operations",
 					items: [
 						{ text: "Overview", link: "/operations/" },
+						{ text: "OVH Rescue Deploy", link: "/operations/ovh-rescue-deploy" },
 						{ text: "Quick Deploy", link: "/operations/quick-deploy" },
 						{ text: "First Boot Setup", link: "/operations/first-boot-setup" },
 						{ text: "Live Testing", link: "/operations/live-testing" },

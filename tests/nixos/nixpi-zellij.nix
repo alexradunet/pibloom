@@ -31,8 +31,11 @@
 
     assert nixpi.succeed("sudo -u pi -- bash -lc \"command -v zellij\"").strip()
     assert nixpi.succeed("sudo -u pi -- bash -lc \"command -v nixpi-launch-terminal-ui\"").strip()
+    assert nixpi.succeed("sudo -u pi -- bash -lc \"stat -c '%U:%G' /home/pi/.config\"").strip() == "pi:pi"
     nixpi.succeed("test -L /home/pi/.config/zellij/config.kdl")
     nixpi.succeed("test -L /home/pi/.config/zellij/layouts/nixpi.kdl")
+    nixpi.succeed("sudo -u pi -- test -r /home/pi/.config/zellij/config.kdl")
+    nixpi.succeed("sudo -u pi -- test -r /home/pi/.config/zellij/layouts/nixpi.kdl")
     nixpi.succeed("grep -q 'pane command=\"pi\"' /home/pi/.config/zellij/layouts/nixpi.kdl")
 
     assert nixpi.succeed(

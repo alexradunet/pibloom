@@ -8,10 +8,14 @@
       content = {
         type = "gpt";
         partitions = {
-          ESP = {
+          BIOS = {
             priority = 1;
-            start = "1MiB";
-            end = "512MiB";
+            size = "3M";
+            type = "EF02";
+          };
+          ESP = {
+            priority = 2;
+            size = "512M";
             type = "EF00";
             content = {
               type = "filesystem";

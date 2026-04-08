@@ -207,6 +207,16 @@ describe("repo standards guards", () => {
 		expect(ovhDisko).not.toContain('end = "100%"');
 	});
 
+	it("keeps the OVH disk layout bootable on BIOS and EFI firmware", () => {
+		const ovhDisko = readFileSync(ovhDiskoPath, "utf8");
+		const ovhHost = readFileSync(ovhHostPath, "utf8");
+
+		expect(ovhDisko).toContain('type = "EF02"');
+		expect(ovhDisko).toContain('type = "EF00"');
+		expect(ovhHost).toContain("efiInstallAsRemovable = true;");
+		expect(ovhHost).toContain('device = "nodev";');
+	});
+
 	it("supports a single bootstrap user with a hashed first-login password for OVH installs", () => {
 		const deployScript = readFileSync(deployOvhScriptPath, "utf8");
 		const deployDoc = readFileSync(ovhDeployDocPath, "utf8");

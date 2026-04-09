@@ -45,6 +45,9 @@
           nixpi-deploy-ovh = pkgs.callPackage ./core/os/pkgs/nixpi-deploy-ovh {
             nixosAnywherePackage = nixos-anywhere.packages.${system}.nixos-anywhere;
           };
+          nixpi-reinstall-ovh = pkgs.callPackage ./core/os/pkgs/nixpi-reinstall-ovh {
+            nixosAnywherePackage = nixos-anywhere.packages.${system}.nixos-anywhere;
+          };
         };
       pkgs = mkPkgs system;
       # pkgsUnfree is used only for boot nixosTest.  pkgs.testers.nixosTest
@@ -426,6 +429,10 @@
         nixpi-deploy-ovh = {
           type = "app";
           program = "${self.packages.${system}.nixpi-deploy-ovh}/bin/nixpi-deploy-ovh";
+        };
+        nixpi-reinstall-ovh = {
+          type = "app";
+          program = "${self.packages.${system}.nixpi-reinstall-ovh}/bin/nixpi-reinstall-ovh";
         };
       };
 

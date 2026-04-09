@@ -90,30 +90,9 @@ environment's persistent path for the `200G` disk:
 /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1
 ```
 
-## 3. Run the install from this repo
+## 3. Run the reinstall from this repo
 
 From your local checkout of this repo:
-
-```bash
-nix run .#nixpi-deploy-ovh -- \
-  --target-host root@SERVER_IP \
-  --disk /dev/sda
-```
-
-Optional hostname override:
-
-```bash
-nix run .#nixpi-deploy-ovh -- \
-  --target-host root@SERVER_IP \
-  --disk /dev/sda \
-  --hostname bloom-eu-1
-```
-
-If you want a single bootstrap user for first login, generate a SHA-512
-bootstrap password hash locally and pass it to the wrapper.
-
-For example, to create a bootstrap user named `human` with the password
-`change123#@!`:
 
 ```bash
 PASSWORD_HASH="$(python3 - <<'PY'
@@ -122,21 +101,49 @@ print(crypt.crypt("change123#@!", crypt.mksalt(crypt.METHOD_SHA512)))
 PY
 )"
 
-nix run .#nixpi-deploy-ovh -- \
+cat > bootstrap-secrets.json <<EOF
+{
+  "bootstrapUser": "alex",
+  "bootstrapPasswordHash": "$PASSWORD_HASH",
+  "netbirdSetupKey": "PASTE_NETBIRD_SETUP_KEY_HERE"
+}
+EOF
+
+nix run .#nixpi-reinstall-ovh -- \
   --target-host root@SERVER_IP \
   --disk /dev/sda \
-  --bootstrap-user human \
-  --bootstrap-password-hash "$PASSWORD_HASH"
+  --bootstrap-secrets-file ./bootstrap-secrets.json
 ```
 
-The OVH bootstrap profile now expires that temporary password after install, so
-the bootstrap user is forced to choose a new password on first successful login.
+Optional hostname override:
+
+```bash
+nix run .#nixpi-reinstall-ovh -- \
+  --target-host root@SERVER_IP \
+  --disk /dev/sda \
+  --hostname bloom-eu-1 \
+  --bootstrap-secrets-file ./bootstrap-secrets.json
+```
+
+The bootstrap secrets file must contain:
+
+```json
+{
+  "bootstrapUser": "alex",
+  "bootstrapPasswordHash": "$6$...",
+  "netbirdSetupKey": "..."
+}
+```
+
+That `bootstrapPasswordHash` value is the bootstrap password hash that feeds `initialHashedPassword` for the temporary first-login account.
+
+The OVH bootstrap profile now expires that temporary password after install, so the bootstrap user is forced to choose a new password on first successful login.
 
 What the wrapper does:
 
 - uses the repo's `ovh-vps` configuration as the base system
 - overrides the target disk explicitly for `disko`
-- can create a single bootstrap user with `initialHashedPassword`
+- reads one local bootstrap secrets file for the bootstrap user, password hash, and NetBird setup key
 - runs `nixos-anywhere` against the OVH rescue host
 
 ### Recommended direct install path
@@ -145,12 +152,23 @@ If you already know the correct target disk path for the current environment,
 run the full install directly:
 
 ```bash
-nix run .#nixpi-deploy-ovh -- \
+nix run .#nixpi-reinstall-ovh -- \
   --target-host root@SERVER_IP \
-  --disk /dev/disk/by-id/PERSISTENT_TARGET_DISK_ID
+  --disk /dev/disk/by-id/PERSISTENT_TARGET_DISK_ID \
+  --bootstrap-secrets-file ./bootstrap-secrets.json
 ```
 
-If you want a bootstrap user named `alex` with a known password hash:
+### Lower-level compatibility wrapper
+
+If you need the old lower-level interface, `nixpi-deploy-ovh` still accepts:
+
+- `--bootstrap-user`
+- `--bootstrap-password-hash`
+- `--netbird-setup-key-file`
+
+`nixpi-reinstall-ovh` is the recommended operator-facing entry point for fresh OVH reinstalls because it keeps those inputs together in one local file.
+
+If you want a bootstrap user named `alex` with a known password hash and a separate NetBird key file:
 
 ```bash
 PASSWORD_HASH="$(python3 - <<'PY'
@@ -163,7 +181,8 @@ nix run .#nixpi-deploy-ovh -- \
   --target-host root@SERVER_IP \
   --disk /dev/disk/by-id/PERSISTENT_TARGET_DISK_ID \
   --bootstrap-user alex \
-  --bootstrap-password-hash "$PASSWORD_HASH"
+  --bootstrap-password-hash "$PASSWORD_HASH" \
+  --netbird-setup-key-file ./netbird-setup-key
 ```
 
 ## 4. Troubleshooting: staged kexec debug when the disk changes after kexec

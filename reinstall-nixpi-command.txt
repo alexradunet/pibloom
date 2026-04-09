@@ -1,0 +1,18 @@
+PASSWORD_HASH="$(python3 - <<'PY'
+import crypt
+print(crypt.crypt("YOUR_PASSWORD_HERE", crypt.mksalt(crypt.METHOD_SHA512)))
+PY
+)"
+
+cat > bootstrap-secrets.json <<EOF
+{
+  "bootstrapUser": "alex",
+  "bootstrapPasswordHash": "$PASSWORD_HASH",
+  "netbirdSetupKey": "YOUR_NETBIRD_SETUP_KEY"
+}
+EOF
+
+nix run .#nixpi-reinstall-ovh -- \
+  --target-host root@YOUR_SERVER_IP \
+  --disk /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi0-0-0-1 \
+  --bootstrap-secrets-file ./bootstrap-secrets.json

@@ -6,6 +6,9 @@ const repoRoot = path.resolve(import.meta.dirname, "../..");
 const packageJsonPath = path.join(repoRoot, "package.json");
 const deployOvhScriptPath = path.join(repoRoot, "core/scripts/nixpi-deploy-ovh.sh");
 const deployOvhTestPath = path.join(repoRoot, "tests/integration/nixpi-deploy-ovh.test.ts");
+const ovhCommonScriptPath = path.join(repoRoot, "core/scripts/nixpi-ovh-common.sh");
+const reinstallOvhScriptPath = path.join(repoRoot, "core/scripts/nixpi-reinstall-ovh.sh");
+const reinstallOvhTestPath = path.join(repoRoot, "tests/integration/nixpi-reinstall-ovh.test.ts");
 const ovhHostPath = path.join(repoRoot, "core/os/hosts/ovh-vps.nix");
 const ovhDiskoPath = path.join(repoRoot, "core/os/disko/ovh-single-disk.nix");
 const ovhDeployDocPath = path.join(repoRoot, "docs/operations/ovh-rescue-deploy.md");
@@ -161,10 +164,12 @@ describe("repo standards guards", () => {
 		expect(flake).toContain("./core/os/hosts/ovh-vps.nix");
 		expect(flake).toContain("./core/os/disko/ovh-single-disk.nix");
 		expect(flake).toContain("nixpi-deploy-ovh");
+		expect(flake).toContain("nixpi-reinstall-ovh");
 
 		expect(existsSync(ovhHostPath)).toBe(true);
 		expect(existsSync(ovhDiskoPath)).toBe(true);
 		expect(existsSync(deployOvhScriptPath)).toBe(true);
+		expect(existsSync(reinstallOvhScriptPath)).toBe(true);
 		expect(existsSync(ovhDeployDocPath)).toBe(true);
 
 		expect(readme).toContain("nix run .#nixpi-deploy-ovh --");
@@ -194,10 +199,21 @@ describe("repo standards guards", () => {
 
 	it("keeps deterministic regression tests for the OVH deploy wrapper", () => {
 		const deployScript = readFileSync(deployOvhScriptPath, "utf8");
+		const commonScript = readFileSync(ovhCommonScriptPath, "utf8");
 
 		expect(existsSync(deployOvhTestPath)).toBe(true);
-		expect(deployScript).toContain("build_deploy_flake()");
+		expect(commonScript).toContain("build_deploy_flake()");
+		expect(deployScript).toContain("run_ovh_deploy");
 		expect(deployScript).toContain(`if [[ "\${BASH_SOURCE[0]}" == "$0" ]]; then`);
+	});
+
+	it("wires a first-class OVH reinstall wrapper into the repo", () => {
+		const flake = readFileSync(path.join(repoRoot, "flake.nix"), "utf8");
+
+		expect(existsSync(reinstallOvhScriptPath)).toBe(true);
+		expect(existsSync(reinstallOvhTestPath)).toBe(true);
+		expect(flake).toContain("nixpi-reinstall-ovh");
+		expect(flake).toContain('program = "${self.packages.${system}.nixpi-reinstall-ovh}/bin/nixpi-reinstall-ovh"');
 	});
 
 	it("defines the OVH root partition with size syntax that disko can realize on real disks", () => {
@@ -219,14 +235,15 @@ describe("repo standards guards", () => {
 
 	it("supports a single bootstrap user with a hashed first-login password for OVH installs", () => {
 		const deployScript = readFileSync(deployOvhScriptPath, "utf8");
+		const commonScript = readFileSync(ovhCommonScriptPath, "utf8");
 		const deployDoc = readFileSync(ovhDeployDocPath, "utf8");
 		const ovhHost = readFileSync(ovhHostPath, "utf8");
 		const shellModule = readFileSync(shellModulePath, "utf8");
 
 		expect(deployScript).toContain("--bootstrap-user");
 		expect(deployScript).toContain("--bootstrap-password-hash");
-		expect(deployScript).toContain("nixpi.primaryUser = lib.mkForce");
-		expect(deployScript).toContain("initialHashedPassword");
+		expect(commonScript).toContain("nixpi.primaryUser = lib.mkForce");
+		expect(commonScript).toContain("initialHashedPassword");
 		expect(ovhHost).toContain("nixpi-expire-bootstrap-password");
 		expect(ovhHost).toContain("/bin/chage -d 0");
 		expect(shellModule).toContain("Refusing to change nixpi.primaryUser");

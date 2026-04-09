@@ -23,10 +23,8 @@
         environment.etc = {
           "nixpi-tests/ssh-password-auth".text =
             if config.services.openssh.settings.PasswordAuthentication then "yes" else "no";
-          "nixpi-tests/has-headscale-option".text =
-            if lib.hasAttrByPath [ "nixpi" "headscale" ] options then "yes" else "no";
-          "nixpi-tests/has-tailnet-option".text =
-            if lib.hasAttrByPath [ "nixpi" "tailnet" ] options then "yes" else "no";
+          "nixpi-tests/has-netbird-option".text =
+            if lib.hasAttrByPath [ "nixpi" "netbird" ] options then "yes" else "no";
         };
       };
 
@@ -46,45 +44,21 @@
             fail2ban.enable = false;
             ssh.passwordAuthentication = true;
           };
-          headscale = {
-            serverUrl = "https://headscale.example.test";
-            policyFile = "/run/secrets/headscale-policy.hujson";
-            settings = {
-              dns = {
-                magic_dns = false;
-                override_local_dns = false;
-              };
-              log = {
-                level = "debug";
-              };
-            };
-          };
-          tailnet = {
-            loginServer = "https://headscale.example.test";
-            authKeyFile = "/run/secrets/tailscale-auth-key";
-            hostname = "nixpi-managed-node";
-            extraUpFlags = [
-              "--accept-dns=false"
-              "--ssh"
-            ];
+          netbird = {
+            enable = true;
+            setupKeyFile = "/run/secrets/netbird-setup-key";
+            clientName = "nixpi-managed-node";
+            managementUrl = "https://api.netbird.io:443";
           };
         };
 
         environment.etc = {
           "nixpi-tests/ssh-password-auth".text =
             if config.services.openssh.settings.PasswordAuthentication then "yes" else "no";
-          "nixpi-tests/headscale-enable".text = if config.nixpi.headscale.enable then "yes" else "no";
-          "nixpi-tests/headscale-server-url".text = config.nixpi.headscale.serverUrl;
-          "nixpi-tests/headscale-policy-file".text =
-            config.nixpi.headscale.policyFile or "";
-          "nixpi-tests/headscale-log-level".text =
-            config.nixpi.headscale.settings.log.level or "";
-          "nixpi-tests/tailnet-enable".text = if config.nixpi.tailnet.enable then "yes" else "no";
-          "nixpi-tests/tailnet-login-server".text = config.nixpi.tailnet.loginServer;
-          "nixpi-tests/tailnet-auth-key-file".text = config.nixpi.tailnet.authKeyFile;
-          "nixpi-tests/tailnet-hostname".text = config.nixpi.tailnet.hostname or "";
-          "nixpi-tests/tailnet-extra-up-flags".text =
-            lib.concatStringsSep " " config.nixpi.tailnet.extraUpFlags;
+          "nixpi-tests/netbird-enable".text = if config.nixpi.netbird.enable then "yes" else "no";
+          "nixpi-tests/netbird-setup-key-file".text = config.nixpi.netbird.setupKeyFile;
+          "nixpi-tests/netbird-client-name".text = config.nixpi.netbird.clientName or "";
+          "nixpi-tests/netbird-management-url".text = config.nixpi.netbird.managementUrl or "";
         };
       };
   };
@@ -104,8 +78,7 @@
 
     defaults.succeed("systemctl is-active fail2ban")
     defaults.succeed("grep -qx 'no' /etc/nixpi-tests/ssh-password-auth")
-    defaults.succeed("grep -qx 'yes' /etc/nixpi-tests/has-headscale-option")
-    defaults.succeed("grep -qx 'yes' /etc/nixpi-tests/has-tailnet-option")
+    defaults.succeed("grep -qx 'yes' /etc/nixpi-tests/has-netbird-option")
 
     overrides.start()
     overrides.wait_for_unit("multi-user.target", timeout=300)
@@ -114,15 +87,10 @@
     overrides.succeed("grep -qx 'yes' /etc/nixpi-tests/ssh-password-auth")
     overrides.succeed("nixpi-brokerctl status | jq -r .defaultAutonomy | grep -qx observe")
 
-    overrides.succeed("grep -qx 'no' /etc/nixpi-tests/headscale-enable")
-    overrides.succeed("grep -qx 'https://headscale.example.test' /etc/nixpi-tests/headscale-server-url")
-    overrides.succeed("grep -qx '/run/secrets/headscale-policy.hujson' /etc/nixpi-tests/headscale-policy-file")
-    overrides.succeed("grep -qx 'debug' /etc/nixpi-tests/headscale-log-level")
-    overrides.succeed("grep -qx 'no' /etc/nixpi-tests/tailnet-enable")
-    overrides.succeed("grep -qx 'https://headscale.example.test' /etc/nixpi-tests/tailnet-login-server")
-    overrides.succeed("grep -qx '/run/secrets/tailscale-auth-key' /etc/nixpi-tests/tailnet-auth-key-file")
-    overrides.succeed("grep -qx 'nixpi-managed-node' /etc/nixpi-tests/tailnet-hostname")
-    overrides.succeed("grep -qx -- '--accept-dns=false --ssh' /etc/nixpi-tests/tailnet-extra-up-flags")
+    overrides.succeed("grep -qx 'yes' /etc/nixpi-tests/netbird-enable")
+    overrides.succeed("grep -qx '/run/secrets/netbird-setup-key' /etc/nixpi-tests/netbird-setup-key-file")
+    overrides.succeed("grep -qx 'nixpi-managed-node' /etc/nixpi-tests/netbird-client-name")
+    overrides.succeed("grep -qx 'https://api.netbird.io:443' /etc/nixpi-tests/netbird-management-url")
 
     print("All nixpi-options-validation tests passed!")
   '';

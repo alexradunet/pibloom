@@ -15,8 +15,7 @@ in
     ./options/bootstrap.nix
     ./options/security.nix
     ./options/agent.nix
-    ./options/headscale.nix
-    ./options/tailnet.nix
+    ./options/netbird.nix
     ./options/terminal-ui.nix
     (lib.mkRenamedOptionModule [ "nixpi" "bootstrap" "keepSshAfterSetup" ] [ "nixpi" "bootstrap" "ssh" "enable" ])
     (lib.mkRemovedOptionModule [ "nixpi" "install" "enable" ] installFinalizeRemoved)

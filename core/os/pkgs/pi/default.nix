@@ -13,14 +13,14 @@
 }:
 
 let
-  version = "0.60.0";
+  version = "0.66.1";
 
   # Fetch the npm tarball and inject the vendored package-lock.json.
   srcWithLock = runCommand "pi-src-with-lock" { } ''
     mkdir -p $out
     tar -xzf ${fetchurl {
       url = "https://registry.npmjs.org/@mariozechner/pi-coding-agent/-/pi-coding-agent-${version}.tgz";
-      hash = "sha256-bcU1HRHjAZKNd74KVqT0WcpOdXj6NMjOxLf7p4FgGGE=";
+      hash = "sha256-NN26A3EQft5Bhyu53JmNECd1kgkNPPse6BsDnwGbzyE=";
     }} -C $out --strip-components=1
     cp ${./package-lock.json} $out/package-lock.json
   '';
@@ -31,7 +31,7 @@ buildNpmPackage {
 
   src = srcWithLock;
 
-  npmDepsHash = "sha256-3A4mtjvylPWJo/BahNH4chiuQG53ZD/i+dZGwEDEAzQ=";
+  npmDepsHash = "sha256-ogQ9LGHB3ODlKOmXzggkaN7W+Y3HHNUwYtlSVTq4F/I=";
 
   # The npm tarball already contains compiled dist/ — no build step needed.
   dontNpmBuild = true;

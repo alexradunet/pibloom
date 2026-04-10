@@ -12,6 +12,9 @@ import {
 	rebuildAllMeta,
 	scanPages,
 } from "../../core/pi/extensions/wiki/actions-meta.js";
+import { captureFile, captureText } from "../../core/pi/extensions/wiki/actions-capture.js";
+import { handleEnsurePage } from "../../core/pi/extensions/wiki/actions-pages.js";
+import { handleWikiSearch, searchRegistry } from "../../core/pi/extensions/wiki/actions-search.js";
 import {
 	countWords,
 	dedupeSlug,
@@ -514,5 +517,315 @@ Some raw content here.
 		// Draft and source pages should not appear
 		expect(digest).not.toContain("Draft Concept");
 		expect(digest).not.toContain("SRC-001");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Task 3: searchRegistry / handleWikiSearch
+// ---------------------------------------------------------------------------
+
+describe("searchRegistry", () => {
+	const makeRegistry = (pages: Array<Partial<import("../../core/pi/extensions/wiki/types.js").RegistryEntry>>) => ({
+		version: 1,
+		generatedAt: new Date().toISOString(),
+		pages: pages.map((p) => ({
+			type: "concept" as const,
+			path: p.path ?? "pages/unnamed.md",
+			title: p.title ?? "Unnamed",
+			aliases: p.aliases ?? [],
+			summary: p.summary ?? "",
+			status: "active" as const,
+			tags: p.tags ?? [],
+			updated: "2026-01-01",
+			sourceIds: p.sourceIds ?? [],
+			linksOut: [],
+			headings: p.headings ?? [],
+			wordCount: 10,
+			...p,
+		})),
+	});
+
+	it("exact title match gets score 120 and is ranked first", () => {
+		const registry = makeRegistry([
+			{ title: "Attention Mechanism", path: "pages/attention-mechanism.md", summary: "attention" },
+			{ title: "Attention", path: "pages/attention.md" },
+		]);
+		const result = searchRegistry(registry, "Attention");
+		expect(result.matches.length).toBeGreaterThan(0);
+		expect(result.matches[0].title).toBe("Attention");
+		expect(result.matches[0].score).toBeGreaterThanOrEqual(120);
+	});
+
+	it("alias match ranks highly", () => {
+		const registry = makeRegistry([
+			{ title: "Multi-Head Attention", path: "pages/mha.md", aliases: ["MHA", "attention heads"] },
+			{ title: "Unrelated Page", path: "pages/unrelated.md" },
+		]);
+		const result = searchRegistry(registry, "MHA");
+		expect(result.matches[0].title).toBe("Multi-Head Attention");
+		expect(result.matches[0].score).toBeGreaterThanOrEqual(110);
+	});
+
+	it("type filter works (only returns matching type)", () => {
+		const registry = makeRegistry([
+			{ title: "Alpha", path: "pages/alpha.md", type: "concept" as const },
+			{ title: "Alpha Entity", path: "pages/alpha-entity.md", type: "entity" as const },
+		]);
+		const result = searchRegistry(registry, "alpha", "entity");
+		expect(result.matches.every((m) => m.type === "entity")).toBe(true);
+		expect(result.matches.some((m) => m.title === "Alpha")).toBe(false);
+	});
+
+	it("returns empty result when no matches", () => {
+		const registry = makeRegistry([{ title: "Unrelated", path: "pages/unrelated.md" }]);
+		const result = searchRegistry(registry, "zzznomatch999");
+		expect(result.matches).toHaveLength(0);
+	});
+});
+
+describe("handleWikiSearch", () => {
+	it("returns 'No wiki matches' text when empty", () => {
+		const registry = {
+			version: 1,
+			generatedAt: new Date().toISOString(),
+			pages: [],
+		};
+		const result = handleWikiSearch(registry, "ghost");
+		expect(result.isOk()).toBe(true);
+		if (result.isOk()) {
+			expect(result.value.text).toContain("No wiki matches for: ghost");
+		}
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Task 4: captureText / captureFile
+// ---------------------------------------------------------------------------
+
+describe("captureText / captureFile", () => {
+	let wikiRoot: string;
+
+	beforeEach(() => {
+		wikiRoot = mkdtempSync(path.join(os.tmpdir(), "wiki-capture-test-"));
+		mkdirSync(path.join(wikiRoot, "raw"), { recursive: true });
+		mkdirSync(path.join(wikiRoot, "pages", "sources"), { recursive: true });
+		mkdirSync(path.join(wikiRoot, "meta"), { recursive: true });
+	});
+
+	afterEach(() => {
+		rmSync(wikiRoot, { recursive: true, force: true });
+	});
+
+	it("captureText creates packet dir with manifest.json, extracted.md, and original/", () => {
+		const result = captureText(wikiRoot, "Hello world\nSecond line");
+		expect(result.isOk()).toBe(true);
+		if (result.isOk()) {
+			const { packetDir } = result.value.details as { packetDir: string };
+			const absPacket = path.join(wikiRoot, packetDir);
+			expect(existsSync(path.join(absPacket, "manifest.json"))).toBe(true);
+			expect(existsSync(path.join(absPacket, "extracted.md"))).toBe(true);
+			expect(existsSync(path.join(absPacket, "original"))).toBe(true);
+		}
+	});
+
+	it("captureText creates source page at pages/sources/SRC-*.md", () => {
+		const result = captureText(wikiRoot, "Some important text");
+		expect(result.isOk()).toBe(true);
+		if (result.isOk()) {
+			const { sourcePagePath } = result.value.details as { sourcePagePath: string };
+			expect(sourcePagePath).toMatch(/^pages\/sources\/SRC-.+\.md$/);
+			expect(existsSync(path.join(wikiRoot, sourcePagePath))).toBe(true);
+		}
+	});
+
+	it("captureText manifest has correct fields", () => {
+		const result = captureText(wikiRoot, "Test content", { title: "My Note", kind: "note" });
+		expect(result.isOk()).toBe(true);
+		if (result.isOk()) {
+			const { packetDir } = result.value.details as { packetDir: string };
+			const manifest = JSON.parse(readFileSync(path.join(wikiRoot, packetDir, "manifest.json"), "utf-8"));
+			expect(manifest.sourceId).toMatch(/^SRC-/);
+			expect(manifest.title).toBe("My Note");
+			expect(manifest.kind).toBe("note");
+			expect(manifest.status).toBe("captured");
+			expect(manifest.hash).toMatch(/^sha256:/);
+		}
+	});
+
+	it("captureText uses title from options if provided, infers from first line if not", () => {
+		const resultWithTitle = captureText(wikiRoot, "First line\nSecond", { title: "Custom Title" });
+		expect(resultWithTitle.isOk()).toBe(true);
+		if (resultWithTitle.isOk()) {
+			expect(resultWithTitle.value.details?.title).toBe("Custom Title");
+		}
+
+		const resultInferred = captureText(wikiRoot, "Inferred title line\nMore content");
+		expect(resultInferred.isOk()).toBe(true);
+		if (resultInferred.isOk()) {
+			expect(resultInferred.value.details?.title).toBe("Inferred title line");
+		}
+	});
+
+	it("captureFile returns err when file doesn't exist", () => {
+		const result = captureFile(wikiRoot, "/tmp/nonexistent-file-xyz.txt");
+		expect(result.isErr()).toBe(true);
+		if (result.isErr()) {
+			expect(result.error).toContain("File not found");
+		}
+	});
+
+	it("captureFile with existing file creates packet with original copy and source page", () => {
+		const tmpFile = path.join(wikiRoot, "test-input.txt");
+		writeFileSync(tmpFile, "File content here", "utf-8");
+
+		const result = captureFile(wikiRoot, tmpFile, { title: "Test File" });
+		expect(result.isOk()).toBe(true);
+		if (result.isOk()) {
+			const { packetDir, sourcePagePath } = result.value.details as { packetDir: string; sourcePagePath: string };
+			expect(existsSync(path.join(wikiRoot, packetDir, "original", "source.txt"))).toBe(true);
+			expect(existsSync(path.join(wikiRoot, packetDir, "manifest.json"))).toBe(true);
+			expect(existsSync(path.join(wikiRoot, sourcePagePath))).toBe(true);
+		}
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Task 5: handleEnsurePage
+// ---------------------------------------------------------------------------
+
+describe("handleEnsurePage", () => {
+	let wikiRoot: string;
+
+	beforeEach(() => {
+		wikiRoot = mkdtempSync(path.join(os.tmpdir(), "wiki-pages-test-"));
+		mkdirSync(path.join(wikiRoot, "pages"), { recursive: true });
+		mkdirSync(path.join(wikiRoot, "meta"), { recursive: true });
+	});
+
+	afterEach(() => {
+		rmSync(wikiRoot, { recursive: true, force: true });
+	});
+
+	it("creates new page when none exists (details.created === true, file exists on disk)", () => {
+		rebuildAllMeta(wikiRoot);
+		const result = handleEnsurePage(wikiRoot, { type: "concept", title: "Machine Learning" });
+		expect(result.isOk()).toBe(true);
+		if (result.isOk()) {
+			expect(result.value.details?.created).toBe(true);
+			expect(result.value.details?.resolved).toBe(true);
+			const relPath = result.value.details?.path as string;
+			expect(existsSync(path.join(wikiRoot, relPath))).toBe(true);
+		}
+	});
+
+	it("resolves existing page by exact title match (details.created === false, details.resolved === true)", () => {
+		const existingPage = `---
+title: Neural Networks
+type: concept
+aliases: []
+status: active
+tags: []
+updated: "2026-01-01"
+source_ids: []
+summary: A page about neural networks
+---
+# Neural Networks
+`;
+		writeFileSync(path.join(wikiRoot, "pages", "neural-networks.md"), existingPage, "utf-8");
+		rebuildAllMeta(wikiRoot);
+
+		const result = handleEnsurePage(wikiRoot, { type: "concept", title: "Neural Networks" });
+		expect(result.isOk()).toBe(true);
+		if (result.isOk()) {
+			expect(result.value.details?.created).toBe(false);
+			expect(result.value.details?.resolved).toBe(true);
+		}
+	});
+
+	it("resolves existing page by alias (details.path matches the aliased page)", () => {
+		const existingPage = `---
+title: Reinforcement Learning
+type: concept
+aliases:
+  - RL
+status: active
+tags: []
+updated: "2026-01-01"
+source_ids: []
+summary: ""
+---
+# Reinforcement Learning
+`;
+		writeFileSync(path.join(wikiRoot, "pages", "reinforcement-learning.md"), existingPage, "utf-8");
+		rebuildAllMeta(wikiRoot);
+
+		const result = handleEnsurePage(wikiRoot, { type: "concept", title: "RL" });
+		expect(result.isOk()).toBe(true);
+		if (result.isOk()) {
+			expect(result.value.details?.path).toBe("pages/reinforcement-learning.md");
+			expect(result.value.details?.created).toBe(false);
+		}
+	});
+
+	it("reports conflict when multiple pages match", () => {
+		const page1 = `---
+title: Transformer
+type: concept
+aliases:
+  - transformer model
+status: active
+tags: []
+updated: "2026-01-01"
+source_ids: []
+summary: ""
+---
+# Transformer
+`;
+		const page2 = `---
+title: Transformer Model
+type: concept
+aliases:
+  - transformer
+status: active
+tags: []
+updated: "2026-01-01"
+source_ids: []
+summary: ""
+---
+# Transformer Model
+`;
+		writeFileSync(path.join(wikiRoot, "pages", "transformer.md"), page1, "utf-8");
+		writeFileSync(path.join(wikiRoot, "pages", "transformer-model.md"), page2, "utf-8");
+		rebuildAllMeta(wikiRoot);
+
+		const result = handleEnsurePage(wikiRoot, { type: "concept", title: "Transformer" });
+		expect(result.isOk()).toBe(true);
+		if (result.isOk()) {
+			expect(result.value.details?.conflict).toBe(true);
+			expect(result.value.details?.resolved).toBe(false);
+		}
+	});
+
+	it("created page has correct frontmatter (type, title, status: 'draft')", () => {
+		rebuildAllMeta(wikiRoot);
+		const result = handleEnsurePage(wikiRoot, { type: "entity", title: "Anthropic" });
+		expect(result.isOk()).toBe(true);
+		if (result.isOk()) {
+			const relPath = result.value.details?.path as string;
+			const content = readFileSync(path.join(wikiRoot, relPath), "utf-8");
+			expect(content).toContain("type: entity");
+			expect(content).toContain("title: Anthropic");
+			expect(content).toContain("status: draft");
+		}
+	});
+
+	it("slug is generated from title (kebab-case)", () => {
+		rebuildAllMeta(wikiRoot);
+		const result = handleEnsurePage(wikiRoot, { type: "concept", title: "Deep Learning Fundamentals" });
+		expect(result.isOk()).toBe(true);
+		if (result.isOk()) {
+			const relPath = result.value.details?.path as string;
+			expect(relPath).toContain("deep-learning-fundamentals");
+		}
 	});
 });

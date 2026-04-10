@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { atomicWriteFile } from "../../../lib/filesystem.js";
 import { parseFrontmatter } from "../../../lib/frontmatter.js";
@@ -113,6 +113,8 @@ export function buildRegistry(pages: ParsedPage[]): RegistryData {
 		};
 	});
 
+	entries.sort((a, b) => a.path.localeCompare(b.path));
+
 	return {
 		version: 1,
 		generatedAt: nowIso(),
@@ -159,7 +161,7 @@ export function buildBacklinks(registry: RegistryData): BacklinksData {
 // renderIndex
 // ---------------------------------------------------------------------------
 
-export function renderIndex(registry: RegistryData): string {
+function renderIndex(registry: RegistryData): string {
 	const lines: string[] = ["# Wiki Index", "", `Generated: ${nowIso()}`, ""];
 
 	const sectionOrder: WikiPageType[] = [
@@ -204,7 +206,7 @@ export function renderIndex(registry: RegistryData): string {
 // rebuildLog
 // ---------------------------------------------------------------------------
 
-export function rebuildLog(wikiRoot: string): void {
+function rebuildLog(wikiRoot: string): void {
 	const events = readEventsSync(wikiRoot);
 	const metaDir = path.join(wikiRoot, "meta");
 	mkdirSync(metaDir, { recursive: true });
@@ -289,10 +291,7 @@ function readEventsSync(wikiRoot: string): WikiEvent[] {
 export async function appendEvent(wikiRoot: string, event: WikiEvent): Promise<void> {
 	const metaDir = path.join(wikiRoot, "meta");
 	mkdirSync(metaDir, { recursive: true });
-	const fp = eventsPath(wikiRoot);
-	const existing = readEventsSync(wikiRoot);
-	existing.push(event);
-	writeFileSync(fp, `${existing.map((e) => JSON.stringify(e)).join("\n")}\n`, "utf-8");
+	appendFileSync(path.join(metaDir, "events.jsonl"), `${JSON.stringify(event)}\n`, "utf-8");
 }
 
 export async function readEvents(wikiRoot: string): Promise<WikiEvent[]> {

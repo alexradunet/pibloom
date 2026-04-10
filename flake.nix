@@ -27,7 +27,6 @@
         system
         "aarch64-linux"
       ];
-      moduleSets = import ./core/os/modules/module-sets.nix;
       forAllSystems = lib.genAttrs supportedSystems;
       mkPkgs = system: import nixpkgs { inherit system; };
       mkPackages =
@@ -101,39 +100,21 @@
       formatter = forAllSystems (system: (mkPkgs system).nixfmt-rfc-style);
 
       nixosModules = {
-        # Minimal installed NixPI base without the Pi runtime, collab stack,
-        # desktop shell, or operator tooling bundle.
-        nixpi-base-no-shell =
-          { ... }:
-          {
-            imports = moduleSets.nixpiBaseNoShell;
-          };
-
-        # Minimal installed NixPI base with the operator shell path.
-        nixpi-base =
-          { ... }:
-          {
-            imports = moduleSets.nixpiBase;
-          };
-
-        # Portable NixPI module set without the operator shell/user module.
-        # Useful for tests that intentionally define their own primary user.
-        nixpi-no-shell =
-          { ... }:
-          {
-            imports = moduleSets.nixpiNoShell;
-          };
-
         # Single composable module exporting all NixPI feature modules.
+        # Use enable flags (nixpi.app.enable, nixpi.shell.enable, etc.) to
+        # activate only what a given configuration needs.
         nixpi =
           { ... }:
           {
-            imports = moduleSets.nixpi;
-            # allowUnfree is intentionally NOT set here.
-            # nixpkgs.config cannot be set in a module that is used inside
-            # pkgs.testers.nixosTest (the test framework injects an externally
-            # created pkgs, making the NixOS module system reject nixpkgs.config
-            # overrides).  Consuming configurations set allowUnfree themselves.
+            imports = [
+              ./core/os/modules/options.nix
+              ./core/os/modules/network.nix
+              ./core/os/modules/update.nix
+              ./core/os/modules/app.nix
+              ./core/os/modules/broker.nix
+              ./core/os/modules/tooling.nix
+              ./core/os/modules/shell.nix
+            ];
           };
 
       };

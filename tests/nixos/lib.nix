@@ -65,7 +65,8 @@
   ];
 
   nixPiModulesNoShell = [
-    self.nixosModules.nixpi-no-shell
+    self.nixosModules.nixpi
+    { nixpi.shell.enable = false; }
   ];
 
 }

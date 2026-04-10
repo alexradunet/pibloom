@@ -23,7 +23,7 @@ const provisionerAgentsPath = path.join(repoRoot, "nixos_vps_provisioner/AGENTS.
 const appModulePath = path.join(repoRoot, "core/os/modules/app.nix");
 const piPackagePath = path.join(repoRoot, "core/os/pkgs/pi/default.nix");
 const shellModulePath = path.join(repoRoot, "core/os/modules/shell.nix");
-const moduleSetsPath = path.join(repoRoot, "core/os/modules/module-sets.nix");
+const vpsHostPath = path.join(repoRoot, "core/os/hosts/vps.nix");
 const runtimeFlowsPath = path.join(repoRoot, "docs/architecture/runtime-flows.md");
 const daemonArchitecturePath = path.join(repoRoot, "docs/reference/daemon-architecture.md");
 const serviceArchitecturePath = path.join(repoRoot, "docs/reference/service-architecture.md");
@@ -273,15 +273,14 @@ describe("repo standards guards", () => {
 
 	it("documents and wires a shell-first operator runtime", () => {
 		const shellModule = readUtf8(shellModulePath);
-		const moduleSets = readUtf8(moduleSetsPath);
-		const vpsHost = readUtf8(path.join(repoRoot, "core/os/hosts/vps.nix"));
+		const vpsHost = readUtf8(vpsHostPath);
 		const readme = readUtf8(readmePath);
 		const runtimeFlows = readUtf8(runtimeFlowsPath);
 		const daemonArchitecture = readUtf8(daemonArchitecturePath);
 		const serviceArchitecture = readUtf8(serviceArchitecturePath);
 
 		expect(existsSync(shellModulePath)).toBe(true);
-		expect(moduleSets).toContain("./shell.nix");
+		expect(vpsHost).toContain("../modules/shell.nix");
 		expect(vpsHost).toContain("bootstrap.enable = lib.mkDefault true;");
 		expect(readme).toContain("plain shell runtime");
 		expect(shellModule).toContain(`export PATH="\${nodeBinDir}:$PATH"`);

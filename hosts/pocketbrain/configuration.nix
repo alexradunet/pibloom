@@ -1,4 +1,4 @@
-{ lib, modulesPath, ... }:
+{ lib, modulesPath, pkgs, ... }:
 {
   imports = [
     (modulesPath + "/profiles/qemu-guest.nix")
@@ -11,6 +11,18 @@
     "flakes"
   ];
 
+  environment.systemPackages = with pkgs; [
+    python3
+    ripgrep
+    fd
+    jq
+    yq-go
+    git-filter-repo
+    shellcheck
+    just
+    bat
+    tree
+  ];
 
   boot.loader = {
     systemd-boot.enable = lib.mkForce false;

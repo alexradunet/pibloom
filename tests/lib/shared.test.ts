@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getNixPiDir, safePath } from "../../core/lib/filesystem.js";
+import { getNixPiDir, safePathWithin } from "../../core/lib/filesystem.js";
 import { parseFrontmatter, stringifyFrontmatter } from "../../core/lib/frontmatter.js";
 import {
 	_clearInteractionStore,
@@ -20,35 +20,35 @@ afterEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// safePath
+// safePathWithin
 // ---------------------------------------------------------------------------
-describe("safePath", () => {
+describe("safePathWithin", () => {
 	it("resolves normal paths within root", () => {
-		expect(safePath("/workspace", "Inbox", "note.md")).toBe("/workspace/Inbox/note.md");
+		expect(safePathWithin("/workspace", "Inbox", "note.md")).toBe("/workspace/Inbox/note.md");
 	});
 
 	it("resolves nested paths", () => {
-		expect(safePath("/workspace", "Projects", "myproj", "task.md")).toBe("/workspace/Projects/myproj/task.md");
+		expect(safePathWithin("/workspace", "Projects", "myproj", "task.md")).toBe("/workspace/Projects/myproj/task.md");
 	});
 
 	it("returns root when no segments given", () => {
-		expect(safePath("/workspace")).toBe("/workspace");
+		expect(safePathWithin("/workspace")).toBe("/workspace");
 	});
 
 	it("throws on ../ traversal", () => {
-		expect(() => safePath("/workspace", "../../etc/passwd")).toThrow("Path traversal blocked");
+		expect(() => safePathWithin("/workspace", "../../etc/passwd")).toThrow("Path traversal blocked");
 	});
 
 	it("throws on absolute path segment", () => {
-		expect(() => safePath("/workspace", "/etc/passwd")).toThrow("Path traversal blocked");
+		expect(() => safePathWithin("/workspace", "/etc/passwd")).toThrow("Path traversal blocked");
 	});
 
 	it("throws on traversal hidden in nested segments", () => {
-		expect(() => safePath("/workspace", "Projects", "..", "..", "etc", "shadow")).toThrow("Path traversal blocked");
+		expect(() => safePathWithin("/workspace", "Projects", "..", "..", "etc", "shadow")).toThrow("Path traversal blocked");
 	});
 
 	it("allows segments that contain dots but don't escape", () => {
-		expect(safePath("/workspace", "my.project", "note.md")).toBe("/workspace/my.project/note.md");
+		expect(safePathWithin("/workspace", "my.project", "note.md")).toBe("/workspace/my.project/note.md");
 	});
 });
 

@@ -50,14 +50,6 @@ export function safePathWithin(root: string, ...segments: string[]): string {
 	return resolvedPath;
 }
 
-/**
- * Resolve path segments under a root directory, blocking path traversal.
- * Throws if the resolved path escapes the root.
- */
-export function safePath(root: string, ...segments: string[]): string {
-	return safePathWithin(root, ...segments);
-}
-
 /** Resolve the configured user workspace directory. Checks `NIXPI_DIR`, then falls back to `~/nixpi`. */
 export function getNixPiDir(): string {
 	return process.env.NIXPI_DIR ?? path.join(os.homedir(), "nixpi");

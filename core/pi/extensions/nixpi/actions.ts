@@ -4,7 +4,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { readPackageVersion, resolvePackageDir, safePath } from "../../../lib/filesystem.js";
+import { readPackageVersion, resolvePackageDir, safePathWithin } from "../../../lib/filesystem.js";
 import { stringifyFrontmatter } from "../../../lib/frontmatter.js";
 import { errorResult, textToolResult, truncate } from "../../../lib/utils.js";
 import { readBlueprintVersions } from "./actions-blueprints.js";
@@ -52,7 +52,7 @@ export function handleSkillCreate(
 ) {
 	let skillDir: string;
 	try {
-		skillDir = safePath(workspaceDir, "Skills", params.name);
+		skillDir = safePathWithin(workspaceDir, "Skills", params.name);
 	} catch {
 		return errorResult("Path traversal blocked: invalid skill name");
 	}

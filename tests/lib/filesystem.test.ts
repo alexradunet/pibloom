@@ -19,35 +19,35 @@ import {
 	isBootstrapMode,
 	readPackageVersion,
 	resolvePackageDir,
-	safePath,
+	safePathWithin,
 } from "../../core/lib/filesystem.js";
 
 const ROOT = path.join(os.tmpdir(), "nixpi-fs-test-root");
 
 // ---------------------------------------------------------------------------
-// safePath
+// safePathWithin
 // ---------------------------------------------------------------------------
-describe("safePath", () => {
+describe("safePathWithin", () => {
 	it("resolves a valid subpath under the root", () => {
-		const result = safePath(ROOT, "Skills", "my-skill");
+		const result = safePathWithin(ROOT, "Skills", "my-skill");
 		expect(result).toBe(path.join(ROOT, "Skills", "my-skill"));
 	});
 
 	it("allows a path equal to the root (no segments)", () => {
-		const result = safePath(ROOT);
+		const result = safePathWithin(ROOT);
 		expect(result).toBe(path.resolve(ROOT));
 	});
 
 	it("throws on path traversal with ../", () => {
-		expect(() => safePath(ROOT, "../escape")).toThrow("Path traversal blocked");
+		expect(() => safePathWithin(ROOT, "../escape")).toThrow("Path traversal blocked");
 	});
 
 	it("throws on deep path traversal that escapes root", () => {
-		expect(() => safePath(ROOT, "Skills", "../../etc/passwd")).toThrow("Path traversal blocked");
+		expect(() => safePathWithin(ROOT, "Skills", "../../etc/passwd")).toThrow("Path traversal blocked");
 	});
 
 	it("handles nested valid subpath correctly", () => {
-		const result = safePath(ROOT, "Objects", "notes", "my-note.md");
+		const result = safePathWithin(ROOT, "Objects", "notes", "my-note.md");
 		expect(result).toBe(path.join(ROOT, "Objects", "notes", "my-note.md"));
 	});
 });

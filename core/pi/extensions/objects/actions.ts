@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { getNixPiDir, safePath } from "../../../lib/filesystem.js";
+import { getNixPiDir, safePathWithin } from "../../../lib/filesystem.js";
 import { parseFrontmatter, stringifyFrontmatter } from "../../../lib/frontmatter.js";
 import { errorResult, textToolResult, truncate } from "../../../lib/utils.js";
 import { defaultObjectBody, mergeObjectState, readMemoryRecord, writeMemoryRecord } from "./memory.js";
@@ -35,7 +35,7 @@ function objectsDir(): string {
 }
 
 function resolveObjectPath(slug: string, filePath?: string): string {
-	return filePath ? safePath(os.homedir(), filePath) : safePath(objectsDir(), `${slug}.md`);
+	return filePath ? safePathWithin(os.homedir(), filePath) : safePathWithin(objectsDir(), `${slug}.md`);
 }
 
 function tryResolveObjectPath(slug: string, filePath: string | undefined, invalidMessage: string) {

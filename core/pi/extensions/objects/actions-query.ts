@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { getNixPiDir, safePath } from "../../../lib/filesystem.js";
+import { getNixPiDir, safePathWithin } from "../../../lib/filesystem.js";
 import { parseFrontmatter } from "../../../lib/frontmatter.js";
 import { errorResult, textToolResult, truncate } from "../../../lib/utils.js";
 import { walkMdFiles } from "./actions.js";
@@ -25,7 +25,7 @@ type QueryParams = {
 function resolveObjectsDir(directory?: string) {
 	if (!directory) return { dir: path.join(getNixPiDir(), "Objects") };
 	try {
-		return { dir: safePath(os.homedir(), directory) };
+		return { dir: safePathWithin(os.homedir(), directory) };
 	} catch {
 		return { error: errorResult("Path traversal blocked: invalid directory") };
 	}

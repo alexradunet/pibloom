@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getNixPiDir, safePath } from "../../../lib/filesystem.js";
+import { getNixPiDir, safePathWithin } from "../../../lib/filesystem.js";
 import { parseFrontmatter, stringifyFrontmatter } from "../../../lib/frontmatter.js";
 import { errorResult, nowIso } from "../../../lib/utils.js";
 import { defaultObjectBody, mergeObjectState, readMemoryRecord, writeMemoryRecord } from "../objects/memory.js";
@@ -78,7 +78,7 @@ function buildEpisodeMarkdown(title: string, body: string): string {
 
 function resolveEpisodeFilepath(created: string, id: string): string {
 	const dir = path.join(ensureEpisodesDir(), dayStamp(created));
-	return safePath(dir, `${id}.md`);
+	return safePathWithin(dir, `${id}.md`);
 }
 
 function listEpisodeFiles(root: string, newestFirst = false): string[] {
@@ -361,7 +361,7 @@ export function promoteEpisode(params: {
 	const objectsDir = path.join(getNixPiDir(), "Objects");
 	let objectPath: string;
 	try {
-		objectPath = safePath(objectsDir, `${target.slug}.md`);
+		objectPath = safePathWithin(objectsDir, `${target.slug}.md`);
 	} catch {
 		return errorResult("Path traversal blocked: invalid promotion slug");
 	}

@@ -23,8 +23,8 @@
 		]
 	},
 	"peerDependencies": {
-		"@mariozechner/pi-ai": "^0.60.0",
-		"@mariozechner/pi-coding-agent": "^0.60.0"
+		"@mariozechner/pi-ai": "^0.66.1",
+		"@mariozechner/pi-coding-agent": "^0.66.1"
 	},
 	"dependencies": {
 		"@sinclair/typebox": "^0.34.0",
@@ -33,8 +33,8 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.0.0",
-		"@mariozechner/pi-ai": "0.60.0",
-		"@mariozechner/pi-coding-agent": "0.60.0",
+		"@mariozechner/pi-ai": "0.66.1",
+		"@mariozechner/pi-coding-agent": "0.66.1",
 		"@types/js-yaml": "^4.0.9",
 		"@vitest/coverage-v8": "^4.0.18",
 		"eslint-plugin-neverthrow": "^1.1.4",
@@ -54,9 +54,9 @@
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
 		"build": "rm -rf dist && tsc --build",
-		"check": "biome check .",
-		"check:ci": "biome ci .",
-		"check:fix": "biome check --write .",
+		"check": "./core/scripts/run-biome.sh check .",
+		"check:ci": "./core/scripts/run-biome.sh ci .",
+		"check:fix": "./core/scripts/run-biome.sh check --write .",
 		"docs:dev": "vitepress dev docs",
 		"docs:build": "vitepress build docs",
 		"docs:preview": "vitepress preview docs"

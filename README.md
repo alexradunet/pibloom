@@ -14,6 +14,8 @@ Interactive operator sessions stay in a plain shell by default. Pi remains avail
 
 Install a plain base system onto a fresh OVH VPS from rescue mode:
 
+> `plain-host-deploy` expects the adjacent `../nixos_vps_provisioner` source tree. If that tree is missing, the wrapper will print setup guidance instead of starting the install.
+
 ```bash
 nix run .#plain-host-deploy -- \
   --target-host root@SERVER_IP \

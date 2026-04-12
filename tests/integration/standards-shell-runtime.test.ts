@@ -23,7 +23,7 @@ describe("repo standards shell runtime guards", () => {
 		expect(vpsHost).toContain("../modules/shell.nix");
 		expect(vpsHost).toContain("bootstrap.enable = lib.mkDefault true;");
 		expect(readme).toContain("plain shell runtime");
-		expect(shellModule).toContain(`export PATH="\${nodeBinDir}:$PATH"`);
+		expect(shellModule).toContain(`export PATH="\${wrapperBinDir}:\${nodeBinDir}:$PATH"`);
 		expect(runtimeFlows).toContain("Interactive operator sessions stay in a plain shell.");
 		expect(daemonArchitecture).toContain("interactive login shells stay in a plain shell");
 		expect(serviceArchitecture).toContain("plain shell runtime");

@@ -372,7 +372,9 @@ export async function serve(
 
 export async function main(runtime: BrokerRuntime, config: BrokerConfig, argv: string[]): Promise<number> {
 	if (argv.length < 2) {
-		runtime.stderr("usage: nixpi-broker <server|status|grant-admin|revoke-admin|systemd|nixos-update|staged-host-config|schedule-reboot>");
+		runtime.stderr(
+			"usage: nixpi-broker <server|status|grant-admin|revoke-admin|systemd|nixos-update|staged-host-config|schedule-reboot>",
+		);
 		return 1;
 	}
 

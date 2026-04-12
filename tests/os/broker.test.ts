@@ -227,7 +227,9 @@ describe("handleRequest", () => {
 			flake: "evil#host",
 		});
 
-		expect(state.commands).toEqual([["/run/current-system/sw/bin/nixos-rebuild", "switch", "--flake", baseConfig.defaultFlake]]);
+		expect(state.commands).toEqual([
+			["/run/current-system/sw/bin/nixos-rebuild", "switch", "--flake", baseConfig.defaultFlake],
+		]);
 	});
 
 	it("syncs staged host config and rebuilds from the installed flake when elevated", async () => {
@@ -250,8 +252,17 @@ describe("handleRequest", () => {
 
 		expect(result.exitCode).toBe(0);
 		expect(result.stdout).toContain("Synced staged host config");
+
+		const sourceFile = baseConfig.stagedHostConfigSourceFile;
+		const targetFile = baseConfig.stagedHostConfigTargetFile;
+		expect(sourceFile).toBeDefined();
+		expect(targetFile).toBeDefined();
+		if (!sourceFile || !targetFile) {
+			throw new Error("Expected staged host config paths in baseConfig");
+		}
+
 		expect(state.commands).toEqual([
-			["install", "-D", "-m", "0644", baseConfig.stagedHostConfigSourceFile!, baseConfig.stagedHostConfigTargetFile!],
+			["install", "-D", "-m", "0644", sourceFile, targetFile],
 			["/run/current-system/sw/bin/nixos-rebuild", "switch", "--flake", baseConfig.defaultFlake],
 		]);
 	});

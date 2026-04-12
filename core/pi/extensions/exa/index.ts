@@ -4,14 +4,16 @@
  * @tools exa_search, exa_fetch, exa_code_context
  * @commands exa-status
  */
-import { type ExtensionAPI, type ExtensionContext } from "@mariozechner/pi-coding-agent";
+
+import { StringEnum } from "@mariozechner/pi-ai";
 import {
 	DEFAULT_MAX_BYTES,
 	DEFAULT_MAX_LINES,
+	type ExtensionAPI,
+	type ExtensionContext,
 	formatSize,
 	truncateHead,
 } from "@mariozechner/pi-coding-agent";
-import { StringEnum } from "@mariozechner/pi-ai";
 import { type Static, Type } from "@sinclair/typebox";
 
 const EXA_API_BASE = "https://api.exa.ai";
@@ -116,7 +118,6 @@ function buildFetchContents(contentType: FetchContentType | undefined, maxCharac
 			return { highlights: true };
 		case "summary":
 			return { summary: true };
-		case "text":
 		default:
 			return boundedMaxChars ? { text: { maxCharacters: boundedMaxChars } } : { text: true };
 	}

@@ -10,6 +10,26 @@ let
       "github:alexradunet/nixpi/${self.rev}"
     else
       "github:alexradunet/nixpi";
+  plainHostDeployPath = ../nixos_vps_provisioner/pkgs/plain-host-deploy;
+  plainHostDeploy =
+    if builtins.pathExists plainHostDeployPath then
+      pkgs.callPackage plainHostDeployPath {
+        nixosAnywherePackage = nixos-anywhere.packages.${system}.nixos-anywhere;
+      }
+    else
+      pkgs.writeShellScriptBin "plain-host-deploy" ''
+        cat >&2 <<'EOF'
+plain-host-deploy is not available in this checkout.
+
+This repository expects an adjacent nixos_vps_provisioner tree at:
+  ../nixos_vps_provisioner
+
+Without that source, the flake cannot perform the rescue-mode base install.
+Add the provisioner tree beside this repo, then rerun:
+  nix run .#plain-host-deploy -- --target-host root@SERVER_IP --disk /dev/disk/by-id/PERSISTENT_TARGET_DISK_ID
+EOF
+        exit 1
+      '';
 in
 {
   pi = piAgent;
@@ -19,9 +39,5 @@ in
     nixpiDefaultInput = nixpiBootstrapDefaultInput;
   };
   nixpi-rebuild = pkgs.callPackage ../core/os/pkgs/nixpi-rebuild { };
-}
-// pkgs.lib.optionalAttrs (builtins.pathExists ../nixos_vps_provisioner/pkgs/plain-host-deploy) {
-  plain-host-deploy = pkgs.callPackage ../nixos_vps_provisioner/pkgs/plain-host-deploy {
-    nixosAnywherePackage = nixos-anywhere.packages.${system}.nixos-anywhere;
-  };
+  plain-host-deploy = plainHostDeploy;
 }

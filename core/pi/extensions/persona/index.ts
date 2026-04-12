@@ -1,7 +1,7 @@
 /**
  * persona — Identity injection, safety guardrails, compaction context.
  *
- * @hooks session_start, before_agent_start, tool_call, session_before_compact
+ * @hooks before_agent_start, tool_call, session_before_compact
  * @see {@link ../../AGENTS.md#persona} Extension reference
  */
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";

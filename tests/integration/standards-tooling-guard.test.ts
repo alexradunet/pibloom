@@ -16,11 +16,11 @@ describe("repo standards tooling guards", () => {
 		};
 
 		expect(packageJson.peerDependencies).toMatchObject({
-			"@mariozechner/pi-ai": "^0.60.0",
-			"@mariozechner/pi-coding-agent": "^0.60.0",
+			"@mariozechner/pi-ai": "^0.66.1",
+			"@mariozechner/pi-coding-agent": "^0.66.1",
 		});
 		expect(packageJson.scripts?.build).toBe("rm -rf dist && tsc --build");
-		expect(packageJson.scripts?.["check:ci"]).toBe("biome ci .");
+		expect(packageJson.scripts?.["check:ci"]).toBe("./core/scripts/run-biome.sh ci .");
 	});
 
 	it("keeps Pi command execution shell-capable by including bash in wrapper PATH", () => {

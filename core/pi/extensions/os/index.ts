@@ -125,7 +125,13 @@ export default function (pi: ExtensionAPI) {
 			} catch {
 				return undefined;
 			}
-			const postEditContent = currentContent.replaceAll(event.input.oldText, event.input.newText);
+			const legacyEditInput = event.input as { oldText?: string; newText?: string };
+			const edits = Array.isArray(event.input.edits)
+				? event.input.edits
+				: [{ oldText: legacyEditInput.oldText ?? "", newText: legacyEditInput.newText ?? "" }];
+			const postEditContent = edits.reduce((content, edit) => {
+				return content.replaceAll(edit.oldText, edit.newText);
+			}, currentContent);
 			return checkBootstrapDisable(event.input.path, postEditContent);
 		}
 	});

@@ -66,9 +66,7 @@ describe("exa registration", () => {
 		const api = createMockExtensionAPI();
 		mod.default(api as never);
 
-		expect(toolNames(api)).toEqual(
-			expect.arrayContaining(["exa_search", "exa_fetch", "exa_code_context"]),
-		);
+		expect(toolNames(api)).toEqual(expect.arrayContaining(["exa_search", "exa_fetch", "exa_code_context"]));
 		expect(commandNames(api)).toEqual(expect.arrayContaining(["exa-status"]));
 		expect(eventNames(api)).toEqual(expect.arrayContaining(["session_start"]));
 	});
@@ -123,7 +121,7 @@ describe("persona registration", () => {
 		expect(toolNames(api)).toEqual([]);
 		expect(commandNames(api)).toEqual([]);
 		expect(eventNames(api)).toEqual(
-			expect.arrayContaining(["session_start", "before_agent_start", "tool_call", "session_before_compact"]),
+			expect.arrayContaining(["before_agent_start", "tool_call", "session_before_compact"]),
 		);
 	});
 });

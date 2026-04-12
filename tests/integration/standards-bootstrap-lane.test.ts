@@ -19,7 +19,9 @@ describe("repo standards bootstrap lane guards", () => {
 		expect(flake).toContain('disko.url = "github:nix-community/disko"');
 		expect(flake).toContain('nixos-anywhere.url = "github:nix-community/nixos-anywhere"');
 		expect(nixPkgs).toContain("nixpi-bootstrap-host = pkgs.callPackage ../core/os/pkgs/nixpi-bootstrap-host { };");
-		expect(nixPkgs).toContain("plain-host-deploy = pkgs.callPackage ../nixos_vps_provisioner/pkgs/plain-host-deploy");
+		expect(nixPkgs).toContain("plainHostDeployPath = ../nixos_vps_provisioner/pkgs/plain-host-deploy;");
+		expect(nixPkgs).toContain("plain-host-deploy = plainHostDeploy;");
+		expect(nixPkgs).toContain('pkgs.writeShellScriptBin "plain-host-deploy"');
 		expect(nixHosts).toContain("ovh-vps-base = mkConfiguredStableSystem");
 		expect(nixHosts).toContain("../nixos_vps_provisioner/presets/ovh-single-disk.nix");
 		expect(nixHosts).toContain("../nixos_vps_provisioner/presets/ovh-vps-base.nix");

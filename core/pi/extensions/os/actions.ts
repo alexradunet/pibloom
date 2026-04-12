@@ -178,7 +178,7 @@ export function checkBootstrapDisable(
 	if (!sshEnabled) missing.push("  services.openssh.enable = true;");
 	if (!cidrsConfigured && !trustedInterfaceSshConfigured) {
 		missing.push('  nixpi.security.ssh.allowedSourceCIDRs = [ "YOUR_IP/32" ];');
-		missing.push('  # or: networking.firewall.interfaces.wg0.allowedTCPPorts = [ 22 ];');
+		missing.push("  # or: networking.firewall.interfaces.wg0.allowedTCPPorts = [ 22 ];");
 	}
 
 	const reason = [

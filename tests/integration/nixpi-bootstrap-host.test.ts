@@ -160,8 +160,12 @@ describe("nixpi-bootstrap-host.sh", () => {
 			expect(result.readEtcNixosFile("nixpi-host.nix")).toContain('nixpi.keyboard = "us";');
 			expect(result.readEtcNixosFile("nixpi-host.nix")).toContain("nixpi.security.ssh.allowedSourceCIDRs = [");
 			expect(result.readEtcNixosFile("nixpi-host.nix")).toContain('"198.51.100.10/32"');
-			expect(result.readEtcNixosFile("nixpi-host.nix")).toContain('users.users.alex.hashedPassword = "$6$deadbeefcafebabe$0123456789abcdef0123456789abcdef";');
-			expect(result.readEtcNixosFile("nixpi-host.nix")).toContain('users.users.root.hashedPassword = "$6$deadbeefcafebabe$0123456789abcdef0123456789abcdef";');
+			expect(result.readEtcNixosFile("nixpi-host.nix")).toContain(
+				'users.users.alex.hashedPassword = "$6$deadbeefcafebabe$0123456789abcdef0123456789abcdef";',
+			);
+			expect(result.readEtcNixosFile("nixpi-host.nix")).toContain(
+				'users.users.root.hashedPassword = "$6$deadbeefcafebabe$0123456789abcdef0123456789abcdef";',
+			);
 			expect(result.rebuildArgs()).toEqual(["switch", "--flake", "/etc/nixos#nixos", "--impure"]);
 		} finally {
 			result.cleanup();
@@ -317,8 +321,12 @@ exit 1
 
 		try {
 			expect(result.exitCode).toBe(0);
-			expect(result.readEtcNixosFile("nixpi-host.nix")).toContain('users.users.alex.hashedPassword = "$6$deadbeefcafebabe$alex-recovery-password";');
-			expect(result.readEtcNixosFile("nixpi-host.nix")).toContain('users.users.root.hashedPassword = "$6$deadbeefcafebabe$root-recovery-password";');
+			expect(result.readEtcNixosFile("nixpi-host.nix")).toContain(
+				'users.users.alex.hashedPassword = "$6$deadbeefcafebabe$alex-recovery-password";',
+			);
+			expect(result.readEtcNixosFile("nixpi-host.nix")).toContain(
+				'users.users.root.hashedPassword = "$6$deadbeefcafebabe$root-recovery-password";',
+			);
 		} finally {
 			result.cleanup();
 		}

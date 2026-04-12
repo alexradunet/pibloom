@@ -25,6 +25,8 @@ This flow installs a standard NixOS host only. It does not bootstrap NixPI as pa
 
 From a local checkout of this repo:
 
+> `plain-host-deploy` expects the adjacent `../nixos_vps_provisioner` source tree. If that tree is missing, the wrapper will print setup guidance instead of starting the install.
+
 ```bash
 nix run .#plain-host-deploy -- \
   --target-host root@SERVER_IP \

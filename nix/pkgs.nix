@@ -34,6 +34,7 @@ in
 {
   pi = piAgent;
   app = appPackage;
+  signal-gateway = pkgs.callPackage ../core/os/pkgs/signal-gateway { };
   # Guardrail contract reference: nixpi-bootstrap-host = pkgs.callPackage ../core/os/pkgs/nixpi-bootstrap-host { };
   nixpi-bootstrap-host = pkgs.callPackage ../core/os/pkgs/nixpi-bootstrap-host {
     nixpiDefaultInput = nixpiBootstrapDefaultInput;

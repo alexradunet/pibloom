@@ -18,6 +18,15 @@
   networking.firewall.allowedUDPPorts = [ 51820 ];
   networking.firewall.interfaces.wg0.allowedTCPPorts = [ 22 ];
 
+  nixpi.signalGateway = {
+    enable = true;
+    account = "+40749599297";
+    allowedNumbers = [ "+40724417990" ];
+    adminNumbers = [ "+40724417990" ];
+    stateDir = "/root/.local/state/nixpi-signal-gateway";
+    piCwd = "/home/alex";
+  };
+
   users.users.alex.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG0j6qRWHj+WsYYrjJvZAXdc5ukYyb2wtE2Y+BVZd6SQ alex@fedora"
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB3MBZfaJf5tx+OCGzynhWCOBWIvx27gXIPse6gew0aQ"

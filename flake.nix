@@ -59,6 +59,7 @@
               ./core/os/modules/app.nix
               ./core/os/modules/broker.nix
               ./core/os/modules/tooling.nix
+              ./core/os/modules/signal-gateway.nix
               ./core/os/modules/shell.nix
             ];
           };

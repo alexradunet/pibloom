@@ -138,6 +138,59 @@ in
       };
     };
 
+    signalGateway = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether the NixPI Signal gateway and native signal-cli daemon are managed as system services.";
+      };
+      account = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Signal account number used by the gateway daemon, for example +15550001111.";
+      };
+      allowedNumbers = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Phone numbers allowed to chat with the Signal gateway.";
+      };
+      adminNumbers = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Phone numbers treated as gateway admins for built-in commands.";
+      };
+      stateDir = lib.mkOption {
+        type = absolutePath;
+        default = "${config.nixpi.stateDir}/signal-gateway";
+        description = "Absolute path holding Signal gateway runtime state, including signal-cli data, SQLite DB, session files, and tmp logs.";
+      };
+      piCwd = lib.mkOption {
+        type = lib.types.str;
+        default = "/home/${config.nixpi.primaryUser}";
+        description = "Working directory used as the Pi SDK cwd for Signal conversations.";
+      };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 8080;
+        description = "Loopback HTTP port exposed by the native signal-cli daemon for the gateway transport.";
+      };
+      maxReplyChars = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 1400;
+        description = "Maximum characters per Signal reply chunk.";
+      };
+      maxReplyChunks = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 4;
+        description = "Maximum number of reply chunks emitted for a single Pi response.";
+      };
+      directMessagesOnly = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether the gateway accepts only direct Signal messages.";
+      };
+    };
+
     agent = {
       autonomy = lib.mkOption {
         type = lib.types.enum [ "observe" "maintain" "admin" ];

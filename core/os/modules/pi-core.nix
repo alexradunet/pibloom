@@ -97,7 +97,6 @@ let
       rm -f ${cfg.agentDir}/agent/auth.json
     fi
 
-    ${pkgs.acl}/bin/setfacl -m u:${cfg.user}:--x,m::--x ${lib.escapeShellArg config.nixpi.stateDir}
     ${pkgs.acl}/bin/setfacl -m u:${cfg.user}:--x,m::--x ${lib.escapeShellArg cfg.homeTraversePath}
     ${pkgs.acl}/bin/setfacl -R -m u:${cfg.user}:rwX,m::rwX ${lib.escapeShellArg cfg.workspaceDir}
     ${pkgs.acl}/bin/setfacl -R -m d:u:${cfg.user}:rwX,d:m::rwX ${lib.escapeShellArg cfg.workspaceDir}

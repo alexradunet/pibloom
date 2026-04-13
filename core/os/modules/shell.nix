@@ -44,7 +44,7 @@ in
         marker=${lib.escapeShellArg primaryUserMarker}
         expected_user=${lib.escapeShellArg primaryUser}
 
-        install -d -m 0700 ${lib.escapeShellArg stateDir}
+        install -d -m 0711 -o ${lib.escapeShellArg primaryUser} -g ${lib.escapeShellArg primaryUser} ${lib.escapeShellArg stateDir}
 
         if [ ! -e "$marker" ]; then
           printf '%s\n' "$expected_user" > "$marker"

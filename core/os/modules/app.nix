@@ -81,7 +81,7 @@ in
       group = "root";
     };
     "${stateDir}".d = {
-      mode = "0770";
+      mode = "0711";
       user = primaryUser;
       group = primaryUser;
     };

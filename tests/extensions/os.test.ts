@@ -210,6 +210,27 @@ describe("handleSystemHealth", () => {
 		});
 	});
 
+	it("prefers the current True row from tabular generation output", async () => {
+		mockRun
+			.mockResolvedValueOnce({
+				stdout:
+					"Generation  Build-date           NixOS version           Kernel   Configuration Revision  Specialisation  Current\n" +
+					"51          2026-04-13 11:05:47  25.11.20260407.4e92bbc  6.12.80  Unknown                 []              True\n" +
+					"1           2026-04-10 19:41:08  25.05.20260102.ac62194  6.12.63  Unknown                 []              False",
+				stderr: "",
+				exitCode: 0,
+			}) // nixos-rebuild
+			.mockResolvedValueOnce({ stdout: "[]", stderr: "", exitCode: 0 }) // podman ps
+			.mockResolvedValueOnce({ stdout: "Filesystem\n/dev 1G 500M", stderr: "", exitCode: 0 }) // df
+			.mockResolvedValueOnce({ stdout: "0.10 0.20 0.30 1/100 12345", stderr: "", exitCode: 0 }) // /proc/loadavg
+			.mockResolvedValueOnce({ stdout: "Mem: 4G 2G 2G\n", stderr: "", exitCode: 0 }) // free
+			.mockResolvedValueOnce({ stdout: "up 2 hours", stderr: "", exitCode: 0 }); // uptime
+		const result = await handleSystemHealth(undefined);
+		expect(result._unsafeUnwrap().text).toContain("51          2026-04-13 11:05:47");
+		expect(result._unsafeUnwrap().text).toContain("(current)");
+		expect(result._unsafeUnwrap().text).not.toContain("1           2026-04-10 19:41:08  25.05.20260102.ac62194  6.12.63  Unknown                 []              False");
+	});
+
 	it("returns text content even when all commands fail", async () => {
 		mockRun.mockResolvedValue({ stdout: "", stderr: "error", exitCode: 1 });
 		const result = await handleSystemHealth(undefined);

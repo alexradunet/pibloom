@@ -6,11 +6,27 @@ import { run } from "../../../lib/exec.js";
 import { type ActionResult, ok, truncate } from "../../../lib/utils.js";
 import type { SystemHealthDetails } from "./types.js";
 
+function currentGenerationLine(stdout: string): string {
+	const lines = stdout
+		.trim()
+		.split("\n")
+		.map((line) => line.trimEnd())
+		.filter(Boolean);
+	if (lines.length === 0) return "No generation info available.";
+
+	const dataLines = lines.filter((line, index) => !(index === 0 && /^Generation\b/i.test(line.trim())));
+	const currentFromBooleanColumn = dataLines.find((line) => /\bTrue\s*$/.test(line));
+	if (currentFromBooleanColumn) return currentFromBooleanColumn.replace(/\bTrue\s*$/, "(current)");
+
+	const currentFromMarker = dataLines.find((line) => /\(current\)|\bcurrent\b/i.test(line));
+	if (currentFromMarker) return currentFromMarker;
+
+	return dataLines[0] ?? lines[0] ?? "No generation info available.";
+}
+
 function nixosSection(result: Awaited<ReturnType<typeof run>>): string {
 	if (result.exitCode !== 0) return "## OS\n(nixos-rebuild unavailable)";
-	const lines = result.stdout.trim().split("\n");
-	const current = lines.find((l) => l.includes("current")) ?? lines.at(-1) ?? "";
-	return `## OS\nNixOS — ${current.trim()}`;
+	return `## OS\nNixOS — ${currentGenerationLine(result.stdout)}`;
 }
 
 function containersSection(result: Awaited<ReturnType<typeof run>>): string | null {

@@ -47,7 +47,8 @@ Use these procedures when diagnosing and recovering from common system issues. A
    - Broken flake input: retry `nix_config_proposal(action="update_flake_lock")`
    - Invalid module import or option: inspect the changed files under `flake.nix` and `core/os/`
    - Wrong repo path: confirm the intended local clone exists; any checkout is only a review workspace, not the running system root
-4. Do not apply or publish until local validation passes and the diff is reviewed
+4. If the current Pi session's proposal-apply helper looks stale, use the terminal fallback: `sudo nixpi-apply-local-repo`
+5. Do not apply or publish until local validation passes and the diff is reviewed
 
 ## Disk Space Issues
 

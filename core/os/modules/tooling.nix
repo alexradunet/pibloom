@@ -8,6 +8,7 @@
 let
   cfg = config.nixpi.tooling;
   nixpiRebuild = pkgs.callPackage ../pkgs/nixpi-rebuild { }; # rebuild the installed /etc/nixos host flake
+  nixpiApplyLocalRepo = pkgs.callPackage ../pkgs/nixpi-apply-local-repo { }; # apply local /var/lib/nixpi/pi-nixpi state through the installed host flake
 in
 {
   options.nixpi.tooling = {
@@ -48,6 +49,7 @@ in
         biome
         typescript
         nixpiRebuild
+        nixpiApplyLocalRepo
       ]
       ++ lib.optionals cfg.qemu.enable [
         qemu

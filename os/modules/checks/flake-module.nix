@@ -45,11 +45,13 @@
 
       ownloom-wiki-npm-pack-smoke = pkgs.callPackage ./wiki-npm-pack-smoke.nix {};
       ownloom-pi-extension-startup-smoke = pkgs.callPackage ./smoke/pi-extension-startup.nix {};
+      ownloom-gateway-web-smoke = pkgs.callPackage ./smoke/gateway-web.nix {};
       ownloom-wiki-cli-smoke = pkgs.callPackage ./smoke/wiki-cli.nix {};
 
       # Build package derivations in flake checks so their package-local test suites run.
       ownloom-wiki-package = pkgs.ownloom-wiki;
       ownloom-gateway-package = pkgs.ownloom-gateway;
+      ownloom-gateway-web-package = pkgs.ownloom-gateway-web;
       ownloom-planner-package = pkgs.ownloom-planner;
 
       ownloom-gateway-module-eval = import ./eval/gateway-module.nix {inherit inputs lib pkgs system;};

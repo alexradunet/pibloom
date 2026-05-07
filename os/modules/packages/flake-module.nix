@@ -3,6 +3,7 @@
     wiki = final.callPackage ../../pkgs/wiki {};
     context = final.callPackage ../../pkgs/context {};
     gateway = final.callPackage ../../pkgs/gateway {};
+    gatewayWeb = final.callPackage ../../pkgs/gateway-web {};
     planner = final.callPackage ../../pkgs/planner {};
   in {
     pi = final.callPackage ../../pkgs/pi {};
@@ -10,6 +11,7 @@
     ownloom-wiki = wiki;
     ownloom-context = context;
     ownloom-gateway = gateway;
+    ownloom-gateway-web = gatewayWeb;
     ownloom-planner = planner;
   };
 in {
@@ -57,7 +59,7 @@ in {
 
     packages = {
       inherit (pkgs) pi;
-      inherit (pkgs) ownloom-wiki ownloom-context ownloom-gateway ownloom-planner;
+      inherit (pkgs) ownloom-wiki ownloom-context ownloom-gateway ownloom-gateway-web ownloom-planner;
       default = pkgs.pi;
     };
 

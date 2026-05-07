@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ownloom Gateway</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <div>
+          <h1>Ownloom Gateway</h1>
+          <p>Protocol/v1 client skeleton for local Ownloom access.</p>
+        </div>
+        <span id="connectionState" class="pill">disconnected</span>
+      </header>
+
+      <section class="card settings">
+        <label>
+          Gateway HTTP URL
+          <input id="httpUrl" value="http://127.0.0.1:8081" autocomplete="off" />
+        </label>
+        <label>
+          Bearer token
+          <input id="token" type="password" placeholder="paste named client token" autocomplete="off" />
+        </label>
+        <label>
+          Session key
+          <input id="sessionKey" value="web-main" autocomplete="off" />
+        </label>
+        <div class="row">
+          <button id="connectButton">Connect</button>
+          <button id="disconnectButton" disabled>Disconnect</button>
+          <button id="healthButton" disabled>Health</button>
+          <button id="refreshButton" disabled>Refresh lists</button>
+        </div>
+      </section>
+
+      <section class="grid">
+        <section class="card chat">
+          <h2>Chat</h2>
+          <div id="messages" class="messages" aria-live="polite"></div>
+          <label>
+            Attachments
+            <input id="attachmentInput" type="file" multiple accept="image/*,audio/*" />
+          </label>
+          <div id="attachments" class="attachments"></div>
+          <label>
+            Message
+            <textarea id="messageInput" rows="4" placeholder="Ask Ownloom…"></textarea>
+          </label>
+          <div class="row">
+            <button id="sendButton" disabled>Send</button>
+            <button id="clearButton">Clear</button>
+          </div>
+        </section>
+
+        <aside class="card side">
+          <h2>Sessions</h2>
+          <div id="sessions" class="list empty">Connect and refresh.</div>
+          <h2>Deliveries</h2>
+          <div id="deliveries" class="list empty">Connect and refresh.</div>
+          <h2>Commands</h2>
+          <div id="commands" class="list empty">Connect and refresh.</div>
+        </aside>
+      </section>
+
+      <section class="card">
+        <h2>Event log</h2>
+        <pre id="log" class="log"></pre>
+      </section>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

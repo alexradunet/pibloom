@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -115,6 +115,44 @@ test("ClientTransport replays stored response for duplicate idempotencyKey", asy
     assert.equal(responses[2].id, "req-2");
     assert.equal(responses[2].ok, true);
     assert.deepEqual(responses[2].payload, responses[1].payload);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("ClientTransport consumes attachment refs after successful agent run", async () => {
+  const tmp = mkdtempSync(path.join(os.tmpdir(), "ownloom-client-transport-"));
+  try {
+    const store = new Store(path.join(tmp, "state.json"));
+    const attachment = store.saveAttachment({
+      kind: "image",
+      mimeType: "image/png",
+      fileName: "photo.png",
+      data: Buffer.from("png-bytes"),
+    });
+    const transport = new ClientTransport(
+      { enabled: true, host: "127.0.0.1", port: 0 },
+      store,
+      new CommandRegistry(),
+    );
+
+    let seen: InboundMessage | undefined;
+    transport.setRouter({
+      handleMessage: async (msg: InboundMessage) => {
+        seen = msg;
+        return { replies: ["ok"], markProcessed: true };
+      },
+    } as any);
+
+    const result = await (transport as any).handleAgentMethod(makeCtx({
+      message: "describe",
+      attachments: [{ id: attachment.id, kind: "image", mimeType: "image/png", fileName: "photo.png" }],
+    }));
+
+    assert.equal(result.ok, true);
+    assert.equal(seen?.attachments?.[0]?.path, attachment.path);
+    assert.equal(store.getAttachment(attachment.id), null);
+    assert.equal(existsSync(attachment.path), false);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

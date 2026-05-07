@@ -200,12 +200,18 @@ Then reference the uploaded attachment in an agent request:
 }
 ```
 
+Attachment lifecycle:
+
+- Attachment refs are one-shot.
+- After a successful agent run, referenced attachments are deleted from gateway state and disk.
+- Failed agent runs keep attachments so the client can retry.
+- Uploading a new attachment also prunes staged uploads older than 24 hours.
+
 Current limits:
 
 - `x-ownloom-attachment-kind` must be `image` or `audio`.
 - Upload body must be non-empty.
 - Max upload size is 25 MiB.
-- Attachment retention/cleanup semantics are not finalized yet.
 
 ## REST API
 

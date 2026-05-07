@@ -1,7 +1,9 @@
 import {
+  existsSync,
   mkdirSync,
   readFileSync,
   renameSync,
+  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
@@ -296,6 +298,28 @@ export class Store {
   getAttachment(id: string): StoredAttachment | null {
     const state = readState(this.statePath);
     return state.attachments[id] ?? null;
+  }
+
+  deleteAttachment(id: string): void {
+    const state = readState(this.statePath);
+    const attachment = state.attachments[id];
+    if (!attachment) return;
+    delete state.attachments[id];
+    if (existsSync(attachment.path)) unlinkSync(attachment.path);
+    writeState(this.statePath, state);
+  }
+
+  pruneAttachments(maxAgeMs: number): number {
+    const state = readState(this.statePath);
+    let removed = 0;
+    for (const [id, attachment] of Object.entries(state.attachments)) {
+      if (!isOlderThan(attachment.createdAt, maxAgeMs)) continue;
+      delete state.attachments[id];
+      if (existsSync(attachment.path)) unlinkSync(attachment.path);
+      removed += 1;
+    }
+    if (removed > 0) writeState(this.statePath, state);
+    return removed;
   }
 
   beginIdempotentRequest(key: string, maxAgeMs: number):

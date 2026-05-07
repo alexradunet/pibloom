@@ -194,6 +194,7 @@ export class ClientTransport implements GatewayTransport {
       return;
     }
 
+    this.store.pruneAttachments(24 * 60 * 60 * 1000);
     const attachment = this.store.saveAttachment({ kind, mimeType, fileName, data });
     res.writeHead(201, { "Content-Type": "application/json" });
     res.end(JSON.stringify({
@@ -466,6 +467,7 @@ export class ClientTransport implements GatewayTransport {
 
     try {
       const result = await this.router.handleMessage(inbound, onChunk);
+      for (const ref of attachmentRefs) this.store.deleteAttachment(ref.id);
       for (const reply of result.replies) {
         ctx.emit(EVENTS.AGENT, { runId, stream: "result", text: reply });
       }

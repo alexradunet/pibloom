@@ -28,6 +28,6 @@ in
   assert lib.asserts.assertMsg (lib.hasInfix "/var/lib/ownloom-wiki-health/technical.status" wikiHealthScript) "wiki health snapshot must write outside the repository";
   assert lib.asserts.assertMsg (vps.config.systemd.timers.ownloom-wiki-health-snapshot.timerConfig.OnCalendar == "*-*-* 04:15:00") "wiki health snapshot must run daily";
   assert lib.asserts.assertMsg (builtins.hasAttr "synthetic_api_key" vps.config.sops.secrets) "nixpi-vps must declare the Synthetic API key secret when secrets.yaml exists";
-    pkgs.runCommand "nixpi-vps-security-eval" {} ''
+    pkgs.runCommand "ownloom-vps-security-eval" {} ''
       touch $out
     ''

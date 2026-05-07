@@ -54,7 +54,7 @@
 
       ownloom-gateway-module-eval = import ./eval/gateway-module.nix {inherit inputs lib pkgs system;};
       ownloom-openssh-native-abuse-eval = import ./eval/openssh-native-abuse.nix {inherit inputs lib pkgs system;};
-      nixpi-vps-security-eval = import ./eval/vps-security.nix {inherit inputs lib pkgs;};
+      ownloom-vps-security-eval = import ./eval/vps-security.nix {inherit inputs lib pkgs;};
       ownloom-host-configurations-eval = import ./eval/host-configurations.nix {inherit inputs lib pkgs;};
 
       # NixOS integration tests (pkgs.testers.runNixOSTest).

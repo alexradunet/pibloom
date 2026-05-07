@@ -15,6 +15,7 @@ _: {
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBEWQSCmHKdaiccFA7Mp+MMfq8V9dpYpEJ+7h6Hj+4vg alex@windows-medius"
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPrEmvcVkdFAvLqEjbsXBOhpjFXtsUDjnQaPecRBrqpz"
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPb6MPMpCqj8MRWe+qCVnZNA5a004Vdk+q2v3/xoL+x+"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGA8BNch1xK3NZ2ARQmIHLqM2/rydIYVO4bekW2ux7+f alex@nixos"
       ];
     };
 

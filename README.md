@@ -11,7 +11,7 @@ The wiki/notes content is intentionally **not** part of this repository — it l
 ├── flake.nix              # root flake: host, modules, packages, checks
 ├── os/                    # reusable NixOS modules and local packages
 └── hosts/                 # host-specific NixOS configuration
-    └── ownloom-vps/         # the current VPS host; host rename is deferred
+    └── ownloom-vps/         # the live VPS host
 ```
 
 ## Build and apply
@@ -49,7 +49,7 @@ Stable host secrets live in encrypted `sops-nix` files under `hosts/ownloom-vps/
 
 - `hosts/ownloom-vps/networking.private.nix` — VPS WAN address + gateway (TEST-NET-3 placeholder)
 - `hosts/ownloom-vps/secrets.private.nix` — code-server argon2 hash (placeholder)
-- `hosts/ownloom-vps/ownloom-gateway.private.nix` — WhatsApp transport owner numbers (disabled by default; file rename deferred)
+- `hosts/ownloom-vps/ownloom-gateway.private.nix` — WhatsApp transport owner numbers (disabled by default)
 
 After cloning, edit each file with real values, then mark them as locally-modified-only so git won't include the changes in commits or pulls:
 
@@ -61,9 +61,6 @@ git update-index --skip-worktree \
 ```
 
 A first install can boot without `hosts/ownloom-vps/secrets.yaml`; SSH keys are enough. After first boot, copy `.sops.example.yaml` to `.sops.yaml`, create a real encrypted `secrets.yaml`, force-add it past the ignore rule, and rebuild.
-
-## Rebrand status
-
 
 ## License
 

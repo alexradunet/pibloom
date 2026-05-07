@@ -28,9 +28,6 @@
       };
   };
 in {
-  imports = [
-  ];
-
   options.services.ownloom-planner = {
     enable = lib.mkEnableOption "standards-based ownloom planner backend using CalDAV/iCalendar";
 

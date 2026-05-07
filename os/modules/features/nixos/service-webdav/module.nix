@@ -7,9 +7,6 @@
   cfg = config.services.ownloom-webdav;
   userName = config.ownloom.human.name;
 in {
-  imports = [
-  ];
-
   options.services.ownloom-webdav = {
     enable = lib.mkEnableOption "loopback WebDAV server for the ownloom wiki (access via SSH tunnel)";
 

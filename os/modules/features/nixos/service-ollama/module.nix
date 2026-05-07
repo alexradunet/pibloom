@@ -19,9 +19,6 @@
     then pkgs.ollama-vulkan
     else pkgs.ollama;
 in {
-  imports = [
-  ];
-
   options.services.ownloom-ollama = {
     enable = lib.mkEnableOption "ownloom local-LLM backend via ollama";
 

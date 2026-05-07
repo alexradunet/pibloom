@@ -200,9 +200,6 @@
     };
   };
 in {
-  imports = [
-  ];
-
   options.services.ownloom-proactive-timers = {
     enable = lib.mkEnableOption "ownloom proactive timer tasks";
 

@@ -6,9 +6,15 @@ import { DeliveryService } from "./core/delivery.js";
 import { Router, type ChannelConfig } from "./core/router.js";
 import { Store } from "./core/store.js";
 import { PiClient } from "./core/pi-client.js";
+import { noopHooks } from "./core/hooks.js";
+import { CommandRegistry } from "./core/commands.js";
+import { registerCoreCommands } from "./core/register-core-commands.js";
+import { SimpleIdentityResolver, type IdentityEntry } from "./core/identity.js";
+import { OwnloomPersonalHooks } from "./personal/hooks.js";
+import { registerPersonalCommands } from "./personal/commands.js";
 import { ReminderDeliveryWorker } from "./personal/reminder-delivery.js";
 import { WhatsAppTransport } from "./transports/whatsapp/transport.js";
-import { WebSocketTransport } from "./transports/websocket/transport.js";
+import { ClientTransport } from "./transport/client-transport.js";
 import type { GatewayTransport } from "./transports/types.js";
 
 // ── WhatsApp system prompt addendum ───────────────────────────────────────────
@@ -22,6 +28,28 @@ const WHATSAPP_SYSTEM_PROMPT_ADDENDUM = [
 
 const WHATSAPP_RESET_HINT =
   "For anything that should survive future resets, ask naturally — for example: remember that …";
+
+// ── Identity configuration ──────────────────────────────────────────────────
+// Build identity entries from WhatsApp trusted/admin numbers.
+// Each trusted number gets an identity with admin scope (single-user gateway).
+// Future: load from a dedicated identity config section.
+
+function buildIdentityEntries(config: ReturnType<typeof loadConfig>): IdentityEntry[] {
+  const entries: IdentityEntry[] = [];
+  const whatsapp = config.transports.whatsapp;
+  if (whatsapp?.enabled) {
+    const numbers = [...new Set([...whatsapp.trustedNumbers, ...whatsapp.adminNumbers])];
+    if (numbers.length > 0) {
+      entries.push({
+        id: "alex",
+        displayName: "Alex",
+        scopes: ["read", "write", "admin"],
+        keys: numbers.map((n) => `whatsapp:${n}`),
+      });
+    }
+  }
+  return entries;
+}
 
 // ── Startup ───────────────────────────────────────────────────────────────────
 
@@ -61,10 +89,38 @@ async function main(): Promise<void> {
     };
   }
 
+  // ── Identity resolver ────────────────────────────────────────────────────
+  const identityEntries = buildIdentityEntries(config);
+  const identityResolver = new SimpleIdentityResolver(identityEntries);
+  if (identityEntries.length > 0) {
+    console.log(`identity: resolved ${identityEntries.length} identity entry/entries`);
+  }
+
+  // ── Conversation hooks ──────────────────────────────────────────────────
+  const hooks = new OwnloomPersonalHooks();
+
+  // ── Command registry ────────────────────────────────────────────────────
+  const commands = new CommandRegistry();
+  registerCoreCommands(commands, store, channelConfigs, { onSessionReset: (chatId) => hooks.onSessionReset?.(chatId) });
+  registerPersonalCommands(commands);
+  console.log(`commands: registered ${commands.listNames().length} commands: ${commands.listNames().join(", ")}`);
+
+  // Client transport: versioned protocol v1 + legacy web UI compat + REST API.
+  // Replaces the old WebSocketTransport. SetRouter must be called after
+  // the Router is constructed (below).
+  let clientTransport: ClientTransport | undefined;
   if (config.transports.websocket?.enabled) {
-    transports.push(new WebSocketTransport(config.transports.websocket));
-    channelConfigs.websocket = {
-      // No model override for web UI; let the user choose in Pi settings.
+    clientTransport = new ClientTransport(
+      config.transports.websocket,
+      store,
+      commands,
+      identityResolver,
+      "pi",
+      ["whatsapp", "client"],
+    );
+    transports.push(clientTransport);
+    channelConfigs.client = {
+      // No model override for web/chat apps; let the user choose in Pi settings.
     };
   }
 
@@ -91,7 +147,14 @@ async function main(): Promise<void> {
     channelConfigs,
     audioTranscriber,
     process.env.OWNLOOM_LOCAL_PROVIDER_MODEL || undefined,
+    hooks,
+    commands,
+    identityResolver,
   );
+
+  // Wire the client transport to the router (circular dep: router needs
+  // clientTransport as a transport, clientTransport needs router for agent calls).
+  clientTransport?.setRouter(router);
 
   const delivery = new DeliveryService(transports);
 

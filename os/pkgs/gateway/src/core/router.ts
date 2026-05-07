@@ -2,11 +2,13 @@ import { rm } from "node:fs/promises";
 import type { InboundAttachment, InboundMessage, RouterResult } from "./types.js";
 import { Store } from "./store.js";
 import type { AgentClient } from "./agent-client.js";
-import { PersonalConversationCaptureService } from "../personal/conversation-capture.js";
-import { wikiSearch, wikiShowPage } from "../personal/wiki.js";
 import { chunkText, normalizeReply } from "./formatter.js";
 import { KeyedSerialQueue } from "./queue.js";
 import type { AudioTranscriber } from "./audio-transcriber.js";
+import type { ConversationHooks } from "./hooks.js";
+import type { CommandRegistry, CommandContext } from "./commands.js";
+import type { IdentityResolver, Identity } from "./identity.js";
+import { isAdmin } from "./identity.js";
 
 export type ChannelConfig = {
   /** Pi model selector, e.g. `synthetic/hf:moonshotai/Kimi-K2.6`. */
@@ -23,7 +25,6 @@ export type ChannelConfig = {
 
 export class Router {
   private readonly queue = new KeyedSerialQueue();
-  private readonly conversationCapture = new PersonalConversationCaptureService();
 
   constructor(
     private readonly store: Store,
@@ -33,6 +34,9 @@ export class Router {
     private readonly channelConfigs: Record<string, ChannelConfig> = {},
     private readonly audioTranscriber?: AudioTranscriber,
     private readonly fallbackModel?: string,
+    private readonly hooks: ConversationHooks = {},
+    private readonly commands?: CommandRegistry,
+    private readonly identityResolver?: IdentityResolver,
   ) {}
 
   handleMessage(msg: InboundMessage, onChunk?: (chunk: string) => void): Promise<RouterResult> {
@@ -44,9 +48,21 @@ export class Router {
     onChunk?: (chunk: string) => void,
   ): Promise<RouterResult> {
     try {
+      // Resolve identity for this message.
+      const identity = this.identityResolver?.resolve(msg.channel, msg.senderId) ?? null;
+
       if (msg.access.selfSenderIds.includes(msg.senderId)) return { replies: [], markProcessed: false };
-      if (!msg.access.allowedSenderIds.includes(msg.senderId)) return { replies: [], markProcessed: false };
-      if (msg.access.directMessagesOnly && msg.isGroup) return { replies: [], markProcessed: false };
+
+      // Access control: identity-based (preferred) or fallback to legacy access policy.
+      if (identity) {
+        // Identity-based: must have at least "read" scope.
+        // (Future: finer-grained checks per command go here.)
+      } else {
+        // Legacy path: per-transport allowlist.
+        if (!msg.access.allowedSenderIds.includes(msg.senderId)) return { replies: [], markProcessed: false };
+        if (msg.access.directMessagesOnly && msg.isGroup) return { replies: [], markProcessed: false };
+      }
+
       if (this.store.hasProcessedMessage(msg.messageId)) return { replies: [], markProcessed: false };
 
       const audioAttachments = (msg.attachments ?? []).filter((a) => a.kind === "audio");
@@ -61,18 +77,40 @@ export class Router {
       }
 
       const text = this.buildEffectiveText(msg.text.trim(), transcribedAudio?.text ?? null).trim();
-      const commandText = this.normalizeCommandText(text);
       if (!text && imageAttachments.length === 0) return { replies: [], markProcessed: true };
 
-      const builtin = this.handleBuiltin(msg, commandText);
-      if (builtin !== null) {
-        return {
-          replies: chunkText(normalizeReply(builtin), this.maxReplyChars, this.maxReplyChunks),
-          markProcessed: true,
-        };
+      // Try command registry first (if configured).
+      const commandText = this.normalizeCommandText(text);
+      if (this.commands) {
+        const resolved = this.commands.resolve(commandText.startsWith("/") ? commandText : `/${commandText}`);
+        if (resolved) {
+          const { def, args } = resolved;
+          if (def.adminOnly && identity && !isAdmin(identity)) {
+            return {
+              replies: chunkText("That command is admin-only.", this.maxReplyChars, this.maxReplyChunks),
+              markProcessed: true,
+            };
+          }
+          const cmdResult = def.handler({ msg, identity, args });
+          if (cmdResult !== null) {
+            return {
+              replies: chunkText(normalizeReply(cmdResult), this.maxReplyChars, this.maxReplyChunks),
+              markProcessed: true,
+            };
+          }
+        }
+      } else {
+        // Fallback: legacy built-in command handling (preserves behavior if no registry).
+        const builtin = this.handleBuiltin(msg, commandText);
+        if (builtin !== null) {
+          return {
+            replies: chunkText(normalizeReply(builtin), this.maxReplyChars, this.maxReplyChunks),
+            markProcessed: true,
+          };
+        }
       }
 
-      this.captureUserMessage(msg, text);
+      this.hooks.onUserMessage?.(msg, text, identity);
 
       try {
         const channelCfg = this.channelConfigs[msg.channel];
@@ -80,7 +118,6 @@ export class Router {
 
         // Privacy routing: messages prefixed with "/private" (or "private" after
         // normalizeCommandText strips the slash) must never leave this host.
-        // They are routed to the local fallback model only.
         const PRIVATE_PREFIX = "private ";
         const isPrivate = commandText.toLowerCase().startsWith(PRIVATE_PREFIX);
         if (isPrivate && !this.fallbackModel) {
@@ -115,7 +152,7 @@ export class Router {
         });
         this.store.upsertChatSession(msg.chatId, msg.senderId, reply.sessionPath);
         const normalizedReply = normalizeReply(reply.text);
-        this.captureAssistantReply(msg, normalizedReply);
+        this.hooks.onAssistantReply?.(msg, normalizedReply, identity);
 
         // When streaming, chunks were already delivered via onChunk — no text to re-send.
         if (onChunk) {
@@ -129,8 +166,7 @@ export class Router {
         console.error("router.handleMessageInner failed:", err);
 
         // Fallback: if no chunks were streamed yet and a local fallback model is
-        // configured, retry once with that model. Annotate the reply so the
-        // operator can see which provider served it.
+        // configured, retry once with that model.
         if (!onChunk && this.fallbackModel) {
           console.warn(
             `router: primary provider failed, retrying with fallback model ${this.fallbackModel}`,
@@ -143,7 +179,7 @@ export class Router {
               env: channelCfg?.env,
             });
             const normalizedFallback = normalizeReply(fallbackReply.text);
-            this.captureAssistantReply(msg, normalizedFallback);
+            this.hooks.onAssistantReply?.(msg, normalizedFallback, identity);
             return {
               replies: chunkText(
                 `[⚡ local] ${normalizedFallback}`,
@@ -168,22 +204,6 @@ export class Router {
       }
     } finally {
       await this.cleanupInboundAttachments(msg);
-    }
-  }
-
-  private captureUserMessage(msg: InboundMessage, text: string): void {
-    try {
-      this.conversationCapture.captureUserMessage(msg, text);
-    } catch (err) {
-      console.error("router: failed to auto-capture user message:", err);
-    }
-  }
-
-  private captureAssistantReply(msg: InboundMessage, text: string): void {
-    try {
-      this.conversationCapture.captureAssistantReply(msg, text);
-    } catch (err) {
-      console.error("router: failed to auto-capture assistant reply:", err);
     }
   }
 
@@ -227,9 +247,10 @@ export class Router {
     return trimmed.slice(1).trimStart();
   }
 
+  /** Legacy built-in command handling — used when no CommandRegistry is provided. */
   private handleBuiltin(msg: InboundMessage, text: string): string | null {
     const lowered = text.toLowerCase();
-    const isAdmin = msg.access.adminSenderIds.includes(msg.senderId);
+    const isAdminSender = msg.access.adminSenderIds.includes(msg.senderId);
 
     if (lowered === "help") {
       return [
@@ -248,13 +269,14 @@ export class Router {
 
     if (lowered === "reset") {
       this.store.resetChatSession(msg.chatId);
+      this.hooks.onSessionReset?.(msg.chatId);
       const hint = this.channelConfigs[msg.channel]?.resetHint;
       const base = `Started a fresh conversation for this ${msg.channel} chat.`;
       return hint ? `${base} ${hint}` : base;
     }
 
     if (lowered === "status") {
-      if (!isAdmin) return "That command is admin-only.";
+      if (!isAdminSender) return "That command is admin-only.";
       const existing = this.store.getChatSession(msg.chatId);
       return [
         `channel: ${msg.channel}`,
@@ -270,6 +292,8 @@ export class Router {
     }
 
     if (lowered.startsWith("wiki ")) {
+      // Lazy import to keep wiki concerns out of the hot path.
+      const { wikiSearch, wikiShowPage } = require("../personal/wiki.js") as typeof import("../personal/wiki.js");
       const rest = text.slice(5).trim();
       if (!rest) return "Usage: wiki <query>  |  wiki show <title>";
       if (rest.toLowerCase().startsWith("show ")) return wikiShowPage(rest.slice(5).trim());

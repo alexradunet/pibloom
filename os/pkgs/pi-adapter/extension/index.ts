@@ -29,11 +29,11 @@ async function buildownloomContext(): Promise<string> {
 function registerPlannerTool(pi: ExtensionAPI) {
   for (const toolName of ["ownloom_planner", "nixpi_planner"] as const) pi.registerTool({
     name: toolName,
-    label: toolName === "ownloom_planner" ? "ownloom Planner" : "NixPI Planner (compat)",
+    label: toolName === "ownloom_planner" ? "ownloom Planner" : "nixpi planner (compat)",
     description: "Manage canonical live tasks, reminders, and calendar events through the local CalDAV/iCalendar planner backend.",
     promptSnippet: toolName === "ownloom_planner"
       ? "Use ownloom_planner for live task, reminder, and calendar operations instead of creating wiki Markdown task/reminder pages."
-      : "Compatibility alias: prefer ownloom_planner for new prompts; use this only for old NixPI prompts.",
+      : "Compatibility alias: prefer ownloom_planner for new prompts; use this only for old nixpi prompts.",
     promptGuidelines: [
       "Use for live operational tasks/reminders/events.",
       "Do not use wiki task/reminder pages as the live source of truth unless the user explicitly asks for an archive/context note.",
@@ -83,15 +83,15 @@ function plannerArgs(params: any): string[] {
   if (action === "init") return ["init"];
   if (action === "list") return ["list", params.view ?? "upcoming", "--json"];
   if (action === "done" || action === "snooze") {
-    if (!params.uid_prefix) throw new Error(`nixpi_planner action=${action} requires uid_prefix.`);
+    if (!params.uid_prefix) throw new Error(`planner action=${action} requires uid_prefix.`);
     if (action === "snooze") {
-      if (!params.reschedule_to) throw new Error("nixpi_planner action=snooze requires reschedule_to.");
+      if (!params.reschedule_to) throw new Error("planner action=snooze requires reschedule_to.");
       return ["snooze", params.uid_prefix, "--to", params.reschedule_to, "--json"];
     }
     return ["done", params.uid_prefix, "--json"];
   }
   if (action === "reschedule") {
-    if (!params.uid_prefix) throw new Error("nixpi_planner action=reschedule requires uid_prefix.");
+    if (!params.uid_prefix) throw new Error("planner action=reschedule requires uid_prefix.");
     const args: string[] = ["reschedule", params.uid_prefix];
     if (params.due) args.push("--due", params.due);
     if (params.start) args.push("--start", params.start);
@@ -100,7 +100,7 @@ function plannerArgs(params: any): string[] {
     return args;
   }
   if (action === "edit") {
-    if (!params.uid_prefix) throw new Error("nixpi_planner action=edit requires uid_prefix.");
+    if (!params.uid_prefix) throw new Error("planner action=edit requires uid_prefix.");
     const args: string[] = ["edit", params.uid_prefix];
     if (params.title) args.push("--title", params.title);
     if (params.description) args.push("--description", params.description);
@@ -113,11 +113,11 @@ function plannerArgs(params: any): string[] {
     return args;
   }
   if (action === "delete") {
-    if (!params.uid_prefix) throw new Error("nixpi_planner action=delete requires uid_prefix.");
+    if (!params.uid_prefix) throw new Error("planner action=delete requires uid_prefix.");
     return ["delete", params.uid_prefix];
   }
 
-  if (!params.title) throw new Error(`nixpi_planner action=${action} requires title.`);
+  if (!params.title) throw new Error(`planner action=${action} requires title.`);
   const args: string[] = [action.replace("_", "-"), params.title];
   if (params.description) args.push("--description", params.description);
   if (params.categories?.length) args.push("--category", params.categories.join(","));
@@ -127,10 +127,10 @@ function plannerArgs(params: any): string[] {
     if (params.due) args.push("--due", params.due);
     if (params.priority !== undefined) args.push("--priority", String(params.priority));
   } else if (action === "add_reminder") {
-    if (!params.at) throw new Error("nixpi_planner action=add_reminder requires at.");
+    if (!params.at) throw new Error("planner action=add_reminder requires at.");
     args.push("--at", params.at);
   } else if (action === "add_event") {
-    if (!params.start) throw new Error("nixpi_planner action=add_event requires start.");
+    if (!params.start) throw new Error("planner action=add_event requires start.");
     args.push("--start", params.start);
     if (params.end) args.push("--end", params.end);
   }
@@ -138,7 +138,7 @@ function plannerArgs(params: any): string[] {
   return args;
 }
 
-export default function nixpiExtension(pi: ExtensionAPI) {
+export default function ownloomExtension(pi: ExtensionAPI) {
   registerWikiExtension(pi);
   registerPlannerTool(pi);
 

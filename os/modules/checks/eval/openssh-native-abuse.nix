@@ -22,6 +22,6 @@ in
   assert lib.asserts.assertMsg (sshSettings.PerSourcePenalties != null) "OpenSSH per-source penalties must be configured";
   assert lib.asserts.assertMsg eval.config.networking.nftables.enable "nftables must be enabled by default";
   assert lib.asserts.assertMsg (!(builtins.hasAttr "reaction" eval.config.systemd.services)) "reaction.service must not be present";
-    pkgs.runCommand "nixpi-openssh-native-abuse-eval" {} ''
+    pkgs.runCommand "ownloom-openssh-native-abuse-eval" {} ''
       touch $out
     ''

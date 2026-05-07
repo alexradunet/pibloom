@@ -2,7 +2,7 @@
   runCommand,
   ripgrep,
 }:
-runCommand "nixpi-purity-check" {
+runCommand "ownloom-purity-check" {
   nativeBuildInputs = [ripgrep];
 } ''
   set -euo pipefail

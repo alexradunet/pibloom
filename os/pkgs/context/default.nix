@@ -27,7 +27,7 @@
       procps
     ];
 
-    text = builtins.readFile ./nixpi-context.sh;
+    text = builtins.readFile ./ownloom-context.sh;
 
     meta = {
       description = "Print the current ownloom agent context for prompt injection";

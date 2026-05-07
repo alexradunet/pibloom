@@ -1,6 +1,6 @@
 {pkgs, ...}:
 pkgs.testers.runNixOSTest {
-  name = "nixpi-services-boot-smoke";
+  name = "ownloom-services-boot-smoke";
 
   nodes.vm = {...}: {
     imports = [
@@ -9,7 +9,7 @@ pkgs.testers.runNixOSTest {
       ../../features/nixos/service-ollama/module.nix
     ];
 
-    networking.hostName = "nixpi-boot-smoke";
+    networking.hostName = "ownloom-boot-smoke";
     system.stateVersion = "26.05";
 
     services.ownloom-planner = {

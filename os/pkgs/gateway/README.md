@@ -1,4 +1,4 @@
-# nixpi-gateway
+# ownloom-gateway
 
 Run `npm ci` after package-lock changes so local `node_modules` matches the
 lockfile. The Baileys tree uses a protobuf override; stale local installs can

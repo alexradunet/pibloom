@@ -2,7 +2,7 @@
   pi,
   runCommand,
 }:
-runCommand "nixpi-pi-extension-startup-smoke" {
+runCommand "ownloom-pi-extension-startup-smoke" {
   nativeBuildInputs = [pi];
 } ''
   set -euo pipefail

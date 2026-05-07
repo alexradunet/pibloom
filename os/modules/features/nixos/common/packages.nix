@@ -10,8 +10,6 @@
     fzf
     git
     jq
-    nixpi-audit
-    nixpi-config
     nixpi-context
     nixpi-health
     nixpi-status

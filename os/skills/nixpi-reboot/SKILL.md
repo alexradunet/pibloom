@@ -33,4 +33,4 @@ sudo shutdown -c
 
 - Never use `shutdown -r now` without an explicit "right now" from the user.
 - Never reboot mid-`nixos-rebuild switch` — wait for it to complete.
-- If unsure, prefer `nixpi-config status` first to check for pending changes.
+- If unsure, check the system state with `nixpi-health` first.

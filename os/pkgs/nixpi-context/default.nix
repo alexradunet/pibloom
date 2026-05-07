@@ -97,9 +97,9 @@ writeShellApplication {
     - nixpi-context --format markdown|json: print live agent context.
     - nixpi-status [--json]: show runtime paths and host state.
     - nixpi-health [--json]: broad host health snapshot.
-    - nixpi-config status|diff|validate|apply: inspect, validate, and apply this host config. Run validate before apply. Confirm with Alex before apply.
+    - nixpi-config (use skill nixpi-config): inspect, validate, and apply this host config. Run validate before apply. Confirm with Alex before apply.
     - Use standard git commit/push for publishing changes.
-    - nixpi-audit [--write-report] [--capture-source] [--json]: current-state baseline/config audit.
+    - nixpi-audit (use skill nixpi-audit): current-state baseline/config audit.
     - nixpi-wiki ...: structured wiki operations.
     - nixpi-planner ...: live CalDAV/iCalendar tasks, reminders, and events.'
 
@@ -162,7 +162,7 @@ writeShellApplication {
     [OS CONTEXT]
     Current host: $current_host
     Canonical flake repo: $flake_dir
-    Use nixpi-health for diagnosis and nixpi-config validate/apply for declarative rebuilds."
+    Use nixpi-health for diagnosis. Use the nixpi-config skill for validate/apply."
 
     if [ "$format" = "json" ]; then
       jq -n \

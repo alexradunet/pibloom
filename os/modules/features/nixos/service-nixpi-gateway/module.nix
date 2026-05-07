@@ -408,10 +408,6 @@ in {
         pkgs.nodejs
         pkgs.nixos-rebuild
         pkgs.podman
-        pkgs.nixpi-audit
-        pkgs.nixpi-planner
-        pkgs.nixpi-config
-        pkgs.nixpi-context
         pkgs.nixpi-health
         pkgs.nixpi-status
       ];

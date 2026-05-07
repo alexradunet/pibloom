@@ -87,8 +87,6 @@
       pkgs.ripgrep
       pkgs.fd
       pkgs.findutils
-      pkgs.nixpi-audit
-      pkgs.nixpi-config
       pkgs.nixpi-context
       pkgs.nixpi-health
       pkgs.nixpi-status

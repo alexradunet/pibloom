@@ -292,7 +292,7 @@ in {
             "3. nixpi_planner action=list view=upcoming — next 7 days"
             "4. wiki_search query=project type=project — summarize 1-2 active projects with recent activity"
             "5. Check meta/about-alex/current-context.md and note if anything needs updating"
-            "6. Run nixpi-health from the shell and flag any anomalies (disk, load, services)"
+            "6. Run nixpi-context --health from the shell and flag any anomalies (disk, load, services)"
             ""
             "Format: ⚠️ Overdue | 📋 Today | 📅 Upcoming | 🚀 Projects | 🔧 System"
             "Keep each section to 2-3 bullets. End with: — NixPI"

@@ -40,4 +40,4 @@ sudo systemctl restart nixpi-gateway.service
 
 ## Non-nixpi units
 
-For any unit outside `nixpi-*`/`sshd`, ask the user explicitly before touching it. Prefer `nixpi-health` to diagnose before taking action.
+For any unit outside `nixpi-*`/`sshd`, ask the user explicitly before touching it. Prefer `nixpi-context --health` to diagnose before taking action.

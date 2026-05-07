@@ -13,7 +13,7 @@ This skill replaces the removed `nixpi-reboot` binary. Always get explicit user 
 1. **Confirm with the user** — state the delay and ask for a yes/no.
 2. **Log a wiki note** (optional but recommended for significant reboots):
    ```bash
-   nixpi-wiki daily append --bullets "Scheduled reboot in <N> minutes — reason: <reason>"
+   nixpi-wiki mutate wiki_daily '{"action":"append","bullets":["Scheduled reboot in <N> minutes — reason: <reason>"]}'
    ```
 3. **Schedule the reboot** (requires sudo):
    ```bash
@@ -33,4 +33,4 @@ sudo shutdown -c
 
 - Never use `shutdown -r now` without an explicit "right now" from the user.
 - Never reboot mid-`nixos-rebuild switch` — wait for it to complete.
-- If unsure, check the system state with `nixpi-health` first.
+- If unsure, check the system state with `nixpi-context --health` first.

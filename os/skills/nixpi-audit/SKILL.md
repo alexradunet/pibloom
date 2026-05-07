@@ -20,9 +20,9 @@ The audit checks for drift between:
 
 ### Step 1: Gather wiki state
 ```bash
-nixpi-wiki search --query "status:reviewing" --type decision | wc -l
-nixpi-wiki lint --mode strict 2>&1 | tail -30
-nixpi-wiki decay-pass --dry-run 2>&1 | tail -20
+nixpi-wiki call wiki_search '{"query":"status:reviewing","type":"decision"}' --json | jq length
+nixpi-wiki call wiki_lint '{"mode":"strict"}' 2>&1 | tail -30
+nixpi-wiki mutate wiki_decay_pass '{"dry_run":true}' 2>&1 | tail -20
 ```
 
 ### Step 2: Gather config state
@@ -36,7 +36,7 @@ nix flake check --no-build --accept-flake-config 2>&1 | tail -10
 
 ### Step 3: Gather runtime state
 ```bash
-nixpi-health --format markdown 2>&1 | head -40
+nixpi-context --health 2>&1 | head -40
 ```
 
 ### Step 4: Compare and report
@@ -51,12 +51,12 @@ Compare the wiki objects against running services. Look for:
 
 Write findings as a summary to the daily note:
 ```bash
-nixpi-wiki daily append --bullets "Audit: <summary>"
+nixpi-wiki mutate wiki_daily '{"action":"append","bullets":["Audit: <summary>"]}'
 ```
 
 Optional: create an audit object:
 ```bash
-nixpi-wiki ensure-object --type snapshot --title "Audit <date>" --summary "Baseline comparison result" --domain technical --areas infrastructure
+nixpi-wiki mutate wiki_ensure_object '{"type":"snapshot","title":"Audit <date>","summary":"Baseline comparison result","domain":"technical","areas":["infrastructure"]}'
 ```
 
 ## Safety

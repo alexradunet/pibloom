@@ -1,13 +1,10 @@
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   buildCompactionContext,
-  loadContext,
-  readText,
-  restoredContextBlock,
   saveContext,
-} from "../../nixpi-pi-adapter/extensions/nixpi/nixpi/wiki/runtime-policy.ts";
+} from "../../pi-adapter/extension/wiki/runtime-policy.ts";
 
 describe("runtime-policy helpers", () => {
   const originalHome = process.env.HOME;
@@ -28,25 +25,13 @@ describe("runtime-policy helpers", () => {
     else delete process.env.HOSTNAME;
   });
 
-  it("reads text or returns null for missing files", () => {
-    expect(readText(path.join(process.env.HOME!, "missing.txt"))).toBeNull();
-    const filePath = path.join(process.env.HOME!, "note.txt");
-    writeFileSync(filePath, "hello", "utf-8");
-    expect(readText(filePath)).toBe("hello");
-  });
+  it("saves compaction context to the Pi agent directory", () => {
+    const context = { savedAt: "2026-04-23T00:00:00.000Z", host: "old-host", cwd: "/tmp/work" };
+    saveContext(context);
 
-  it("saves and loads restored context data", () => {
-    expect(loadContext()).toBeNull();
-    saveContext({ savedAt: "2026-04-23T00:00:00.000Z", host: "old-host", cwd: "/tmp/work" });
-    expect(loadContext()).toEqual({ savedAt: "2026-04-23T00:00:00.000Z", host: "old-host", cwd: "/tmp/work" });
-    expect(restoredContextBlock({ savedAt: "2026-04-23T00:00:00.000Z", host: "old-host", cwd: "/tmp/work" })).toContain("Previous cwd: /tmp/work");
-  });
-
-  it("returns null for invalid saved context json", () => {
     const contextPath = path.join(process.env.HOME!, ".pi", "agent", "context.json");
-    mkdirSync(path.dirname(contextPath), { recursive: true });
-    writeFileSync(contextPath, "{ invalid json", "utf-8");
-    expect(loadContext()).toBeNull();
+    expect(existsSync(contextPath)).toBe(true);
+    expect(JSON.parse(readFileSync(contextPath, "utf-8"))).toEqual(context);
   });
 
   it("builds compaction context with host and cwd", () => {

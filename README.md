@@ -1,6 +1,6 @@
 # NixPI
 
-NixPI is a personal NixOS monorepo for one VPS-centered host. It bundles the host configuration, reusable OS modules, and a set of local agent runtime packages (`pi`, `nixpi-config`, `nixpi-planner`, `nixpi-gateway`, `nixpi-wiki`, …) into a single flake.
+NixPI is a personal NixOS monorepo for one VPS-centered host. It bundles the host configuration, reusable OS modules, local agent runtime packages (`pi`, `nixpi-planner`, `nixpi-gateway`, `nixpi-wiki`, …), and agent skills into a single flake.
 
 The wiki/notes content is intentionally **not** part of this repository — it lives at `~/wiki` on the host and is never published.
 
@@ -21,12 +21,14 @@ nix flake show
 nix build .#nixosConfigurations.nixpi-vps.config.system.build.toplevel
 ```
 
-On the host, validate then apply:
+On the host, validate then apply with standard Nix tooling:
 
 ```sh
-nixpi-config validate
-sudo nixpi-config apply
+nix flake check --accept-flake-config
+sudo nixos-rebuild switch --flake .#nixpi-vps --accept-flake-config
 ```
+
+Agents should follow `os/skills/nixpi-config/SKILL.md` for the full status → diff → validate → confirm → apply workflow.
 
 For a manual remote deploy from a workstation, set the target host explicitly:
 
@@ -39,7 +41,7 @@ nixos-rebuild switch \
 
 ## Publishing
 
-The canonical remote is GitHub. Standard `git commit` / `git push` is the only publication path — there is no auto-sync daemon. Confirm changes locally, run `nixpi-config validate`, then push.
+The canonical remote is GitHub. Standard `git commit` / `git push` is the only publication path — there is no auto-sync daemon. Confirm changes locally, run `nix flake check --accept-flake-config`, then push.
 
 ## Secrets and host-local config
 

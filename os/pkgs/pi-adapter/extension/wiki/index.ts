@@ -19,7 +19,7 @@ import {
 	rebuildAllMeta,
 	toolManifest,
 	todayStamp,
-} from "../../../../wiki/src/api.ts";
+} from "../../../wiki/src/api.ts";
 import { readMemoryPaths, readMemoryStats } from "./prompt-context.ts";
 import { buildCompactionContext, saveContext } from "./runtime-policy.ts";
 

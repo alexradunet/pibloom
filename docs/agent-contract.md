@@ -14,19 +14,12 @@ This document defines what an AI agent adapter must provide to participate in Ni
 
 The shared NixPI surface is CLI-first. An agent must be able to call these commands from its normal shell/tool environment:
 
-- `nixpi-context --format markdown|json` — print live NixPI context for prompt injection.
-- `nixpi-status [--json]` — show runtime paths and host state.
-- `nixpi-health [--json]` — broad host health snapshot.
-- `nixpi-config status|diff|validate|apply` — inspect, validate, and apply this host config. Validate before apply.
-- `nixpi-config status|diff|validate|apply`: inspect, validate, and apply this host config.
-- `nixpi-svc status|start|stop|restart <unit>` — allowlisted systemd control for `nixpi-*` and `sshd`.
-- `nixpi-reboot --in <minutes>` — schedule a reboot after explicit approval.
-- `nixpi-evolution --title <title> ...` — create or resolve evolution notes.
-- `nixpi-audit [--write-report] [--capture-source] [--json]` — current-state baseline/config audit.
+- `nixpi-context --format markdown|json [--health]` — print live NixPI context for prompt injection.
 - `nixpi-wiki` — search, inspect, ingest, lint, and update the Markdown wiki.
 - `nixpi-planner` — manage live tasks, reminders, and calendar items through CalDAV/iCalendar.
+- Standard Nix/Git/systemd tools — `git`, `nix flake check`, `nixos-rebuild`, and `systemctl` for repository, validation, deployment, and service work.
 
-Safety and allowlist behavior belongs in these CLIs. Agent adapters may add extra hooks, but must not be the only enforcement point.
+Operational workflows that used to be wrapper CLIs now live as skills under `os/skills/` (`nixpi-config`, `nixpi-svc`, `nixpi-reboot`, `nixpi-evolution`, and `nixpi-audit`). Safety and allowlist behavior belongs in the underlying NixOS config, sudo policy, systemd units, and shared CLIs. Agent adapters may add extra hooks, but must not be the only enforcement point.
 
 ## Context requirements
 
@@ -56,28 +49,28 @@ nixpi-context --format json
 
 ## Tool behavior
 
-Agents should prefer CLIs over harness-specific tools:
+Agents should prefer shared commands and skills over harness-specific tools:
 
 - Use `nixpi-planner` for live tasks/reminders/events.
 - Use `nixpi-wiki` for wiki operations rather than direct Markdown edits when structured mutation is available.
-- Use `nixpi-config`, `nixpi-svc`, and `nixpi-reboot` for privileged or allowlisted operations.
-- Use raw shell only for ordinary repository inspection and development commands.
+- Use `os/skills/nixpi-config/SKILL.md`, `nixpi-svc`, and `nixpi-reboot` skill workflows for privileged or allowlisted operations.
+- Use raw shell for ordinary repository inspection, development commands, and the standard Nix/Git/systemd commands described by those skills.
 
 PI currently keeps registered tools for the two UX-heavy domains where the TUI/tool-call experience still pays for itself:
 
 - wiki tools, backed by the shared `nixpi-wiki` manifest/API.
 - `nixpi_planner`, a thin wrapper over `nixpi-planner`.
 
-All other PI operational tools were removed. Their replacements are the shared CLIs documented by `nixpi-context`.
+All other PI operational tools were removed. Their replacements are standard shell workflows documented by `nixpi-context` and the skills in `os/skills/`.
 
 ## Guardrails
 
 Agent adapters should enforce, where the harness supports it:
 
 - Ask for explicit user confirmation before privileged actions, rebuilds, rollbacks, reboot scheduling, commit, push, or apply.
-- Run `nixpi-config validate` before `nixpi-config apply`.
-- Use `nixpi-config status` before summarizing or changing repo/config state.
-- Use `nixpi-svc status <unit>` before service mutations.
+- Run `nix flake check --accept-flake-config` before `nixos-rebuild switch`.
+- Use `git status --short` and `git diff --stat` before summarizing or changing repo/config state.
+- Use `systemctl status <unit>` before service mutations.
 - Block or redirect direct writes to protected wiki areas such as `raw/` and `meta/proposals/`.
 - Prefer read-only diagnosis before mutation.
 - Preserve the current host identity; never assume a different fleet host unless the user names it.
@@ -90,7 +83,7 @@ A new agent adapter is viable when it can do the following without changing shar
 
 1. Install or reference the agent through a NixOS module.
 2. Inject `nixpi-context --format markdown` or equivalent JSON-rendered context at session start.
-3. Provide shell access to the shared `nixpi-*` CLIs.
+3. Provide shell access to the shared `nixpi-*` CLIs and the standard Nix/Git/systemd commands used by the skills.
 4. Preserve current host identity from context.
 5. Respect planner policy: live tasks/reminders/events go through `nixpi-planner`, not wiki task pages.
 6. Respect wiki policy: use `nixpi-wiki` for structured wiki writes and avoid protected paths.
@@ -122,7 +115,7 @@ Adding a new agent should primarily add files under an agent-specific module/pac
 Current adapter package:
 
 ```text
-os/pkgs/nixpi-pi-adapter/
+os/pkgs/pi-adapter/
 ```
 
 For now, the only active adapter is PI.

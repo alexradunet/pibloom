@@ -62,14 +62,14 @@ describe("PI adapter", () => {
 
   async function loadWikiAdapter() {
     const api = createMockExtensionAPI();
-    const mod = await import("../../nixpi-pi-adapter/extensions/nixpi/nixpi/wiki/index.ts");
+    const mod = await import("../../pi-adapter/extension/wiki/index.ts");
     mod.default(api as never);
     return api;
   }
 
   async function loadNixpiAdapter() {
     const api = createMockExtensionAPI();
-    const mod = await import("../../nixpi-pi-adapter/extensions/nixpi/nixpi/index.ts");
+    const mod = await import("../../pi-adapter/extension/index.ts");
     mod.default(api as never);
     return api;
   }

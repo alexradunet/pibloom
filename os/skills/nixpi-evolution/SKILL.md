@@ -15,13 +15,14 @@ Do **not** use the old `nixpi-evolution` CLI — it has been removed. It generat
 ## Creating an evolution note
 
 ```bash
-nixpi-wiki ensure-object \
-  --type evolution \
-  --title "<title>" \
-  --domain technical \
-  --areas "infrastructure,ai" \
-  --summary "<one-line summary>" \
-  --confidence medium
+nixpi-wiki mutate wiki_ensure_object '{
+  "type": "evolution",
+  "title": "<title>",
+  "domain": "technical",
+  "areas": ["infrastructure", "ai"],
+  "summary": "<one-line summary>",
+  "confidence": "medium"
+}'
 ```
 
 After creating it, open the file in `wiki/objects/` and fill in the body sections:
@@ -37,7 +38,7 @@ After creating it, open the file in `wiki/objects/` and fill in the body section
 Use `nixpi-wiki` to read the object path, then edit the frontmatter `status` field:
 
 ```bash
-nixpi-wiki search --query "<title>" --type evolution
+nixpi-wiki call wiki_search '{"query":"<title>","type":"evolution"}'
 # then edit the file directly
 ```
 

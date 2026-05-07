@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { getWikiRootForDomain } from "../../../../wiki/src/api.ts";
+import { getWikiRootForDomain } from "../../../wiki/src/api.ts";
 
 const MEMORY_FILE = "memory/MEMORY.md";
 const USER_FILE = "memory/USER.md";

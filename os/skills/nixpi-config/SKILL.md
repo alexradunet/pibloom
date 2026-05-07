@@ -59,7 +59,7 @@ sudo nixos-rebuild switch --flake ".#$HOST" --accept-flake-config 2>&1
 4. **apply** — run `nixos-rebuild switch`. Capture stdout/stderr.
 5. After a successful apply, optionally reboot if it includes kernel/daemon changes:
    ```bash
-   nixpi-health | head -20
+   nixpi-context --health | head -20
    # Ask user before rebooting
    ```
 

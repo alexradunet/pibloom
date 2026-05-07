@@ -20,9 +20,8 @@ import {
 	toolManifest,
 	todayStamp,
 } from "../../../../wiki/src/api.ts";
-import { type RegisteredExtensionTool, registerTools } from "./lib/utils.ts";
 import { readMemoryPaths, readMemoryStats } from "./prompt-context.ts";
-import { buildCompactionContext, loadContext, type SavedContext, saveContext } from "./runtime-policy.ts";
+import { buildCompactionContext, saveContext } from "./runtime-policy.ts";
 
 const execFileAsync = promisify(execFile);
 
@@ -133,6 +132,14 @@ function manifestParamsToSchema(toolName: string, params: Record<string, Manifes
 	));
 }
 
+type RegisteredExtensionTool = {
+	name: string;
+	label?: string;
+	description?: string;
+	parameters?: unknown;
+	execute: (...args: any[]) => unknown;
+};
+
 // ── Tool execution ────────────────────────────────────────────────────────────
 
 async function executeCoreWikiTool(
@@ -150,7 +157,6 @@ async function executeCoreWikiTool(
 
 export default function (pi: ExtensionAPI) {
 	const dirtyRoots = new Set<string>();
-	let restoredContext: SavedContext | null = loadContext();
 
 	// Register all wiki tools declared by the shared nixpi-wiki manifest.
 	const tools: RegisteredExtensionTool[] = toolManifest.map((manifest) => ({
@@ -162,11 +168,7 @@ export default function (pi: ExtensionAPI) {
 			return executeCoreWikiTool(manifest.name, (params ?? {}) as Record<string, unknown>, signal);
 		},
 	}));
-	registerTools(pi, tools);
-
-	pi.on("session_start", async () => {
-		restoredContext = loadContext();
-	});
+	for (const tool of tools) pi.registerTool(tool);
 
 	pi.registerCommand("memory", {
 		description: "Show memory file stats and paths. Usage: /memory",
@@ -230,8 +232,7 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.on("session_before_compact", async (_event, ctx) => {
-		restoredContext = buildCompactionContext(ctx.cwd);
-		saveContext(restoredContext);
+		saveContext(buildCompactionContext(ctx.cwd));
 		return undefined;
 	});
 }

@@ -46,6 +46,34 @@ test("MethodRegistry lists registered methods", () => {
   assert.deepEqual(registry.listMethods(), ["test.method"]);
 });
 
+test("v1 registers agent and agent.wait", async () => {
+  const { store, cleanup } = makeStore();
+  try {
+    const commands = new CommandRegistry();
+    const registry = new MethodRegistry();
+    let calls = 0;
+    registerV1Methods(registry, {
+      store,
+      commands,
+      agentName: "pi",
+      transportNames: [],
+      startedAtMs: Date.now(),
+      handleAgent: async () => {
+        calls += 1;
+        return { ok: true, payload: { runId: "r1", status: "accepted" } };
+      },
+    });
+
+    assert.ok(registry.listMethods().includes(METHODS.AGENT));
+    assert.ok(registry.listMethods().includes(METHODS.AGENT_WAIT));
+    assert.equal((await registry.dispatch(makeCtx({ _method: METHODS.AGENT }))).ok, true);
+    assert.equal((await registry.dispatch(makeCtx({ _method: METHODS.AGENT_WAIT }))).ok, true);
+    assert.equal(calls, 2);
+  } finally {
+    cleanup();
+  }
+});
+
 test("v1 health returns ok", async () => {
   const { store, cleanup } = makeStore();
   try {

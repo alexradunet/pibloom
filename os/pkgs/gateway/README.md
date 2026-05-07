@@ -261,3 +261,30 @@ Content-Type: <mime-type>
 x-ownloom-attachment-kind: image|audio
 x-ownloom-filename: <optional original filename>
 ```
+
+## Protocol client example
+
+Run the Node example against a local gateway:
+
+```bash
+cd os/pkgs/gateway
+OWNLOOM_GATEWAY_TOKEN=change-me npm run example:protocol
+```
+
+Useful environment variables:
+
+```text
+OWNLOOM_GATEWAY_HTTP_URL=http://127.0.0.1:8081
+OWNLOOM_GATEWAY_WS_URL=ws://127.0.0.1:8081
+OWNLOOM_GATEWAY_TOKEN=<client or global token>
+OWNLOOM_GATEWAY_SESSION=web-main
+OWNLOOM_GATEWAY_MESSAGE="Hello from protocol/v1"
+OWNLOOM_GATEWAY_ATTACHMENT=/path/to/photo.jpg
+OWNLOOM_GATEWAY_ATTACHMENT_KIND=image
+OWNLOOM_GATEWAY_ATTACHMENT_MIME=image/jpeg
+```
+
+The example connects, calls `health`, then sends `agent.wait` with a stable
+`sessionKey` and an `idempotencyKey`. If an attachment path is provided, it
+uploads the attachment over REST first and then references it from the agent
+request.

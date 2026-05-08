@@ -122,6 +122,11 @@ function makeNewSessionKey() {
 }
 
 function switchSessionKey(sessionKey, reason = "Switched session") {
+  if (state.agentRunning) {
+    addMessage("system", "Wait for the current answer before switching sessions.");
+    log("session switch blocked while agent is running", { sessionKey });
+    return;
+  }
   els.sessionKey.value = sessionKey;
   saveSettings();
   clearMessagesWithNotice(`${reason}: ${sessionKey}`);
@@ -147,6 +152,8 @@ function isConnected() {
 function updateSendButton() {
   els.sendButton.disabled = !isConnected() || state.agentRunning;
   els.sendButton.textContent = state.agentRunning ? "Waiting…" : "Send";
+  els.newChatButton.disabled = state.agentRunning;
+  els.sessionKey.disabled = state.agentRunning;
 }
 
 function log(message, data) {
@@ -357,6 +364,7 @@ async function sendMessage() {
   const message = els.messageInput.value.trim();
   if (!message && state.stagedAttachments.length === 0) return;
   const attachments = [...state.stagedAttachments];
+  const sessionKey = currentSessionKey();
   state.agentRunning = true;
   updateSendButton();
   els.messageInput.value = "";
@@ -365,7 +373,7 @@ async function sendMessage() {
   try {
     const payload = await request("agent.wait", {
       message: message || "Please inspect the attachment(s).",
-      sessionKey: els.sessionKey.value.trim() || "web-main",
+      sessionKey,
       idempotencyKey: `web-${crypto.randomUUID()}`,
       ...(attachments.length ? { attachments } : {}),
     });
@@ -391,8 +399,9 @@ async function refreshLists() {
     const chatId = s.chatId ?? s.id ?? "session";
     const sessionKey = clientSessionKey(chatId);
     const current = chatId === currentChatId();
-    const switchButton = sessionKey && !current ? `<button data-session-switch="${escapeHtml(sessionKey)}">Switch</button>` : "";
-    const resetButton = admin ? `<button data-session-reset="${escapeHtml(chatId)}">Reset</button>` : "";
+    const disabled = state.agentRunning ? " disabled" : "";
+    const switchButton = sessionKey && !current ? `<button data-session-switch="${escapeHtml(sessionKey)}"${disabled}>Switch</button>` : "";
+    const resetButton = admin ? `<button data-session-reset="${escapeHtml(chatId)}"${disabled}>Reset</button>` : "";
     const actions = switchButton || resetButton ? `<div class="row item-actions">${switchButton}${resetButton}</div>` : "";
     const badge = current ? " · current" : "";
     return `<strong>${escapeHtml(sessionTitle(chatId))}</strong><br><small>${escapeHtml(chatId)}${escapeHtml(badge)} · ${escapeHtml(s.updatedAt ?? s.createdAt ?? "")}</small>${actions}`;

@@ -397,6 +397,7 @@ in {
       wantedBy = ["multi-user.target"];
       path = [
         pkgs.pi
+        pkgs.bash
         pkgs.coreutils
         pkgs.findutils
         pkgs.gnugrep

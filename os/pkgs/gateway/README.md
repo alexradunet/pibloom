@@ -255,8 +255,8 @@ manually managed over WebSocket with an admin-scoped client:
 { "type": "req", "id": "retry-1", "method": "deliveries.retry", "params": { "id": "delivery-..." } }
 ```
 
-`deliveries.retry` clears `deadAt`/`nextAttemptAt` and resets attempts so the
-periodic delivery drain can try it again. To remove a queued delivery:
+`deliveries.retry` clears `deadAt`/`nextAttemptAt`, resets attempts, and triggers
+an immediate queued-delivery drain. To remove a queued delivery:
 
 ```json
 { "type": "req", "id": "delete-1", "method": "deliveries.delete", "params": { "id": "delivery-..." } }

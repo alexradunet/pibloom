@@ -14,6 +14,7 @@ import {
 } from "../protocol/types.js";
 import { MethodRegistry, registerV1Methods, type ConnectedClient, type MethodContext, type MethodResult } from "../protocol/methods.js";
 import type { ClientTransportConfig } from "../config.js";
+import type { DeliveryService } from "../core/delivery.js";
 import type { InboundAttachment, InboundMessage } from "../core/types.js";
 import type { GatewayTransport } from "../transports/types.js";
 import type { Store } from "../core/store.js";
@@ -34,6 +35,7 @@ export class ClientTransport implements GatewayTransport {
   private readonly connections = new Map<string, { ws: WebSocket; client: ConnectedClient }>();
   private readonly methodRegistry = new MethodRegistry();
   private router!: Router;
+  private delivery?: DeliveryService;
   private startedAtMs = Date.now();
 
   constructor(
@@ -52,6 +54,7 @@ export class ClientTransport implements GatewayTransport {
       transportNames,
       startedAtMs: this.startedAtMs,
       handleAgent: (ctx) => this.handleAgentMethod(ctx),
+      onDeliveryRetry: () => this.delivery?.drainQueuedDeliveries(),
       clients: (config.clients ?? []).map((client) => ({
         id: client.id,
         displayName: client.displayName,
@@ -63,6 +66,10 @@ export class ClientTransport implements GatewayTransport {
   /** Must be called before startReceiving so the agent method can reach the Router. */
   setRouter(router: Router): void {
     this.router = router;
+  }
+
+  setDeliveryService(delivery: DeliveryService): void {
+    this.delivery = delivery;
   }
 
   async healthCheck(): Promise<void> {

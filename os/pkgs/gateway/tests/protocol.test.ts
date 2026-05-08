@@ -262,12 +262,17 @@ test("v1 delivery admin methods retry and delete queued deliveries", async () =>
   try {
     const commands = new CommandRegistry();
     const registry = new MethodRegistry();
+    let drainCalls = 0;
     registerV1Methods(registry, {
       store,
       commands,
       agentName: "pi",
       transportNames: [],
       startedAtMs: Date.now(),
+      onDeliveryRetry: () => {
+        drainCalls += 1;
+        return { attempted: 1, delivered: 1, failed: 0 };
+      },
       handleAgent: async () => ({ ok: true, payload: { runId: "r1", status: "accepted" } }),
     });
 
@@ -277,6 +282,8 @@ test("v1 delivery admin methods retry and delete queued deliveries", async () =>
 
     const retry = await registry.dispatch(makeCtx({ _method: METHODS.DELIVERIES_RETRY, id: delivery.id }));
     assert.equal(retry.ok, true);
+    assert.equal(drainCalls, 1);
+    if (retry.ok) assert.deepEqual((retry.payload as any).drain, { attempted: 1, delivered: 1, failed: 0 });
     const retried = store.listQueuedDeliveries(undefined, { includeDead: true })[0];
     assert.equal(retried.attempts, 0);
     assert.equal(retried.deadAt, undefined);

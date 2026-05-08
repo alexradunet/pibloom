@@ -167,6 +167,7 @@ async function main(): Promise<void> {
   clientTransport?.setRouter(router);
 
   const delivery = new DeliveryService(transports, store);
+  clientTransport?.setDeliveryService(delivery);
 
   await agent.healthCheck();
   console.log(`${agent.name} agent health check OK`);

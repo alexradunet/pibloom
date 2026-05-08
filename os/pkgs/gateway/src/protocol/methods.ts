@@ -88,6 +88,7 @@ export function registerV1Methods(
     transportNames: string[];
     startedAtMs: number;
     handleAgent: (ctx: MethodContext) => Promise<MethodResult>;
+    onDeliveryRetry?: () => Promise<unknown> | unknown;
     clients?: Array<{ id: string; displayName: string; scopes: Scope[] }>;
   },
 ): void {
@@ -148,12 +149,13 @@ export function registerV1Methods(
   });
 
   // deliveries.retry
-  registry.register(METHODS.DELIVERIES_RETRY, (ctx) => {
+  registry.register(METHODS.DELIVERIES_RETRY, async (ctx) => {
     const id = ctx.params["id"] as string | undefined;
     if (!id) return { ok: false, error: { message: "id is required", code: "INVALID_REQUEST" } };
     const delivery = deps.store.retryQueuedDelivery(id);
     if (!delivery) return { ok: false, error: { message: `Unknown or delivered delivery: ${id}`, code: "NOT_FOUND" } };
-    return { ok: true, payload: { delivery } };
+    const drain = await deps.onDeliveryRetry?.();
+    return { ok: true, payload: { delivery, drain } };
   });
 
   // deliveries.delete

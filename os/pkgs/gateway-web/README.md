@@ -24,5 +24,7 @@ Current features:
 - streamed `agent` event display
 - REST attachment upload using one-shot attachment refs
 - sessions, deliveries, and commands list panels
+- Send button disabled while an agent run is active
+- confirmations for destructive session, delivery, and runtime-client actions
 
 The gateway client transport is still expected to stay loopback-only until HTTPS/reverse-proxy/pairing is designed.

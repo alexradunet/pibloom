@@ -8,6 +8,7 @@ const state = {
   pending: new Map(),
   stagedAttachments: [],
   currentRun: null,
+  agentRunning: false,
 };
 
 const els = {
@@ -85,7 +86,16 @@ function setConnection(status, className = "") {
   els.disconnectButton.disabled = !connected;
   els.healthButton.disabled = !connected;
   els.refreshButton.disabled = !connected;
-  els.sendButton.disabled = !connected;
+  updateSendButton();
+}
+
+function isConnected() {
+  return state.ws?.readyState === WebSocket.OPEN && els.connectionState.textContent === "connected";
+}
+
+function updateSendButton() {
+  els.sendButton.disabled = !isConnected() || state.agentRunning;
+  els.sendButton.textContent = state.agentRunning ? "Waiting…" : "Send";
 }
 
 function log(message, data) {
@@ -146,7 +156,11 @@ function handleFrame(frame) {
   if (!pending) return;
   state.pending.delete(frame.id);
   if (frame.ok) pending.resolve(frame.payload);
-  else pending.reject(new Error(`${frame.error?.code ?? "ERROR"}: ${frame.error?.message ?? "request failed"}`));
+  else {
+    const error = new Error(frame.error?.message ?? "request failed");
+    error.code = frame.error?.code ?? "ERROR";
+    pending.reject(error);
+  }
 }
 
 function handleChangedEvent(event, payload) {
@@ -262,20 +276,29 @@ function renderAttachments() {
 }
 
 async function sendMessage() {
+  if (state.agentRunning) return;
   const message = els.messageInput.value.trim();
   if (!message && state.stagedAttachments.length === 0) return;
-  const attachments = state.stagedAttachments.splice(0);
-  renderAttachments();
+  const attachments = [...state.stagedAttachments];
+  state.agentRunning = true;
+  updateSendButton();
   els.messageInput.value = "";
   addMessage("user", message || "[attachments]");
   state.currentRun = addMessage("agent", "");
-  const payload = await request("agent.wait", {
-    message: message || "Please inspect the attachment(s).",
-    sessionKey: els.sessionKey.value.trim() || "web-main",
-    idempotencyKey: `web-${crypto.randomUUID()}`,
-    ...(attachments.length ? { attachments } : {}),
-  });
-  log("agent.wait response", payload);
+  try {
+    const payload = await request("agent.wait", {
+      message: message || "Please inspect the attachment(s).",
+      sessionKey: els.sessionKey.value.trim() || "web-main",
+      idempotencyKey: `web-${crypto.randomUUID()}`,
+      ...(attachments.length ? { attachments } : {}),
+    });
+    state.stagedAttachments = state.stagedAttachments.filter((staged) => !attachments.some((sent) => sent.id === staged.id));
+    renderAttachments();
+    log("agent.wait response", payload);
+  } finally {
+    state.agentRunning = false;
+    updateSendButton();
+  }
 }
 
 async function refreshLists() {
@@ -331,6 +354,21 @@ async function health() {
   log("health", await request("health"));
 }
 
+function confirmAction(message) {
+  return window.confirm(message);
+}
+
+function handleSendError(error) {
+  if (state.currentRun && !state.currentRun.textContent) state.currentRun.remove();
+  state.currentRun = null;
+  const code = error?.code;
+  const message = code === "AGENT_BUSY"
+    ? "Agent is already working on this session. Wait for the current answer, then retry."
+    : `Send failed: ${error.message}`;
+  addMessage("system", message);
+  log("send failed", { code: code ?? "ERROR", message: error.message });
+}
+
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (char) => ({
     "&": "&amp;",
@@ -362,12 +400,14 @@ els.clients.addEventListener("click", (event) => {
   const rotateId = target.getAttribute("data-client-rotate");
   const revokeId = target.getAttribute("data-client-revoke");
   if (rotateId) {
+    if (!confirmAction(`Rotate token for ${rotateId}? The old runtime token will stop working.`)) return;
     request("clients.rotateToken", { id: rotateId }).then((payload) => {
       log("client token rotated", { id: rotateId, token: payload.token });
       addMessage("system", `New token for ${rotateId}: ${payload.token}\nCopy it now; it will not be shown again.`);
       return refreshLists();
     }).catch((error) => log("client token rotate failed", error.message));
   } else if (revokeId) {
+    if (!confirmAction(`Revoke client ${revokeId}? It will be disconnected and unable to reconnect.`)) return;
     request("clients.revoke", { id: revokeId }).then(refreshLists).catch((error) => log("client revoke failed", error.message));
   }
 });
@@ -376,6 +416,7 @@ els.sessions.addEventListener("click", (event) => {
   if (!(target instanceof HTMLElement)) return;
   const chatId = target.getAttribute("data-session-reset");
   if (!chatId) return;
+  if (!confirmAction(`Reset session ${chatId}? This clears its stored conversation history.`)) return;
   request("sessions.reset", { chatId }).then(refreshLists).catch((error) => log("session reset failed", error.message));
 });
 els.deliveries.addEventListener("click", (event) => {
@@ -386,21 +427,18 @@ els.deliveries.addEventListener("click", (event) => {
   if (retryId) {
     request("deliveries.retry", { id: retryId }).then(refreshLists).catch((error) => log("delivery retry failed", error.message));
   } else if (deleteId) {
+    if (!confirmAction(`Delete delivery ${deleteId}? This removes it from the retry queue.`)) return;
     request("deliveries.delete", { id: deleteId }).then(refreshLists).catch((error) => log("delivery delete failed", error.message));
   }
 });
-els.sendButton.addEventListener("click", () => sendMessage().catch((error) => {
-  state.currentRun = null;
-  addMessage("system", `Send failed: ${error.message}`);
-  log("send failed", error.message);
-}));
+els.sendButton.addEventListener("click", () => sendMessage().catch(handleSendError));
 els.clearButton.addEventListener("click", () => els.messages.replaceChildren());
 els.attachmentInput.addEventListener("change", () => {
   uploadAttachments([...els.attachmentInput.files]).catch((error) => log("upload failed", error.message));
   els.attachmentInput.value = "";
 });
 els.messageInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) sendMessage().catch((error) => log("send failed", error.message));
+  if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) sendMessage().catch(handleSendError);
 });
 
 if (window.location.protocol === "http:" || window.location.protocol === "https:") {

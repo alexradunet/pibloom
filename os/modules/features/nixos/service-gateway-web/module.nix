@@ -29,6 +29,12 @@ in {
       default = "http://127.0.0.1:8081";
       description = "Loopback URL of the ownloom-gateway protocol/REST endpoint to proxy.";
     };
+
+    terminalUrl = lib.mkOption {
+      type = lib.types.str;
+      default = "http://127.0.0.1:8091";
+      description = "Loopback URL of the optional ownloom terminal endpoint to proxy under /terminal/.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -41,6 +47,10 @@ in {
         assertion = lib.hasPrefix "http://127.0.0.1:" cfg.gatewayUrl || lib.hasPrefix "http://[::1]:" cfg.gatewayUrl;
         message = "services.ownloom-gateway-web.gatewayUrl must stay loopback-only.";
       }
+      {
+        assertion = lib.hasPrefix "http://127.0.0.1:" cfg.terminalUrl || lib.hasPrefix "http://[::1]:" cfg.terminalUrl;
+        message = "services.ownloom-gateway-web.terminalUrl must stay loopback-only.";
+      }
     ];
 
     systemd.services.ownloom-gateway-web = {
@@ -52,6 +62,7 @@ in {
         OWNLOOM_GATEWAY_WEB_HOST = cfg.host;
         OWNLOOM_GATEWAY_WEB_PORT = toString cfg.port;
         OWNLOOM_GATEWAY_URL = cfg.gatewayUrl;
+        OWNLOOM_TERMINAL_URL = cfg.terminalUrl;
       };
       serviceConfig = {
         Type = "simple";

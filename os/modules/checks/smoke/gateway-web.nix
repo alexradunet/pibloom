@@ -16,7 +16,9 @@ runCommand "ownloom-gateway-web-smoke" {
   node --check "$root/app.js"
   node --check ${ownloom-gateway-web}/share/ownloom-gateway-web/server.mjs
 
-  grep -qi 'protocol/v1' "$root/index.html"
+  grep -qi 'Ownloom Cockpit' "$root/index.html"
+  grep -q 'data-tab-target="terminal"' "$root/index.html"
+  grep -q 'terminalFrame' "$root/index.html"
   grep -q 'pairButton' "$root/index.html"
   grep -q 'newChatButton' "$root/index.html"
   grep -q 'agent.wait' "$root/app.js"
@@ -25,6 +27,7 @@ runCommand "ownloom-gateway-web-smoke" {
   grep -q '/api/v1/attachments' "$root/app.js"
   grep -q 'deliveries.list' "$root/app.js"
   grep -q 'clients.list' "$root/app.js"
+  grep -q 'selectTab' "$root/app.js"
 
   OWNLOOM_GATEWAY_WEB_HOST=127.0.0.1 \
   OWNLOOM_GATEWAY_WEB_PORT=18090 \
@@ -38,7 +41,7 @@ runCommand "ownloom-gateway-web-smoke" {
     fi
     sleep 0.1
   done
-  grep -qi 'Ownloom Gateway' /tmp/index.html
+  grep -qi 'Ownloom Cockpit' /tmp/index.html
 
   mkdir -p $out
   touch $out/passed

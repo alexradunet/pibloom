@@ -1,6 +1,7 @@
 const $ = (id) => document.getElementById(id);
 
 const SETTINGS_KEY = "ownloom.gatewayWeb.settings.v1";
+const ACTIVE_TAB_KEY = "ownloom.gatewayWeb.activeTab.v1";
 const BROWSER_CLIENT_ID_KEY = "ownloom.gatewayWeb.browserClientId.v1";
 
 const state = {
@@ -10,6 +11,7 @@ const state = {
   stagedAttachments: [],
   currentRun: null,
   agentRunning: false,
+  terminalLoaded: false,
 };
 
 const els = {
@@ -37,7 +39,28 @@ const els = {
   deliveries: $("deliveries"),
   commands: $("commands"),
   log: $("log"),
+  tabButtons: [...document.querySelectorAll("[data-tab-target]")],
+  tabPanels: [...document.querySelectorAll("[data-tab-panel]")],
+  terminalFrame: $("terminalFrame"),
 };
+
+function selectTab(tab) {
+  const knownTabs = new Set(els.tabPanels.map((panel) => panel.dataset.tabPanel));
+  const nextTab = knownTabs.has(tab) ? tab : "chat";
+  for (const button of els.tabButtons) {
+    button.classList.toggle("active", button.dataset.tabTarget === nextTab);
+  }
+  for (const panel of els.tabPanels) {
+    const active = panel.dataset.tabPanel === nextTab;
+    panel.classList.toggle("active", active);
+    panel.hidden = !active;
+  }
+  localStorage.setItem(ACTIVE_TAB_KEY, nextTab);
+  if (nextTab === "terminal" && !state.terminalLoaded) {
+    els.terminalFrame.src = els.terminalFrame.dataset.src;
+    state.terminalLoaded = true;
+  }
+}
 
 function httpUrl() {
   return els.httpUrl.value.trim().replace(/\/$/, "");
@@ -510,6 +533,10 @@ function escapeHtml(value) {
   }[char]));
 }
 
+for (const button of els.tabButtons) {
+  button.addEventListener("click", () => selectTab(button.dataset.tabTarget));
+}
+
 els.connectButton.addEventListener("click", () => connect().catch((error) => {
   setConnection("error", "error");
   log("connect failed", error.message);
@@ -592,6 +619,7 @@ if (window.location.protocol === "http:" || window.location.protocol === "https:
 }
 loadSettings();
 updateCurrentSession();
+selectTab(localStorage.getItem(ACTIVE_TAB_KEY) ?? "chat");
 
 setConnection("disconnected");
 if (els.rememberSettings.checked && els.token.value.trim()) {

@@ -3,86 +3,137 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Ownloom Gateway</title>
+    <title>Ownloom Cockpit</title>
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
     <main class="shell">
       <header>
         <div>
-          <h1>Ownloom Gateway</h1>
-          <p>Protocol/v1 client skeleton for local Ownloom access.</p>
+          <h1>Ownloom Cockpit</h1>
+          <p>Local operator hub for chat, planning, configuration, and advanced terminal sessions.</p>
         </div>
         <span id="connectionState" class="pill">disconnected</span>
       </header>
 
-      <section class="card settings">
-        <label>
-          Gateway HTTP URL
-          <input id="httpUrl" value="http://127.0.0.1:8081" autocomplete="off" />
-        </label>
-        <label>
-          Bearer token
-          <input id="token" type="password" placeholder="paste named client token" autocomplete="off" />
-        </label>
-        <label>
-          Session key
-          <input id="sessionKey" value="web-main" autocomplete="off" />
-        </label>
-        <label class="checkbox">
-          <input id="rememberSettings" type="checkbox" checked />
-          Remember locally
-        </label>
-        <div class="row">
-          <button id="connectButton">Connect</button>
-          <button id="pairButton">Pair this browser</button>
-          <button id="disconnectButton" disabled>Disconnect</button>
-          <button id="healthButton" disabled>Health</button>
-          <button id="refreshButton" disabled>Refresh lists</button>
-          <button id="clearSettingsButton">Forget</button>
-        </div>
+      <nav class="tabs" aria-label="Ownloom cockpit sections">
+        <button class="tab-button active" data-tab-target="chat">Chat</button>
+        <button class="tab-button" data-tab-target="organizer">Organizer</button>
+        <button class="tab-button" data-tab-target="config">Config</button>
+        <button class="tab-button" data-tab-target="terminal">Terminal</button>
+        <button class="tab-button" data-tab-target="log">Log</button>
+      </nav>
+
+      <section id="tab-chat" class="tab-panel active" data-tab-panel="chat">
+        <section class="grid">
+          <section class="card chat">
+            <div class="chat-heading">
+              <h2>Chat</h2>
+              <div class="row">
+                <span id="currentSession" class="chip">Session: web-main</span>
+                <button id="newChatButton">New chat</button>
+              </div>
+            </div>
+            <div id="messages" class="messages" aria-live="polite"></div>
+            <label>
+              Attachments
+              <input id="attachmentInput" type="file" multiple accept="image/*,audio/*" />
+            </label>
+            <div id="attachments" class="attachments"></div>
+            <label>
+              Message
+              <textarea id="messageInput" rows="4" placeholder="Ask Ownloom…"></textarea>
+            </label>
+            <div class="row">
+              <button id="sendButton" disabled>Send</button>
+              <button id="clearButton">Clear</button>
+            </div>
+          </section>
+
+          <aside class="card side">
+            <h2>Sessions</h2>
+            <div id="sessions" class="list empty">Connect and refresh.</div>
+          </aside>
+        </section>
       </section>
 
-      <section class="grid">
-        <section class="card chat">
-          <div class="chat-heading">
-            <h2>Chat</h2>
-            <div class="row">
-              <span id="currentSession" class="chip">Session: web-main</span>
-              <button id="newChatButton">New chat</button>
+      <section id="tab-organizer" class="tab-panel" data-tab-panel="organizer" hidden>
+        <section class="grid organizer-grid">
+          <section class="card">
+            <h2>Today</h2>
+            <div class="placeholder">
+              Planner-backed tasks, reminders, and calendar items will live here.
             </div>
-          </div>
-          <div id="messages" class="messages" aria-live="polite"></div>
+          </section>
+          <section class="card">
+            <h2>Upcoming</h2>
+            <div class="placeholder">
+              Next step: read from Ownloom Planner / CalDAV and add quick-create controls.
+            </div>
+          </section>
+        </section>
+      </section>
+
+      <section id="tab-config" class="tab-panel" data-tab-panel="config" hidden>
+        <section class="card settings">
           <label>
-            Attachments
-            <input id="attachmentInput" type="file" multiple accept="image/*,audio/*" />
+            Gateway HTTP URL
+            <input id="httpUrl" value="http://127.0.0.1:8081" autocomplete="off" />
           </label>
-          <div id="attachments" class="attachments"></div>
           <label>
-            Message
-            <textarea id="messageInput" rows="4" placeholder="Ask Ownloom…"></textarea>
+            Bearer token
+            <input id="token" type="password" placeholder="paste named client token" autocomplete="off" />
+          </label>
+          <label>
+            Session key
+            <input id="sessionKey" value="web-main" autocomplete="off" />
+          </label>
+          <label class="checkbox">
+            <input id="rememberSettings" type="checkbox" checked />
+            Remember locally
           </label>
           <div class="row">
-            <button id="sendButton" disabled>Send</button>
-            <button id="clearButton">Clear</button>
+            <button id="connectButton">Connect</button>
+            <button id="pairButton">Pair this browser</button>
+            <button id="disconnectButton" disabled>Disconnect</button>
+            <button id="healthButton" disabled>Health</button>
+            <button id="refreshButton" disabled>Refresh lists</button>
+            <button id="clearSettingsButton">Forget</button>
           </div>
         </section>
 
-        <aside class="card side">
-          <h2>Clients</h2>
-          <div id="clients" class="list empty">Connect and refresh.</div>
-          <h2>Sessions</h2>
-          <div id="sessions" class="list empty">Connect and refresh.</div>
-          <h2>Deliveries</h2>
-          <div id="deliveries" class="list empty">Connect and refresh.</div>
-          <h2>Commands</h2>
-          <div id="commands" class="list empty">Connect and refresh.</div>
-        </aside>
+        <section class="grid config-grid">
+          <section class="card side">
+            <h2>Clients</h2>
+            <div id="clients" class="list empty">Connect and refresh.</div>
+          </section>
+          <section class="card side">
+            <h2>Deliveries</h2>
+            <div id="deliveries" class="list empty">Connect and refresh.</div>
+            <h2>Commands</h2>
+            <div id="commands" class="list empty">Connect and refresh.</div>
+          </section>
+        </section>
       </section>
 
-      <section class="card">
-        <h2>Event log</h2>
-        <pre id="log" class="log"></pre>
+      <section id="tab-terminal" class="tab-panel" data-tab-panel="terminal" hidden>
+        <section class="card terminal-card">
+          <div class="chat-heading">
+            <div>
+              <h2>Terminal</h2>
+              <p>Advanced operator shell for Pi TUI and coding sessions. Loopback-only; access through the cockpit tunnel.</p>
+            </div>
+            <a id="openTerminalLink" class="button-link" href="/terminal/" target="_blank" rel="noreferrer">Open full terminal</a>
+          </div>
+          <iframe id="terminalFrame" class="terminal-frame" title="Ownloom terminal" data-src="/terminal/"></iframe>
+        </section>
+      </section>
+
+      <section id="tab-log" class="tab-panel" data-tab-panel="log" hidden>
+        <section class="card">
+          <h2>Event log</h2>
+          <pre id="log" class="log"></pre>
+        </section>
       </section>
     </main>
     <script type="module" src="./app.js"></script>

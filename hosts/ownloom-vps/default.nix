@@ -72,6 +72,7 @@ in {
     inputs.self.nixosModules.server
     inputs.self.nixosModules.service-gateway
     inputs.self.nixosModules.service-gateway-web
+    inputs.self.nixosModules.service-terminal
     inputs.self.nixosModules.service-code-server
     inputs.self.nixosModules.service-planner
     inputs.self.nixosModules.service-webdav
@@ -254,6 +255,12 @@ in {
     ownloom-gateway-web = {
       enable = true;
       # Loopback-only — access via: ssh -L 8090:127.0.0.1:8090 ownloom-vps
+      # Terminal is proxied under /terminal/ so the cockpit needs only this tunnel.
+    };
+
+    ownloom-terminal = {
+      enable = true;
+      # Loopback-only ttyd terminal for the cockpit Terminal tab.
     };
 
     ownloom-planner = {

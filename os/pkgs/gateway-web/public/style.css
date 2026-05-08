@@ -8,13 +8,17 @@
 * { box-sizing: border-box; }
 body { margin: 0; }
 button, input, textarea { font: inherit; }
-button {
+button, .button-link {
   border: 0;
   border-radius: 0.6rem;
   padding: 0.65rem 0.9rem;
   background: #88c0d0;
   color: #0b1117;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 button:disabled { cursor: not-allowed; opacity: 0.45; }
 input, textarea {
@@ -32,6 +36,10 @@ label { display: grid; gap: 0.35rem; color: #c8d0dc; }
 .shell { width: min(1200px, calc(100vw - 2rem)); margin: 0 auto; padding: 1rem 0 2rem; }
 header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 h1 { margin: 0; }
+.tabs { display: flex; gap: 0.5rem; margin-top: 1rem; overflow-x: auto; }
+.tab-button { background: #242936; color: #c8d0dc; }
+.tab-button.active { background: #88c0d0; color: #0b1117; }
+.tab-panel[hidden] { display: none; }
 h2 { margin: 0 0 0.75rem; font-size: 1.05rem; }
 p { margin: 0.25rem 0 0; color: #9aa7b8; }
 .card {
@@ -45,6 +53,7 @@ p { margin: 0.25rem 0 0; color: #9aa7b8; }
 .settings { display: grid; grid-template-columns: 1.4fr 1.2fr 0.8fr auto auto; gap: 0.75rem; align-items: end; }
 .row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 1rem; }
+.config-grid, .organizer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .chat { display: grid; gap: 0.75rem; }
 .chat-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
 .chat-heading h2 { margin: 0; }
@@ -92,6 +101,24 @@ p { margin: 0.25rem 0 0; color: #9aa7b8; }
 .item small { color: #9aa7b8; }
 .item-actions { margin-top: 0.5rem; }
 .item-actions button { padding: 0.35rem 0.55rem; font-size: 0.8rem; }
+.placeholder {
+  min-height: 10rem;
+  border: 1px dashed #3b4252;
+  border-radius: 0.8rem;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  color: #9aa7b8;
+  text-align: center;
+}
+.terminal-card { display: grid; gap: 1rem; }
+.terminal-frame {
+  width: 100%;
+  height: min(72vh, 48rem);
+  border: 1px solid #2f3542;
+  border-radius: 0.8rem;
+  background: #0b0d12;
+}
 .log {
   min-height: 8rem;
   max-height: 18rem;
@@ -102,6 +129,6 @@ p { margin: 0.25rem 0 0; color: #9aa7b8; }
 }
 
 @media (max-width: 900px) {
-  .settings, .grid { grid-template-columns: 1fr; }
+  .settings, .grid, .config-grid, .organizer-grid { grid-template-columns: 1fr; }
   header { align-items: flex-start; }
 }

@@ -10,6 +10,8 @@ const staticRoot = resolve(process.env.OWNLOOM_GATEWAY_WEB_STATIC_ROOT ?? join(h
 const host = process.env.OWNLOOM_GATEWAY_WEB_HOST ?? "127.0.0.1";
 const port = Number(process.env.OWNLOOM_GATEWAY_WEB_PORT ?? "8090");
 const target = new URL(process.env.OWNLOOM_GATEWAY_URL ?? "http://127.0.0.1:8081");
+const terminalTargetRaw = process.env.OWNLOOM_TERMINAL_URL ?? "";
+const terminalTarget = terminalTargetRaw ? new URL(terminalTargetRaw) : null;
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -25,17 +27,77 @@ const mimeTypes = {
 
 const server = createServer((req, res) => {
   if (req.url?.startsWith("/api/v1/")) {
-    proxyHttp(req, res);
+    proxyHttp(req, res, target, "gateway");
+    return;
+  }
+  if (isTerminalPath(req.url)) {
+    proxyTerminal(req, res);
     return;
   }
   serveStatic(req.url ?? "/", res);
 });
 
 server.on("upgrade", (req, socket, head) => {
-  const targetPort = Number(target.port || (target.protocol === "https:" ? 443 : 80));
-  const upstream = netConnect(targetPort, target.hostname, () => {
+  if (isTerminalPath(req.url)) {
+    if (!terminalTarget) {
+      socket.destroy();
+      return;
+    }
+    proxyUpgrade(req, socket, head, terminalTarget);
+    return;
+  }
+  proxyUpgrade(req, socket, head, target);
+});
+
+server.listen(port, host, () => {
+  const terminal = terminalTarget ? `, terminal -> ${terminalTarget.href}` : "";
+  console.log(`ownloom-gateway-web: http://${host}:${port} -> ${target.href}${terminal}`);
+});
+
+function isTerminalPath(url) {
+  const pathname = new URL(url ?? "/", "http://localhost").pathname;
+  return pathname === "/terminal" || pathname.startsWith("/terminal/");
+}
+
+function proxyTerminal(req, res) {
+  if (!terminalTarget) {
+    res.writeHead(503, { "Content-Type": "text/plain; charset=utf-8" });
+    res.end("Ownloom terminal is not configured.\n");
+    return;
+  }
+  if (new URL(req.url ?? "/", "http://localhost").pathname === "/terminal") {
+    res.writeHead(308, { Location: "/terminal/" });
+    res.end();
+    return;
+  }
+  proxyHttp(req, res, terminalTarget, "terminal");
+}
+
+function proxyHttp(req, res, upstreamTarget, name) {
+  const options = {
+    protocol: upstreamTarget.protocol,
+    hostname: upstreamTarget.hostname,
+    port: upstreamTarget.port,
+    method: req.method,
+    path: req.url,
+    headers: { ...req.headers, host: upstreamTarget.host },
+  };
+  const upstream = httpRequest(options, (upstreamRes) => {
+    res.writeHead(upstreamRes.statusCode ?? 502, upstreamRes.headers);
+    upstreamRes.pipe(res);
+  });
+  upstream.on("error", (err) => {
+    res.writeHead(502, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: `${name} proxy failed: ${err.message}` }));
+  });
+  req.pipe(upstream);
+}
+
+function proxyUpgrade(req, socket, head, upstreamTarget) {
+  const targetPort = Number(upstreamTarget.port || (upstreamTarget.protocol === "https:" ? 443 : 80));
+  const upstream = netConnect(targetPort, upstreamTarget.hostname, () => {
     const path = req.url || "/";
-    const headers = { ...req.headers, host: target.host };
+    const headers = { ...req.headers, host: upstreamTarget.host };
     const lines = [`${req.method} ${path} HTTP/${req.httpVersion}`];
     for (const [name, value] of Object.entries(headers)) {
       if (Array.isArray(value)) for (const item of value) lines.push(`${name}: ${item}`);
@@ -47,30 +109,6 @@ server.on("upgrade", (req, socket, head) => {
     socket.pipe(upstream);
   });
   upstream.on("error", () => socket.destroy());
-});
-
-server.listen(port, host, () => {
-  console.log(`ownloom-gateway-web: http://${host}:${port} -> ${target.href}`);
-});
-
-function proxyHttp(req, res) {
-  const options = {
-    protocol: target.protocol,
-    hostname: target.hostname,
-    port: target.port,
-    method: req.method,
-    path: req.url,
-    headers: { ...req.headers, host: target.host },
-  };
-  const upstream = httpRequest(options, (upstreamRes) => {
-    res.writeHead(upstreamRes.statusCode ?? 502, upstreamRes.headers);
-    upstreamRes.pipe(res);
-  });
-  upstream.on("error", (err) => {
-    res.writeHead(502, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: `gateway proxy failed: ${err.message}` }));
-  });
-  req.pipe(upstream);
 }
 
 function serveStatic(url, res) {

@@ -71,6 +71,7 @@ in {
     ../alex.nix
     inputs.self.nixosModules.server
     inputs.self.nixosModules.service-gateway
+    inputs.self.nixosModules.service-gateway-web
     inputs.self.nixosModules.service-code-server
     inputs.self.nixosModules.service-planner
     inputs.self.nixosModules.service-webdav
@@ -248,6 +249,11 @@ in {
           # See ownloom-gateway.private.nix.example for the format.
         };
       };
+    };
+
+    ownloom-gateway-web = {
+      enable = true;
+      # Loopback-only — access via: ssh -L 8090:127.0.0.1:8090 ownloom-vps
     };
 
     ownloom-planner = {

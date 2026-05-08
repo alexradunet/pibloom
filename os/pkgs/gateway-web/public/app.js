@@ -1,5 +1,7 @@
 const $ = (id) => document.getElementById(id);
 
+const SETTINGS_KEY = "ownloom.gatewayWeb.settings.v1";
+
 const state = {
   ws: null,
   nextId: 1,
@@ -13,6 +15,7 @@ const els = {
   token: $("token"),
   sessionKey: $("sessionKey"),
   connectionState: $("connectionState"),
+  rememberSettings: $("rememberSettings"),
   connectButton: $("connectButton"),
   disconnectButton: $("disconnectButton"),
   healthButton: $("healthButton"),
@@ -22,6 +25,7 @@ const els = {
   attachments: $("attachments"),
   sendButton: $("sendButton"),
   clearButton: $("clearButton"),
+  clearSettingsButton: $("clearSettingsButton"),
   messages: $("messages"),
   clients: $("clients"),
   sessions: $("sessions"),
@@ -41,6 +45,36 @@ function wsUrl() {
 function authHeaders() {
   const token = els.token.value.trim();
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function loadSettings() {
+  const raw = localStorage.getItem(SETTINGS_KEY);
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw);
+    if (typeof saved.httpUrl === "string") els.httpUrl.value = saved.httpUrl;
+    if (typeof saved.token === "string") els.token.value = saved.token;
+    if (typeof saved.sessionKey === "string") els.sessionKey.value = saved.sessionKey;
+    if (typeof saved.remember === "boolean") els.rememberSettings.checked = saved.remember;
+  } catch (error) {
+    log("failed to load saved settings", error.message);
+  }
+}
+
+function saveSettings() {
+  if (!els.rememberSettings.checked) return;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+    httpUrl: els.httpUrl.value.trim(),
+    token: els.token.value.trim(),
+    sessionKey: els.sessionKey.value.trim(),
+    remember: true,
+  }));
+}
+
+function clearSettings() {
+  localStorage.removeItem(SETTINGS_KEY);
+  els.token.value = "";
+  log("forgot local settings");
 }
 
 function setConnection(status, className = "") {
@@ -172,6 +206,7 @@ async function connect() {
     client: { id: "web-main", version: "0.1.0", platform: "web" },
   }));
   const hello = await helloPromise;
+  saveSettings();
   setConnection("connected", "connected");
   log("connected", hello);
   addMessage("system", "Connected to Ownloom Gateway.");
@@ -244,7 +279,10 @@ async function refreshLists() {
     request("commands.list").catch((error) => ({ error: error.message, commands: [] })),
   ]);
   renderClients(clients);
-  renderList(els.sessions, sessions.sessions ?? [], (s) => `<strong>${escapeHtml(s.chatId ?? s.id ?? "session")}</strong><br><small>${escapeHtml(s.updatedAt ?? s.createdAt ?? "")}</small>`);
+  renderList(els.sessions, sessions.sessions ?? [], (s) => {
+    const chatId = s.chatId ?? s.id ?? "session";
+    return `<strong>${escapeHtml(chatId)}</strong><br><small>${escapeHtml(s.updatedAt ?? s.createdAt ?? "")}</small><div class="row item-actions"><button data-session-reset="${escapeHtml(chatId)}">Reset</button></div>`;
+  });
   renderList(els.deliveries, deliveries.deliveries ?? [], (d) => {
     const status = d.deadAt ? "dead" : d.nextAttemptAt ? "waiting" : "queued";
     const recipient = d.recipientId ?? d.target ?? d.recipient ?? "";
@@ -289,8 +327,23 @@ els.connectButton.addEventListener("click", () => connect().catch((error) => {
   log("connect failed", error.message);
 }));
 els.disconnectButton.addEventListener("click", disconnect);
+els.clearSettingsButton.addEventListener("click", clearSettings);
+els.httpUrl.addEventListener("change", saveSettings);
+els.token.addEventListener("change", saveSettings);
+els.sessionKey.addEventListener("change", saveSettings);
+els.rememberSettings.addEventListener("change", () => {
+  if (els.rememberSettings.checked) saveSettings();
+  else localStorage.removeItem(SETTINGS_KEY);
+});
 els.healthButton.addEventListener("click", () => health().catch((error) => log("health failed", error.message)));
 els.refreshButton.addEventListener("click", () => refreshLists().catch((error) => log("refresh failed", error.message)));
+els.sessions.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return;
+  const chatId = target.getAttribute("data-session-reset");
+  if (!chatId) return;
+  request("sessions.reset", { chatId }).then(refreshLists).catch((error) => log("session reset failed", error.message));
+});
 els.deliveries.addEventListener("click", (event) => {
   const target = event.target;
   if (!(target instanceof HTMLElement)) return;
@@ -319,5 +372,6 @@ els.messageInput.addEventListener("keydown", (event) => {
 if (window.location.protocol === "http:" || window.location.protocol === "https:") {
   els.httpUrl.value = window.location.origin;
 }
+loadSettings();
 
 setConnection("disconnected");

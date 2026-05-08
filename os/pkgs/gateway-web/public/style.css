@@ -26,6 +26,8 @@ input, textarea {
   color: inherit;
 }
 label { display: grid; gap: 0.35rem; color: #c8d0dc; }
+.checkbox { display: flex; flex-direction: row; align-items: center; gap: 0.45rem; white-space: nowrap; }
+.checkbox input { width: auto; }
 
 .shell { width: min(1200px, calc(100vw - 2rem)); margin: 0 auto; padding: 1rem 0 2rem; }
 header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
@@ -40,7 +42,7 @@ p { margin: 0.25rem 0 0; color: #9aa7b8; }
   padding: 1rem;
   box-shadow: 0 16px 40px rgb(0 0 0 / 0.25);
 }
-.settings { display: grid; grid-template-columns: 1.4fr 1.2fr 0.8fr auto; gap: 0.75rem; align-items: end; }
+.settings { display: grid; grid-template-columns: 1.4fr 1.2fr 0.8fr auto auto; gap: 0.75rem; align-items: end; }
 .row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 1rem; }
 .chat { display: grid; gap: 0.75rem; }

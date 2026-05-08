@@ -13,11 +13,12 @@
     ownloom = "${config.ownloom.root}/os/pkgs/pi-adapter/extension";
   };
 
+  npmPackages = lib.filter (package: lib.hasPrefix "npm:" package) cfg.packages;
+  globalPackages = lib.filter (package: !(lib.hasPrefix "npm:" package)) cfg.packages;
+
   desiredGlobalSettings =
     {
-      # npm Pi packages are project-scoped below so installs go under
-      # $OWNLOOM_ROOT/.pi/npm instead of npm's global prefix in the Nix store.
-      packages = [];
+      packages = globalPackages;
       extensions = map (name: extensionSources.${name}) cfg.extensions;
       inherit (cfg) skills;
       inherit (cfg) prompts;
@@ -28,7 +29,9 @@
     };
 
   desiredProjectSettings = {
-    inherit (cfg) packages;
+    # npm Pi packages are project-scoped so installs go under
+    # $OWNLOOM_ROOT/.pi/npm instead of npm's global prefix in the Nix store.
+    packages = npmPackages;
   };
 
   desiredGlobalSettingsFile = pkgs.writeText "ownloom-pi-global-settings.json" (builtins.toJSON desiredGlobalSettings);

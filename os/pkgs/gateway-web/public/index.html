@@ -110,18 +110,80 @@
       </section>
 
       <section id="tab-organizer" class="tab-panel" role="tabpanel" data-tab-panel="organizer" aria-labelledby="tab-organizer-button" tabindex="0" hidden>
-        <section class="grid organizer-grid">
-          <section class="card">
-            <h2>Today</h2>
-            <div class="placeholder">
-              Today’s Ownloom Planner items will appear here from the CalDAV/iCalendar backend.
+        <section class="card planner-dashboard" aria-labelledby="planner-heading">
+          <div class="card-header">
+            <div>
+              <h2 id="planner-heading">Planner</h2>
+              <p class="card-meta">Live CalDAV/iCalendar tasks, reminders, and events from Ownloom Planner.</p>
             </div>
+            <div class="row">
+              <span id="plannerStatus" class="chip" role="status" aria-live="polite">not loaded</span>
+              <button id="plannerRefreshButton" class="button-secondary" type="button">Refresh planner</button>
+            </div>
+          </div>
+
+          <form id="plannerForm" class="planner-form" aria-label="Add planner item">
+            <label>
+              Kind
+              <select id="plannerKind">
+                <option value="task">Task</option>
+                <option value="reminder">Reminder</option>
+                <option value="event">Event</option>
+              </select>
+            </label>
+            <label>
+              Title
+              <input id="plannerTitle" autocomplete="off" required placeholder="What needs attention?" />
+            </label>
+            <label>
+              <span id="plannerWhenText">Due</span>
+              <input id="plannerWhen" type="datetime-local" />
+            </label>
+            <label id="plannerEndLabel" hidden>
+              End
+              <input id="plannerEnd" type="datetime-local" />
+            </label>
+            <label id="plannerPriorityLabel">
+              Priority
+              <input id="plannerPriority" type="number" min="1" max="9" placeholder="1-9" />
+            </label>
+            <label>
+              Repeat
+              <select id="plannerRepeat">
+                <option value="">No repeat</option>
+                <option value="daily">Daily</option>
+                <option value="weekdays">Weekdays</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </label>
+            <label class="planner-wide">
+              Description
+              <textarea id="plannerDescription" rows="2" placeholder="Optional context"></textarea>
+            </label>
+            <label>
+              Categories
+              <input id="plannerCategories" autocomplete="off" placeholder="health, work" />
+            </label>
+            <div class="row planner-form-actions">
+              <button type="submit">Add planner item</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="grid organizer-grid planner-grid">
+          <section class="card planner-list-card">
+            <h2>Overdue</h2>
+            <ul id="plannerOverdueList" class="list empty planner-list" aria-label="Overdue planner items"><li>Open Planner to load items.</li></ul>
           </section>
-          <section class="card">
+          <section class="card planner-list-card">
+            <h2>Today</h2>
+            <ul id="plannerTodayList" class="list empty planner-list" aria-label="Today planner items"><li>Open Planner to load items.</li></ul>
+          </section>
+          <section class="card planner-list-card">
             <h2>Upcoming</h2>
-            <div class="placeholder">
-              Upcoming tasks, reminders, and events stay planner-backed — never cached as stale cockpit data.
-            </div>
+            <ul id="plannerUpcomingList" class="list empty planner-list" aria-label="Upcoming planner items"><li>Open Planner to load items.</li></ul>
           </section>
         </section>
       </section>

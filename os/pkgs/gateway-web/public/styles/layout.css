@@ -225,6 +225,8 @@ header p { max-width: 56rem; }
 .config-grid,
 .organizer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
+.planner-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
 .chat {
   display: grid;
   gap: var(--space-6);

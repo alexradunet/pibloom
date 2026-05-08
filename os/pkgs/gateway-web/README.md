@@ -88,7 +88,7 @@ There is intentionally no PWA manifest or service worker for now. A proper mobil
 - `Referrer-Policy: no-referrer`
 - `X-Frame-Options: SAMEORIGIN`
 
-It also rejects non-loopback `Host`/`Origin` headers to reduce DNS-rebinding exposure, and forces `Cache-Control: no-store, max-age=0` on proxied `/api/v1/*` and `/terminal/*` HTTP responses, including proxy errors. Do not add HSTS while the supported deployment is loopback HTTP/SSH tunnel.
+It also rejects non-loopback `Host`/`Origin` headers to reduce DNS-rebinding exposure, and forces `Cache-Control: no-store, max-age=0` on proxied `/api/v1/*`, `/api/planner/*`, and `/terminal/*` HTTP responses, including proxy errors. Do not add HSTS while the supported deployment is loopback HTTP/SSH tunnel.
 
 ## Current features
 
@@ -103,6 +103,7 @@ It also rejects non-loopback `Host`/`Origin` headers to reduce DNS-rebinding exp
 - streamed `agent` event display
 - REST attachment upload using one-shot attachment refs
 - sessions, clients, deliveries, and commands list panels
+- live Planner tab backed by `ownloom-planner`/CalDAV with add, done, snooze/reschedule, edit, delete, overdue/today/upcoming views
 - current client de-duplication and clear labels for paired/config-managed clients
 - operator action buttons with confirmation prompts
 - Send button disabled while an agent run is active
@@ -121,7 +122,7 @@ nix build .#ownloom-gateway-web --no-link
 nix build .#checks.x86_64-linux.ownloom-gateway-web-smoke --no-link
 ```
 
-For local header/token smoke testing, run the package on a temporary port with a temporary terminal token file, then verify `/`, `/api/v1/terminal-token`, and a proxy error path with `curl -D-`.
+For local header/token smoke testing, run the package on a temporary port with a temporary terminal token file, then verify `/`, `/api/v1/terminal-token`, `/api/planner/items`, and a proxy error path with `curl -D-`.
 
 ## Rollback
 

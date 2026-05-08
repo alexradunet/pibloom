@@ -163,6 +163,8 @@ export class PlannerClient {
     if (matches.length > 1) throw new Error(`UID prefix is ambiguous: ${uidPrefix}`);
     const item = matches[0];
     if (!item.href || !item.raw) throw new Error(`Item has no href/raw calendar data: ${item.uid}`);
+    if (item.kind === "event" && !args.start && !args.end) throw new Error("reschedule event requires start or end");
+    if (item.kind !== "event" && !args.due) throw new Error("reschedule task/reminder requires due");
     const updated = item.kind === "event"
       ? updateEventDates(item.raw, { start: args.start, end: args.end })
       : updateTodoDates(item.raw, { due: args.due, reminderAt: item.kind === "reminder" ? args.due : undefined });

@@ -16,7 +16,11 @@
   .grid,
   .config-grid,
   .organizer-grid,
+  .planner-form,
+  .planner-grid,
   .composer-row { grid-template-columns: 1fr; }
+
+  .planner-wide { grid-column: auto; }
 
   header {
     align-items: flex-start;
@@ -64,6 +68,7 @@
   .card,
   .item,
   input,
+  select,
   textarea {
     border: 1px solid CanvasText;
   }

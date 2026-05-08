@@ -11,7 +11,7 @@ buildNpmPackage {
 
   src = ./.;
 
-  npmDepsHash = "sha256-CQuVMMJglaocWG9dtnWamyjxzIChx3DggVKNGKTc+2E=";
+  npmDepsHash = "sha256-GFBVZApRc6nqbz7+Mqx00Z21pB+0w2lfiyuakPHiQE0=";
 
   nativeBuildInputs = [makeWrapper radicale];
 

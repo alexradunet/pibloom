@@ -88,8 +88,16 @@ function priority(args: ParsedArgs): number | undefined {
   return parsed;
 }
 
+function editPriority(args: ParsedArgs): number | undefined {
+  const value = flag(args, "priority");
+  if (value === undefined) return undefined;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 9) throw new Error("--priority must be an integer from 0 to 9");
+  return parsed;
+}
+
 function printItem(item: PlannerItem): void {
-  const when = item.due ?? item.start ?? "no-date";
+  const when = item.alarmAt ?? item.due ?? item.start ?? "no-date";
   const marker = item.status === "done" ? "✓" : "•";
   console.log(`${marker} ${item.uid.slice(0, 12)} ${item.kind.padEnd(8)} ${when.padEnd(20)} ${item.title}`);
 }
@@ -168,7 +176,7 @@ async function main(): Promise<void> {
     const editArgs = {
       title: flag(args, "title"),
       description: flag(args, "description"),
-      priority: flag(args, "priority") !== undefined ? Number(flag(args, "priority")) : undefined,
+      priority: editPriority(args),
       categories: flag(args, "category") !== undefined ? flag(args, "category")!.split(",").map((c) => c.trim()).filter(Boolean) : undefined,
       addCategories: flag(args, "add-category") !== undefined ? flag(args, "add-category")!.split(",").map((c) => c.trim()).filter(Boolean) : undefined,
       removeCategories: flag(args, "remove-category") !== undefined ? flag(args, "remove-category")!.split(",").map((c) => c.trim()).filter(Boolean) : undefined,
@@ -201,7 +209,9 @@ async function main(): Promise<void> {
   if (command === "reschedule") {
     const uid = args.positional[1];
     if (!uid) throw new Error("reschedule requires a UID prefix");
-    const item = await client.reschedule(uid, { due: flag(args, "due"), start: flag(args, "start"), end: flag(args, "end") });
+    const rescheduleArgs = { due: flag(args, "due"), start: flag(args, "start"), end: flag(args, "end") };
+    if (!rescheduleArgs.due && !rescheduleArgs.start && !rescheduleArgs.end) throw new Error("reschedule requires --due, --start, or --end");
+    const item = await client.reschedule(uid, rescheduleArgs);
     printResult(item, json);
     return;
   }

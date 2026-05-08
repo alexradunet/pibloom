@@ -41,7 +41,7 @@ function registerPlannerTool(pi: ExtensionAPI) {
       "Use action=list with view=today/upcoming/overdue before summarizing current planner state.",
     ],
     parameters: Type.Object({
-      action: stringEnum(PLANNER_ACTIONS, { description: "init, add_task, add_reminder, add_event, list, or done." }),
+      action: stringEnum(PLANNER_ACTIONS, { description: "Planner action: init, add_task, add_reminder, add_event, snooze, reschedule, list, done, edit, or delete." }),
       title: Type.Optional(Type.String({ description: "Title for add_task/add_reminder/add_event." })),
       description: Type.Optional(Type.String({ description: "Optional item description." })),
       due: Type.Optional(Type.String({ description: "Due date/time for add_task." })),

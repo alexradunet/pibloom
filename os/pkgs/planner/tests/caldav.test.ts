@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { PlannerClient } from "../src/caldav.js";
-import { todoIcs } from "../src/ical.js";
+import { eventIcs, todoIcs } from "../src/ical.js";
 
 function multistatus(href: string, ics: string): string {
   return `<?xml version="1.0" encoding="utf-8" ?>
@@ -53,6 +53,21 @@ test("reschedule updates reminder VALARM when due changes", async () => {
     assert.equal(item.alarmAt, "2999-05-08T09:00:00Z");
     assert.match(putBody, /DUE:29990508T090000Z/);
     assert.match(putBody, /TRIGGER;VALUE=DATE-TIME:29990508T090000Z/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("reschedule rejects date fields that do not apply to the item kind", async () => {
+  const originalFetch = globalThis.fetch;
+  const ics = eventIcs({ uid: "event-noop", title: "Event", start: "2999-05-07T08:30:00Z", end: "2999-05-07T09:30:00Z" });
+  globalThis.fetch = async (_url, init) => {
+    if (init?.method === "REPORT") return new Response(multistatus("/alex/planner/event-noop.ics", ics), { status: 207 });
+    return new Response("", { status: 201 });
+  };
+  try {
+    const client = new PlannerClient({ baseUrl: "http://127.0.0.1:5232/", user: "alex", collection: "planner" });
+    await assert.rejects(() => client.reschedule("event-noop", { due: "2999-05-08" }), /reschedule event requires start or end/);
   } finally {
     globalThis.fetch = originalFetch;
   }

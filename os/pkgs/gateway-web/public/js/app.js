@@ -106,7 +106,7 @@ export function startApp() {
     setConnectionError: () => setConnection("error", "error", false, false),
   });
   createTerminalController({ els, gatewayClient });
-  createOrganizerController();
+  const organizerController = createOrganizerController({ els, log });
   setupThreadRail(els);
 
   const requestedTab = new URLSearchParams(window.location.search).get("tab");
@@ -117,6 +117,7 @@ export function startApp() {
     onPersist: setActiveTab,
     onSelect: (tab) => {
       if (tab === "terminal") ensureTerminalLoaded(state, els.terminalFrame);
+      if (tab === "organizer") organizerController.refresh();
     },
   });
 
@@ -163,6 +164,23 @@ function collectElements() {
     terminalFrame: byId("terminalFrame"),
     copyTerminalTokenButton: byId("copyTerminalTokenButton"),
     terminalTokenStatus: byId("terminalTokenStatus"),
+    plannerStatus: byId("plannerStatus"),
+    plannerRefreshButton: byId("plannerRefreshButton"),
+    plannerForm: byId("plannerForm"),
+    plannerKind: byId("plannerKind"),
+    plannerTitle: byId("plannerTitle"),
+    plannerWhenText: byId("plannerWhenText"),
+    plannerWhen: byId("plannerWhen"),
+    plannerEndLabel: byId("plannerEndLabel"),
+    plannerEnd: byId("plannerEnd"),
+    plannerPriorityLabel: byId("plannerPriorityLabel"),
+    plannerPriority: byId("plannerPriority"),
+    plannerRepeat: byId("plannerRepeat"),
+    plannerDescription: byId("plannerDescription"),
+    plannerCategories: byId("plannerCategories"),
+    plannerOverdueList: byId("plannerOverdueList"),
+    plannerTodayList: byId("plannerTodayList"),
+    plannerUpcomingList: byId("plannerUpcomingList"),
   };
 }
 

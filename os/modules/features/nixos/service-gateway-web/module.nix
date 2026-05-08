@@ -6,6 +6,9 @@
   ...
 }: let
   cfg = config.services.ownloom-gateway-web;
+  isLoopbackHttpUrl = value:
+    (lib.hasPrefix "http://127.0.0.1:" value || lib.hasPrefix "http://[::1]:" value)
+    && !(lib.hasInfix "@" value);
 in {
   options.services.ownloom-gateway-web = {
     enable = lib.mkEnableOption "loopback-only web client for ownloom-gateway";
@@ -36,6 +39,12 @@ in {
       description = "Loopback URL of the optional Zellij web terminal endpoint to proxy under /terminal/.";
     };
 
+    plannerUrl = lib.mkOption {
+      type = lib.types.str;
+      default = "http://127.0.0.1:8082";
+      description = "Loopback URL of the ownloom planner web/API server to proxy under /api/planner/.";
+    };
+
     terminalTokenFile = lib.mkOption {
       type = lib.types.str;
       default = "/var/lib/ownloom-terminal/login-token";
@@ -56,12 +65,16 @@ in {
         message = "services.ownloom-gateway-web.host must stay loopback-only.";
       }
       {
-        assertion = lib.hasPrefix "http://127.0.0.1:" cfg.gatewayUrl || lib.hasPrefix "http://[::1]:" cfg.gatewayUrl;
-        message = "services.ownloom-gateway-web.gatewayUrl must stay loopback-only.";
+        assertion = isLoopbackHttpUrl cfg.gatewayUrl;
+        message = "services.ownloom-gateway-web.gatewayUrl must stay loopback-only without URL userinfo.";
       }
       {
-        assertion = lib.hasPrefix "http://127.0.0.1:" cfg.terminalUrl || lib.hasPrefix "http://[::1]:" cfg.terminalUrl;
-        message = "services.ownloom-gateway-web.terminalUrl must stay loopback-only.";
+        assertion = isLoopbackHttpUrl cfg.terminalUrl;
+        message = "services.ownloom-gateway-web.terminalUrl must stay loopback-only without URL userinfo.";
+      }
+      {
+        assertion = isLoopbackHttpUrl cfg.plannerUrl;
+        message = "services.ownloom-gateway-web.plannerUrl must stay loopback-only without URL userinfo.";
       }
     ];
 
@@ -77,6 +90,7 @@ in {
         OWNLOOM_GATEWAY_WEB_PORT = toString cfg.port;
         OWNLOOM_GATEWAY_URL = cfg.gatewayUrl;
         OWNLOOM_TERMINAL_URL = cfg.terminalUrl;
+        OWNLOOM_PLANNER_URL = cfg.plannerUrl;
         OWNLOOM_TERMINAL_TOKEN_FILE = toString cfg.terminalTokenFile;
       };
       serviceConfig = {

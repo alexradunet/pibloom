@@ -45,6 +45,9 @@ runCommand "ownloom-gateway-web-smoke" {
   grep -q 'pairButton' "$root/index.html"
   grep -q 'newChatButton' "$root/index.html"
   grep -q 'threadRailToggle' "$root/index.html"
+  grep -q 'plannerRefreshButton' "$root/index.html"
+  grep -q 'plannerOverdueList' "$root/index.html"
+  grep -R -q '/api/planner' "$root"
   grep -R -q 'agent.wait' "$root"
   grep -R -q 'data-session-switch-chat' "$root"
   grep -R -q '/api/v1/pair' "$root"
@@ -64,16 +67,33 @@ runCommand "ownloom-gateway-web-smoke" {
   grep -q 'no-store, max-age=0' "$server"
   grep -q '/api/v1/terminal-token' "$server"
   grep -q 'stripTerminalPrefix' "$server"
+  grep -q 'stripPlannerPrefix' "$server"
+  grep -q 'OWNLOOM_PLANNER_URL' "$server"
 
   token_file=$(mktemp)
   printf '# smoke token\nsmoke-zellij-token\n' > "$token_file"
 
+  cat > planner-upstream.mjs <<'EOF'
+  import { createServer } from "node:http";
+  createServer((req, res) => {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", () => {
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ method: req.method, url: req.url, body }));
+    });
+  }).listen(18082, "127.0.0.1");
+EOF
+  node planner-upstream.mjs >planner-upstream.log 2>&1 &
+  planner_pid=$!
+
   OWNLOOM_GATEWAY_WEB_HOST=127.0.0.1 \
   OWNLOOM_GATEWAY_WEB_PORT=18090 \
+  OWNLOOM_PLANNER_URL=http://127.0.0.1:18082 \
   OWNLOOM_TERMINAL_TOKEN_FILE="$token_file" \
   ${ownloom-gateway-web}/bin/ownloom-gateway-web >server.log 2>&1 &
   server_pid=$!
-  trap 'kill $server_pid 2>/dev/null || true' EXIT
+  trap 'kill $server_pid $planner_pid 2>/dev/null || true' EXIT
 
   for _ in $(seq 1 20); do
     if curl -fsS -D /tmp/index.headers http://127.0.0.1:18090/ >/tmp/index.html 2>/dev/null; then
@@ -98,6 +118,16 @@ runCommand "ownloom-gateway-web-smoke" {
 
   curl -sS -D /tmp/proxy.headers http://127.0.0.1:18090/api/v1/status >/tmp/proxy.json || true
   grep -qi 'cache-control: no-store' /tmp/proxy.headers
+
+  curl -fsS -D /tmp/planner.headers 'http://127.0.0.1:18090/api/planner/items?view=today' >/tmp/planner.json
+  grep -qi 'cache-control: no-store' /tmp/planner.headers
+  grep -q '"url":"/api/items?view=today"' /tmp/planner.json
+
+  curl -fsS -X POST -H 'Content-Type: application/json' \
+    -d '{"kind":"task","title":"Smoke"}' \
+    -D /tmp/planner-post.headers http://127.0.0.1:18090/api/planner/items >/tmp/planner-post.json
+  grep -q '"method":"POST"' /tmp/planner-post.json
+  grep -q '\\"title\\":\\"Smoke\\"' /tmp/planner-post.json
 
   curl -sS -D /tmp/host.headers -H 'Host: evil.example' http://127.0.0.1:18090/ >/tmp/host.txt || true
   grep -q '421' /tmp/host.headers

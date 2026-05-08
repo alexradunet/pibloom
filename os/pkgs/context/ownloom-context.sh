@@ -91,7 +91,7 @@ if planner_json="$(ownloom-planner list upcoming --json 2>/dev/null)"; then
     if type == "array" and length > 0 then
       (["[PLANNER DIGEST — \($host) — \($today)]"] +
         ([.[0:12][] |
-          "- " + (if .status == "done" then "✓" else "•" end) + " " + ((.kind // "item") | ascii_upcase) + ": " + (.title // "(untitled)") + " (" + (((.due // .start // "no-date") | tostring)[0:10]) + ")"
+          "- " + (if .status == "done" then "✓" else "•" end) + " " + ((.kind // "item") | ascii_upcase) + ": " + (.title // "(untitled)") + " (" + (((.alarmAt // .due // .start // "no-date") | tostring)[0:10]) + ")"
         ])) | join("\n")
     else "" end
   ' 2>/dev/null || true)"

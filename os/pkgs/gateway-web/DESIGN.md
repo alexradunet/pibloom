@@ -183,13 +183,12 @@ Workbench is the main working surface: a clean ChatGPT/Claude-like conversation 
 
 Planner is planner-backed, not wiki-task-backed.
 
-Until the planner API is designed, show honest placeholders for:
+The Planner tab uses the loopback `ownloom-planner` API proxied under `/api/planner/` and must stay honest about live state:
 
-- Today;
-- Upcoming;
-- Reminders/events.
-
-Copy should mention Ownloom Planner / CalDAV / iCalendar, not Markdown task pages.
+- show overdue, today, and upcoming items from CalDAV/iCalendar;
+- support small CRUD actions without inventing a second planner store;
+- keep loading/error status visible and never present cached data as current;
+- copy should mention Ownloom Planner / CalDAV / iCalendar, not Markdown task pages.
 
 ### Access
 
@@ -289,4 +288,4 @@ Design work must not weaken the operator security model.
 - No remote design assets.
 - No custom animation engine.
 - No theme marketplace.
-- No live Planner data until planner API shape is designed.
+- No rich calendar app beyond the small Ownloom Planner CRUD surface.

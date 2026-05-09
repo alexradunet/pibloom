@@ -13,7 +13,7 @@ This package implements that system for the static Ownloom web shell and local c
 - Keep runtime assets self-hosted. No remote scripts, styles, fonts, icons, analytics, or image assets.
 - Preserve CSP compatibility: `style-src 'self'`, `font-src 'self'`, loopback-only API/WebSocket/frame assumptions.
 - Preserve required `/admin` IDs, `data-*` hooks, ARIA tabs, terminal hooks, Radicale frame hooks, and protocol behavior.
-- Keep `components.html` as a static no-JS component loom and `components-lit.html` as the generated Lit/Tailwind catalog. The root personal chat island is the first live generated flow; keep further migrations deliberate and one flow at a time.
+- Keep `components.html` as a static no-JS component loom and `components-lit.html` as the generated Lit/Tailwind catalog. The root personal chat island is the first live generated custom-element flow; keep further migrations deliberate and one flow at a time.
 
 ## Core visual contract
 
@@ -40,7 +40,7 @@ public/styles/components.css       # cards, chips, messages, lists, service fram
 public/styles/responsive.css       # mobile/zoom/reduced-motion/forced-colors
 src/styles/ownloom-tailwind.css    # Tailwind v4 token bridge; no Preflight
 src/components/ownloom-lit.ts      # catalog Lit component island source
-src/components/ownloom-personal.ts # root personal chat island source
+src/components/ownloom-personal.ts # root dependency-light personal chat island source
 public/generated/ownloom-lit.css   # generated Tailwind CSS output
 public/generated/ownloom-lit.js    # bundled self-hosted catalog island output
 public/generated/ownloom-personal.js # bundled self-hosted personal chat island output

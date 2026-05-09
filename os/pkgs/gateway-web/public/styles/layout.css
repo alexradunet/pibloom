@@ -152,6 +152,24 @@
   margin-inline: auto;
 }
 
+.personal-layout {
+  display: grid;
+  gap: var(--space-sm);
+  width: min(100%, var(--shell-max-width));
+  margin-inline: auto;
+}
+
+.personal-layout > ownloom-personal-chat {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.personal-mode-rail {
+  position: static;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+}
+
 .page-card {
   min-width: 0;
   margin: 0;

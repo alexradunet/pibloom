@@ -29,7 +29,7 @@ export class OwnloomPersonalChat extends OwnloomPersonalLightElement {
   @state() private pairing = false;
   @state() private messages: ChatMessage[] = [
     {
-      id: crypto.randomUUID(),
+      id: makeId(),
       role: "system",
       text: "Personal mode uses the same local Ownloom gateway and a dedicated personal web session.",
     },
@@ -180,7 +180,7 @@ export class OwnloomPersonalChat extends OwnloomPersonalLightElement {
         message: text,
         sessionKey: PERSONAL_SESSION_KEY,
         chatId: PERSONAL_CHAT_ID,
-        idempotencyKey: `web-personal-${crypto.randomUUID()}`,
+        idempotencyKey: makeId("web-personal"),
       });
       const resultText = typeof payload?.text === "string" ? payload.text : "";
       if (resultText && this.activeAssistantId) this.replaceMessageText(this.activeAssistantId, resultText);
@@ -225,7 +225,7 @@ export class OwnloomPersonalChat extends OwnloomPersonalLightElement {
   }
 
   private addMessage(role: ChatMessage["role"], text: string) {
-    const id = crypto.randomUUID();
+    const id = makeId();
     this.messages = [...this.messages, { id, role, text }];
     return id;
   }
@@ -237,4 +237,11 @@ export class OwnloomPersonalChat extends OwnloomPersonalLightElement {
   private replaceMessageText(id: string, text: string) {
     this.messages = this.messages.map((message) => message.id === id ? { ...message, text } : message);
   }
+}
+
+function makeId(prefix = "personal") {
+  const randomUuid = globalThis.crypto?.randomUUID;
+  if (typeof randomUuid === "function") return `${prefix}-${randomUuid.call(globalThis.crypto)}`;
+  const random = Math.random().toString(36).slice(2, 10);
+  return `${prefix}-${Date.now().toString(36)}-${random}`;
 }

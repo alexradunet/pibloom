@@ -46,7 +46,7 @@ export function setActiveTab(tab) {
 export function getBrowserClientId() {
   const existing = safeGet(BROWSER_CLIENT_ID_KEY);
   if (existing) return existing;
-  const id = `browser-${crypto.randomUUID()}`;
+  const id = makeId("browser");
   safeSet(BROWSER_CLIENT_ID_KEY, id);
   return id;
 }
@@ -54,6 +54,13 @@ export function getBrowserClientId() {
 export function browserDisplayName() {
   const platform = navigator.platform ? ` on ${navigator.platform}` : "";
   return `Ownloom web${platform}`;
+}
+
+function makeId(prefix) {
+  const randomUuid = globalThis.crypto?.randomUUID;
+  if (typeof randomUuid === "function") return `${prefix}-${randomUuid.call(globalThis.crypto)}`;
+  const random = Math.random().toString(36).slice(2, 10);
+  return `${prefix}-${Date.now().toString(36)}-${random}`;
 }
 
 function safeGet(key) {

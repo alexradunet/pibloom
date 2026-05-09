@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Work+Sans:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .pixel-stitch-h {
+            background-image: linear-gradient(to right, currentColor 50%, transparent 50%);
+            background-size: 4px 1px;
+            background-repeat: repeat-x;
+        }
+        .pixel-stitch-v {
+            background-image: linear-gradient(to bottom, currentColor 50%, transparent 50%);
+            background-size: 1px 4px;
+            background-repeat: repeat-y;
+        }
+        .pixel-notch::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 4px;
+            height: 4px;
+            background-color: #b85736;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#e9c267",
+                        "outline": "#a48b84",
+                        "inverse-primary": "#9d4323",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#5b4300",
+                        "inverse-on-surface": "#392e2b",
+                        "secondary-container": "#755800",
+                        "on-primary-container": "#fffaf9",
+                        "surface-bright": "#423733",
+                        "tertiary": "#76d5dc",
+                        "secondary-fixed-dim": "#e9c267",
+                        "on-surface": "#f1dfd9",
+                        "surface-container": "#271d1a",
+                        "surface-tint": "#ffb59d",
+                        "surface-container-low": "#231916",
+                        "surface-container-lowest": "#150c0a",
+                        "on-tertiary-fixed": "#002022",
+                        "on-error": "#690005",
+                        "secondary-fixed": "#ffdf9b",
+                        "tertiary-fixed-dim": "#76d5dc",
+                        "surface-container-high": "#322824",
+                        "background": "#1a110f",
+                        "on-primary-fixed": "#390b00",
+                        "on-surface-variant": "#dcc1b8",
+                        "on-tertiary-container": "#ecfeff",
+                        "on-tertiary": "#00363a",
+                        "error-container": "#93000a",
+                        "primary": "#ffb59d",
+                        "on-primary-fixed-variant": "#7e2c0e",
+                        "surface-container-highest": "#3e322f",
+                        "surface-dim": "#1a110f",
+                        "on-secondary-container": "#f8d074",
+                        "primary-fixed": "#ffdbd0",
+                        "surface-variant": "#3e322f",
+                        "on-secondary": "#3f2e00",
+                        "surface": "#1a110f",
+                        "primary-container": "#b85736",
+                        "error": "#ffb4ab",
+                        "primary-fixed-dim": "#ffb59d",
+                        "on-background": "#f1dfd9",
+                        "inverse-surface": "#f1dfd9",
+                        "on-secondary-fixed": "#251a00",
+                        "outline-variant": "#56423c",
+                        "on-primary": "#5d1800",
+                        "on-tertiary-fixed-variant": "#004f54",
+                        "tertiary-fixed": "#93f2f9",
+                        "tertiary-container": "#008087"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin": "32px",
+                        "xs": "8px",
+                        "md": "24px",
+                        "sm": "16px",
+                        "gutter": "24px",
+                        "xl": "64px",
+                        "base": "4px",
+                        "lg": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Newsreader"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-lg": ["Newsreader"],
+                        "headline-lg-mobile": ["Newsreader"],
+                        "label-md": ["JetBrains Mono"],
+                        "body-lg": ["Work Sans"],
+                        "body-md": ["Work Sans"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["28px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                        "label-sm": ["12px", {"lineHeight": "1.4", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "headline-lg": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["32px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-primary selection:text-on-primary">
+<div class="flex h-screen overflow-hidden">
+<!-- SideNavBar -->
+<aside class="flex flex-col h-full py-md bg-surface dark:bg-surface border-r border-outline-variant bg-surface-container-low dark:bg-surface-container-low w-16">
+<div class="px-md mb-xl"><div class="flex justify-center"><h1 class="font-headline-md text-headline-md text-primary">O</h1></div></div>
+<nav class="flex-grow space-y-1">
+<!-- Workbench is Active -->
+<a class="flex items-center px-md py-sm font-label-md text-label-md transition-all text-on-primary-container dark:text-on-primary-container bg-primary-container dark:bg-primary-container border-l-4 border-primary scale-[0.98] justify-center" href="#"><span class="material-symbols-outlined" data-icon="edit_square">edit_square</span></a>
+<a class="flex items-center px-md py-sm font-label-md text-label-md text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-high transition-colors justify-center" href="#"><span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span></a>
+<a class="flex items-center px-md py-sm font-label-md text-label-md text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-high transition-colors justify-center" href="#"><span class="material-symbols-outlined" data-icon="database">database</span></a>
+<a class="flex items-center px-md py-sm font-label-md text-label-md text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-high transition-colors justify-center" href="#"><span class="material-symbols-outlined" data-icon="key">key</span></a>
+<a class="flex items-center px-md py-sm font-label-md text-label-md text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-high transition-colors justify-center" href="#"><span class="material-symbols-outlined" data-icon="terminal">terminal</span></a>
+<a class="flex items-center px-md py-sm font-label-md text-label-md text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-high transition-colors justify-center" href="#"><span class="material-symbols-outlined" data-icon="history">history</span></a>
+</nav>
+<div class="px-md mt-auto">
+<div class="p-sm bg-surface-container-highest border border-outline-variant flex items-center gap-sm justify-center">
+<div class="w-8 h-8 bg-primary-container flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[18px]" data-icon="person">person</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-grow flex flex-col min-w-0 bg-background">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-md h-16 bg-surface dark:bg-surface border-b border-outline-variant bg-surface-container dark:bg-surface-container">
+<div class="flex items-center gap-sm"><div class="flex items-center gap-xs px-sm py-1 bg-surface-container-highest border border-outline-variant rounded-sm cursor-pointer hover:bg-surface-bright transition-colors"><span class="w-2 h-2 rounded-full bg-tertiary"></span><span class="font-label-sm text-label-sm">System Status</span><span class="material-symbols-outlined text-[16px]">expand_more</span></div></div>
+<div class="flex items-center gap-md">
+<div class="relative hidden lg:block">
+<input class="bg-surface-container-lowest border border-outline-variant px-sm py-1 font-label-sm text-label-sm text-on-surface w-64 focus:outline-none focus:border-primary transition-colors" placeholder="Search trace..." type="text"/>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline text-[18px]" data-icon="search">search</span>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-opacity mr-2" data-icon="vertical_split">vertical_split</button><div class="flex items-center gap-sm">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-opacity" data-icon="sensors">sensors</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-opacity" data-icon="dns">dns</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-opacity" data-icon="hub">hub</button>
+</div>
+</div>
+</header>
+<!-- Conversation Thread Canvas -->
+<section class="flex-grow overflow-y-auto custom-scrollbar">
+<div class="max-w-3xl mx-auto py-xl px-md space-y-lg"><div class="max-w-2xl mx-auto py-xl px-md space-y-xl"><div class="flex flex-col space-y-12"><div class="flex flex-col space-y-2"><div class="flex items-center gap-sm text-outline mb-2"><span class="font-label-sm text-[10px] uppercase tracking-widest">Operator_01</span><span class="h-[1px] flex-grow bg-outline/10"></span></div><div class="pl-base"><p class="font-body-lg text-on-surface leading-relaxed">Could you review my upcoming memory nodes related to the 'Digital Loom' project? I want to see if there are any conflicts with the workshop schedule next week.</p></div></div><div class="flex flex-col space-y-2"><div class="flex items-center gap-sm text-tertiary mb-2"><span class="material-symbols-outlined text-[16px]">database</span><span class="font-label-sm text-[10px] uppercase tracking-widest">Ownloom Memory Access</span><span class="h-[1px] flex-grow bg-tertiary/10"></span></div><div class="pl-lg border-l border-tertiary/20 space-y-4"><p class="font-body-lg text-on-surface">I've cross-referenced your **Digital Loom** project nodes with the **Planner** entries for next week.</p><div class="space-y-3"><div class="flex gap-sm"><span class="text-secondary font-medium">→</span><p class="font-body-md text-on-surface-variant">The 'Warp Setup' deep-dive on Tuesday (10:00) overlaps with your 'Local-First Workshop' keynote.</p></div><div class="flex gap-sm"><span class="text-secondary font-medium">→</span><p class="font-body-md text-on-surface-variant">I suggest moving the deep-dive to Thursday afternoon when your memory sync is scheduled to be idle.</p></div></div></div></div></div></div></div>
+</section>
+<!-- Composer Area -->
+<footer class="p-md bg-background">
+<div class="max-w-3xl mx-auto">
+<div class="bg-surface-container-low border border-outline-variant p-base">
+<div class="flex flex-col bg-surface-container border border-outline-variant">
+<textarea class="w-full bg-transparent border-none focus:ring-0 p-md font-body-md text-on-surface resize-none min-h-[120px] placeholder:text-outline/50" placeholder="Ask Ownloom..."></textarea>
+<div class="flex items-center justify-between p-sm border-t border-outline-variant/30"><div class="flex items-center gap-sm">
+<button class="p-sm hover:bg-surface-container-highest transition-colors text-outline">
+<span class="material-symbols-outlined" data-icon="attach_file">attach_file</span>
+</button>
+</div>
+<div class="flex items-center gap-sm">
+<button class="px-lg py-sm font-label-md text-label-md bg-primary-container text-on-primary-container hover:brightness-110 transition-all flex items-center gap-xs relative pixel-notch">
+<span class="material-symbols-outlined text-[18px]" data-icon="send">send</span>
+    Send
+  </button>
+</div></div>
+</div>
+<div class="pixel-stitch-h h-[1px] w-full text-outline/20 mt-1"></div>
+</div>
+<div class="mt-sm flex justify-center">
+<div class="flex items-center gap-xs text-[10px] font-label-sm text-outline uppercase tracking-widest">
+<span class="material-symbols-outlined text-[12px]" data-icon="local_fire_department" data-weight="fill" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+                            Hearth: Sync Active (12ms)
+                        </div>
+</div>
+</div>
+</footer>
+</main>
+<!-- Right Toolbelt (Optional Asymmetric Element) -->
+<aside class="w-72 border-l border-outline-variant bg-surface-container-low flex flex-col transition-all duration-300" id="threads-sidebar">
+<div class="p-md border-b border-outline-variant flex items-center justify-between">
+<h2 class="font-label-md text-label-md uppercase tracking-wider text-on-surface">Threads</h2>
+<button class="material-symbols-outlined text-outline hover:text-on-surface">close</button>
+</div>
+<div class="flex-grow overflow-y-auto p-sm space-y-sm">
+<div class="p-sm hover:bg-surface-container-high border border-transparent hover:border-outline-variant transition-all cursor-pointer group">
+<p class="font-body-md text-on-surface">Digital Loom Workshop</p>
+<p class="text-[10px] text-outline font-label-sm uppercase">2 hours ago</p>
+</div>
+<div class="p-sm hover:bg-surface-container-high border border-transparent hover:border-outline-variant transition-all cursor-pointer group">
+<p class="font-body-md text-on-surface">NixOS Config Audit</p>
+<p class="text-[10px] text-outline font-label-sm uppercase">Yesterday</p>
+</div>
+<div class="p-sm hover:bg-surface-container-high border border-transparent hover:border-outline-variant transition-all cursor-pointer group">
+<p class="font-body-md text-on-surface">Project Warp Sync</p>
+<p class="text-[10px] text-outline font-label-sm uppercase">3 days ago</p>
+</div>
+</div>
+</aside><aside class="hidden xl:flex flex-col w-12 border-l border-outline-variant bg-surface-container py-md items-center gap-lg">
+<button class="material-symbols-outlined text-outline hover:text-secondary" data-icon="info">info</button>
+<button class="material-symbols-outlined text-outline hover:text-secondary" data-icon="settings">settings</button>
+<div class="pixel-stitch-h w-8 h-[1px] text-outline/30"></div>
+<button class="material-symbols-outlined text-outline hover:text-secondary" data-icon="layers">layers</button>
+<button class="material-symbols-outlined text-outline hover:text-secondary" data-icon="account_tree">account_tree</button>
+</aside>
+</div>
+</body></html>

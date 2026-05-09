@@ -348,7 +348,7 @@ function serveStatic(url, res) {
     sendText(res, 400, "Bad request\n");
     return;
   }
-  const relative = pathname === "/" ? "index.html" : pathname.slice(1);
+  const relative = pathname === "/" ? "index.html" : pathname === "/admin" || pathname === "/admin/" ? "admin.html" : pathname.slice(1);
   const filePath = resolve(staticRoot, normalize(relative));
   if (!filePath.startsWith(`${staticRoot}/`) && filePath !== staticRoot) {
     sendText(res, 403, "Forbidden\n");

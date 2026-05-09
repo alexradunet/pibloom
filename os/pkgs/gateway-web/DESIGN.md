@@ -2,7 +2,7 @@
 
 The canonical Ownloom design system is the repo-level [`../../../DESIGN.md`](../../../DESIGN.md): **Digital Scoarță / Pixel Loom Minimalism**.
 
-This package implements that system for the static local cockpit. If this file and the repo-level design ever conflict, the repo-level `DESIGN.md` wins.
+This package implements that system for the static Ownloom web shell and local cockpit. If this file and the repo-level design ever conflict, the repo-level `DESIGN.md` wins.
 
 ## Non-negotiables for gateway-web
 
@@ -12,7 +12,7 @@ This package implements that system for the static local cockpit. If this file a
 - Tailwind must use Digital Scoarță tokens as aliases, not introduce a second visual system. Avoid Tailwind Preflight while Pico remains.
 - Keep runtime assets self-hosted. No remote scripts, styles, fonts, icons, analytics, or image assets.
 - Preserve CSP compatibility: `style-src 'self'`, `font-src 'self'`, loopback-only API/WebSocket/frame assumptions.
-- Preserve required IDs, `data-*` hooks, ARIA tabs, terminal hooks, Radicale frame hooks, and protocol behavior.
+- Preserve required `/admin` IDs, `data-*` hooks, ARIA tabs, terminal hooks, Radicale frame hooks, and protocol behavior.
 - Keep `components.html` as a static no-JS component loom and `components-lit.html` as the generated Lit/Tailwind proof island. The generated island must stay catalog-only until a migration step explicitly moves a live flow.
 
 ## Core visual contract
@@ -28,6 +28,8 @@ This package implements that system for the static local cockpit. If this file a
 ## File responsibilities
 
 ```text
+public/index.html                  # personal/user-mode shell at /
+public/admin.html                  # existing operator cockpit at /admin
 public/style.css                   # import order: Pico, tokens/theme, app CSS
 public/vendor/pico.min.css         # self-hosted Pico CSS
 public/vendor/fonts/               # self-hosted Digital Scoarță typefaces
@@ -44,7 +46,9 @@ public/generated/ownloom-lit.js    # bundled self-hosted Lit island output
 
 ## Component guidance
 
-- **Sidebar:** the loom frame. It should carry a restrained stitched edge and active tab state that is visible beyond color.
+- **Personal shell (`/`):** calm user-mode entry point for today, planner, journal, documents, and clear links to advanced/admin surfaces.
+- **Admin cockpit (`/admin`):** preserve the existing operator behavior and hooks until a deliberate migration step moves one flow at a time.
+- **Sidebar:** the admin loom frame. It should carry a restrained stitched edge and active tab state that is visible beyond color.
 - **Top lintel:** title, purpose, and live status in one quiet band.
 - **Workbench:** centered active thread first; thread rail secondary and hideable.
 - **Composer:** simple bottom tool strip; attachments remain explicit and one-shot.
@@ -56,7 +60,7 @@ public/generated/ownloom-lit.js    # bundled self-hosted Lit island output
 
 ## Page layout pattern
 
-Every cockpit tab should use a two-part layout:
+Every admin cockpit tab should use a two-part layout:
 
 ```html
 <div class="page-layout">

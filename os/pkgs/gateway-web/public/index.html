@@ -4,318 +4,108 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
-    <meta name="description" content="Private local cockpit for Ownloom chat, planning, configuration, and terminal sessions." />
-    <meta name="application-name" content="Ownloom Cockpit" />
+    <meta name="description" content="Personal Ownloom Web shell for today, planner, journal, documents, and local-first context." />
+    <meta name="application-name" content="Ownloom Web" />
     <meta name="theme-color" content="#1a110f" />
-    <title>Ownloom Cockpit</title>
+    <title>Ownloom Web</title>
     <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
-    <a class="skip-link" href="#cockpit-content">Skip to cockpit content</a>
+    <a class="skip-link" href="#personal-content">Skip to personal mode</a>
 
-    <main id="main" class="app-shell container-fluid">
-      <aside class="app-sidebar" aria-label="Ownloom cockpit menu">
-        <header class="sidebar-brand">
-          <small class="section-kicker">Digital scoarță</small>
-          <h1>Ownloom</h1>
-          <p>Local-first cockpit for the active thread, planner, access, shell, and trace.</p>
-        </header>
-
-        <nav class="sidebar-tabs" role="tablist" aria-orientation="vertical" aria-label="Ownloom cockpit sections">
-          <button id="tab-chat-button" class="tab-button active secondary outline" type="button" role="tab" data-tab-target="chat" aria-controls="tab-chat" aria-selected="true" tabindex="0">
-            <span>Workbench</span>
-            <small>Quiet active conversation.</small>
-          </button>
-          <button id="tab-organizer-button" class="tab-button secondary outline" type="button" role="tab" data-tab-target="organizer" aria-controls="tab-organizer" aria-selected="false" tabindex="-1">
-            <span>Planner</span>
-            <small>CalDAV tasks and events.</small>
-          </button>
-          <button id="tab-config-button" class="tab-button secondary outline" type="button" role="tab" data-tab-target="config" aria-controls="tab-config" aria-selected="false" tabindex="-1">
-            <span>Access</span>
-            <small>Pair browsers and clients.</small>
-          </button>
-          <button id="tab-terminal-button" class="tab-button secondary outline" type="button" role="tab" data-tab-target="terminal" aria-controls="tab-terminal" aria-selected="false" tabindex="-1">
-            <span>Shell</span>
-            <small>Loopback Zellij workspace.</small>
-          </button>
-          <button id="tab-log-button" class="tab-button secondary outline" type="button" role="tab" data-tab-target="log" aria-controls="tab-log" aria-selected="false" tabindex="-1">
-            <span>Trace</span>
-            <small>Redacted local event log.</small>
-          </button>
+    <main id="personal-content" class="container component-catalog" tabindex="-1" aria-labelledby="personal-heading">
+      <header class="component-hero">
+        <div>
+          <small class="section-kicker">Personal mode</small>
+          <h1 id="personal-heading">Ownloom Web</h1>
+          <p>
+            A calm local-first home for today, planner, journal, documents, and personal context. The full chat surface
+            will move here after the mode split foundation is stable.
+          </p>
+        </div>
+        <nav class="actions" aria-label="Ownloom routes">
+          <a class="secondary outline small-button" href="/admin" role="button">Admin cockpit</a>
+          <a class="secondary outline small-button" href="/terminal/ownloom" role="button">Operator terminal</a>
         </nav>
+      </header>
 
-        <footer class="hearth" aria-label="Local-first hearth status">
-          <span class="status-dot" aria-hidden="true"></span>
-          <p><strong>Hearth</strong><br /><small>Loopback-first, local Ownloom services.</small></p>
-        </footer>
-      </aside>
+      <section class="component-section" aria-labelledby="today-heading">
+        <div class="page-layout">
+          <article class="page-card" aria-labelledby="today-heading">
+            <header class="split-header">
+              <div>
+                <small class="section-kicker">Today</small>
+                <h2 id="today-heading">Personal hearth</h2>
+                <p>
+                  Start from life mode: ask about the day, capture a thought, plan a reminder, or bring a document for
+                  Ownloom to summarize when the personal chat UI lands here.
+                </p>
+              </div>
+              <span class="chip chip-private">Personal default</span>
+            </header>
 
-      <div id="cockpit-content" class="app-content" tabindex="-1">
-        <header class="top-lintel">
-          <div>
-            <small class="section-kicker">Woven context, local control</small>
-            <h1>Ownloom Cockpit</h1>
-            <p>Start with the active work thread, then reach for planner, access, shell, and trace only when needed.</p>
-          </div>
-          <div class="header-status" aria-label="Cockpit status">
-            <span id="currentSession" class="chip chip-thread">Conversation: web-main</span>
-            <span class="chip chip-private">Loopback / tunnel only</span>
-            <span class="chip chip-system">Planner: CalDAV/Radicale</span>
-            <span id="connectionState" class="pill" role="status" aria-live="polite">disconnected</span>
-            <a class="secondary outline small-button" href="./components.html" role="button">Components</a>
+            <div class="grid">
+              <article>
+                <small class="section-kicker">Planner</small>
+                <h3>Tasks, reminders, calendar</h3>
+                <p>Live items stay canonical in CalDAV/iCalendar through Radicale and <code>ownloom-planner</code>.</p>
+                <footer class="actions">
+                  <a class="secondary outline small-button" href="/radicale/" target="_blank" rel="noopener noreferrer" role="button">Manage collections</a>
+                </footer>
+              </article>
+              <article>
+                <small class="section-kicker">Journal</small>
+                <h3>Notes and reviews</h3>
+                <p>Personal notes live in <code>/home/alex/wiki</code>. The web shell should help capture and retrieve them.</p>
+              </article>
+              <article>
+                <small class="section-kicker">Documents</small>
+                <h3>Materials and attachments</h3>
+                <p>Future personal chat work will use the Lit/Tailwind component path for document-friendly UX.</p>
+              </article>
+            </div>
+          </article>
+
+          <aside class="page-sidebar" aria-label="Mode rail">
+            <article>
+              <small class="section-kicker">Mode split</small>
+              <h2>Personal first</h2>
+              <p>This page is intentionally not the operator cockpit. Coding, config, trace, token, and shell controls stay behind the admin route.</p>
+              <ul class="rail-list">
+                <li><strong>Personal</strong><br /><small>Today, planner, journal, people, documents.</small></li>
+                <li><strong>Admin</strong><br /><small>Existing Workbench, Access, Shell, Trace.</small></li>
+                <li><strong>Shared</strong><br /><small>Same Ownloom gateway, CLIs, wiki, planner, skills.</small></li>
+              </ul>
+            </article>
+            <article>
+              <small class="section-kicker">Advanced</small>
+              <p>Use admin and terminal only when you intend operator/coding mode.</p>
+              <footer class="actions">
+                <a class="secondary outline small-button" href="/admin" role="button">Open admin</a>
+                <a class="secondary outline small-button" href="/terminal/ownloom" role="button">Open terminal</a>
+              </footer>
+            </article>
+          </aside>
+        </div>
+      </section>
+
+      <section class="component-section" aria-labelledby="foundation-heading">
+        <article class="page-card" aria-labelledby="foundation-heading">
+          <header class="split-header">
+            <div>
+              <small class="section-kicker">Foundation</small>
+              <h2 id="foundation-heading">Component path</h2>
+              <p>The personal surface will grow on the generated Lit/Tailwind island while the admin cockpit keeps the stable Pico/static JS flow.</p>
+            </div>
+            <span class="chip chip-system">Catalog-only for now</span>
+          </header>
+          <footer class="actions">
+            <a class="secondary outline small-button" href="./components.html" role="button">Static components</a>
             <a class="secondary outline small-button" href="./components-lit.html" role="button">Lit catalog</a>
-          </div>
-        </header>
-
-        <section id="tab-chat" class="tab-panel active" role="tabpanel" data-tab-panel="chat" aria-labelledby="tab-chat-button" tabindex="0">
-          <div class="page-layout workbench-shell thread-rail-open" data-workbench-shell>
-            <article class="page-card workbench-card" aria-labelledby="chat-heading">
-              <header class="split-header">
-                <div>
-                  <small class="section-kicker">Workbench</small>
-                  <h2 id="chat-heading">Active thread</h2>
-                  <p>Centered conversation space. Open the thread rail only when needed.</p>
-                </div>
-                <div class="actions">
-                  <button id="threadRailToggle" class="secondary outline" type="button" aria-controls="threadRail" aria-expanded="true">Threads</button>
-                  <button id="newChatButton" class="secondary outline" type="button">New thread</button>
-                </div>
-              </header>
-
-              <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions text" aria-busy="false" aria-label="Active thread messages"></div>
-
-              <section class="composer" aria-label="Thread composer">
-                <header>
-                  <small class="section-kicker">One-shot materials</small>
-                  <div id="attachments" class="attachments" role="list" aria-label="Staged attachments"></div>
-                </header>
-                <div class="grid composer-grid">
-                  <label>
-                    Attach material
-                    <input id="attachmentInput" type="file" multiple accept="image/*,audio/*" />
-                  </label>
-                  <label>
-                    Next instruction
-                    <textarea id="messageInput" rows="4" placeholder="Message Ownloom…"></textarea>
-                  </label>
-                </div>
-                <footer class="actions end">
-                  <button id="sendButton" type="button" disabled>Send</button>
-                  <button id="clearButton" class="secondary outline" type="button">Clear view</button>
-                </footer>
-              </section>
-            </article>
-
-            <aside id="threadRail" class="page-sidebar thread-rail" aria-labelledby="sessions-heading" aria-hidden="false">
-              <article>
-                <header class="split-header">
-                  <div>
-                    <small class="section-kicker">Threads</small>
-                    <h2 id="sessions-heading">Conversation rail</h2>
-                    <p>Switch web threads or attach existing conversations.</p>
-                  </div>
-                  <button id="threadRailClose" class="secondary outline small-button" type="button" aria-label="Close threads">Close</button>
-                </header>
-                <ul id="sessions" class="list empty" aria-label="Threads"><li>Connect and refresh.</li></ul>
-              </article>
-            </aside>
-          </div>
-        </section>
-
-        <section id="tab-organizer" class="tab-panel" role="tabpanel" data-tab-panel="organizer" aria-labelledby="tab-organizer-button" tabindex="0" hidden>
-          <div class="page-layout">
-            <article class="page-card" aria-labelledby="planner-heading">
-              <header class="split-header">
-                <div>
-                  <small class="section-kicker">Planner</small>
-                  <h2 id="planner-heading">Radicale management</h2>
-                  <p>Built-in CalDAV/CardDAV collection management. Individual tasks, reminders, and events stay in Ownloom chat/CLI.</p>
-                </div>
-                <div class="actions">
-                  <a class="secondary outline small-button" href="/radicale/" target="_blank" rel="noopener noreferrer" role="button">Open Radicale</a>
-                </div>
-              </header>
-
-              <p class="warning-banner" role="note"><strong>No extra planner app.</strong> This trusted local frame uses Radicale's own management UI and auto-opens as the local Ownloom user.</p>
-              <iframe id="radicaleFrame" class="service-frame radicale-frame" title="Radicale collection management" data-src="/radicale/"></iframe>
-            </article>
-
-            <aside class="page-sidebar" aria-label="Planner context rail">
-              <article>
-                <small class="section-kicker">Live source</small>
-                <h2>Planner rail</h2>
-                <p>Radicale stores the canonical CalDAV/iCalendar data. Ownloom chat and `ownloom-planner` operate individual tasks and events.</p>
-                <ul class="rail-list">
-                  <li><strong>Canonical</strong><br /><small>Do not mirror live tasks as wiki task pages.</small></li>
-                  <li><strong>Collections</strong><br /><small>Create or inspect calendars/task-capable collections here.</small></li>
-                  <li><strong>No duplicate UI</strong><br /><small>The old custom planner app/API has been removed from the cockpit.</small></li>
-                </ul>
-              </article>
-            </aside>
-          </div>
-        </section>
-
-        <section id="tab-config" class="tab-panel" role="tabpanel" data-tab-panel="config" aria-labelledby="tab-config-button" tabindex="0" hidden>
-          <div class="page-layout">
-            <article class="page-card" aria-label="Gateway access workspace">
-              <header class="split-header access-hero">
-                <div>
-                  <small class="section-kicker">Access</small>
-                  <h2>Gateway access</h2>
-                  <p>Pair this browser to the local operator gateway. Runtime tokens remain masked and local to this browser when remembered.</p>
-                </div>
-                <div>
-                  <span class="chip chip-private">Full-operator runtime client</span>
-                  <button id="pairButton" type="button">Pair this browser</button>
-                  <p><small>Best path for trusted loopback or SSH-tunneled browsers.</small></p>
-                </div>
-              </header>
-
-              <details>
-                <summary>Advanced connection controls</summary>
-                <div class="grid access-grid">
-                  <label>
-                    Gateway HTTP URL
-                    <input id="httpUrl" value="http://127.0.0.1:8081" autocomplete="off" />
-                  </label>
-                  <label>
-                    Bearer token
-                    <input id="token" type="password" placeholder="paste named client token" autocomplete="off" />
-                  </label>
-                  <label>
-                    Session key
-                    <input id="sessionKey" value="web-main" autocomplete="off" />
-                  </label>
-                  <label>
-                    <input id="rememberSettings" type="checkbox" role="switch" checked />
-                    Remember locally
-                  </label>
-                </div>
-                <footer class="actions end">
-                  <button id="connectButton" class="secondary outline" type="button">Connect manually</button>
-                  <button id="disconnectButton" class="secondary outline" type="button" disabled>Disconnect</button>
-                  <button id="healthButton" class="secondary outline" type="button" disabled>Health</button>
-                  <button id="refreshButton" class="secondary outline" type="button" disabled>Refresh lists</button>
-                </footer>
-              </details>
-
-              <section class="grid access-lists" aria-label="Gateway runtime state">
-                <article aria-labelledby="clients-heading">
-                  <header>
-                    <small class="section-kicker">Runtime</small>
-                    <h2 id="clients-heading">Runtime clients</h2>
-                    <p>Current, paired browser, config-managed, and revoked clients.</p>
-                  </header>
-                  <ul id="clients" class="list empty" aria-label="Clients"><li>Connect and refresh.</li></ul>
-                </article>
-                <article aria-labelledby="queues-heading">
-                  <header>
-                    <small class="section-kicker">Gateway queues</small>
-                    <h2 id="queues-heading">Delivery and command queue</h2>
-                    <p>Live gateway lists; admin actions appear only when authorized.</p>
-                  </header>
-                  <h3 id="deliveries-heading">Delivery queue</h3>
-                  <ul id="deliveries" class="list empty" aria-labelledby="deliveries-heading"><li>Connect and refresh.</li></ul>
-                  <h3 id="commands-heading">Command queue</h3>
-                  <ul id="commands" class="list empty" aria-labelledby="commands-heading"><li>Connect and refresh.</li></ul>
-                </article>
-              </section>
-
-              <article class="danger-zone" aria-labelledby="danger-heading">
-                <div>
-                  <small class="section-kicker">Danger zone</small>
-                  <h2 id="danger-heading">Forget local browser settings</h2>
-                  <p>Clears the remembered token/settings from local storage and the token field. It does not revoke this browser id or any gateway runtime client.</p>
-                </div>
-                <button id="clearSettingsButton" class="button-danger" type="button">Forget local settings</button>
-              </article>
-            </article>
-
-            <aside class="page-sidebar" aria-label="Access context rail">
-              <article>
-                <small class="section-kicker">Boundary</small>
-                <h2>Access rail</h2>
-                <p>This browser is an operator surface. Keep access loopback or tunneled unless the network model changes explicitly.</p>
-                <ul class="rail-list">
-                  <li><strong>Pair</strong><br /><small>Creates a runtime client for this browser.</small></li>
-                  <li><strong>Remember</strong><br /><small>Stores token/settings only in this browser.</small></li>
-                  <li><strong>Forget</strong><br /><small>Clears local storage; it does not revoke server clients.</small></li>
-                </ul>
-              </article>
-              <article>
-                <small class="section-kicker">Token rule</small>
-                <p>Tokens stay masked and should never be echoed into trace output or copied into notes.</p>
-              </article>
-            </aside>
-          </div>
-        </section>
-
-        <section id="tab-terminal" class="tab-panel" role="tabpanel" data-tab-panel="terminal" aria-labelledby="tab-terminal-button" tabindex="0" hidden>
-          <div class="page-layout">
-            <article class="page-card">
-              <header class="split-header">
-                <div>
-                  <small class="section-kicker">Shell</small>
-                  <h2>Interactive shell</h2>
-                  <p>Advanced Zellij shell for Pi TUI and coding sessions. The iframe loads only when this tab is selected.</p>
-                </div>
-                <div class="actions end">
-                  <button id="copyTerminalTokenButton" class="secondary outline" type="button">Copy Zellij token</button>
-                  <a id="openTerminalLink" href="/terminal/ownloom" target="_blank" rel="noopener noreferrer" role="button" class="secondary outline">Open full terminal</a>
-                  <span id="terminalTokenStatus" class="chip" role="status" aria-live="polite">Token stays local.</span>
-                </div>
-              </header>
-              <p class="warning-banner" role="note"><strong>Local shell boundary.</strong> Use through loopback or an SSH tunnel. The terminal proxy remains same-origin and no-store.</p>
-              <iframe id="terminalFrame" class="terminal-frame" title="Ownloom terminal" data-src="/terminal/ownloom"></iframe>
-            </article>
-
-            <aside class="page-sidebar" aria-label="Shell context rail">
-              <article>
-                <small class="section-kicker">Power tool</small>
-                <h2>Shell rail</h2>
-                <p>The shell is intentionally advanced and local. It is for direct operator work when chat is not enough.</p>
-                <ul class="rail-list">
-                  <li><strong>Lazy load</strong><br /><small>The iframe loads only after opening this tab.</small></li>
-                  <li><strong>No-store</strong><br /><small>Terminal proxy responses stay uncached.</small></li>
-                  <li><strong>Loopback</strong><br /><small>Use SSH tunnel or local browser access.</small></li>
-                </ul>
-              </article>
-            </aside>
-          </div>
-        </section>
-
-        <section id="tab-log" class="tab-panel" role="tabpanel" data-tab-panel="log" aria-labelledby="tab-log-button" tabindex="0" hidden>
-          <div class="page-layout">
-            <article class="page-card">
-              <header class="split-header">
-                <div>
-                  <small class="section-kicker">Trace</small>
-                  <h2>Local event trace</h2>
-                  <p>Redacted browser-side gateway events, useful for operator diagnosis.</p>
-                </div>
-                <span class="chip chip-system">textContent only</span>
-              </header>
-              <pre id="log" class="log" aria-label="Local event trace"></pre>
-            </article>
-
-            <aside class="page-sidebar" aria-label="Trace context rail">
-              <article>
-                <small class="section-kicker">Ephemeral</small>
-                <h2>Trace rail</h2>
-                <p>This is browser-side operator trace, not durable memory and not a wiki source.</p>
-                <ul class="rail-list">
-                  <li><strong>Redacted</strong><br /><small>Keep tokens and secrets out of normal logs.</small></li>
-                  <li><strong>Local</strong><br /><small>Useful for diagnosing this cockpit session.</small></li>
-                  <li><strong>Temporary</strong><br /><small>Reloading clears the visible trace.</small></li>
-                </ul>
-              </article>
-            </aside>
-          </div>
-        </section>
-      </div>
+          </footer>
+        </article>
+      </section>
     </main>
-
-    <script type="module" src="./app.js"></script>
   </body>
 </html>

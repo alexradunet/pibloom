@@ -568,6 +568,7 @@
 .planner-overdue .section-register { border-block-end-color: rgb(255 180 171 / 0.34); }
 .planner-today .section-register { border-block-end-color: rgb(233 194 103 / 0.34); }
 .planner-upcoming .section-register { border-block-end-color: rgb(118 213 220 / 0.34); }
+.planner-undated .section-register { border-block-end-color: rgb(169 199 255 / 0.32); }
 
 .planner-count {
   min-inline-size: 2.3rem;

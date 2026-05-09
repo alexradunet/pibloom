@@ -114,8 +114,8 @@ export class PlannerClient {
       const afterDate = currentDue ? new Date(currentDue) : new Date();
       const next = nextDueAfter(item, afterDate);
       if (next) {
-        const nextIso = next.toISOString();
-        const updated = updateTodoDates(item.raw, { due: nextIso, reminderAt: item.kind === "reminder" ? nextIso : undefined });
+        const nextValue = occurrenceValue(next, isDateOnlyString(currentDue));
+        const updated = updateTodoDates(item.raw, { due: nextValue, reminderAt: item.kind === "reminder" ? nextValue : undefined });
         await this.putRaw(item.href, updated);
         return parsePlannerItem(updated, item.href)!;
       }
@@ -199,12 +199,21 @@ function localDayStart(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
+function isDateOnlyString(value: string | undefined): boolean {
+  return Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value));
+}
+
+function occurrenceValue(date: Date, dateOnly: boolean): string {
+  return dateOnly ? date.toISOString().slice(0, 10) : date.toISOString();
+}
+
 /** Build DTSTART string for rrulestr — handles date-only and datetime formats. */
 function buildDtstart(dateStr: string): string {
-  // date-only (YYYY-MM-DD or YYYYMMDD)
+  // date-only (YYYY-MM-DD or YYYYMMDD). rrule does not honor DTSTART;VALUE=DATE,
+  // so use the compact date form to avoid defaulting DTSTART to "now".
   if (/^\d{4}-?\d{2}-?\d{2}$/.test(dateStr)) {
     const compact = dateStr.replace(/-/g, "");
-    return `DTSTART;VALUE=DATE:${compact}`;
+    return `DTSTART:${compact}`;
   }
   // datetime: convert to compact UTC form for rrule
   const d = new Date(dateStr);
@@ -220,15 +229,19 @@ function expandRrule(item: PlannerItem, windowStart: Date, windowEnd: Date): Pla
     const rule = rrulestr(`${buildDtstart(dtstart)}\nRRULE:${item.rrule!}`);
     const dates = rule.between(windowStart, windowEnd, true);
     if (dates.length === 0) return [];
-    return dates.map((d) => ({
-      ...item,
-      uid: `${item.uid}@${d.toISOString().slice(0, 10)}`,
-      due: item.kind !== "event" ? d.toISOString() : undefined,
-      start: item.kind === "event" ? d.toISOString() : undefined,
-      alarmAt: item.kind === "reminder" ? d.toISOString() : item.alarmAt,
-      // virtual occurrences should not carry the raw ICS (use base item.uid for mutations)
-      raw: item.raw,
-    }));
+    const dateOnly = isDateOnlyString(dtstart);
+    return dates.map((d) => {
+      const occurrence = occurrenceValue(d, dateOnly);
+      return {
+        ...item,
+        uid: `${item.uid}@${d.toISOString().slice(0, 10)}`,
+        due: item.kind !== "event" ? occurrence : undefined,
+        start: item.kind === "event" ? occurrence : undefined,
+        alarmAt: item.kind === "reminder" ? occurrence : item.alarmAt,
+        // virtual occurrences should not carry the raw ICS (use base item.uid for mutations)
+        raw: item.raw,
+      };
+    });
   } catch {
     return [item]; // invalid RRULE — treat as non-recurring
   }

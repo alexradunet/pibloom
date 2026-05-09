@@ -32,14 +32,16 @@ export function createOrganizerController({ els, log }) {
     setStatus("loading…");
     els.plannerRefreshButton.disabled = true;
     try {
-      const [overdue, today, upcoming] = await Promise.all([
+      const [overdue, today, upcoming, allItems] = await Promise.all([
         request("/items?view=overdue"),
         request("/items?view=today"),
         request("/items?view=upcoming"),
+        request("/items?view=all"),
       ]);
       renderList(els.plannerOverdueList, overdue, "No overdue planner items.");
       renderList(els.plannerTodayList, today, "No planner items for today.");
       renderList(els.plannerUpcomingList, upcoming.filter((item) => !isToday(item)), "No upcoming planner items.");
+      renderList(els.plannerUndatedList, allItems.filter(isOpenUndated), "No undated planner items.");
       setStatus(`updated ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`);
       log?.("planner refreshed");
     } catch (error) {
@@ -47,6 +49,7 @@ export function createOrganizerController({ els, log }) {
       renderError(els.plannerOverdueList, error);
       renderError(els.plannerTodayList, error);
       renderError(els.plannerUpcomingList, error);
+      renderError(els.plannerUndatedList, error);
       log?.("planner refresh failed", error.message || String(error));
     } finally {
       loading = false;
@@ -170,7 +173,7 @@ export function createOrganizerController({ els, log }) {
   els.plannerRefreshButton.addEventListener("click", refresh);
   els.plannerForm.addEventListener("submit", addItem);
   els.plannerKind.addEventListener("change", updateFormForKind);
-  for (const list of [els.plannerOverdueList, els.plannerTodayList, els.plannerUpcomingList]) {
+  for (const list of [els.plannerOverdueList, els.plannerTodayList, els.plannerUpcomingList, els.plannerUndatedList]) {
     list.addEventListener("click", handleListClick);
   }
   updateFormForKind();
@@ -292,6 +295,10 @@ function visibleCategories(item) {
 
 function itemDate(item) {
   return item.alarmAt || item.due || item.start || "";
+}
+
+function isOpenUndated(item) {
+  return item.status === "open" && !itemDate(item);
 }
 
 function isToday(item) {

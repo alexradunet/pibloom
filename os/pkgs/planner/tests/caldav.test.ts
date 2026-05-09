@@ -16,6 +16,14 @@ function multistatus(href: string, ics: string): string {
 </D:multistatus>`;
 }
 
+function localDateStamp(offsetDays: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + offsetDays);
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
 test("list upcoming includes reminders by VALARM alarmAt without DUE", async () => {
   const originalFetch = globalThis.fetch;
   const ics = todoIcs({ uid: "rem-alarm-only", title: "Alarm only", reminderAt: "2999-05-07T08:30:00Z" });
@@ -29,6 +37,23 @@ test("list upcoming includes reminders by VALARM alarmAt without DUE", async () 
     assert.equal(items.length, 1);
     assert.equal(items[0]?.kind, "reminder");
     assert.equal(items[0]?.alarmAt, "2999-05-07T08:30:00Z");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("date-only recurring tasks expand from their due date, not from now", async () => {
+  const originalFetch = globalThis.fetch;
+  const due = localDateStamp(7);
+  const ics = todoIcs({ uid: "weekly-date-only", title: "Weekly date-only", due, rrule: "FREQ=WEEKLY" });
+  globalThis.fetch = async (_url, init) => {
+    if (init?.method === "REPORT") return new Response(multistatus("/alex/planner/weekly-date-only.ics", ics), { status: 207 });
+    return new Response("", { status: 201 });
+  };
+  try {
+    const client = new PlannerClient({ baseUrl: "http://127.0.0.1:5232/", user: "alex", collection: "planner" });
+    assert.equal((await client.list("today")).length, 0);
+    assert.equal((await client.list("upcoming"))[0]?.due, due);
   } finally {
     globalThis.fetch = originalFetch;
   }

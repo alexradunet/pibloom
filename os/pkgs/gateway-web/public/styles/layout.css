@@ -301,7 +301,7 @@ header p {
 .config-grid,
 .organizer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-.planner-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.planner-grid { grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
 
 .access-grid { align-items: start; }
 

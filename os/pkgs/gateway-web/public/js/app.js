@@ -181,6 +181,7 @@ function collectElements() {
     plannerOverdueList: byId("plannerOverdueList"),
     plannerTodayList: byId("plannerTodayList"),
     plannerUpcomingList: byId("plannerUpcomingList"),
+    plannerUndatedList: byId("plannerUndatedList"),
   };
 }
 

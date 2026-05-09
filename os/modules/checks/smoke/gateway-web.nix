@@ -47,6 +47,7 @@ runCommand "ownloom-gateway-web-smoke" {
     grep -q 'threadRailToggle' "$root/index.html"
     grep -q 'plannerRefreshButton' "$root/index.html"
     grep -q 'plannerOverdueList' "$root/index.html"
+    grep -q 'plannerUndatedList' "$root/index.html"
     grep -R -q '/api/planner' "$root"
     grep -R -q 'agent.wait' "$root"
     grep -R -q 'data-session-switch-chat' "$root"

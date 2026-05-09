@@ -109,6 +109,15 @@ export function startApp() {
   const organizerController = createOrganizerController({ els, log });
   setupThreadRail(els);
 
+  function ensureRadicaleLoaded() {
+    if (state.radicaleLoaded || !els.radicaleFrame) return;
+    els.radicaleFrame.src = els.radicaleFrame.dataset.src;
+    state.radicaleLoaded = true;
+  }
+  els.radicaleDetails?.addEventListener("toggle", () => {
+    if (els.radicaleDetails.open) ensureRadicaleLoaded();
+  });
+
   const requestedTab = new URLSearchParams(window.location.search).get("tab");
   createTabController({
     buttons: els.tabButtons,
@@ -162,6 +171,8 @@ function collectElements() {
     tabButtons: all("[data-tab-target]"),
     tabPanels: all("[data-tab-panel]"),
     terminalFrame: byId("terminalFrame"),
+    radicaleDetails: byId("radicaleDetails"),
+    radicaleFrame: byId("radicaleFrame"),
     copyTerminalTokenButton: byId("copyTerminalTokenButton"),
     terminalTokenStatus: byId("terminalTokenStatus"),
     plannerStatus: byId("plannerStatus"),

@@ -267,12 +267,22 @@
   background: linear-gradient(135deg, rgb(147 0 10 / 0.2), var(--pico-card-background-color) 45%);
 }
 
-.terminal-frame {
+.embedded-service {
+  margin-block-start: var(--space-lg);
+}
+
+.terminal-frame,
+.service-frame {
   width: 100%;
   height: min(72vh, 48rem);
   border: 1px solid var(--color-border-soft);
   border-radius: var(--radius-default);
   background: var(--terminal-bg);
+}
+
+.radicale-frame {
+  min-height: 38rem;
+  background: var(--pico-background-color);
 }
 
 .log {

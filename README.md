@@ -30,6 +30,10 @@ sudo nixos-rebuild switch --flake .#ownloom-vps --accept-flake-config
 
 Agents should follow the ownloom config skill workflow for the full status → diff → validate → confirm → apply workflow. 
 
+## Operator surface
+
+Ownloom is the AI/operator cockpit over standards-based local tools, not a custom app suite. See [`docs/operator-surface.md`](./docs/operator-surface.md) for the planner/wiki/config boundary: Radicale remains the CalDAV source of truth, its built-in UI handles collection management, and Ownloom CLIs stay the machine interface.
+
 ## Design system
 
 Ownloom UI must follow [`DESIGN.md`](./DESIGN.md): **Digital Scoarță / Pixel Loom Minimalism**. In short: Pico-first static interfaces, self-hosted assets, warm dark Romanian woven-carpet-inspired palette, Newsreader headings, Work Sans interface text, JetBrains Mono metadata/logs, 4px rhythm/radius, flat tonal layers, 1px structural borders, and subtle pixel-stitch motifs. Avoid generic SaaS gloss, cyberpunk neon, busy wallpaper, and remote runtime design assets.

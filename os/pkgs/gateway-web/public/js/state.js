@@ -7,6 +7,7 @@ export function createAppState() {
     agentRunning: false,
     activeChatId: null,
     terminalLoaded: false,
+    radicaleLoaded: false,
   };
 }
 

@@ -45,6 +45,12 @@ in {
       description = "Loopback URL of the ownloom planner web/API server to proxy under /api/planner/.";
     };
 
+    radicaleUrl = lib.mkOption {
+      type = lib.types.str;
+      default = "http://127.0.0.1:5232";
+      description = "Loopback URL of Radicale's built-in collection management UI to proxy under /radicale/.";
+    };
+
     terminalTokenFile = lib.mkOption {
       type = lib.types.str;
       default = "/var/lib/ownloom-terminal/login-token";
@@ -76,14 +82,18 @@ in {
         assertion = isLoopbackHttpUrl cfg.plannerUrl;
         message = "services.ownloom-gateway-web.plannerUrl must stay loopback-only without URL userinfo.";
       }
+      {
+        assertion = isLoopbackHttpUrl cfg.radicaleUrl;
+        message = "services.ownloom-gateway-web.radicaleUrl must stay loopback-only without URL userinfo.";
+      }
     ];
 
     users.groups.${cfg.terminalTokenGroup} = {};
 
     systemd.services.ownloom-gateway-web = {
       description = "ownloom gateway web client";
-      after = ["network.target" "ownloom-gateway.service"];
-      wants = ["ownloom-gateway.service"];
+      after = ["network.target" "ownloom-gateway.service"] ++ lib.optional config.services.radicale.enable "radicale.service";
+      wants = ["ownloom-gateway.service"] ++ lib.optional config.services.radicale.enable "radicale.service";
       wantedBy = ["multi-user.target"];
       environment = {
         OWNLOOM_GATEWAY_WEB_HOST = cfg.host;
@@ -91,6 +101,7 @@ in {
         OWNLOOM_GATEWAY_URL = cfg.gatewayUrl;
         OWNLOOM_TERMINAL_URL = cfg.terminalUrl;
         OWNLOOM_PLANNER_URL = cfg.plannerUrl;
+        OWNLOOM_RADICALE_URL = cfg.radicaleUrl;
         OWNLOOM_TERMINAL_TOKEN_FILE = toString cfg.terminalTokenFile;
       };
       serviceConfig = {

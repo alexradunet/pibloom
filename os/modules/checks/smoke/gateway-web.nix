@@ -64,6 +64,8 @@ runCommand "ownloom-gateway-web-smoke" {
     grep -q 'plannerRefreshButton' "$root/index.html"
     grep -q 'plannerOverdueList' "$root/index.html"
     grep -q 'plannerUndatedList' "$root/index.html"
+    grep -q 'radicaleFrame' "$root/index.html"
+    grep -q '/radicale/' "$root/index.html"
     grep -q 'Gateway access workspace' "$root/index.html"
     grep -q 'Trace rail' "$root/index.html"
     grep -R -q '/api/planner' "$root"
@@ -89,7 +91,9 @@ runCommand "ownloom-gateway-web-smoke" {
     grep -q '/api/v1/terminal-token' "$server"
     grep -q 'stripTerminalPrefix' "$server"
     grep -q 'stripPlannerPrefix' "$server"
+    grep -q 'stripRadicalePrefix' "$server"
     grep -q 'OWNLOOM_PLANNER_URL' "$server"
+    grep -q 'OWNLOOM_RADICALE_URL' "$server"
 
     token_file=$(mktemp)
     printf '# smoke token\nsmoke-zellij-token\n' > "$token_file"
@@ -108,13 +112,24 @@ runCommand "ownloom-gateway-web-smoke" {
     node planner-upstream.mjs >planner-upstream.log 2>&1 &
     planner_pid=$!
 
+    cat > radicale-upstream.mjs <<'EOF'
+    import { createServer } from "node:http";
+    createServer((req, res) => {
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+      res.end(JSON.stringify({ url: req.url, scriptName: req.headers["x-script-name"] ?? "" }));
+    }).listen(18083, "127.0.0.1");
+  EOF
+    node radicale-upstream.mjs >radicale-upstream.log 2>&1 &
+    radicale_pid=$!
+
     OWNLOOM_GATEWAY_WEB_HOST=127.0.0.1 \
     OWNLOOM_GATEWAY_WEB_PORT=18090 \
     OWNLOOM_PLANNER_URL=http://127.0.0.1:18082 \
+    OWNLOOM_RADICALE_URL=http://127.0.0.1:18083 \
     OWNLOOM_TERMINAL_TOKEN_FILE="$token_file" \
     ${ownloom-gateway-web}/bin/ownloom-gateway-web >server.log 2>&1 &
     server_pid=$!
-    trap 'kill $server_pid $planner_pid 2>/dev/null || true' EXIT
+    trap 'kill $server_pid $planner_pid $radicale_pid 2>/dev/null || true' EXIT
 
     for _ in $(seq 1 20); do
       if curl -fsS -D /tmp/index.headers http://127.0.0.1:18090/ >/tmp/index.html 2>/dev/null; then
@@ -167,6 +182,11 @@ runCommand "ownloom-gateway-web-smoke" {
       -D /tmp/planner-post.headers http://127.0.0.1:18090/api/planner/items >/tmp/planner-post.json
     grep -q '"method":"POST"' /tmp/planner-post.json
     grep -q '\\"title\\":\\"Smoke\\"' /tmp/planner-post.json
+
+    curl -fsS -D /tmp/radicale.headers http://127.0.0.1:18090/radicale/.web/ >/tmp/radicale.json
+    grep -qi 'cache-control: no-store' /tmp/radicale.headers
+    grep -q '"url":"/.web/"' /tmp/radicale.json
+    grep -q '"scriptName":"/radicale"' /tmp/radicale.json
 
     curl -sS -D /tmp/host.headers -H 'Host: evil.example' http://127.0.0.1:18090/ >/tmp/host.txt || true
     grep -q '421' /tmp/host.headers

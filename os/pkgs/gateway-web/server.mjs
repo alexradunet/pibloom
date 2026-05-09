@@ -13,8 +13,10 @@ const target = new URL(process.env.OWNLOOM_GATEWAY_URL ?? "http://127.0.0.1:8081
 const terminalTargetRaw = process.env.OWNLOOM_TERMINAL_URL ?? "";
 const terminalTarget = terminalTargetRaw ? new URL(terminalTargetRaw) : null;
 const plannerTarget = new URL(process.env.OWNLOOM_PLANNER_URL ?? "http://127.0.0.1:8082");
+const radicaleTarget = new URL(process.env.OWNLOOM_RADICALE_URL ?? "http://127.0.0.1:5232");
 const terminalPathPrefix = "/terminal";
 const plannerPathPrefix = "/api/planner";
+const radicalePathPrefix = "/radicale";
 const terminalTokenFile = process.env.OWNLOOM_TERMINAL_TOKEN_FILE ?? "";
 
 const mimeTypes = {
@@ -70,6 +72,10 @@ const server = createServer((req, res) => {
     proxyHttp(req, res, plannerTarget, "planner", { path: stripPlannerPrefix(req.url ?? "/") });
     return;
   }
+  if (isRadicalePath(req.url)) {
+    proxyRadicale(req, res);
+    return;
+  }
   if (req.url?.startsWith("/api/v1/")) {
     proxyHttp(req, res, target, "gateway");
     return;
@@ -99,7 +105,7 @@ server.on("upgrade", (req, socket, head) => {
 
 server.listen(port, host, () => {
   const terminal = terminalTarget ? `, terminal -> ${terminalTarget.href}` : "";
-  console.log(`ownloom-gateway-web: http://${host}:${port} -> ${target.href}, planner -> ${plannerTarget.href}${terminal}`);
+  console.log(`ownloom-gateway-web: http://${host}:${port} -> ${target.href}, planner -> ${plannerTarget.href}, radicale -> ${radicaleTarget.href}${terminal}`);
 });
 
 function isAllowedRequest(req) {
@@ -141,12 +147,39 @@ function isPlannerPath(url) {
   return pathname === plannerPathPrefix || pathname.startsWith(`${plannerPathPrefix}/`);
 }
 
+function isRadicalePath(url) {
+  const pathname = new URL(url ?? "/", "http://localhost").pathname;
+  return pathname === radicalePathPrefix || pathname.startsWith(`${radicalePathPrefix}/`);
+}
+
 function stripPlannerPrefix(url) {
   const parsed = new URL(url, "http://localhost");
   if (parsed.pathname === plannerPathPrefix || parsed.pathname === `${plannerPathPrefix}/`) {
     parsed.pathname = "/api/items";
   } else if (parsed.pathname.startsWith(`${plannerPathPrefix}/`)) {
     parsed.pathname = `/api/${parsed.pathname.slice(plannerPathPrefix.length + 1)}`;
+  }
+  return `${parsed.pathname}${parsed.search}`;
+}
+
+function proxyRadicale(req, res) {
+  if (new URL(req.url ?? "/", "http://localhost").pathname === radicalePathPrefix) {
+    res.writeHead(308, { Location: `${radicalePathPrefix}/`, ...noStoreHeaders });
+    res.end();
+    return;
+  }
+  proxyHttp(req, res, radicaleTarget, "radicale", {
+    path: stripRadicalePrefix(req.url ?? "/"),
+    headers: { "x-script-name": radicalePathPrefix },
+  });
+}
+
+function stripRadicalePrefix(url) {
+  const parsed = new URL(url, "http://localhost");
+  if (parsed.pathname === radicalePathPrefix || parsed.pathname === `${radicalePathPrefix}/`) {
+    parsed.pathname = "/";
+  } else if (parsed.pathname.startsWith(`${radicalePathPrefix}/`)) {
+    parsed.pathname = parsed.pathname.slice(radicalePathPrefix.length);
   }
   return `${parsed.pathname}${parsed.search}`;
 }
@@ -242,7 +275,7 @@ function proxyHttp(req, res, upstreamTarget, name, proxyOptions = {}) {
     port: upstreamTarget.port,
     method: req.method,
     path: proxyOptions.path ?? req.url,
-    headers: { ...req.headers, host: upstreamTarget.host },
+    headers: { ...req.headers, ...(proxyOptions.headers ?? {}), host: upstreamTarget.host },
   };
   const upstream = httpRequest(options, (upstreamRes) => {
     const rewrittenHeaders = proxyOptions.rewriteHeaders

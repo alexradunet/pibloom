@@ -177,6 +177,7 @@
   .component-sample,
   .warning-banner,
   .terminal-frame,
+  .service-frame,
   .log {
     border: 1px solid CanvasText;
   }

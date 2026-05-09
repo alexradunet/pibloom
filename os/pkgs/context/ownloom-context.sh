@@ -85,6 +85,13 @@ Prefer ownloom CLIs over harness-specific tools so the workflow stays agent-agno
 - ownloom-wiki ...: structured wiki operations.
 - ownloom-planner ...: live CalDAV/iCalendar tasks, reminders, and events.'
 
+design_policy="[OWNLOOM DESIGN SYSTEM]
+Canonical UI design system: ${flake_dir}/DESIGN.md — Digital Scoarță / Pixel Loom Minimalism. Every Pi agent editing Ownloom UI must follow it.
+- Pico-first static interfaces; keep runtime assets self-hosted and compatible with CSP: style-src self, font-src self.
+- Use the warm dark Digital Scoarță palette, Newsreader headings, Work Sans body/interface text, and JetBrains Mono labels/chips/logs/metadata.
+- Preserve 4px rhythm/radius, 1px structural borders, flat tonal layers, pixel-stitch dividers/notches, and local-first hearth/operator language.
+- Avoid glossy SaaS dashboards, cyberpunk neon, busy folk wallpaper, remote fonts/scripts/styles, and decorative assets that compete with content."
+
 planner_digest=""
 if planner_json="$(ownloom-planner list upcoming --json 2>/dev/null)"; then
   planner_lines="$(printf '%s' "$planner_json" | jq -r --arg host "$current_host" --arg today "$today" '
@@ -237,18 +244,20 @@ if [ "$format" = "json" ]; then
     --arg fleetBlock "$fleet_block" \
     --arg plannerPolicy "$planner_policy" \
     --arg cliPolicy "$cli_policy" \
+    --arg designPolicy "$design_policy" \
     --arg plannerDigest "$planner_digest" \
     --arg wikiContext "$wiki_context" \
     --arg memoryBlock "$memory_block" \
     --arg restoredBlock "$restored_block" \
     --arg healthBlock "$health_block" \
-    '{host: $host, fleetHosts: $fleetHosts, fleetMembership: $fleetMembership, flakeDir: $flakeDir, wikiRoot: $wikiRoot, blocks: {fleet: $fleetBlock, plannerPolicy: $plannerPolicy, cliPolicy: $cliPolicy, plannerDigest: $plannerDigest, wiki: $wikiContext, memory: $memoryBlock, restored: $restoredBlock, health: $healthBlock}}'
+    '{host: $host, fleetHosts: $fleetHosts, fleetMembership: $fleetMembership, flakeDir: $flakeDir, wikiRoot: $wikiRoot, blocks: {fleet: $fleetBlock, plannerPolicy: $plannerPolicy, cliPolicy: $cliPolicy, designPolicy: $designPolicy, plannerDigest: $plannerDigest, wiki: $wikiContext, memory: $memoryBlock, restored: $restoredBlock, health: $healthBlock}}'
   exit 0
 fi
 
 printf '%s\n' "$fleet_block"
 printf '\n%s\n' "$planner_policy"
 printf '\n%s\n' "$cli_policy"
+printf '\n%s\n' "$design_policy"
 if [ -n "$health_block" ]; then
   printf '\n%s\n' "$health_block"
 fi

@@ -1,117 +1,232 @@
+@font-face {
+  font-family: "Newsreader";
+  src: url("../vendor/fonts/newsreader-var.ttf") format("truetype");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400 800;
+}
+
+@font-face {
+  font-family: "Work Sans";
+  src: url("../vendor/fonts/work-sans-var.ttf") format("truetype");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 300 700;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../vendor/fonts/jetbrains-mono-var.woff2") format("woff2");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400 700;
+}
+
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
 
-  /* Ownloom Digital Scoarță palette, kept as named primitives for JS/CSS compatibility. */
-  --palette-void-950: #1a110f;
-  --palette-void-975: #150c0a;
-  --palette-ink-925: #231916;
-  --palette-ink-900: #271d1a;
-  --palette-ink-850: #322824;
-  --palette-ink-800: #3e322f;
-  --palette-ink-750: #4a3a35;
-  --palette-ink-700: #56423c;
-  --palette-ink-600: #6f5750;
-  --palette-mist-100: #fffaf9;
-  --palette-mist-150: #f1dfd9;
-  --palette-mist-200: #dcc1b8;
-  --palette-mist-300: #c9aba1;
-  --palette-mist-500: #a48b84;
-  --palette-thread-200: #ffdbd0;
-  --palette-thread-300: #ffb59d;
-  --palette-thread-400: #df7d5a;
-  --palette-thread-500: #b85736;
-  --palette-thread-700: #7e2c0e;
-  --palette-loom-300: #e9c267;
-  --palette-loom-900: #251a00;
-  --palette-moss-300: #c4d694;
-  --palette-ember-300: #ffb4ab;
-  --palette-ember-700: #93000a;
-  --palette-indigo-300: #76d5dc;
-  --palette-indigo-900: #10282c;
+  /* Canonical Digital Scoarță / Pixel Loom Minimalism tokens (DESIGN.md). */
+  --ds-surface: #1a110f;
+  --ds-surface-dim: #1a110f;
+  --ds-surface-bright: #423733;
+  --ds-surface-container-lowest: #150c0a;
+  --ds-surface-container-low: #231916;
+  --ds-surface-container: #271d1a;
+  --ds-surface-container-high: #322824;
+  --ds-surface-container-highest: #3e322f;
+  --ds-on-surface: #f1dfd9;
+  --ds-on-surface-variant: #dcc1b8;
+  --ds-inverse-surface: #f1dfd9;
+  --ds-inverse-on-surface: #392e2b;
+  --ds-outline: #a48b84;
+  --ds-outline-variant: #56423c;
+  --ds-surface-tint: #ffb59d;
+  --ds-primary: #ffb59d;
+  --ds-on-primary: #5d1800;
+  --ds-primary-container: #b85736;
+  --ds-on-primary-container: #fffaf9;
+  --ds-inverse-primary: #9d4323;
+  --ds-secondary: #e9c267;
+  --ds-on-secondary: #3f2e00;
+  --ds-secondary-container: #755800;
+  --ds-on-secondary-container: #f8d074;
+  --ds-tertiary: #76d5dc;
+  --ds-on-tertiary: #00363a;
+  --ds-tertiary-container: #008087;
+  --ds-on-tertiary-container: #ecfeff;
+  --ds-error: #ffb4ab;
+  --ds-on-error: #690005;
+  --ds-error-container: #93000a;
+  --ds-on-error-container: #ffdad6;
+  --ds-primary-fixed: #ffdbd0;
+  --ds-primary-fixed-dim: #ffb59d;
+  --ds-on-primary-fixed: #390b00;
+  --ds-on-primary-fixed-variant: #7e2c0e;
+  --ds-secondary-fixed: #ffdf9b;
+  --ds-secondary-fixed-dim: #e9c267;
+  --ds-on-secondary-fixed: #251a00;
+  --ds-on-secondary-fixed-variant: #5b4300;
+  --ds-tertiary-fixed: #93f2f9;
+  --ds-tertiary-fixed-dim: #76d5dc;
+  --ds-on-tertiary-fixed: #002022;
+  --ds-on-tertiary-fixed-variant: #004f54;
+  --ds-background: #1a110f;
+  --ds-on-background: #f1dfd9;
+  --ds-surface-variant: #3e322f;
 
-  /* Compatibility names for the small app-specific layer. */
-  --color-bg: var(--palette-void-950);
-  --color-bg-deep: var(--palette-void-975);
-  --color-surface: var(--palette-ink-925);
-  --color-surface-2: var(--palette-ink-900);
-  --color-surface-3: var(--palette-ink-850);
-  --color-border-soft: rgb(164 139 132 / 0.24);
-  --color-border-strong: rgb(164 139 132 / 0.48);
-  --color-text: var(--palette-mist-150);
-  --color-muted: var(--palette-mist-200);
-  --color-subtle: var(--palette-mist-300);
-  --color-faint: var(--palette-mist-500);
-  --color-accent: var(--palette-thread-300);
-  --color-accent-hover: var(--palette-thread-200);
-  --color-warning: var(--palette-loom-300);
-  --color-success: var(--palette-moss-300);
-  --color-system: var(--palette-indigo-300);
-  --color-danger: var(--palette-ember-300);
-  --color-on-danger: #690005;
-  --terminal-bg: #120c09;
+  /* App semantics that are not explicit in the material-style palette. */
+  --ds-card: #332016;
+  --ds-success: #c4d694;
+  --ds-on-success: #203000;
+  --ds-terminal: #120c09;
+
+  /* Compatibility names for existing app CSS and JS-rendered state classes. */
+  --palette-void-950: var(--ds-background);
+  --palette-void-975: var(--ds-surface-container-lowest);
+  --palette-ink-925: var(--ds-surface-container-low);
+  --palette-ink-900: var(--ds-surface-container);
+  --palette-ink-850: var(--ds-surface-container-high);
+  --palette-ink-800: var(--ds-surface-container-highest);
+  --palette-ink-750: var(--ds-surface-bright);
+  --palette-ink-700: var(--ds-outline-variant);
+  --palette-ink-600: color-mix(in srgb, var(--ds-outline-variant), var(--ds-outline) 35%);
+  --palette-mist-100: var(--ds-on-primary-container);
+  --palette-mist-150: var(--ds-on-surface);
+  --palette-mist-200: var(--ds-on-surface-variant);
+  --palette-mist-300: color-mix(in srgb, var(--ds-on-surface-variant), var(--ds-outline) 35%);
+  --palette-mist-500: var(--ds-outline);
+  --palette-thread-200: var(--ds-primary-fixed);
+  --palette-thread-300: var(--ds-primary);
+  --palette-thread-400: var(--ds-inverse-primary);
+  --palette-thread-500: var(--ds-primary-container);
+  --palette-thread-700: var(--ds-on-primary-fixed-variant);
+  --palette-loom-300: var(--ds-secondary);
+  --palette-loom-900: var(--ds-on-secondary-fixed);
+  --palette-moss-300: var(--ds-success);
+  --palette-ember-300: var(--ds-error);
+  --palette-ember-700: var(--ds-error-container);
+  --palette-indigo-300: var(--ds-tertiary);
+  --palette-indigo-900: var(--ds-on-tertiary-fixed);
+
+  --color-bg: var(--ds-background);
+  --color-bg-deep: var(--ds-surface-container-lowest);
+  --color-surface: var(--ds-surface-container-low);
+  --color-surface-2: var(--ds-surface-container);
+  --color-surface-3: var(--ds-card);
+  --color-border-soft: rgb(164 139 132 / 0.28);
+  --color-border-strong: rgb(164 139 132 / 0.56);
+  --color-text: var(--ds-on-surface);
+  --color-muted: var(--ds-on-surface-variant);
+  --color-subtle: color-mix(in srgb, var(--ds-on-surface-variant), var(--ds-outline) 35%);
+  --color-faint: var(--ds-outline);
+  --color-accent: var(--ds-primary);
+  --color-accent-hover: var(--ds-primary-fixed);
+  --color-warning: var(--ds-secondary);
+  --color-success: var(--ds-success);
+  --color-system: var(--ds-tertiary);
+  --color-danger: var(--ds-error);
+  --color-on-danger: var(--ds-on-error);
+  --terminal-bg: var(--ds-terminal);
+
+  /* Typography from DESIGN.md. */
+  --font-headline: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Work Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-label: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --text-headline-lg: 40px;
+  --text-headline-md: 28px;
+  --text-body-lg: 18px;
+  --text-body-md: 16px;
+  --text-label-md: 14px;
+  --text-label-sm: 12px;
+  --text-headline-lg-mobile: 32px;
+  --line-headline-lg: 1.2;
+  --line-headline-md: 1.3;
+  --line-body-lg: 1.6;
+  --line-body-md: 1.5;
+  --line-label: 1.4;
+
+  /* 4px spacing rhythm and rectangular soft-brutalist shapes. */
+  --space-base: 4px;
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 40px;
+  --space-xl: 64px;
+  --space-gutter: 24px;
+  --space-margin: 32px;
+  --radius-sm: 0.125rem;
+  --radius-default: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
   --sidebar-width: 15rem;
+  --shell-max-width: 1280px;
+  --focus-ring: 0 0 0 2px rgb(233 194 103 / 0.72), 0 0 0 4px rgb(184 87 54 / 0.34);
+  --stitch-horizontal: repeating-linear-gradient(90deg, var(--ds-secondary) 0 4px, var(--ds-primary-container) 4px 8px, transparent 8px 12px);
+  --stitch-vertical: repeating-linear-gradient(0deg, var(--ds-secondary) 0 4px, var(--ds-primary-container) 4px 8px, transparent 8px 12px);
 
-  /* Pico design-system mapping. */
-  --pico-font-family-sans-serif: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --pico-font-family-monospace: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  --pico-font-family: var(--pico-font-family-sans-serif);
-  --pico-line-height: 1.5;
-  --pico-border-radius: 0.38rem;
-  --pico-spacing: 1rem;
-  --pico-typography-spacing-vertical: 0.85rem;
-  --pico-block-spacing-vertical: 1rem;
-  --pico-block-spacing-horizontal: 1rem;
-  --pico-form-element-spacing-vertical: 0.68rem;
-  --pico-form-element-spacing-horizontal: 0.85rem;
+  /* Pico mapping: Pico provides defaults; Ownloom supplies the core tokens. */
+  --pico-font-family-sans-serif: var(--font-body);
+  --pico-font-family-monospace: var(--font-label);
+  --pico-font-family: var(--font-body);
+  --pico-line-height: var(--line-body-md);
+  --pico-border-radius: var(--radius-default);
+  --pico-spacing: var(--space-sm);
+  --pico-typography-spacing-vertical: var(--space-sm);
+  --pico-block-spacing-vertical: var(--space-sm);
+  --pico-block-spacing-horizontal: var(--space-sm);
+  --pico-form-element-spacing-vertical: 0.625rem;
+  --pico-form-element-spacing-horizontal: 0.75rem;
 
-  --pico-background-color: var(--color-bg);
-  --pico-color: var(--color-text);
+  --pico-background-color: var(--ds-background);
+  --pico-color: var(--ds-on-surface);
   --pico-muted-color: var(--color-subtle);
   --pico-muted-border-color: var(--color-border-soft);
-  --pico-primary: var(--palette-thread-300);
-  --pico-primary-background: var(--palette-thread-500);
-  --pico-primary-border: var(--palette-thread-500);
-  --pico-primary-hover: var(--palette-thread-200);
-  --pico-primary-hover-background: #c76746;
-  --pico-primary-hover-border: var(--palette-thread-300);
+  --pico-primary: var(--ds-primary);
+  --pico-primary-background: var(--ds-primary-container);
+  --pico-primary-border: var(--ds-primary-container);
+  --pico-primary-hover: var(--ds-primary-fixed);
+  --pico-primary-hover-background: var(--ds-inverse-primary);
+  --pico-primary-hover-border: var(--ds-primary);
   --pico-primary-focus: rgb(233 194 103 / 0.38);
-  --pico-primary-inverse: var(--palette-mist-100);
+  --pico-primary-inverse: var(--ds-on-primary-container);
   --pico-primary-underline: rgb(255 181 157 / 0.55);
 
-  --pico-secondary: var(--palette-mist-200);
-  --pico-secondary-background: var(--palette-ink-800);
-  --pico-secondary-border: rgb(164 139 132 / 0.38);
-  --pico-secondary-hover: var(--palette-mist-100);
+  --pico-secondary: var(--ds-on-surface-variant);
+  --pico-secondary-background: var(--ds-surface-container-highest);
+  --pico-secondary-border: rgb(233 194 103 / 0.44);
+  --pico-secondary-hover: var(--ds-on-primary-container);
   --pico-secondary-hover-background: rgb(233 194 103 / 0.14);
-  --pico-secondary-hover-border: rgb(233 194 103 / 0.46);
-  --pico-secondary-focus: rgb(233 194 103 / 0.25);
-  --pico-secondary-inverse: var(--palette-mist-100);
+  --pico-secondary-hover-border: rgb(233 194 103 / 0.62);
+  --pico-secondary-focus: rgb(233 194 103 / 0.28);
+  --pico-secondary-inverse: var(--ds-on-primary-container);
 
-  --pico-contrast: var(--palette-mist-100);
-  --pico-contrast-background: var(--palette-ink-750);
-  --pico-contrast-border: var(--palette-ink-750);
+  --pico-contrast: var(--ds-on-primary-container);
+  --pico-contrast-background: var(--ds-surface-bright);
+  --pico-contrast-border: var(--ds-outline-variant);
   --pico-contrast-hover: #ffffff;
-  --pico-contrast-hover-background: var(--palette-ink-600);
-  --pico-contrast-hover-border: var(--palette-mist-300);
+  --pico-contrast-hover-background: color-mix(in srgb, var(--ds-surface-bright), var(--ds-outline) 18%);
+  --pico-contrast-hover-border: var(--ds-outline);
   --pico-contrast-focus: rgb(220 193 184 / 0.24);
-  --pico-contrast-inverse: var(--palette-void-950);
+  --pico-contrast-inverse: var(--ds-background);
 
-  --pico-card-background-color: rgb(39 29 26 / 0.95);
+  --pico-card-background-color: var(--ds-card);
   --pico-card-border-color: var(--color-border-soft);
-  --pico-card-sectioning-background-color: rgb(35 25 22 / 0.74);
-  --pico-card-box-shadow: 0 1px 0 rgb(255 250 249 / 0.035);
-  --pico-form-element-background-color: rgb(21 12 10 / 0.92);
+  --pico-card-sectioning-background-color: var(--ds-surface-container-low);
+  --pico-card-box-shadow: none;
+  --pico-form-element-background-color: var(--ds-surface-container-lowest);
   --pico-form-element-border-color: var(--color-border-strong);
-  --pico-form-element-active-background-color: var(--palette-void-975);
-  --pico-form-element-active-border-color: var(--palette-thread-300);
-  --pico-form-element-focus-color: var(--palette-loom-300);
-  --pico-form-element-color: var(--palette-mist-150);
-  --pico-form-element-placeholder-color: var(--palette-mist-500);
-  --pico-h1-color: var(--palette-thread-300);
-  --pico-h2-color: var(--palette-mist-150);
-  --pico-h3-color: var(--palette-mist-200);
-  --pico-code-background-color: var(--terminal-bg);
-  --pico-code-color: var(--palette-indigo-300);
+  --pico-form-element-active-background-color: var(--ds-surface-container-lowest);
+  --pico-form-element-active-border-color: var(--ds-primary);
+  --pico-form-element-focus-color: var(--ds-secondary);
+  --pico-form-element-color: var(--ds-on-surface);
+  --pico-form-element-placeholder-color: var(--ds-outline);
+  --pico-h1-color: var(--ds-primary);
+  --pico-h2-color: var(--ds-on-surface);
+  --pico-h3-color: var(--ds-on-surface-variant);
+  --pico-code-background-color: var(--ds-terminal);
+  --pico-code-color: var(--ds-tertiary);
   --pico-table-border-color: var(--color-border-soft);
 }

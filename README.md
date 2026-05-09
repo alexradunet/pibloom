@@ -30,6 +30,10 @@ sudo nixos-rebuild switch --flake .#ownloom-vps --accept-flake-config
 
 Agents should follow the ownloom config skill workflow for the full status → diff → validate → confirm → apply workflow. 
 
+## Design system
+
+Ownloom UI must follow [`DESIGN.md`](./DESIGN.md): **Digital Scoarță / Pixel Loom Minimalism**. In short: Pico-first static interfaces, self-hosted assets, warm dark Romanian woven-carpet-inspired palette, Newsreader headings, Work Sans interface text, JetBrains Mono metadata/logs, 4px rhythm/radius, flat tonal layers, 1px structural borders, and subtle pixel-stitch motifs. Avoid generic SaaS gloss, cyberpunk neon, busy wallpaper, and remote runtime design assets.
+
 For a manual remote deploy from a workstation, set the target host explicitly:
 
 ```sh

@@ -32,6 +32,7 @@ At session start, every agent should receive equivalent ownloom context:
 - Technical wiki digest.
 - Memory/profile files and their editable paths.
 - Planner infrastructure policy.
+- Canonical Ownloom design-system policy: `DESIGN.md` / Digital Scoarță / Pixel Loom Minimalism.
 - Upcoming planner digest.
 - Any restored session/compaction context when the harness supports it.
 
@@ -74,6 +75,7 @@ Agent adapters should enforce, where the harness supports it:
 - Block or redirect direct writes to protected wiki areas such as `raw/` and `meta/proposals/`.
 - Prefer read-only diagnosis before mutation.
 - Preserve the current host identity; never assume a different fleet host unless the user names it.
+- For UI work, follow the canonical `DESIGN.md` system: Pico-first static UI, self-hosted assets, Digital Scoarță palette/typography, 4px rhythm, flat tonal layers, structural borders, and pixel-stitch motifs.
 
 The shared CLIs must enforce critical allowlists so weaker future agents still inherit safety.
 

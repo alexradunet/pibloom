@@ -4,7 +4,7 @@ Small protocol/v1-only Ownloom cockpit for local operator use.
 
 It is intentionally static HTML/CSS/JS: no bundled legacy gateway UI, no framework, no build step. The browser app uses native ES modules plus a pragmatic Atomic Design layout.
 
-Design direction and guardrails live in [`DESIGN.md`](./DESIGN.md): **Digital Scoarță / Pixel Loom Minimalism** — local-first, accessible, low-noise, inspectable, flat, warm, earthy, and inspired by Romanian `scoarțe` structure without folk-wallpaper noise.
+Canonical design direction and guardrails live in the repo-level [`DESIGN.md`](../../../DESIGN.md): **Digital Scoarță / Pixel Loom Minimalism**. The gateway-specific [`DESIGN.md`](./DESIGN.md) explains how this package implements it: Pico-first, self-hosted assets, flat tonal layers, 4px rhythm, structural borders, pixel-stitch motifs, Newsreader headings, Work Sans interface text, and JetBrains Mono operational metadata.
 
 ## Use
 
@@ -56,8 +56,9 @@ public/
     controllers/*.js
   vendor/
     pico.min.css            # self-hosted Pico CSS v2 base (CSP stays style-src 'self')
+    fonts/                  # self-hosted Newsreader, Work Sans, JetBrains Mono
   styles/
-    tokens.css              # Ownloom palette mapped to --pico-* variables
+    tokens.css              # canonical Digital Scoarță tokens mapped to --pico-* variables
     base.css
     layout.css
     components.css
@@ -75,7 +76,7 @@ Atomic Design is used as file organization, not framework ceremony:
 
 Dynamic UI is rendered with DOM APIs and `textContent`; avoid `innerHTML`, `outerHTML`, and `insertAdjacentHTML`.
 
-CSS is Pico-first: `public/style.css` imports the vendored `public/vendor/pico.min.css` base, then a small Ownloom theme/app layer maps Digital Scoarță colors and covers only the cockpit layout that Pico does not provide. Keep it no-build: add new CSS files explicitly and include them in the smoke check when needed.
+CSS is Pico-first: `public/style.css` imports the vendored `public/vendor/pico.min.css` base, then a small Ownloom theme/app layer maps the canonical Digital Scoarță palette, typography, spacing, and radius tokens from `DESIGN.md`. Runtime fonts/styles are self-hosted to preserve CSP and local-first operation. Keep it no-build: add new CSS files explicitly and include them in the smoke check when needed.
 
 ## Mobile/PWA status
 

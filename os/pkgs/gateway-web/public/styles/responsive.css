@@ -20,8 +20,8 @@
     inset-block: auto 0;
     inset-inline: 0;
     inline-size: auto;
-    block-size: 0.25rem;
-    background: repeating-linear-gradient(90deg, var(--palette-loom-300) 0 0.5rem, var(--palette-thread-500) 0.5rem 1rem, transparent 1rem 1.5rem);
+    block-size: var(--space-base);
+    background: var(--stitch-horizontal);
   }
 
   .sidebar-tabs {
@@ -106,7 +106,11 @@
   .top-lintel,
   .tab-panel,
   .workbench-card {
-    padding: 0.75rem;
+    padding: var(--space-xs);
+  }
+
+  h1 {
+    font-size: var(--text-headline-lg-mobile);
   }
 
   .thread-rail {
@@ -151,7 +155,9 @@
   }
 
   .app-sidebar::before,
-  article::before {
+  article::before,
+  article::after,
+  .list-card-header::after {
     display: none;
   }
 }

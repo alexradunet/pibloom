@@ -105,6 +105,10 @@ spacing:
   margin: 32px
 ---
 
+## Agent Contract
+
+This is the canonical design system for Ownloom UI. Pi and any future agent editing UI must treat this file as source of truth: preserve the palette, typography, spacing, 4px radius, flat tonal layers, structural borders, pixel-stitch motifs, and self-hosted/no-remote-asset constraint unless Alex explicitly changes the system.
+
 ## Brand & Style
 
 This design system is a "Digital Scoarță," blending the ancient tactile heritage of Romanian woven carpets with the precision of local-first computing. It evokes the feeling of a private, warm study—a digital hearth where sovereignty and craft are paramount. 

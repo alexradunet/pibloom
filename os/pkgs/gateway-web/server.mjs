@@ -28,6 +28,8 @@ const mimeTypes = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".webp": "image/webp",
+  ".ttf": "font/ttf",
+  ".woff2": "font/woff2",
 };
 
 const staticSecurityHeaders = {
@@ -35,6 +37,7 @@ const staticSecurityHeaders = {
     "default-src 'self'",
     "script-src 'self'",
     "style-src 'self'",
+    "font-src 'self'",
     "img-src 'self' data: blob:",
     "connect-src 'self' http://127.0.0.1:* http://[::1]:* http://localhost:* https://127.0.0.1:* https://[::1]:* https://localhost:* ws://127.0.0.1:* ws://[::1]:* ws://localhost:* wss://127.0.0.1:* wss://[::1]:* wss://localhost:*",
     "frame-src 'self'",

@@ -433,3 +433,224 @@ article::after {
 .swatch-tertiary { --swatch-color: var(--ds-tertiary); --swatch-text: var(--ds-on-tertiary); }
 .swatch-error { --swatch-color: var(--ds-error-container); --swatch-text: var(--ds-on-error-container); }
 .swatch-success { --swatch-color: var(--ds-success); --swatch-text: var(--ds-on-success); }
+
+/* Master workbench conversation and telemetry rail. */
+.messages {
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-xs) var(--space-xs) 8rem;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+.message {
+  position: relative;
+  width: fit-content;
+  max-width: min(85%, 46rem);
+  min-height: 2rem;
+  margin-inline-start: 3rem;
+  border: 0;
+  border-radius: var(--radius-default);
+  padding: var(--space-xs) 0;
+  background: transparent;
+  color: var(--ds-on-surface);
+  white-space: pre-wrap;
+  box-shadow: none;
+}
+
+.message::before {
+  content: "✦";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: -3rem;
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border: 1px solid var(--ds-outline-variant);
+  border-radius: var(--radius-full);
+  background: var(--ds-surface-container);
+  color: var(--ds-primary);
+  font-family: var(--font-label);
+  font-size: var(--text-label-sm);
+}
+
+.message.user {
+  margin-inline: auto 3rem;
+  border: 1px solid var(--ds-outline-variant);
+  border-start-end-radius: 0;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--ds-surface-container-high);
+  color: var(--ds-on-surface);
+}
+
+.message.user::before {
+  content: "OP";
+  inset-inline: auto -3rem;
+  border-color: var(--ds-primary);
+  background: var(--ds-primary-container);
+  color: var(--ds-on-primary-container);
+  font-size: 10px;
+}
+
+.message.system {
+  max-width: 100%;
+  border: 1px solid rgb(118 213 220 / 0.22);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--ds-on-tertiary-fixed);
+  color: var(--color-muted);
+}
+
+.message.system::before {
+  content: "⌁";
+  color: var(--ds-tertiary);
+}
+
+.composer {
+  display: grid;
+  gap: var(--space-xs);
+  width: min(100%, 50rem);
+  margin-inline: auto;
+  padding: var(--space-xs);
+  border: 1px solid var(--ds-outline-variant);
+  border-radius: var(--radius-lg);
+  background: var(--ds-surface-container);
+  box-shadow: 0 1.5rem 3rem rgb(0 0 0 / 0.38);
+}
+
+.composer textarea {
+  min-height: 4rem;
+  border: 0;
+  background: transparent;
+  color: var(--ds-on-surface);
+  resize: none;
+  box-shadow: none;
+}
+
+.composer textarea:focus {
+  box-shadow: none;
+}
+
+.composer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-xs) var(--space-base);
+  border-block-start: 1px dashed var(--ds-outline-variant);
+}
+
+.composer-tools,
+.composer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.composer-actions #sendButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.telemetry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  margin-block-end: var(--space-md);
+}
+
+.telemetry-header h2,
+.telemetry-header p {
+  margin: 0;
+}
+
+.telemetry-tabs {
+  display: flex;
+  gap: 0;
+  margin-inline: calc(-1 * var(--space-sm));
+  margin-block-end: var(--space-sm);
+  padding-inline: var(--space-xs);
+  border-block-end: 1px solid var(--ds-outline-variant);
+}
+
+.telemetry-tabs button {
+  margin: 0;
+  padding: var(--space-xs) var(--space-xs);
+  border: 0;
+  border-block-end: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ds-on-surface-variant);
+  font-family: var(--font-label);
+  font-size: var(--text-label-sm);
+  box-shadow: none;
+}
+
+.telemetry-tabs button.active {
+  border-block-end-color: var(--ds-tertiary-fixed-dim);
+  color: var(--ds-tertiary-fixed-dim);
+}
+
+.telemetry-block {
+  display: grid;
+  gap: var(--space-xs);
+  margin-block-end: var(--space-md);
+}
+
+.telemetry-block h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  color: var(--ds-on-surface-variant);
+  font-family: var(--font-label);
+  font-size: var(--text-label-sm);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.node-list {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  border: 1px solid var(--ds-outline-variant);
+  border-radius: var(--radius-default);
+  background: var(--ds-surface);
+}
+
+.node-list div,
+.metric {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-label);
+  font-size: var(--text-label-sm);
+}
+
+.node-list strong {
+  color: var(--ds-tertiary);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.metric i {
+  grid-column: 1 / -1;
+  display: block;
+  block-size: 2px;
+  background: linear-gradient(to right, var(--ds-on-surface) var(--metric, 0%), var(--ds-outline-variant) var(--metric, 0%));
+}
+
+.metric-gateway { --metric: 42%; }
+.metric-memory { --metric: 78%; }
+
+.metric strong {
+  color: var(--ds-on-surface);
+  font-size: 10px;
+  text-transform: uppercase;
+}

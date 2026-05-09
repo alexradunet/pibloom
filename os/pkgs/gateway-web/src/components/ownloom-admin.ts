@@ -2,14 +2,14 @@ import { html } from "lit";
 import "./ownloom-ui.js";
 import { OwnloomLightElement } from "./ownloom-ui.js";
 
-const navItemClass = "tab-button group flex w-full cursor-pointer items-start gap-xs rounded border border-transparent px-sm py-xs text-left text-on-surface-variant transition-colors hover:border-outline-variant hover:bg-surface-container hover:text-primary";
+const navItemClass = "tab-button group flex w-full cursor-pointer items-center gap-3 rounded border border-transparent px-3 py-2 pl-2 text-left text-on-surface-variant transition-all hover:bg-surface-container hover:text-primary";
 const navLabelClass = "font-label-md text-label-md";
-const navHintClass = "block font-body-md text-[12px] leading-snug text-on-surface-variant";
 const panelClass = "tab-panel flex-1 overflow-y-auto p-sm";
-const shellClass = "loom-shell flex h-dvh overflow-hidden bg-background text-on-background";
+const shellClass = "loom-shell flex h-dvh flex-col overflow-hidden bg-background text-on-background";
+const appRowClass = "loom-main-row flex min-h-0 flex-1 overflow-hidden";
 const sideNavClass = "loom-sidebar flex h-full w-64 shrink-0 flex-col border-r border-dashed border-outline-variant bg-surface-container-lowest py-md";
 const mainClass = "loom-content flex min-w-0 flex-1 flex-col overflow-hidden bg-surface";
-const topbarClass = "loom-topbar flex h-16 shrink-0 items-center justify-between gap-sm border-b border-dashed border-outline-variant bg-background px-margin";
+const topbarClass = "loom-topbar flex h-16 w-full shrink-0 items-center justify-between gap-sm border-b border-outline-variant bg-surface px-margin";
 const cardClass = "lit-stitch lit-notch relative rounded border border-outline-variant bg-surface-container p-md";
 const railClass = "page-sidebar grid content-start gap-sm";
 
@@ -17,14 +17,17 @@ export class OwnloomAdminApp extends OwnloomLightElement {
   render() {
     return html`<main id="main" class=${shellClass}>
       <a class="skip-link" href="#cockpit-content">Skip to cockpit content</a>
-      <ownloom-admin-nav></ownloom-admin-nav>
-      <div id="cockpit-content" class=${mainClass} tabindex="-1">
-        <ownloom-admin-topbar></ownloom-admin-topbar>
-        <ownloom-workbench-panel></ownloom-workbench-panel>
-        <ownloom-planner-panel></ownloom-planner-panel>
-        <ownloom-access-panel></ownloom-access-panel>
-        <ownloom-shell-panel></ownloom-shell-panel>
-        <ownloom-trace-panel></ownloom-trace-panel>
+      <ownloom-admin-topbar></ownloom-admin-topbar>
+      <div class=${appRowClass}>
+        <ownloom-admin-nav></ownloom-admin-nav>
+        <div id="cockpit-content" class=${mainClass} tabindex="-1">
+          <ownloom-workbench-panel></ownloom-workbench-panel>
+          <ownloom-memory-panel></ownloom-memory-panel>
+          <ownloom-planner-panel></ownloom-planner-panel>
+          <ownloom-access-panel></ownloom-access-panel>
+          <ownloom-shell-panel></ownloom-shell-panel>
+          <ownloom-trace-panel></ownloom-trace-panel>
+        </div>
       </div>
     </main>`;
   }
@@ -33,42 +36,30 @@ export class OwnloomAdminApp extends OwnloomLightElement {
 class OwnloomAdminNav extends OwnloomLightElement {
   render() {
     return html`<aside class=${sideNavClass} aria-label="Ownloom cockpit menu">
-      <header class="px-sm pb-sm">
-        <small class="font-label-sm text-label-sm uppercase tracking-[0.05em] text-secondary">Digital scoarță</small>
-        <h1 class="m-0 mt-xs font-headline-md text-headline-md text-primary">ownloom</h1>
-        <p class="m-0 text-sm text-on-surface-variant">Local-first cockpit for workbench, planner, access, shell, and trace.</p>
-      </header>
-
-      <nav class="flex-1 space-y-xs overflow-y-auto px-sm" role="tablist" aria-orientation="vertical" aria-label="Ownloom cockpit sections">
-        ${this.renderTab("chat", "workbench", "Workbench", "Quiet active conversation.", true)}
-        ${this.renderTab("organizer", "planner", "Planner", "CalDAV tasks and events.")}
-        ${this.renderTab("config", "access", "Access", "Pair browsers and clients.")}
-        ${this.renderTab("terminal", "shell", "Shell", "Loopback Zellij workspace.")}
-        ${this.renderTab("log", "trace", "Trace", "Redacted local event log.")}
+      <nav class="flex-1 space-y-2 overflow-y-auto px-4" role="tablist" aria-orientation="vertical" aria-label="Ownloom cockpit sections">
+        ${this.renderTab("chat", "workbench", "Workbench", true)}
+        ${this.renderTab("organizer", "planner", "Planner")}
+        ${this.renderTab("memory", "memory", "Memory")}
+        ${this.renderTab("config", "access", "Access")}
+        ${this.renderTab("terminal", "shell", "Shell")}
+        ${this.renderTab("log", "trace", "Trace")}
       </nav>
 
-      <div class="mx-sm space-y-xs border-t border-dashed border-outline-variant pt-sm">
-        <a class="group flex cursor-pointer items-center gap-xs rounded px-sm py-xs text-on-surface-variant no-underline hover:bg-surface-container hover:text-primary" href="/" aria-label="Open personal Ownloom">
-          <ownloom-icon name="memory"></ownloom-icon><span class=${navLabelClass}>Personal</span>
-        </a>
-        <a class="group flex cursor-pointer items-center gap-xs rounded px-sm py-xs text-on-surface-variant no-underline hover:bg-surface-container hover:text-primary" href="/admin?tab=config">
+      <div class="mx-4 mt-auto space-y-2 border-t border-dashed border-outline-variant px-0 pt-4">
+        <a class="group flex cursor-pointer items-center gap-3 rounded px-3 py-2 pl-2 text-on-surface-variant no-underline transition-all hover:bg-surface-container hover:text-primary" href="/admin?tab=config">
           <ownloom-icon name="settings"></ownloom-icon><span class=${navLabelClass}>Settings</span>
         </a>
-        <a class="group flex cursor-pointer items-center gap-xs rounded px-sm py-xs text-on-surface-variant no-underline hover:bg-surface-container hover:text-primary" href="/components.html">
-          <ownloom-icon name="mesh"></ownloom-icon><span class=${navLabelClass}>Components</span>
-        </a>
-        <a class="group flex cursor-pointer items-center gap-xs rounded px-sm py-xs text-on-surface-variant no-underline hover:bg-surface-container hover:text-primary" href="/components-lit.html">
-          <ownloom-icon name="workbench"></ownloom-icon><span class=${navLabelClass}>Lit catalog</span>
+        <a class="group flex cursor-pointer items-center gap-3 rounded px-3 py-2 pl-2 text-on-surface-variant no-underline transition-all hover:bg-surface-container hover:text-primary" href="/" aria-label="Open personal Ownloom">
+          <ownloom-icon name="hearth"></ownloom-icon><span class=${navLabelClass}>Hearth</span>
         </a>
       </div>
-      <ownloom-hearth></ownloom-hearth>
     </aside>`;
   }
 
-  private renderTab(tab: string, icon: string, label: string, hint: string, active = false) {
+  private renderTab(tab: string, icon: string, label: string, active = false) {
     return html`<button
       id=${`tab-${tab}-button`}
-      class=${`${navItemClass} ${active ? "active border-primary/50 bg-primary-container/30 text-on-primary-container" : ""}`}
+      class=${`${navItemClass} ${active ? "active border-l-2 border-primary bg-surface-container pl-2 text-secondary" : ""}`}
       type="button"
       role="tab"
       data-tab-target=${tab}
@@ -77,7 +68,7 @@ class OwnloomAdminNav extends OwnloomLightElement {
       tabindex=${active ? "0" : "-1"}
     >
       <ownloom-icon name=${icon}></ownloom-icon>
-      <span><span class=${navLabelClass}>${label}</span><small class=${navHintClass}>${hint}</small></span>
+      <span class=${navLabelClass}>${label}</span>
     </button>`;
   }
 }
@@ -85,18 +76,23 @@ class OwnloomAdminNav extends OwnloomLightElement {
 class OwnloomAdminTopbar extends OwnloomLightElement {
   render() {
     return html`<header class=${topbarClass}>
-      <a class="flex shrink-0 items-center gap-sm text-primary no-underline active:scale-95" href="/admin" aria-label="Ownloom admin home">
-        <ownloom-icon name="menu"></ownloom-icon>
-        <span class="font-headline-md text-headline-md tracking-tight">ownloom</span>
+      <a class="topbar-brand flex shrink-0 items-center gap-base text-primary no-underline active:scale-95" href="/admin" aria-label="Ownloom admin home">
+        <ownloom-icon name="shell"></ownloom-icon>
+        <span class="font-headline-md text-headline-md font-semibold tracking-tight">Ownloom</span>
       </a>
-      <div class="flex-1"></div>
-      <div class="flex shrink-0 items-center gap-xs">
-        <span id="currentSession" class="chip chip-thread">Conversation: web-main</span>
-        <span class="chip chip-private hidden lg:inline-flex">Loopback / tunnel only</span>
-        <span class="chip chip-system hidden xl:inline-flex">Planner: CalDAV/Radicale</span>
+
+      <div class="topbar-search hidden max-w-lg flex-1 md:block">
+        <label class="relative m-0 block"><span class="search-icon"><ownloom-icon name="search"></ownloom-icon></span><input aria-label="Search Atelier" class="w-full bg-surface-container border-b border-outline-variant border-l-0 border-r-0 border-t-0 py-2 pl-10 pr-4 font-label-md text-on-surface outline-none transition-colors focus:border-primary" placeholder="Search Atelier…" type="search" /></label>
+      </div>
+
+      <div class="topbar-actions flex shrink-0 items-center gap-4">
+        <span id="currentSession" class="chip chip-thread hidden xl:inline-flex">Conversation: web-main</span>
         <span id="connectionState" class="pill" role="status" aria-live="polite">disconnected</span>
-        <a class="secondary outline small-button" href="/" role="button" aria-label="Open personal mode">Personal</a>
-        <a class="secondary outline small-button" href="/admin?tab=config" role="button" aria-label="Settings"><ownloom-icon name="settings"></ownloom-icon></a>
+        <button id="threadRailToggle" class="icon-button" type="button" aria-controls="threadRail" aria-expanded="true">Threads</button>
+        <a class="icon-button" href="/admin?tab=config" aria-label="Settings"><ownloom-icon name="settings"></ownloom-icon></a>
+        <button class="icon-button notification-button" type="button" aria-label="Notifications"><ownloom-icon name="notify"></ownloom-icon></button>
+        <a class="icon-button" href="/" aria-label="Open personal hearth"><ownloom-icon name="mesh"></ownloom-icon></a>
+        <a class="hearth-avatar" href="/" aria-label="Hearth status"><ownloom-icon name="hearth"></ownloom-icon></a>
       </div>
     </header>`;
   }
@@ -106,50 +102,50 @@ class OwnloomWorkbenchPanel extends OwnloomLightElement {
   render() {
     return html`<section id="tab-chat" class=${`${panelClass} active p-0`} role="tabpanel" data-tab-panel="chat" aria-labelledby="tab-chat-button" tabindex="0">
       <div class="page-layout workbench-shell thread-rail-open" data-workbench-shell>
-        <article class="workbench-card grid min-h-full w-full max-w-[64rem] justify-self-center border-0 bg-transparent p-sm shadow-none" aria-labelledby="chat-heading">
-          <header class="split-header">
-            <div>
-              <small class="section-kicker">Workbench</small>
-              <h2 id="chat-heading">Active thread</h2>
-              <p>Centered conversation canvas. Open the thread rail only when needed.</p>
-            </div>
-            <div class="actions">
-              <button id="threadRailToggle" class="secondary outline" type="button" aria-controls="threadRail" aria-expanded="true">Threads</button>
-              <button id="newChatButton" class="secondary outline" type="button">New thread</button>
-            </div>
-          </header>
-
+        <article class="workbench-card" aria-labelledby="chat-heading">
+          <h2 id="chat-heading" class="sr-only">Active thread</h2>
           <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions text" aria-busy="false" aria-label="Active thread messages"></div>
 
           <section class="composer" aria-label="Thread composer">
-            <header>
-              <small class="section-kicker">One-shot materials</small>
-              <div id="attachments" class="attachments" role="list" aria-label="Staged attachments"></div>
-            </header>
-            <div class="grid composer-grid">
-              <label>Attach material<input id="attachmentInput" type="file" multiple accept="image/*,audio/*" /></label>
-              <label>Next instruction<textarea id="messageInput" rows="4" placeholder="Direct the Atelier…"></textarea></label>
+            <textarea id="messageInput" rows="3" placeholder="Direct the Atelier…" spellcheck="false"></textarea>
+            <div class="composer-footer">
+              <div class="composer-tools">
+                <label class="icon-button small-button" aria-label="Attach material"><ownloom-icon name="attach"></ownloom-icon><input id="attachmentInput" class="sr-only" type="file" multiple accept="image/*,audio/*" /></label>
+                <button class="icon-button small-button" type="button" aria-label="Attach dataset"><ownloom-icon name="dataset"></ownloom-icon></button>
+                <div id="attachments" class="attachments" role="list" aria-label="Staged attachments"></div>
+              </div>
+              <div class="composer-actions">
+                <button id="newChatButton" class="secondary outline small-button" type="button">New thread</button>
+                <button id="clearButton" class="secondary outline small-button" type="button">Clear view</button>
+                <button id="sendButton" type="button" disabled>Send <ownloom-icon name="send"></ownloom-icon></button>
+              </div>
             </div>
-            <footer class="actions end">
-              <button id="sendButton" type="button" disabled>Send</button>
-              <button id="clearButton" class="secondary outline" type="button">Clear view</button>
-            </footer>
           </section>
         </article>
 
         <aside id="threadRail" class="thread-rail" aria-labelledby="sessions-heading" aria-hidden="false">
           <article>
-            <header class="split-header">
-              <div>
-                <small class="section-kicker">Threads</small>
-                <h2 id="sessions-heading">Conversation rail</h2>
-                <p>Switch web threads or attach existing conversations.</p>
-              </div>
-              <button id="threadRailClose" class="secondary outline small-button" type="button" aria-label="Close threads">Close</button>
+            <header class="telemetry-header">
+              <div><h2 id="sessions-heading" class="font-label-md text-label-md text-on-surface">Telemetry</h2><p class="font-label-sm text-label-sm text-on-surface-variant">local workbench</p></div>
+              <button id="threadRailClose" class="icon-button small-button" type="button" aria-label="Close threads"><ownloom-icon name="close"></ownloom-icon></button>
             </header>
-            <ul id="sessions" class="list empty" aria-label="Threads"><li>Connect and refresh.</li></ul>
+            <div class="telemetry-tabs" role="tablist" aria-label="Workbench context rail"><button class="active" type="button">Context</button><button type="button">Thread List</button><button type="button">Node Status</button></div>
+            <section class="telemetry-block" aria-labelledby="active-nodes-heading"><h3 id="active-nodes-heading"><ownloom-icon name="mesh"></ownloom-icon> Active Nodes</h3><div class="node-list"><div><span>ownloom-vps</span><strong>Operational</strong></div><div><span>Gateway</span><strong>Loopback</strong></div><div><span>Planner</span><strong>CalDAV</strong></div></div></section>
+            <section class="telemetry-block" aria-label="Threads"><h3><ownloom-icon name="workbench"></ownloom-icon> Threads</h3><ul id="sessions" class="list empty" aria-label="Threads"><li>Connect and refresh.</li></ul></section>
+            <section class="telemetry-block" aria-labelledby="diagnostics-heading"><h3 id="diagnostics-heading"><ownloom-icon name="trace"></ownloom-icon> Diagnostics</h3><div class="metric metric-gateway"><span>Gateway</span><strong>standby</strong><i></i></div><div class="metric metric-memory"><span>Memory</span><strong>local</strong><i></i></div></section>
           </article>
         </aside>
+      </div>
+    </section>`;
+  }
+}
+
+class OwnloomMemoryPanel extends OwnloomLightElement {
+  render() {
+    return html`<section id="tab-memory" class=${panelClass} role="tabpanel" data-tab-panel="memory" aria-labelledby="tab-memory-button" tabindex="0" hidden>
+      <div class="page-layout">
+        <article class=${cardClass} aria-labelledby="memory-heading"><header class="split-header"><div><small class="section-kicker">Memory</small><h2 id="memory-heading">Local knowledge loom</h2><p>Use the conversation to search, capture, and update Markdown wiki memory. Live tasks stay in the planner.</p></div><span class="chip chip-private">Markdown / Git</span></header><p class="warning-banner" role="note">Memory remains file-backed and local-first. This panel is a quiet placeholder for the dedicated memory atelier.</p></article>
+        <aside class=${railClass} aria-label="Memory context rail"><article><small class="section-kicker">Boundary</small><h2>Memory rail</h2><p>Durable context belongs in the wiki; operational tasks and reminders belong in CalDAV.</p></article></aside>
       </div>
     </section>`;
   }
@@ -240,6 +236,7 @@ customElements.define("ownloom-admin-app", OwnloomAdminApp);
 customElements.define("ownloom-admin-nav", OwnloomAdminNav);
 customElements.define("ownloom-admin-topbar", OwnloomAdminTopbar);
 customElements.define("ownloom-workbench-panel", OwnloomWorkbenchPanel);
+customElements.define("ownloom-memory-panel", OwnloomMemoryPanel);
 customElements.define("ownloom-planner-panel", OwnloomPlannerPanel);
 customElements.define("ownloom-access-panel", OwnloomAccessPanel);
 customElements.define("ownloom-shell-panel", OwnloomShellPanel);

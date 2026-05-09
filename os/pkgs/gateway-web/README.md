@@ -1,6 +1,6 @@
 # ownloom-gateway-web
 
-Small loopback-only Ownloom web surface with a personal landing shell and an operator cockpit.
+Small loopback-only Ownloom web surface with a gateway-backed personal chat shell and an operator cockpit.
 
 It serves a static HTML/CSS/JS runtime. A small build step is allowed for generated Tailwind v4 CSS and Lit/mini-lit-style component islands, but the deployed browser assets remain self-hosted files with no runtime bundler, CDN, or framework server. The existing live cockpit still uses native ES modules plus a pragmatic Atomic Design layout while generated islands are introduced incrementally.
 
@@ -20,7 +20,7 @@ From another machine, use an SSH tunnel:
 ssh -L 8090:127.0.0.1:8090 ownloom-vps
 ```
 
-Then open <http://127.0.0.1:8090> for the personal/user-mode shell, or <http://127.0.0.1:8090/admin> for the existing operator cockpit. In the admin cockpit, click **Pair this browser**. The browser receives a loopback-only runtime token, stores it in local storage only when **Remember locally** is enabled, and connects automatically.
+Then open <http://127.0.0.1:8090> for the personal/user-mode chat shell, or <http://127.0.0.1:8090/admin> for the existing operator cockpit. The personal shell can pair and remember this browser itself; `/admin` remains the fallback for manual token and operator controls. Pairing stores a loopback-only trusted runtime token in local storage so the personal shell can reconnect automatically.
 
 You can still paste a named client token manually and click **Connect** in `/admin` if needed.
 
@@ -30,7 +30,7 @@ For ad-hoc local use without the NixOS service:
 nix run .#ownloom-gateway-web
 ```
 
-The server serves `/` as the personal shell, `/admin` and `/admin/` as the operator cockpit, and proxies `/api/v1/*` plus WebSocket upgrades to `OWNLOOM_GATEWAY_URL`, defaulting to `http://127.0.0.1:8081`. It also proxies `/radicale/` to Radicale's built-in collection management UI. When `OWNLOOM_TERMINAL_URL` is set, `/terminal/` is proxied to the loopback Zellij web client for the cockpit Terminal tab.
+The server serves `/` as the personal chat shell, `/admin` and `/admin/` as the operator cockpit, and proxies `/api/v1/*` plus WebSocket upgrades to `OWNLOOM_GATEWAY_URL`, defaulting to `http://127.0.0.1:8081`. It also proxies `/radicale/` to Radicale's built-in collection management UI. When `OWNLOOM_TERMINAL_URL` is set, `/terminal/` is proxied to the loopback Zellij web client for the cockpit Terminal tab.
 
 The terminal tab opens the shared `ownloom` Zellij session at `/terminal/ownloom`. Zellij web requires its own login token. The NixOS service creates one on first start and stores it at `/var/lib/ownloom-terminal/login-token`. The `/admin` cockpit can copy that token from the loopback-only **Copy Zellij token** button; after login, Zellij stores a browser session cookie.
 
@@ -47,7 +47,8 @@ public/
   components-lit.html     # generated Lit/Tailwind component island catalog
   generated/
     ownloom-lit.css       # Tailwind v4 token-bridge output; no Preflight
-    ownloom-lit.js        # esbuild-bundled Lit island, self-hosted
+    ownloom-lit.js        # esbuild-bundled catalog Lit island, self-hosted
+    ownloom-personal.js   # esbuild-bundled gateway-backed personal chat island
   js/
     app.js                # app composition/root controller
     constants.js          # storage keys, protocol constants
@@ -104,7 +105,7 @@ The `/radicale/` proxy deliberately keeps Radicale same-origin so it works throu
 
 ## Current features
 
-- `/` personal/user-mode shell for today, planner, journal, documents, and links to advanced surfaces
+- `/` personal/user-mode shell with a gateway-backed text chat island using `agent.wait`, streaming agent events, and the `web-personal-main` session
 - `/admin` flat Digital Scoarță / pixel-loom operator cockpit with a main card plus right context rail on every cockpit tab
 - accessible ARIA tab navigation with keyboard support
 - no PWA manifest/service-worker; old PWA caches are cleaned up on load
@@ -125,6 +126,8 @@ The `/radicale/` proxy deliberately keeps Radicale same-origin so it works throu
 - loopback-only helper button to copy the generated Zellij web login token
 - static `components.html` component loom for atoms, cards, rails, messages, list patterns, and trace surfaces
 - generated `components-lit.html` proof island for Lit/mini-lit-style components backed by Tailwind v4 Digital Scoarță token aliases
+
+Personal chat limitations in this phase: text only, no attachments/artifacts, no browser-side Agent/provider/API-key model, and no separate lower-privilege policy. Pairing still creates a trusted local runtime client; use `/admin` when pairing or operator controls are needed.
 
 The gateway client transport is still expected to stay loopback-only until HTTPS/reverse-proxy/pairing is designed.
 

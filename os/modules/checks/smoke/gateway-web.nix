@@ -18,6 +18,7 @@ runCommand "ownloom-gateway-web-smoke" {
     test -f "$root/style.css"
     test -f "$root/generated/ownloom-lit.css"
     test -f "$root/generated/ownloom-lit.js"
+    test -f "$root/generated/ownloom-personal.js"
     test ! -e "$root/manifest.webmanifest"
     test ! -e "$root/sw.js"
     test ! -e "$root/js/pwa.js"
@@ -58,10 +59,15 @@ runCommand "ownloom-gateway-web-smoke" {
     grep -q -- '--background:var(--ds-background)' "$root/generated/ownloom-lit.css"
     grep -q 'ownloom-lit-button' "$root/generated/ownloom-lit.js"
     grep -q 'ownloom-lit-catalog' "$root/generated/ownloom-lit.js"
+    grep -q 'ownloom-personal-chat' "$root/generated/ownloom-personal.js"
+    grep -q 'agent.wait' "$root/generated/ownloom-personal.js"
+    grep -q 'web-personal-main' "$root/generated/ownloom-personal.js"
     ! grep -R -q 'cdn.tailwindcss.com' "$root"
     ! grep -R -q 'fonts.googleapis.com' "$root"
     grep -q 'Personal mode' "$root/index.html"
-    grep -q 'Personal hearth' "$root/index.html"
+    grep -q 'ownloom-personal-chat' "$root/index.html"
+    grep -q './generated/ownloom-lit.css' "$root/index.html"
+    grep -q './generated/ownloom-personal.js' "$root/index.html"
     grep -q 'Admin cockpit' "$root/index.html"
     grep -q 'Operator terminal' "$root/index.html"
     grep -q '/admin' "$root/index.html"
@@ -71,7 +77,6 @@ runCommand "ownloom-gateway-web-smoke" {
     grep -q 'components-lit.html' "$root/index.html"
     ! grep -q 'pairButton' "$root/index.html"
     ! grep -q 'terminalFrame' "$root/index.html"
-    ! grep -q './generated/ownloom-lit.css' "$root/index.html"
     ! grep -q './generated/ownloom-lit.js' "$root/index.html"
     ! grep -q 'ownloom-lit-catalog' "$root/index.html"
     grep -q 'page-layout' "$root/admin.html"
@@ -156,7 +161,8 @@ runCommand "ownloom-gateway-web-smoke" {
       sleep 0.1
     done
     grep -qi 'Ownloom Web' /tmp/index.html
-    grep -q 'Personal hearth' /tmp/index.html
+    grep -q 'ownloom-personal-chat' /tmp/index.html
+    grep -q './generated/ownloom-personal.js' /tmp/index.html
     grep -q '/admin' /tmp/index.html
     grep -q '/terminal/ownloom' /tmp/index.html
     grep -qi 'content-security-policy:' /tmp/index.headers
@@ -194,6 +200,12 @@ runCommand "ownloom-gateway-web-smoke" {
     grep -qi 'content-type: text/javascript' /tmp/lit-js.headers
     node --check /tmp/ownloom-lit.js
     grep -q 'ownloom-lit-button' /tmp/ownloom-lit.js
+
+    curl -fsS -D /tmp/personal-js.headers http://127.0.0.1:18090/generated/ownloom-personal.js >/tmp/ownloom-personal.js
+    grep -qi 'content-type: text/javascript' /tmp/personal-js.headers
+    node --check /tmp/ownloom-personal.js
+    grep -q 'ownloom-personal-chat' /tmp/ownloom-personal.js
+    grep -q 'agent.wait' /tmp/ownloom-personal.js
 
     curl -fsS -D /tmp/style.headers http://127.0.0.1:18090/style.css >/tmp/style.css
     grep -qi 'content-type: text/css' /tmp/style.headers

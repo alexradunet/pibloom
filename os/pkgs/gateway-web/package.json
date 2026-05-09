@@ -6,9 +6,11 @@
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('public/generated',{recursive:true,force:true})\"",
     "build:css": "tailwindcss -i src/styles/ownloom-tailwind.css -o public/generated/ownloom-lit.css --minify",
-    "build:js": "esbuild src/components/ownloom-lit.ts --bundle --format=esm --target=es2022 --outfile=public/generated/ownloom-lit.js",
+    "build:js:catalog": "esbuild src/components/ownloom-lit.ts --bundle --format=esm --target=es2022 --outfile=public/generated/ownloom-lit.js",
+    "build:js:personal": "esbuild src/components/ownloom-personal.ts --bundle --format=esm --target=es2022 --outfile=public/generated/ownloom-personal.js",
+    "build:js": "npm run build:js:catalog && npm run build:js:personal",
     "build": "npm run clean && npm run build:css && npm run build:js",
-    "check": "node --check public/generated/ownloom-lit.js"
+    "check": "node --check public/generated/ownloom-lit.js && node --check public/generated/ownloom-personal.js"
   },
   "devDependencies": {
     "@tailwindcss/cli": "4.3.0",

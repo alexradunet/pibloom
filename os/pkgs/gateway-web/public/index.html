@@ -10,6 +10,8 @@
     <title>Ownloom Web</title>
     <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./generated/ownloom-lit.css" />
+    <script type="module" src="./generated/ownloom-personal.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#personal-content">Skip to personal mode</a>
@@ -20,8 +22,8 @@
           <small class="section-kicker">Personal mode</small>
           <h1 id="personal-heading">Ownloom Web</h1>
           <p>
-            A calm local-first home for today, planner, journal, documents, and personal context. The full chat surface
-            will move here after the mode split foundation is stable.
+            A calm local-first home for today, planner, journal, documents, and personal context. The first
+            gateway-backed personal chat surface is live here now.
           </p>
         </div>
         <nav class="actions" aria-label="Ownloom routes">
@@ -30,42 +32,9 @@
         </nav>
       </header>
 
-      <section class="component-section" aria-labelledby="today-heading">
+      <section class="component-section" aria-label="Personal chat surface">
         <div class="page-layout">
-          <article class="page-card" aria-labelledby="today-heading">
-            <header class="split-header">
-              <div>
-                <small class="section-kicker">Today</small>
-                <h2 id="today-heading">Personal hearth</h2>
-                <p>
-                  Start from life mode: ask about the day, capture a thought, plan a reminder, or bring a document for
-                  Ownloom to summarize when the personal chat UI lands here.
-                </p>
-              </div>
-              <span class="chip chip-private">Personal default</span>
-            </header>
-
-            <div class="grid">
-              <article>
-                <small class="section-kicker">Planner</small>
-                <h3>Tasks, reminders, calendar</h3>
-                <p>Live items stay canonical in CalDAV/iCalendar through Radicale and <code>ownloom-planner</code>.</p>
-                <footer class="actions">
-                  <a class="secondary outline small-button" href="/radicale/" target="_blank" rel="noopener noreferrer" role="button">Manage collections</a>
-                </footer>
-              </article>
-              <article>
-                <small class="section-kicker">Journal</small>
-                <h3>Notes and reviews</h3>
-                <p>Personal notes live in <code>/home/alex/wiki</code>. The web shell should help capture and retrieve them.</p>
-              </article>
-              <article>
-                <small class="section-kicker">Documents</small>
-                <h3>Materials and attachments</h3>
-                <p>Future personal chat work will use the Lit/Tailwind component path for document-friendly UX.</p>
-              </article>
-            </div>
-          </article>
+          <ownloom-personal-chat></ownloom-personal-chat>
 
           <aside class="page-sidebar" aria-label="Mode rail">
             <article>
@@ -83,6 +52,7 @@
               <p>Use admin and terminal only when you intend operator/coding mode.</p>
               <footer class="actions">
                 <a class="secondary outline small-button" href="/admin" role="button">Open admin</a>
+                <a class="secondary outline small-button" href="/radicale/" target="_blank" rel="noopener noreferrer" role="button">Planner collections</a>
                 <a class="secondary outline small-button" href="/terminal/ownloom" role="button">Open terminal</a>
               </footer>
             </article>
@@ -96,9 +66,9 @@
             <div>
               <small class="section-kicker">Foundation</small>
               <h2 id="foundation-heading">Component path</h2>
-              <p>The personal surface will grow on the generated Lit/Tailwind island while the admin cockpit keeps the stable Pico/static JS flow.</p>
+              <p>The personal chat surface now uses the generated Lit/Tailwind path while the admin cockpit keeps the stable Pico/static JS flow.</p>
             </div>
-            <span class="chip chip-system">Catalog-only for now</span>
+            <span class="chip chip-system">Personal island active</span>
           </header>
           <footer class="actions">
             <a class="secondary outline small-button" href="./components.html" role="button">Static components</a>

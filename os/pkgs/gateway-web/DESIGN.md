@@ -13,7 +13,7 @@ This package implements that system for the static Ownloom web shell and local c
 - Keep runtime assets self-hosted. No remote scripts, styles, fonts, icons, analytics, or image assets.
 - Preserve CSP compatibility: `style-src 'self'`, `font-src 'self'`, loopback-only API/WebSocket/frame assumptions.
 - Preserve required `/admin` IDs, `data-*` hooks, ARIA tabs, terminal hooks, Radicale frame hooks, and protocol behavior.
-- Keep `components.html` as a static no-JS component loom and `components-lit.html` as the generated Lit/Tailwind proof island. The generated island must stay catalog-only until a migration step explicitly moves a live flow.
+- Keep `components.html` as a static no-JS component loom and `components-lit.html` as the generated Lit/Tailwind catalog. The root personal chat island is the first live generated flow; keep further migrations deliberate and one flow at a time.
 
 ## Core visual contract
 
@@ -39,14 +39,16 @@ public/styles/layout.css           # app shell, sidebar, workbench, grids
 public/styles/components.css       # cards, chips, messages, lists, service frames, log
 public/styles/responsive.css       # mobile/zoom/reduced-motion/forced-colors
 src/styles/ownloom-tailwind.css    # Tailwind v4 token bridge; no Preflight
-src/components/ownloom-lit.ts      # catalog-only Lit component island source
+src/components/ownloom-lit.ts      # catalog Lit component island source
+src/components/ownloom-personal.ts # root personal chat island source
 public/generated/ownloom-lit.css   # generated Tailwind CSS output
-public/generated/ownloom-lit.js    # bundled self-hosted Lit island output
+public/generated/ownloom-lit.js    # bundled self-hosted catalog island output
+public/generated/ownloom-personal.js # bundled self-hosted personal chat island output
 ```
 
 ## Component guidance
 
-- **Personal shell (`/`):** calm user-mode entry point for today, planner, journal, documents, and clear links to advanced/admin surfaces.
+- **Personal shell (`/`):** calm user-mode entry point with a small gateway-backed text chat island, plus clear links to planner/admin/terminal surfaces. Keep attachments/artifacts deferred until explicitly scoped.
 - **Admin cockpit (`/admin`):** preserve the existing operator behavior and hooks until a deliberate migration step moves one flow at a time.
 - **Sidebar:** the admin loom frame. It should carry a restrained stitched edge and active tab state that is visible beyond color.
 - **Top lintel:** title, purpose, and live status in one quiet band.

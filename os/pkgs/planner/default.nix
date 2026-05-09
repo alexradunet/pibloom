@@ -39,9 +39,6 @@ buildNpmPackage {
     makeWrapper ${nodejs}/bin/node $out/bin/ownloom-planner \
       --add-flags "$out/share/ownloom-planner/dist/cli.js"
 
-    makeWrapper ${nodejs}/bin/node $out/bin/ownloom-planner-server \
-      --add-flags "$out/share/ownloom-planner/dist/server.js"
-
     runHook postInstall
   '';
 

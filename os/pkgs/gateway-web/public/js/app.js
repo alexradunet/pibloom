@@ -6,7 +6,6 @@ import { getActiveTab, loadSettings, saveSettings, setActiveTab } from "./storag
 import { createChatController } from "./controllers/chat-controller.js";
 import { createConfigController } from "./controllers/config-controller.js";
 import { createLogController } from "./controllers/log-controller.js";
-import { createOrganizerController } from "./controllers/organizer-controller.js";
 import { createTerminalController } from "./controllers/terminal-controller.js";
 import { renderClients } from "./components/organisms/clients-panel.js";
 import { renderCommands } from "./components/organisms/commands-panel.js";
@@ -106,7 +105,6 @@ export function startApp() {
     setConnectionError: () => setConnection("error", "error", false, false),
   });
   createTerminalController({ els, gatewayClient });
-  const organizerController = createOrganizerController({ els, log });
   setupThreadRail(els);
 
   function ensureRadicaleLoaded() {
@@ -114,9 +112,6 @@ export function startApp() {
     els.radicaleFrame.src = els.radicaleFrame.dataset.src;
     state.radicaleLoaded = true;
   }
-  els.radicaleDetails?.addEventListener("toggle", () => {
-    if (els.radicaleDetails.open) ensureRadicaleLoaded();
-  });
 
   const requestedTab = new URLSearchParams(window.location.search).get("tab");
   createTabController({
@@ -126,7 +121,7 @@ export function startApp() {
     onPersist: setActiveTab,
     onSelect: (tab) => {
       if (tab === "terminal") ensureTerminalLoaded(state, els.terminalFrame);
-      if (tab === "organizer") organizerController.refresh();
+      if (tab === "organizer") ensureRadicaleLoaded();
     },
   });
 
@@ -171,28 +166,9 @@ function collectElements() {
     tabButtons: all("[data-tab-target]"),
     tabPanels: all("[data-tab-panel]"),
     terminalFrame: byId("terminalFrame"),
-    radicaleDetails: byId("radicaleDetails"),
     radicaleFrame: byId("radicaleFrame"),
     copyTerminalTokenButton: byId("copyTerminalTokenButton"),
     terminalTokenStatus: byId("terminalTokenStatus"),
-    plannerStatus: byId("plannerStatus"),
-    plannerRefreshButton: byId("plannerRefreshButton"),
-    plannerForm: byId("plannerForm"),
-    plannerKind: byId("plannerKind"),
-    plannerTitle: byId("plannerTitle"),
-    plannerWhenText: byId("plannerWhenText"),
-    plannerWhen: byId("plannerWhen"),
-    plannerEndLabel: byId("plannerEndLabel"),
-    plannerEnd: byId("plannerEnd"),
-    plannerPriorityLabel: byId("plannerPriorityLabel"),
-    plannerPriority: byId("plannerPriority"),
-    plannerRepeat: byId("plannerRepeat"),
-    plannerDescription: byId("plannerDescription"),
-    plannerCategories: byId("plannerCategories"),
-    plannerOverdueList: byId("plannerOverdueList"),
-    plannerTodayList: byId("plannerTodayList"),
-    plannerUpcomingList: byId("plannerUpcomingList"),
-    plannerUndatedList: byId("plannerUndatedList"),
   };
 }
 

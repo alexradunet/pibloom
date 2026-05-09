@@ -12,11 +12,7 @@ pkgs.testers.runNixOSTest {
     system.stateVersion = "26.05";
 
     # ownloom.human.name defaults to "human" from paths.
-    # Disable the web-view server — we only need CalDAV + planner CLI here.
-    services.ownloom-planner = {
-      enable = true;
-      enableServer = false;
-    };
+    services.ownloom-planner.enable = true;
   };
 
   testScript = ''

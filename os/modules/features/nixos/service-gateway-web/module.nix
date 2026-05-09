@@ -39,16 +39,17 @@ in {
       description = "Loopback URL of the optional Zellij web terminal endpoint to proxy under /terminal/.";
     };
 
-    plannerUrl = lib.mkOption {
-      type = lib.types.str;
-      default = "http://127.0.0.1:8082";
-      description = "Loopback URL of the ownloom planner web/API server to proxy under /api/planner/.";
-    };
-
     radicaleUrl = lib.mkOption {
       type = lib.types.str;
       default = "http://127.0.0.1:5232";
       description = "Loopback URL of Radicale's built-in collection management UI to proxy under /radicale/.";
+    };
+
+    radicaleUser = lib.mkOption {
+      type = lib.types.str;
+      default = config.ownloom.human.name;
+      defaultText = lib.literalExpression "config.ownloom.human.name";
+      description = "Radicale principal used by the cockpit's built-in UI auto-login shim.";
     };
 
     terminalTokenFile = lib.mkOption {
@@ -79,10 +80,6 @@ in {
         message = "services.ownloom-gateway-web.terminalUrl must stay loopback-only without URL userinfo.";
       }
       {
-        assertion = isLoopbackHttpUrl cfg.plannerUrl;
-        message = "services.ownloom-gateway-web.plannerUrl must stay loopback-only without URL userinfo.";
-      }
-      {
         assertion = isLoopbackHttpUrl cfg.radicaleUrl;
         message = "services.ownloom-gateway-web.radicaleUrl must stay loopback-only without URL userinfo.";
       }
@@ -100,8 +97,8 @@ in {
         OWNLOOM_GATEWAY_WEB_PORT = toString cfg.port;
         OWNLOOM_GATEWAY_URL = cfg.gatewayUrl;
         OWNLOOM_TERMINAL_URL = cfg.terminalUrl;
-        OWNLOOM_PLANNER_URL = cfg.plannerUrl;
         OWNLOOM_RADICALE_URL = cfg.radicaleUrl;
+        OWNLOOM_RADICALE_USER = cfg.radicaleUser;
         OWNLOOM_TERMINAL_TOKEN_FILE = toString cfg.terminalTokenFile;
       };
       serviceConfig = {

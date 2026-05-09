@@ -12,10 +12,7 @@ pkgs.testers.runNixOSTest {
     networking.hostName = "ownloom-boot-smoke";
     system.stateVersion = "26.05";
 
-    services.ownloom-planner = {
-      enable = true;
-      enableServer = false;
-    };
+    services.ownloom-planner.enable = true;
 
     # No models: only test service health, not inference.
     services.ownloom-ollama = {

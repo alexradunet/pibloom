@@ -128,132 +128,28 @@
               <header class="split-header">
                 <div>
                   <small class="section-kicker">Planner</small>
-                  <h2 id="planner-heading">Warp a live item to the loom</h2>
-                  <p>Backed by Ownloom Planner, CalDAV, iCalendar, VTODO, VEVENT, and VALARM.</p>
+                  <h2 id="planner-heading">Radicale management</h2>
+                  <p>Built-in CalDAV/CardDAV collection management. Individual tasks, reminders, and events stay in Ownloom chat/CLI.</p>
                 </div>
                 <div class="actions">
-                  <span id="plannerStatus" class="chip" role="status" aria-live="polite">not loaded</span>
-                  <button id="plannerRefreshButton" class="secondary outline" type="button">Refresh planner</button>
                   <a class="secondary outline small-button" href="/radicale/" target="_blank" rel="noopener noreferrer" role="button">Open Radicale</a>
                 </div>
               </header>
 
-              <form id="plannerForm" class="planner-form" aria-label="Add planner item">
-                <label class="planner-title-field">
-                  New thread / task
-                  <input id="plannerTitle" autocomplete="off" required placeholder="What needs attention?" />
-                </label>
-                <label>
-                  Kind
-                  <select id="plannerKind">
-                    <option value="task">Task</option>
-                    <option value="reminder">Reminder</option>
-                    <option value="event">Event</option>
-                  </select>
-                </label>
-                <label>
-                  <span id="plannerWhenText">Due</span>
-                  <input id="plannerWhen" type="datetime-local" />
-                </label>
-                <label id="plannerEndLabel" hidden>
-                  End
-                  <input id="plannerEnd" type="datetime-local" />
-                </label>
-                <label id="plannerPriorityLabel">
-                  Priority
-                  <input id="plannerPriority" type="number" min="1" max="9" placeholder="1-9" />
-                </label>
-                <label>
-                  Repeat
-                  <select id="plannerRepeat">
-                    <option value="">No repeat</option>
-                    <option value="daily">Daily</option>
-                    <option value="weekdays">Weekdays</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
-                </label>
-                <label class="planner-wide">
-                  Description
-                  <textarea id="plannerDescription" rows="2" placeholder="Optional context"></textarea>
-                </label>
-                <label>
-                  Categories
-                  <input id="plannerCategories" autocomplete="off" placeholder="health, work" />
-                </label>
-                <button type="submit">Add planner item</button>
-              </form>
-
-              <section class="grid planner-grid" aria-label="Planner bento views">
-                <article class="planner-list-card planner-overdue" aria-labelledby="planner-overdue-heading">
-                  <header class="list-card-header">
-                    <span class="status-dot status-dot-danger" aria-hidden="true"></span>
-                    <div>
-                      <h2 id="planner-overdue-heading">Overdue</h2>
-                      <p>Past due items from the live planner.</p>
-                    </div>
-                    <span class="chip planner-count" data-planner-count>—</span>
-                  </header>
-                  <ul id="plannerOverdueList" class="list empty planner-list" aria-label="Overdue planner items"><li>Open Planner to load items.</li></ul>
-                </article>
-                <article class="planner-list-card planner-today" aria-labelledby="planner-today-heading">
-                  <header class="list-card-header">
-                    <span class="status-dot status-dot-warning" aria-hidden="true"></span>
-                    <div>
-                      <h2 id="planner-today-heading">Today</h2>
-                      <p>Due now, reminders, and calendar blocks.</p>
-                    </div>
-                    <span class="chip planner-count" data-planner-count>—</span>
-                  </header>
-                  <ul id="plannerTodayList" class="list empty planner-list" aria-label="Today planner items"><li>Open Planner to load items.</li></ul>
-                </article>
-                <article class="planner-list-card planner-upcoming" aria-labelledby="planner-upcoming-heading">
-                  <header class="list-card-header">
-                    <span class="status-dot status-dot-system" aria-hidden="true"></span>
-                    <div>
-                      <h2 id="planner-upcoming-heading">Upcoming</h2>
-                      <p>Next horizon, excluding today.</p>
-                    </div>
-                    <span class="chip planner-count" data-planner-count>—</span>
-                  </header>
-                  <ul id="plannerUpcomingList" class="list empty planner-list" aria-label="Upcoming planner items"><li>Open Planner to load items.</li></ul>
-                </article>
-                <article class="planner-list-card planner-undated" aria-labelledby="planner-undated-heading">
-                  <header class="list-card-header">
-                    <span class="status-dot" aria-hidden="true"></span>
-                    <div>
-                      <h2 id="planner-undated-heading">No date</h2>
-                      <p>Open tasks without due dates stay visible here.</p>
-                    </div>
-                    <span class="chip planner-count" data-planner-count>—</span>
-                  </header>
-                  <ul id="plannerUndatedList" class="list empty planner-list" aria-label="Undated planner items"><li>Open Planner to load items.</li></ul>
-                </article>
-              </section>
-
-              <details id="radicaleDetails" class="embedded-service">
-                <summary>Radicale collection management</summary>
-                <p class="warning-banner" role="note"><strong>Built-in Radicale UI.</strong> This trusted local frame manages calendars, address books, and task-capable collections only. Use Ownloom chat/CLI or the quick planner above for individual tasks, reminders, and events.</p>
-                <iframe id="radicaleFrame" class="service-frame radicale-frame" title="Radicale collection management" data-src="/radicale/"></iframe>
-              </details>
+              <p class="warning-banner" role="note"><strong>No extra planner app.</strong> This trusted local frame uses Radicale's own management UI and auto-opens as the local Ownloom user.</p>
+              <iframe id="radicaleFrame" class="service-frame radicale-frame" title="Radicale collection management" data-src="/radicale/"></iframe>
             </article>
 
             <aside class="page-sidebar" aria-label="Planner context rail">
               <article>
                 <small class="section-kicker">Live source</small>
                 <h2>Planner rail</h2>
-                <p>Every item here comes from the loopback Ownloom Planner API backed by CalDAV/iCalendar.</p>
+                <p>Radicale stores the canonical CalDAV/iCalendar data. Ownloom chat and `ownloom-planner` operate individual tasks and events.</p>
                 <ul class="rail-list">
-                  <li><strong>Canonical</strong><br /><small>Do not mirror these as wiki task pages.</small></li>
-                  <li><strong>Views</strong><br /><small>Overdue, today, upcoming, and no-date stay visible in the main card.</small></li>
-                  <li><strong>Collections</strong><br /><small>Radicale's own UI is embedded for collection management; no extra CalDAV web app is installed.</small></li>
-                  <li><strong>State</strong><br /><small>The status chip tells you when the rail is loading or stale.</small></li>
+                  <li><strong>Canonical</strong><br /><small>Do not mirror live tasks as wiki task pages.</small></li>
+                  <li><strong>Collections</strong><br /><small>Create or inspect calendars/task-capable collections here.</small></li>
+                  <li><strong>No duplicate UI</strong><br /><small>The old custom planner app/API has been removed from the cockpit.</small></li>
                 </ul>
-              </article>
-              <article>
-                <small class="section-kicker">Quick rule</small>
-                <p>Use reminders for alarmed nudges, tasks for open loops, and events for calendar blocks.</p>
               </article>
             </aside>
           </div>

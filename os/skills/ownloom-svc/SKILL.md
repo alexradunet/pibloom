@@ -17,7 +17,8 @@ Only `ownloom-*` units and `sshd` may be managed without root. For any other uni
 ### Status (no privilege needed)
 ```bash
 systemctl status ownloom-gateway.service --no-pager
-systemctl status ownloom-planner-server.service --no-pager
+systemctl status ownloom-gateway-web.service --no-pager
+systemctl status radicale.service --no-pager
 systemctl list-units 'ownloom-proactive-task-*' --no-pager
 systemctl status sshd.service --no-pager
 ```

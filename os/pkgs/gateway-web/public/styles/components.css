@@ -146,17 +146,10 @@ article::after {
   color: var(--ds-success);
 }
 
-.status-chip-error,
-#plannerStatus.error {
+.status-chip-error {
   border-color: rgb(255 180 171 / 0.38);
   background: rgb(147 0 10 / 0.24);
   color: var(--ds-error);
-}
-
-#plannerStatus.loading {
-  border-color: rgb(118 213 220 / 0.34);
-  background: rgb(118 213 220 / 0.12);
-  color: var(--color-system);
 }
 
 .pill.connected {
@@ -224,8 +217,7 @@ article::after {
 
 .attachments,
 .chip-row,
-.item-actions,
-.planner-actions {
+.item-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-xs);
@@ -244,8 +236,7 @@ article::after {
   font-style: italic;
 }
 
-.item,
-.planner-item {
+.item {
   display: grid;
   gap: var(--space-xs);
   padding: var(--space-sm);
@@ -256,7 +247,6 @@ article::after {
 }
 
 .item-header,
-.planner-item-header,
 .list-card-header {
   display: flex;
   align-items: flex-start;
@@ -264,23 +254,18 @@ article::after {
   gap: var(--space-xs);
 }
 
-.item-title,
-.planner-item-title {
+.item-title {
   display: grid;
   gap: var(--space-base);
   min-width: 0;
 }
 
-.item small,
-.planner-item small,
-.planner-description,
-.planner-categories {
+.item small {
   color: var(--color-subtle);
 }
 
 .client-item-current,
-.queue-waiting,
-.planner-today .planner-item {
+.queue-waiting {
   border-color: rgb(233 194 103 / 0.32);
 }
 
@@ -311,38 +296,6 @@ article::after {
   margin: 0;
 }
 
-.planner-overdue .list-card-header::after { background: repeating-linear-gradient(90deg, var(--ds-error) 0 4px, transparent 4px 8px); }
-.planner-today .list-card-header::after { background: repeating-linear-gradient(90deg, var(--ds-secondary) 0 4px, transparent 4px 8px); }
-.planner-upcoming .list-card-header::after { background: repeating-linear-gradient(90deg, var(--ds-tertiary) 0 4px, transparent 4px 8px); }
-.planner-undated .list-card-header::after { background: repeating-linear-gradient(90deg, var(--ds-outline) 0 4px, transparent 4px 8px); }
-
-.planner-count {
-  min-inline-size: 2.3rem;
-  justify-content: center;
-}
-
-.planner-kind {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.planner-kind-task {
-  border-color: rgb(233 194 103 / 0.38);
-  background: rgb(233 194 103 / 0.12);
-  color: var(--color-warning);
-}
-
-.planner-kind-reminder {
-  border-color: rgb(118 213 220 / 0.38);
-  background: rgb(118 213 220 / 0.12);
-  color: var(--color-system);
-}
-
-.planner-kind-event {
-  border-color: rgb(196 214 148 / 0.38);
-  background: rgb(196 214 148 / 0.12);
-  color: var(--color-success);
-}
 
 .warning-banner {
   display: flex;

@@ -62,10 +62,7 @@ in
       networking.hostName = "planner-pi-e2e-test";
       system.stateVersion = "26.05";
 
-      services.ownloom-planner = {
-        enable = true;
-        enableServer = false;
-      };
+      services.ownloom-planner.enable = true;
 
       # Fake LLM server on the same port as ollama so pi's provider routing
       # is identical to production.

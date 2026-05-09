@@ -194,7 +194,7 @@ Rename generated services/timers and emitted environment variables.
 
 Target examples:
 
-- [x] `nixpi-planner-server.service` → `ownloom-planner-server.service`
+- [x] `nixpi-planner-server.service` → `ownloom-planner-server.service` (historical; custom planner server was later removed in favor of Radicale's built-in UI + CLI)
 - [x] `nixpi-gateway.service` → `ownloom-gateway.service`
 - [x] `NIXPI_PLANNER_*` → `OWNLOOM_PLANNER_*` with old aliases still emitted for transition
 - [x] `NIXPI_GATEWAY_*` → `OWNLOOM_GATEWAY_*` where applicable
@@ -302,7 +302,7 @@ Renamed `nixpi-vps` → `ownloom-vps` across all infrastructure.
 ✅ nixos-rebuild switch --flake .#ownloom-vps succeeded
 ✅ Systemd units migrated: 6 ownloom-* services active/running
 ✅ Gateway service: ACTIVE (running)
-✅ Planner server: ACTIVE (running)
+✅ Planner server: ACTIVE (running) — historical state before custom planner server removal
 ✅ CalDAV endpoint: responding (http://127.0.0.1:5232/)
 ✅ CLI tools: ownloom-wiki, ownloom-planner functional
 ✅ Backward compat: nixpi-* command aliases still available
@@ -313,7 +313,7 @@ Renamed `nixpi-vps` → `ownloom-vps` across all infrastructure.
 ### Services Successfully Started:
 
 - ✅ `ownloom-gateway.service` — transport gateway (WhatsApp, transcription, etc.)
-- ✅ `ownloom-planner-server.service` — CalDAV/iCalendar web view/API
+- ✅ `ownloom-planner-server.service` — CalDAV/iCalendar web view/API (historical; later removed)
 - ✅ `ownloom-wiki-health-snapshot.timer` — daily wiki health check
 - ✅ `ownloom-proactive-task-*.timer` — reminder/review tasks
 - ✅ Radicale (CalDAV backend), Ollama, Minecraft, code-server (all running)

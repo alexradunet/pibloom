@@ -74,7 +74,7 @@ case ", $fleet_hosts," in
 esac
 
 planner_policy='[OWNLOOM PLANNER INFRASTRUCTURE]
-The canonical live task/reminder/calendar system is the standards-based ownloom planner backend: CalDAV/iCalendar VTODO/VEVENT/VALARM served by Radicale on ownloom-vps. Current safe endpoint is loopback-only at http://127.0.0.1:5232/. Direct phone CalDAV access is intentionally deferred; canonical access should be through WhatsApp, Pi, and the upcoming small ownloom web view/API. Do not create new wiki Markdown task/reminder pages as the source of truth for live operational items unless the user explicitly asks for a wiki/archive note. Use the wiki for summaries, reviews, decisions, and project context. Use ownloom-planner for live task/reminder/event operations.'
+The canonical live task/reminder/calendar system is the standards-based ownloom planner backend: CalDAV/iCalendar VTODO/VEVENT/VALARM served by Radicale on ownloom-vps. Current safe endpoint is loopback-only at http://127.0.0.1:5232/. Direct phone CalDAV access is intentionally deferred; canonical access should be through WhatsApp, Pi, Ownloom chat, and the Radicale collection-management tab in the cockpit. Do not create new wiki Markdown task/reminder pages as the source of truth for live operational items unless the user explicitly asks for a wiki/archive note. Use the wiki for summaries, reviews, decisions, and project context. Use ownloom-planner for live task/reminder/event operations.'
 
 cli_policy='[OWNLOOM CLI TOOLS]
 Prefer ownloom CLIs over harness-specific tools so the workflow stays agent-agnostic.

@@ -12,10 +12,9 @@ const port = Number(process.env.OWNLOOM_GATEWAY_WEB_PORT ?? "8090");
 const target = new URL(process.env.OWNLOOM_GATEWAY_URL ?? "http://127.0.0.1:8081");
 const terminalTargetRaw = process.env.OWNLOOM_TERMINAL_URL ?? "";
 const terminalTarget = terminalTargetRaw ? new URL(terminalTargetRaw) : null;
-const plannerTarget = new URL(process.env.OWNLOOM_PLANNER_URL ?? "http://127.0.0.1:8082");
 const radicaleTarget = new URL(process.env.OWNLOOM_RADICALE_URL ?? "http://127.0.0.1:5232");
+const radicaleUser = process.env.OWNLOOM_RADICALE_USER ?? "alex";
 const terminalPathPrefix = "/terminal";
-const plannerPathPrefix = "/api/planner";
 const radicalePathPrefix = "/radicale";
 const terminalTokenFile = process.env.OWNLOOM_TERMINAL_TOKEN_FILE ?? "";
 
@@ -68,10 +67,6 @@ const server = createServer((req, res) => {
     serveTerminalToken(req, res);
     return;
   }
-  if (isPlannerPath(req.url)) {
-    proxyHttp(req, res, plannerTarget, "planner", { path: stripPlannerPrefix(req.url ?? "/") });
-    return;
-  }
   if (isRadicalePath(req.url)) {
     proxyRadicale(req, res);
     return;
@@ -105,7 +100,7 @@ server.on("upgrade", (req, socket, head) => {
 
 server.listen(port, host, () => {
   const terminal = terminalTarget ? `, terminal -> ${terminalTarget.href}` : "";
-  console.log(`ownloom-gateway-web: http://${host}:${port} -> ${target.href}, planner -> ${plannerTarget.href}, radicale -> ${radicaleTarget.href}${terminal}`);
+  console.log(`ownloom-gateway-web: http://${host}:${port} -> ${target.href}, radicale -> ${radicaleTarget.href}${terminal}`);
 });
 
 function isAllowedRequest(req) {
@@ -142,30 +137,20 @@ function isTerminalPath(url) {
   return pathname === terminalPathPrefix || pathname.startsWith(`${terminalPathPrefix}/`);
 }
 
-function isPlannerPath(url) {
-  const pathname = new URL(url ?? "/", "http://localhost").pathname;
-  return pathname === plannerPathPrefix || pathname.startsWith(`${plannerPathPrefix}/`);
-}
-
 function isRadicalePath(url) {
   const pathname = new URL(url ?? "/", "http://localhost").pathname;
   return pathname === radicalePathPrefix || pathname.startsWith(`${radicalePathPrefix}/`);
 }
 
-function stripPlannerPrefix(url) {
-  const parsed = new URL(url, "http://localhost");
-  if (parsed.pathname === plannerPathPrefix || parsed.pathname === `${plannerPathPrefix}/`) {
-    parsed.pathname = "/api/items";
-  } else if (parsed.pathname.startsWith(`${plannerPathPrefix}/`)) {
-    parsed.pathname = `/api/${parsed.pathname.slice(plannerPathPrefix.length + 1)}`;
-  }
-  return `${parsed.pathname}${parsed.search}`;
-}
-
 function proxyRadicale(req, res) {
-  if (new URL(req.url ?? "/", "http://localhost").pathname === radicalePathPrefix) {
+  const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
+  if (pathname === radicalePathPrefix) {
     res.writeHead(308, { Location: `${radicalePathPrefix}/`, ...noStoreHeaders });
     res.end();
+    return;
+  }
+  if (pathname === `${radicalePathPrefix}/.web/js/main.js`) {
+    serveRadicaleAutologinScript(req, res);
     return;
   }
   proxyHttp(req, res, radicaleTarget, "radicale", {
@@ -182,6 +167,22 @@ function stripRadicalePrefix(url) {
     parsed.pathname = parsed.pathname.slice(radicalePathPrefix.length);
   }
   return `${parsed.pathname}${parsed.search}`;
+}
+
+function serveRadicaleAutologinScript(req, res) {
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    sendText(res, 405, "Method not allowed\n");
+    return;
+  }
+  const body = `import { LoadingScene } from "./scenes/LoadingScene.js";\nimport { LoginScene } from "./scenes/LoginScene.js";\nimport { push_scene } from "./scenes/scene_manager.js";\n\nnew LoadingScene().hide();\nconst loginScene = new LoginScene();\npush_scene(loginScene);\nloginScene._perform_login(${JSON.stringify(radicaleUser)}, "ownloom");\n`;
+  res.writeHead(200, {
+    "Content-Type": "text/javascript; charset=utf-8",
+    "Content-Length": Buffer.byteLength(body),
+    "X-Content-Type-Options": "nosniff",
+    ...noStoreHeaders,
+  });
+  if (req.method === "HEAD") res.end();
+  else res.end(body);
 }
 
 function proxyTerminal(req, res) {

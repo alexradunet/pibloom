@@ -32,8 +32,6 @@ Usage:
   ownloom-planner list [all|today|upcoming|overdue] [--json]
   ownloom-planner done <uid-prefix> [--json]
 
-  ownloom-planner server
-
 Environment:
   OWNLOOM_PLANNER_CALDAV_URL  default http://127.0.0.1:5232/
   OWNLOOM_PLANNER_USER        default alex
@@ -216,11 +214,6 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (command === "server") {
-    const { startServer } = await import("./server.js");
-    startServer();
-    return;
-  }
 
   throw new Error(`Unknown command: ${command}\n\n${usage()}`);
 }

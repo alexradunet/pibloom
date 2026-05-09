@@ -10,7 +10,7 @@ This package implements that system for the static local cockpit. If this file a
 - Keep Pico CSS as the baseline reset/component layer; map Ownloom tokens onto Pico variables in `public/styles/tokens.css`.
 - Keep runtime assets self-hosted. No remote scripts, styles, fonts, icons, analytics, or image assets.
 - Preserve CSP compatibility: `style-src 'self'`, `font-src 'self'`, loopback-only API/WebSocket/frame assumptions.
-- Preserve required IDs, `data-*` hooks, ARIA tabs, terminal hooks, planner hooks, and protocol behavior.
+- Preserve required IDs, `data-*` hooks, ARIA tabs, terminal hooks, Radicale frame hooks, and protocol behavior.
 - Keep `components.html` as a static no-JS component loom for reusable Ownloom atoms, molecules, and page patterns.
 
 ## Core visual contract
@@ -32,7 +32,7 @@ public/vendor/fonts/          # self-hosted Digital Scoarță typefaces
 public/styles/tokens.css      # canonical --ds-* tokens + Pico variable mapping
 public/styles/base.css        # base typography, forms, focus, selection
 public/styles/layout.css      # app shell, sidebar, workbench, grids
-public/styles/components.css  # cards, chips, messages, lists, planner, log
+public/styles/components.css  # cards, chips, messages, lists, service frames, log
 public/styles/responsive.css  # mobile/zoom/reduced-motion/forced-colors
 ```
 
@@ -42,7 +42,7 @@ public/styles/responsive.css  # mobile/zoom/reduced-motion/forced-colors
 - **Top lintel:** title, purpose, and live status in one quiet band.
 - **Workbench:** centered active thread first; thread rail secondary and hideable.
 - **Composer:** simple bottom tool strip; attachments remain explicit and one-shot.
-- **Planner:** honest live CalDAV/iCalendar state; never present cached/stale data as current.
+- **Planner:** embed Radicale collection management honestly; individual item operations belong in chat/CLI, not a duplicate custom web app.
 - **Access:** operator clarity; never echo tokens in normal text/logs.
 - **Shell:** clearly local/loopback; iframe lazy-load stays tab-gated.
 - **Trace:** local redacted diagnostics, monospace, readable, not durable memory.
@@ -59,7 +59,7 @@ Every cockpit tab should use a two-part layout:
 </div>
 ```
 
-The main work surface is carded like the Planner. The Workbench/chat exception keeps `.workbench-card` transparent so the conversation itself has no card background, while the right thread rail still participates in the same sidebar pattern.
+The main work surface is carded consistently. The Workbench/chat exception keeps `.workbench-card` transparent so the conversation itself has no card background, while the right thread rail still participates in the same sidebar pattern.
 
 ## Change checklist
 

@@ -65,14 +65,8 @@
     justify-content: flex-start;
   }
 
-  .planner-form,
   .composer-grid {
     grid-template-columns: 1fr;
-  }
-
-  .planner-title-field,
-  .planner-wide {
-    grid-column: auto;
   }
 
   .workbench-shell,
@@ -128,8 +122,7 @@
   }
 
   .component-sample,
-  .item,
-  .planner-item {
+  .item {
     padding: var(--space-xs);
   }
 
@@ -147,8 +140,7 @@
   }
 
   .list-card-header,
-  .item-header,
-  .planner-item-header {
+  .item-header {
     flex-direction: column;
   }
 }

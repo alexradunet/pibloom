@@ -10,7 +10,6 @@
     then "[${cfg.host}]"
     else cfg.host;
   isLoopback = builtins.elem cfg.host ["127.0.0.1" "::1" "localhost"];
-  serverIsLoopback = builtins.elem cfg.serverListen ["127.0.0.1" "::1" "localhost"];
   usesPasswordAuth = cfg.htpasswdFile != null;
   caldavUrl = "http://${bindHost}:${toString cfg.port}/";
 
@@ -81,24 +80,6 @@ in {
       description = "Planner CalDAV collection name used by the local ownloom adapter.";
     };
 
-    enableServer = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Run ownloom-planner-server as a systemd service for the local web view/API.";
-    };
-
-    serverPort = lib.mkOption {
-      type = lib.types.port;
-      default = 8082;
-      description = "TCP port for the ownloom-planner-server web view/API.";
-    };
-
-    serverListen = lib.mkOption {
-      type = lib.types.str;
-      default = "127.0.0.1";
-      description = "Address ownloom-planner-server binds to. Keep loopback-only unless protected.";
-    };
-
     extraSettings = lib.mkOption {
       type = lib.types.attrs;
       default = {};
@@ -120,10 +101,6 @@ in {
         assertion = (!cfg.openFirewall) || usesPasswordAuth;
         message = "services.ownloom-planner.htpasswdFile is required when opening the firewall.";
       }
-      {
-        assertion = (!cfg.enableServer) || serverIsLoopback;
-        message = "services.ownloom-planner.serverListen must stay loopback-only for the local web view/API.";
-      }
     ];
 
     environment.systemPackages = [
@@ -131,8 +108,8 @@ in {
       pkgs.radicale
     ];
 
-    # Three vars shared by the interactive shell, gateway injection, and the
-    # planner server service. Declare once, merge per consumer.
+    # Three vars shared by the interactive shell, gateway injection, and local services.
+    # Declare once, merge per consumer.
     ownloom.plannerEnvVars = {
       OWNLOOM_PLANNER_CALDAV_URL = caldavUrl;
       OWNLOOM_PLANNER_USER = cfg.user;
@@ -174,29 +151,6 @@ in {
           collection = "{user}/[^/]+";
           permissions = "rw";
         };
-      };
-    };
-
-    systemd.services.ownloom-planner-server = lib.mkIf cfg.enableServer {
-      description = "ownloom planner web view/API server";
-      wantedBy = ["multi-user.target"];
-      after = ["network.target" "radicale.service"];
-      serviceConfig = {
-        Type = "simple";
-        Restart = "on-failure";
-        ExecStart = "${pkgs.ownloom-planner}/bin/ownloom-planner server";
-        Environment = lib.mapAttrsToList (k: v: "${k}=${v}") (config.ownloom.plannerEnvVars
-          // {
-            OWNLOOM_PLANNER_PORT = toString cfg.serverPort;
-            OWNLOOM_PLANNER_LISTEN = cfg.serverListen;
-          });
-        User = "radicale";
-        Group = "radicale";
-        PrivateTmp = true;
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        NoNewPrivileges = true;
-        ReadWritePaths = [cfg.storageDir];
       };
     };
   };

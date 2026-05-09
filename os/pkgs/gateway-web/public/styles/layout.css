@@ -231,19 +231,6 @@
   display: none;
 }
 
-.planner-form {
-  display: grid;
-  grid-template-columns: minmax(16rem, 1.6fr) minmax(8rem, 0.7fr) minmax(11rem, 0.9fr) minmax(8rem, 0.6fr);
-  gap: var(--space-sm);
-  align-items: end;
-}
-
-.planner-title-field,
-.planner-wide {
-  grid-column: span 2;
-}
-
-.planner-grid,
 .access-lists,
 .component-grid {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
@@ -265,10 +252,6 @@
   gap: var(--space-sm);
   border-color: rgb(255 180 171 / 0.32);
   background: linear-gradient(135deg, rgb(147 0 10 / 0.2), var(--pico-card-background-color) 45%);
-}
-
-.embedded-service {
-  margin-block-start: var(--space-lg);
 }
 
 .terminal-frame,

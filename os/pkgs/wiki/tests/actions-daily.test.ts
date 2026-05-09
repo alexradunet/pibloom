@@ -57,6 +57,16 @@ describe("actions-daily", () => {
     expect(content).toContain("- first bullet");
   });
 
+  it("append can auto-create a technical daily note", () => {
+    const result = handleDailyAppend(wikiRoot, ["ops bullet"], { date: "2099-06-16", domain: "technical" });
+    expect(result.isOk()).toBe(true);
+
+    const content = readFileSync(path.join(wikiRoot, "daily", "2099-06-16.md"), "utf-8");
+    expect(content).toContain("domain: technical");
+    expect(content).toContain("areas: [ops]");
+    expect(content).toContain("- ops bullet");
+  });
+
   it("append inserts under existing section and updates `updated:` field", () => {
     const today = todayStamp();
     handleDailyAppend(wikiRoot, ["first"], { section: "Captured" });

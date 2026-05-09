@@ -82,6 +82,7 @@ export const toolManifest: ToolManifestEntry[] = [
       action: { type: "string", enum: ["get", "append"], description: "get: read today's note. append: add bullets." },
       bullets: { type: "array", items: { type: "string" }, description: "Bullets to append (for action=append)." },
       section: { type: "string", description: "Section heading to append under. Defaults to Captured." },
+      domain: domainParam,
       date: { type: "string", description: "Override date (YYYY-MM-DD). Defaults to today." },
     },
   },

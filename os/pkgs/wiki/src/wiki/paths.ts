@@ -38,26 +38,50 @@ function firstEnv(...names: string[]): string | undefined {
 	return undefined;
 }
 
+const WIKI_PROFILE_DOMAINS = ["personal", "technical"];
+
+function domainRootEnvName(domain: string): string {
+	return `OWNLOOM_WIKI_ROOT_${domain.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`;
+}
+
+function configuredRootForDomain(domain: string | undefined): string | undefined {
+	const normalized = normalizeDomain(domain);
+	if (!normalized) return undefined;
+	return firstEnv(domainRootEnvName(normalized));
+}
+
+function getDefaultWikiDomain(): string {
+	return normalizeDomain(firstEnv("OWNLOOM_WIKI_DEFAULT_DOMAIN")) ?? "technical";
+}
+
 export function getWikiRoot(): string {
-	return firstEnv("OWNLOOM_WIKI_ROOT", "OWNLOOM_WIKI_DIR") ?? path.join(os.homedir(), "wiki");
+	return firstEnv("OWNLOOM_WIKI_ROOT", "OWNLOOM_WIKI_DIR")
+		?? configuredRootForDomain(getDefaultWikiDomain())
+		?? configuredRootForDomain("technical")
+		?? configuredRootForDomain("personal")
+		?? path.join(os.homedir(), "wiki");
 }
 
 export function getWikiRoots(): Record<string, string> {
-	return { wiki: getWikiRoot() };
+	const roots: Record<string, string> = {};
+	for (const domain of WIKI_PROFILE_DOMAINS) {
+		const root = configuredRootForDomain(domain);
+		if (root) roots[domain] = root;
+	}
+	return Object.keys(roots).length > 0 ? roots : { wiki: getWikiRoot() };
 }
 
-export function getWikiRootForDomain(_domain: string | undefined): string {
-	return getWikiRoot();
+export function getWikiRootForDomain(domain: string | undefined): string {
+	return configuredRootForDomain(domain) ?? getWikiRoot();
 }
 
 export function getWorkspaceProfile(): WikiWorkspaceProfile {
-	const root = getWikiRoot();
 	return {
 		name: normalizeWorkspace(firstEnv("OWNLOOM_WIKI_WORKSPACE")),
-		defaultDomain: normalizeDomain(firstEnv("OWNLOOM_WIKI_DEFAULT_DOMAIN")) ?? "technical",
+		defaultDomain: getDefaultWikiDomain(),
 		domains: {
-			technical: { root },
-			personal: { root },
+			technical: { root: getWikiRootForDomain("technical") },
+			personal: { root: getWikiRootForDomain("personal") },
 		},
 	};
 }

@@ -48,7 +48,16 @@ fi
 
 ownloom_root="${OWNLOOM_ROOT:-${HOME:-/tmp}/ownloom}"
 flake_dir="${OWNLOOM_FLAKE_DIR:-$ownloom_root}"
-wiki_root="${OWNLOOM_WIKI_ROOT:-${HOME:-/tmp}/wiki}"
+compat_wiki_root="${OWNLOOM_WIKI_ROOT:-}"
+wiki_root_personal="${OWNLOOM_WIKI_ROOT_PERSONAL:-${compat_wiki_root:-${HOME:-/tmp}/wiki}}"
+wiki_root_technical="${OWNLOOM_WIKI_ROOT_TECHNICAL:-${compat_wiki_root:-/var/lib/ownloom/wiki}}"
+wiki_default_domain="${OWNLOOM_WIKI_DEFAULT_DOMAIN:-technical}"
+case "$wiki_default_domain" in
+  personal) default_wiki_root="$wiki_root_personal" ;;
+  technical) default_wiki_root="$wiki_root_technical" ;;
+  *) default_wiki_root="${OWNLOOM_WIKI_ROOT:-$wiki_root_technical}" ;;
+esac
+wiki_root="${OWNLOOM_WIKI_ROOT:-$default_wiki_root}"
 today="$(date +%F)"
 
 fleet_hosts=""
@@ -109,8 +118,8 @@ fi
 
 wiki_context="$(ownloom-wiki context --format markdown 2>/dev/null || true)"
 
-memory_path="$wiki_root/memory/MEMORY.md"
-user_path="$wiki_root/memory/USER.md"
+memory_path="$wiki_root_personal/memory/MEMORY.md"
+user_path="$wiki_root_personal/memory/USER.md"
 agent_dir="${OWNLOOM_AGENT_DIR:-${PI_CODING_AGENT_DIR:-${HOME:-/tmp}/.pi/agent}}"
 context_path="$agent_dir/context.json"
 memory_block=""
@@ -241,6 +250,8 @@ if [ "$format" = "json" ]; then
     --arg fleetMembership "$fleet_membership" \
     --arg flakeDir "$flake_dir" \
     --arg wikiRoot "$wiki_root" \
+    --arg wikiRootPersonal "$wiki_root_personal" \
+    --arg wikiRootTechnical "$wiki_root_technical" \
     --arg fleetBlock "$fleet_block" \
     --arg plannerPolicy "$planner_policy" \
     --arg cliPolicy "$cli_policy" \
@@ -250,7 +261,7 @@ if [ "$format" = "json" ]; then
     --arg memoryBlock "$memory_block" \
     --arg restoredBlock "$restored_block" \
     --arg healthBlock "$health_block" \
-    '{host: $host, fleetHosts: $fleetHosts, fleetMembership: $fleetMembership, flakeDir: $flakeDir, wikiRoot: $wikiRoot, blocks: {fleet: $fleetBlock, plannerPolicy: $plannerPolicy, cliPolicy: $cliPolicy, designPolicy: $designPolicy, plannerDigest: $plannerDigest, wiki: $wikiContext, memory: $memoryBlock, restored: $restoredBlock, health: $healthBlock}}'
+    '{host: $host, fleetHosts: $fleetHosts, fleetMembership: $fleetMembership, flakeDir: $flakeDir, wikiRoot: $wikiRoot, wikiRoots: {personal: $wikiRootPersonal, technical: $wikiRootTechnical}, blocks: {fleet: $fleetBlock, plannerPolicy: $plannerPolicy, cliPolicy: $cliPolicy, designPolicy: $designPolicy, plannerDigest: $plannerDigest, wiki: $wikiContext, memory: $memoryBlock, restored: $restoredBlock, health: $healthBlock}}'
   exit 0
 fi
 

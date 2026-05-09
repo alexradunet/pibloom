@@ -5,17 +5,22 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { ok, err } from "./lib/core-utils.ts";
 import type { ActionResult } from "./types.ts";
-import { todayStamp } from "./paths.ts";
+import { normalizeDomain, todayStamp } from "./paths.ts";
+
+function dailyAreaForDomain(domain: string): string {
+  return domain === "technical" ? "ops" : "journal";
+}
 
 /** Build a v2 daily-note skeleton. Exported so other actions (e.g. ingest) reuse it. */
-export function dailyNoteSkeleton(date: string): string {
+export function dailyNoteSkeleton(date: string, domainInput = "personal"): string {
+  const domain = normalizeDomain(domainInput) ?? "personal";
   return [
     "---",
     `id: daily-note/${date}`,
     `type: daily-note`,
     `title: ${date}`,
-    `domain: personal`,
-    `areas: [journal]`,
+    `domain: ${domain}`,
+    `areas: [${dailyAreaForDomain(domain)}]`,
     `confidence: high`,
     `last_confirmed: ${date}`,
     `decay: fast`,
@@ -38,10 +43,10 @@ export function dailyNoteSkeleton(date: string): string {
   ].join("\n");
 }
 
-function ensureDailyNote(dailyDir: string, today: string): string {
+function ensureDailyNote(dailyDir: string, today: string, domain?: string): string {
   const filePath = path.join(dailyDir, `${today}.md`);
   if (!existsSync(filePath)) {
-    writeFileSync(filePath, dailyNoteSkeleton(today), "utf-8");
+    writeFileSync(filePath, dailyNoteSkeleton(today, domain), "utf-8");
   }
   return filePath;
 }
@@ -53,6 +58,7 @@ function isDailyDate(value: string): boolean {
 export interface DailyAppendOptions {
   section?: string;    // which section to append under; defaults to "Captured"
   date?: string;       // override date (YYYY-MM-DD); defaults to today
+  domain?: string;     // frontmatter domain for auto-created daily notes
 }
 
 export function handleDailyAppend(
@@ -67,7 +73,7 @@ export function handleDailyAppend(
 
   const dailyDir = path.join(wikiRoot, "daily");
   mkdirSync(dailyDir, { recursive: true });
-  const filePath = ensureDailyNote(dailyDir, today);
+  const filePath = ensureDailyNote(dailyDir, today, opts.domain);
 
   const section = opts.section ?? "Captured";
   let content = readFileSync(filePath, "utf-8");

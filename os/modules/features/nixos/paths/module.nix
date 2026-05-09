@@ -9,12 +9,20 @@ in {
     (lib.mkRenamedOptionModule ["ownloom" "user"] ["ownloom" "human"])
   ];
 
-  config.environment.sessionVariables = {
-    OWNLOOM_ROOT = cfg.root;
-    OWNLOOM_WIKI_ROOT = cfg.wiki.root;
-    OWNLOOM_WIKI_WORKSPACE = cfg.wiki.workspace;
-    OWNLOOM_WIKI_DEFAULT_DOMAIN = cfg.wiki.defaultDomain;
-    OWNLOOM_WIKI_HOST = config.networking.hostName;
+  config = {
+    environment.sessionVariables = {
+      OWNLOOM_ROOT = cfg.root;
+      OWNLOOM_WIKI_ROOT = cfg.wiki.root;
+      OWNLOOM_WIKI_ROOT_PERSONAL = cfg.wiki.roots.personal;
+      OWNLOOM_WIKI_ROOT_TECHNICAL = cfg.wiki.roots.technical;
+      OWNLOOM_WIKI_WORKSPACE = cfg.wiki.workspace;
+      OWNLOOM_WIKI_DEFAULT_DOMAIN = cfg.wiki.defaultDomain;
+      OWNLOOM_WIKI_HOST = config.networking.hostName;
+    };
+
+    systemd.tmpfiles.rules = [
+      "d ${cfg.wiki.roots.technical} 0750 ${cfg.human.name} users -"
+    ];
   };
 
   options.ownloom.plannerEnvVars = lib.mkOption {
@@ -118,13 +126,40 @@ in {
     };
 
     wiki = {
+      roots = {
+        personal = lib.mkOption {
+          type = lib.types.str;
+          default = "${cfg.human.homeDirectory}/wiki";
+          defaultText = lib.literalExpression ''"''${config.ownloom.human.homeDirectory}/wiki"'';
+          description = ''
+            Absolute path to Alex's personal/human Markdown wiki root.
+          '';
+        };
+
+        technical = lib.mkOption {
+          type = lib.types.str;
+          default = "/var/lib/ownloom/wiki";
+          description = ''
+            Absolute path to Ownloom's technical/operator Markdown wiki root.
+          '';
+        };
+      };
+
       root = lib.mkOption {
         type = lib.types.str;
-        default = "${cfg.human.homeDirectory}/wiki";
-        defaultText = lib.literalExpression ''"''${config.ownloom.human.homeDirectory}/wiki"'';
+        default =
+          if cfg.wiki.defaultDomain == "personal"
+          then cfg.wiki.roots.personal
+          else cfg.wiki.roots.technical;
+        defaultText = lib.literalExpression ''
+          if config.ownloom.wiki.defaultDomain == "personal"
+          then config.ownloom.wiki.roots.personal
+          else config.ownloom.wiki.roots.technical
+        '';
         description = ''
-          Absolute path to the single Markdown wiki root. Technical and personal
-          are frontmatter domains inside this root, not separate vaults.
+          Compatibility/default Markdown wiki root used when a caller does not
+          specify a domain. Personal and technical roots are configured under
+          ownloom.wiki.roots.*.
         '';
       };
 

@@ -9,7 +9,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { ok, err } from "./lib/core-utils.ts";
 import type { ActionResult } from "./types.ts";
-import { todayStamp } from "./paths.ts";
+import { normalizeDomain, todayStamp } from "./paths.ts";
 import { dailyNoteSkeleton } from "./actions-daily.ts";
 
 const SOURCE_CHANNELS = new Set(["whatsapp", "gmail", "calendar", "drive", "journal", "web", "voice", "other"]);
@@ -56,6 +56,7 @@ export function handleIngest(
   if (!SOURCE_CHANNELS.has(channel)) {
     return err(`Invalid source channel: ${channel}. Expected one of: ${[...SOURCE_CHANNELS].join(", ")}.`);
   }
+  const domain = normalizeDomain(opts.domain) ?? "personal";
   const areas = opts.areas?.length ? opts.areas : ["inbox"];
   const clean = stripSecrets(content);
 
@@ -72,7 +73,7 @@ export function handleIngest(
     `title: ${opts.title ?? `${channel} capture ${today}`}`,
     `channel: ${channel}`,
     `status: captured`,
-    `domain: ${opts.domain ?? "personal"}`,
+    `domain: ${domain}`,
     `areas: [${areas.join(", ")}]`,
     `confidence: high`,
     `last_confirmed: ${today}`,
@@ -92,7 +93,7 @@ export function handleIngest(
   const dailyPath = path.join(dailyDir, `${today}.md`);
 
   if (!existsSync(dailyPath)) {
-    writeFileSync(dailyPath, dailyNoteSkeleton(today), "utf-8");
+    writeFileSync(dailyPath, dailyNoteSkeleton(today, domain), "utf-8");
   }
 
   // 3. Append a captured bullet to daily note

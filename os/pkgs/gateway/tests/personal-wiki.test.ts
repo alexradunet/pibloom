@@ -6,19 +6,27 @@ import test from "node:test";
 import { formatLocalDate } from "../src/personal/date.js";
 import { PersonalConversationCaptureService } from "../src/personal/conversation-capture.js";
 import { PersonalJournalService } from "../src/personal/journal.js";
+import { getPersonalWikiRoot } from "../src/personal/wiki.js";
+
+function restoreEnv(name: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[name];
+  } else {
+    process.env[name] = value;
+  }
+}
 
 function withPersonalWikiRoot<T>(fn: (wikiRoot: string) => T): T {
-  const previous = process.env.OWNLOOM_WIKI_ROOT;
+  const previousRoot = process.env.OWNLOOM_WIKI_ROOT;
+  const previousPersonalRoot = process.env.OWNLOOM_WIKI_ROOT_PERSONAL;
   const wikiRoot = mkdtempSync(path.join(os.tmpdir(), "ownloom-gateway-personal-wiki-"));
   process.env.OWNLOOM_WIKI_ROOT = wikiRoot;
+  delete process.env.OWNLOOM_WIKI_ROOT_PERSONAL;
   try {
     return fn(wikiRoot);
   } finally {
-    if (previous === undefined) {
-      delete process.env.OWNLOOM_WIKI_ROOT;
-    } else {
-      process.env.OWNLOOM_WIKI_ROOT = previous;
-    }
+    restoreEnv("OWNLOOM_WIKI_ROOT", previousRoot);
+    restoreEnv("OWNLOOM_WIKI_ROOT_PERSONAL", previousPersonalRoot);
     rmSync(wikiRoot, { recursive: true, force: true });
   }
 }
@@ -36,6 +44,19 @@ function withTimeZone<T>(timeZone: string, fn: () => T): T {
     }
   }
 }
+
+test("personal wiki root prefers the split personal env var", () => {
+  const previousRoot = process.env.OWNLOOM_WIKI_ROOT;
+  const previousPersonalRoot = process.env.OWNLOOM_WIKI_ROOT_PERSONAL;
+  process.env.OWNLOOM_WIKI_ROOT = "/tmp/technical-wiki";
+  process.env.OWNLOOM_WIKI_ROOT_PERSONAL = "/tmp/personal-wiki";
+  try {
+    assert.equal(getPersonalWikiRoot(), "/tmp/personal-wiki");
+  } finally {
+    restoreEnv("OWNLOOM_WIKI_ROOT", previousRoot);
+    restoreEnv("OWNLOOM_WIKI_ROOT_PERSONAL", previousPersonalRoot);
+  }
+});
 
 test("personal journal append keeps multiline entries under one markdown bullet", () => {
   withPersonalWikiRoot((wikiRoot) => {

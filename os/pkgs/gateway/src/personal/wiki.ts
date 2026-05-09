@@ -3,7 +3,9 @@ import os from "node:os";
 import path from "node:path";
 
 export function getPersonalWikiRoot(): string {
-  return process.env.OWNLOOM_WIKI_ROOT ?? path.join(os.homedir(), "wiki");
+  return process.env.OWNLOOM_WIKI_ROOT_PERSONAL
+    ?? process.env.OWNLOOM_WIKI_ROOT
+    ?? path.join(os.homedir(), "wiki");
 }
 
 // ── Gateway wiki search ────────────────────────────────────────────────────

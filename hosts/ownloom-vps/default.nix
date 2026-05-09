@@ -302,13 +302,13 @@ in {
             "1. ownloom_planner action=list view=overdue — list any overdue items first"
             "2. ownloom_planner action=list view=today — today's tasks and reminders"
             "3. ownloom_planner action=list view=upcoming — next 7 days"
-            "4. wiki_search query=project type=project — summarize 1-2 active projects with recent activity"
-            "5. Check meta/about-alex/current-context.md and note if anything needs updating"
+            "4. wiki_search query=project type=project domain=personal — summarize 1-2 active projects with recent activity"
+            "5. Check the personal wiki meta/about-alex/current-context.md and note if anything needs updating"
             "6. Run ownloom-context --health from the shell and flag any anomalies (disk, load, services)"
             ""
             "Format: ⚠️ Overdue | 📋 Today | 📅 Upcoming | 🚀 Projects | 🔧 System"
             "Keep each section to 2-3 bullets. End with: — ownloom"
-            "Finally: call wiki_daily action=append to log delivery."
+            "Finally: call wiki_daily action=append domain=personal to log delivery."
           ];
           enabledTools = "ownloom_planner,wiki_search,wiki_daily";
         };
@@ -320,8 +320,8 @@ in {
           userPrompts = [
             "Weekly review prompt for Alex — $(date +%Y-%m-%d)."
             ""
-            "1. wiki_search query=decision type=decision — list decisions made this week"
-            "2. wiki_daily action=get — review the last few daily notes for patterns"
+            "1. wiki_search query=decision type=decision domain=personal — list decisions made this week"
+            "2. wiki_daily action=get domain=personal — review the last few daily notes for patterns"
             "3. ownloom_planner action=list view=overdue — flag anything slipping"
             "4. Summarize: What got done? What's blocked? What needs a decision?"
             ""
@@ -338,11 +338,11 @@ in {
           userPrompts = [
             "Monthly wiki decay pass — $(date +%Y-%m-%d)."
             ""
-            "1. Run wiki_decay_pass dry_run=false to downgrade stale-confidence pages."
-            "2. Run wiki_lint mode=strict and report any new issues."
-            "3. List the top 5 confidence:low pages from wiki_search that need review or archiving."
+            "1. Run wiki_decay_pass dry_run=false domain=personal to downgrade stale-confidence pages."
+            "2. Run wiki_lint mode=strict domain=personal and report any new issues."
+            "3. List the top 5 confidence:low personal pages from wiki_search domain=personal that need review or archiving."
             ""
-            "Log results with wiki_daily action=append to record the pass."
+            "Log results with wiki_daily action=append domain=personal to record the pass."
           ];
           enabledTools = "wiki_decay_pass,wiki_lint,wiki_search,wiki_daily,wiki_rebuild";
         };

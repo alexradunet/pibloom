@@ -2,7 +2,7 @@
 
 ownloom is a personal NixOS monorepo for one VPS-centered host. It bundles the host configuration, reusable OS modules, local agent runtime packages (`pi`, `ownloom-planner`, `ownloom-gateway`, `ownloom-wiki`, …), and agent skills into a single flake.
 
-The wiki/notes content is intentionally **not** part of this repository — it lives at `~/wiki` on the host and is never published.
+The wiki/notes content is intentionally **not** part of this repository. Alex's personal wiki lives at `~/wiki`; Ownloom's technical/operator wiki lives at `/var/lib/ownloom/wiki`; neither is published by this repo.
 
 ## Layout
 

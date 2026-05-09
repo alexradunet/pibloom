@@ -37,13 +37,20 @@ OWNLOOM_WIKI_DEFAULT_DOMAIN=personal
 OWNLOOM_WIKI_HOST=ownloom-vps
 ```
 
-No legacy `NIXPI_*` wiki environment variables are accepted. If no root is configured, the default root is:
+No legacy `NIXPI_*` wiki environment variables are accepted. If no root is configured, the fallback root is:
 
 ```text
 ~/wiki
 ```
 
-There is one wiki root per workspace. Domains are frontmatter labels inside that root, not separate vaults.
+Ownloom hosts may expose split roots with:
+
+```text
+OWNLOOM_WIKI_ROOT_PERSONAL=/home/alex/wiki
+OWNLOOM_WIKI_ROOT_TECHNICAL=/var/lib/ownloom/wiki
+```
+
+`domain=personal|technical` selects the matching root when those env vars are set. `OWNLOOM_WIKI_ROOT` remains the compatibility/default root for callers that do not select a domain.
 
 ## Canonical folders
 

@@ -19,14 +19,16 @@ ownloom-wiki mutate wiki_session_capture '{"summary":"Worked on ownloom wiki doc
 ## Environment
 
 ```text
-OWNLOOM_WIKI_ROOT=/path/to/wiki
+OWNLOOM_WIKI_ROOT=/path/to/default-wiki
+OWNLOOM_WIKI_ROOT_PERSONAL=/home/alex/wiki
+OWNLOOM_WIKI_ROOT_TECHNICAL=/var/lib/ownloom/wiki
 OWNLOOM_WIKI_WORKSPACE=work
-OWNLOOM_WIKI_DEFAULT_DOMAIN=work
+OWNLOOM_WIKI_DEFAULT_DOMAIN=technical
 OWNLOOM_WIKI_HOST=workstation
 OWNLOOM_WIKI_BODY_SEARCH_BIN=rga
 ```
 
-If `OWNLOOM_WIKI_ROOT` is not set, ownloom Wiki uses:
+If `OWNLOOM_WIKI_ROOT` is not set, ownloom Wiki uses the configured default-domain split root, then falls back to:
 
 ```text
 ~/wiki

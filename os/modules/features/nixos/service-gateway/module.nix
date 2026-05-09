@@ -197,7 +197,7 @@ in {
           type = lib.types.str;
           default = config.ownloom.wiki.root;
           defaultText = lib.literalExpression "config.ownloom.wiki.root";
-          description = "Single wiki root exposed to Pi gateway sessions.";
+          description = "Compatibility/default wiki root exposed to Pi gateway sessions. Personal and technical roots are also exported through OWNLOOM_WIKI_ROOT_PERSONAL/TECHNICAL.";
         };
       };
 
@@ -418,6 +418,8 @@ in {
           XDG_CACHE_HOME = "${cfg.stateDir}/xdg/cache";
           PI_CODING_AGENT_DIR = settings.pi.agentDir;
           OWNLOOM_WIKI_ROOT = settings.wiki.dir;
+          OWNLOOM_WIKI_ROOT_PERSONAL = config.ownloom.wiki.roots.personal;
+          OWNLOOM_WIKI_ROOT_TECHNICAL = config.ownloom.wiki.roots.technical;
           OWNLOOM_WIKI_WORKSPACE = config.ownloom.wiki.workspace;
           OWNLOOM_WIKI_DEFAULT_DOMAIN = config.ownloom.wiki.defaultDomain;
           OWNLOOM_WIKI_HOST = config.networking.hostName;

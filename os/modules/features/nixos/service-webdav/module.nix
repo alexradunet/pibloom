@@ -11,6 +11,32 @@
     "::1"
     "localhost"
   ];
+  authFile =
+    if cfg.htpasswdFile != null
+    then cfg.htpasswdFile
+    else "/run/secrets/${cfg.htpasswdSecret}";
+  davLocationConfig = authRealm: ''
+    # WebDAV verbs — PUT/DELETE/MKCOL/COPY/MOVE are the write methods;
+    # PROPFIND/OPTIONS are the discovery methods (dav_ext).
+    dav_methods PUT DELETE MKCOL COPY MOVE;
+    dav_ext_methods PROPFIND OPTIONS;
+
+    # Allow nginx to create intermediate directories on PUT.
+    create_full_put_path on;
+
+    # File/directory permissions created by nginx.
+    dav_access user:rw group:r all:r;
+
+    # Basic auth — credentials file is decrypted by sops at runtime.
+    auth_basic "${authRealm}";
+    auth_basic_user_file ${authFile};
+
+    # Let WebDAV clients discover directory contents.
+    autoindex on;
+
+    # Ensure COPY/MOVE destination headers are accepted.
+    client_max_body_size 256m;
+  '';
 in {
   options.services.ownloom-webdav = {
     enable = lib.mkEnableOption "loopback WebDAV server for the ownloom wiki (access via SSH tunnel)";
@@ -29,9 +55,9 @@ in {
 
     wikiRoot = lib.mkOption {
       type = lib.types.str;
-      default = config.ownloom.wiki.root;
-      defaultText = lib.literalExpression "config.ownloom.wiki.root";
-      description = "Absolute path to the directory served over WebDAV. Defaults to the ownloom wiki root.";
+      default = config.ownloom.wiki.roots.personal;
+      defaultText = lib.literalExpression "config.ownloom.wiki.roots.personal";
+      description = "Compatibility WebDAV root served at /. Defaults to the personal wiki root. /personal/ and /technical/ expose the explicit split roots.";
     };
 
     htpasswdSecret = lib.mkOption {
@@ -87,7 +113,7 @@ in {
     ];
 
     # nginx with WebDAV extension module, workers running as the wiki owner
-    # so they can read/write ~/wiki without any chmod gymnastics.
+    # so they can read/write the personal and technical wiki roots without chmod gymnastics.
     services.nginx = {
       enable = true;
       user = userName;
@@ -104,31 +130,20 @@ in {
 
         locations."/" = {
           root = cfg.wikiRoot;
+          extraConfig = davLocationConfig "ownloom Wiki";
+        };
+
+        locations."/personal/" = {
           extraConfig = ''
-            # WebDAV verbs — PUT/DELETE/MKCOL/COPY/MOVE are the write methods;
-            # PROPFIND/OPTIONS are the discovery methods (dav_ext).
-            dav_methods PUT DELETE MKCOL COPY MOVE;
-            dav_ext_methods PROPFIND OPTIONS;
+            alias ${config.ownloom.wiki.roots.personal}/;
+            ${davLocationConfig "ownloom Personal Wiki"}
+          '';
+        };
 
-            # Allow nginx to create intermediate directories on PUT.
-            create_full_put_path on;
-
-            # File/directory permissions created by nginx.
-            dav_access user:rw group:r all:r;
-
-            # Basic auth — credentials file is decrypted by sops at runtime.
-            auth_basic "ownloom Wiki";
-            auth_basic_user_file ${
-              if cfg.htpasswdFile != null
-              then cfg.htpasswdFile
-              else "/run/secrets/${cfg.htpasswdSecret}"
-            };
-
-            # Let WebDAV clients discover directory contents.
-            autoindex on;
-
-            # Ensure COPY/MOVE destination headers are accepted.
-            client_max_body_size 256m;
+        locations."/technical/" = {
+          extraConfig = ''
+            alias ${config.ownloom.wiki.roots.technical}/;
+            ${davLocationConfig "ownloom Technical Wiki"}
           '';
         };
       };
@@ -138,12 +153,19 @@ in {
       # The NixOS nginx module sets ProtectHome=yes by default, which blocks
       # access to /home even for processes running as the home directory owner.
       # Since this nginx instance is loopback-only and runs as the wiki owner,
-      # we disable that restriction so workers can read/write ~/wiki.
+      # we disable that restriction so workers can read/write the wiki roots.
       services.nginx.serviceConfig.ProtectHome = lib.mkForce false;
+      services.nginx.serviceConfig.ReadWritePaths = lib.mkForce [
+        cfg.wikiRoot
+        config.ownloom.wiki.roots.personal
+        config.ownloom.wiki.roots.technical
+      ];
 
       # Ensure the wiki directory exists with correct ownership before nginx starts.
       tmpfiles.rules = [
         "d ${cfg.wikiRoot} 0750 ${userName} users -"
+        "d ${config.ownloom.wiki.roots.personal} 0750 ${userName} users -"
+        "d ${config.ownloom.wiki.roots.technical} 0750 ${userName} users -"
       ];
 
       services.ownloom-webdav-wiki-rebuild = lib.mkIf (cfg.metadataRebuildInterval != "0") {
@@ -157,12 +179,25 @@ in {
         };
         environment = {
           OWNLOOM_WIKI_ROOT = cfg.wikiRoot;
+          OWNLOOM_WIKI_ROOT_PERSONAL = config.ownloom.wiki.roots.personal;
+          OWNLOOM_WIKI_ROOT_TECHNICAL = config.ownloom.wiki.roots.technical;
           OWNLOOM_WIKI_WORKSPACE = config.ownloom.wiki.workspace;
           OWNLOOM_WIKI_DEFAULT_DOMAIN = config.ownloom.wiki.defaultDomain;
           OWNLOOM_WIKI_HOST = config.networking.hostName;
         };
         script = ''
-          ${pkgs.ownloom-wiki}/bin/ownloom-wiki mutate wiki_rebuild '{}' --json >/dev/null
+          set -euo pipefail
+          rebuild_root() {
+            domain="$1"
+            root="$2"
+            if [ -d "$root" ]; then
+              OWNLOOM_WIKI_ROOT="$root" \
+              OWNLOOM_WIKI_DEFAULT_DOMAIN="$domain" \
+                ${pkgs.ownloom-wiki}/bin/ownloom-wiki mutate wiki_rebuild "{\"domain\":\"$domain\"}" --json >/dev/null
+            fi
+          }
+          rebuild_root personal ${lib.escapeShellArg config.ownloom.wiki.roots.personal}
+          rebuild_root technical ${lib.escapeShellArg config.ownloom.wiki.roots.technical}
         '';
       };
 

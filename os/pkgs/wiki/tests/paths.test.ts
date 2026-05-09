@@ -33,6 +33,8 @@ afterEach(() => {
   delete process.env.OWNLOOM_WIKI_HOST;
   delete process.env.OWNLOOM_WIKI_WORKSPACE;
   delete process.env.OWNLOOM_WIKI_DEFAULT_DOMAIN;
+  delete process.env.OWNLOOM_WIKI_ROOT_PERSONAL;
+  delete process.env.OWNLOOM_WIKI_ROOT_TECHNICAL;
 
 });
 
@@ -48,7 +50,7 @@ describe("getWikiRoot", () => {
     expect(getWikiRoot()).toBe(path.join(process.env.HOME ?? "/root", "wiki"));
   });
 
-  it("uses one root for every domain", () => {
+  it("uses one compatibility root for every domain when split roots are unset", () => {
     process.env.OWNLOOM_WIKI_ROOT = "/tmp/default-wiki";
     expect(getWikiRoots()).toEqual({ wiki: "/tmp/default-wiki" });
     expect(getWikiRootForDomain(" technical ")).toBe("/tmp/default-wiki");
@@ -57,12 +59,27 @@ describe("getWikiRoot", () => {
     expect(getWikiRootForDomain(undefined)).toBe("/tmp/default-wiki");
   });
 
-  it("does not infer sibling split roots", () => {
-    process.env.OWNLOOM_WIKI_ROOT = "/srv/wiki";
+  it("supports explicit personal and technical roots", () => {
+    process.env.OWNLOOM_WIKI_ROOT_PERSONAL = "/home/alex/wiki";
+    process.env.OWNLOOM_WIKI_ROOT_TECHNICAL = "/var/lib/ownloom/wiki";
 
-    expect(getWikiRootForDomain("technical")).toBe("/srv/wiki");
-    expect(getWikiRootForDomain("personal")).toBe("/srv/wiki");
-    expect(getWikiRootForDomain("unknown")).toBe("/srv/wiki");
+    expect(getWikiRoots()).toEqual({
+      personal: "/home/alex/wiki",
+      technical: "/var/lib/ownloom/wiki",
+    });
+    expect(getWikiRoot()).toBe("/var/lib/ownloom/wiki");
+    expect(getWikiRootForDomain("technical")).toBe("/var/lib/ownloom/wiki");
+    expect(getWikiRootForDomain("personal")).toBe("/home/alex/wiki");
+    expect(getWikiRootForDomain("unknown")).toBe("/var/lib/ownloom/wiki");
+  });
+
+  it("uses the default domain root when the compatibility root is unset", () => {
+    process.env.OWNLOOM_WIKI_ROOT_PERSONAL = "/home/alex/wiki";
+    process.env.OWNLOOM_WIKI_ROOT_TECHNICAL = "/var/lib/ownloom/wiki";
+    process.env.OWNLOOM_WIKI_DEFAULT_DOMAIN = "personal";
+
+    expect(getWikiRoot()).toBe("/home/alex/wiki");
+    expect(getWikiRootForDomain(undefined)).toBe("/home/alex/wiki");
   });
 });
 

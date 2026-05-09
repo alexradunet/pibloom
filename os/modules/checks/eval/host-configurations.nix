@@ -17,7 +17,9 @@
     userHome = host.config.ownloom.human.homeDirectory;
   in
     assert lib.asserts.assertMsg (host.config.environment.sessionVariables.OWNLOOM_ROOT == "${userHome}/ownloom") "${name} must export OWNLOOM_ROOT";
-    assert lib.asserts.assertMsg (host.config.environment.sessionVariables.OWNLOOM_WIKI_ROOT == "${userHome}/wiki") "${name} must export the ownloom wiki root as ~/wiki";
+    assert lib.asserts.assertMsg (host.config.environment.sessionVariables.OWNLOOM_WIKI_ROOT == "/var/lib/ownloom/wiki") "${name} must export the default technical wiki root";
+    assert lib.asserts.assertMsg (host.config.environment.sessionVariables.OWNLOOM_WIKI_ROOT_PERSONAL == "${userHome}/wiki") "${name} must export the personal wiki root as ~/wiki";
+    assert lib.asserts.assertMsg (host.config.environment.sessionVariables.OWNLOOM_WIKI_ROOT_TECHNICAL == "/var/lib/ownloom/wiki") "${name} must export the technical wiki root under /var/lib/ownloom";
     assert lib.asserts.assertMsg (host.config.environment.sessionVariables.OWNLOOM_WIKI_WORKSPACE == "ownloom") "${name} must export the ownloom wiki workspace label"; true;
   assertHost = name: host: let
     activationText = host.config.system.activationScripts.ownloom-pi-settings.text or "";

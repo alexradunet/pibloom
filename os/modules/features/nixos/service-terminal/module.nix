@@ -152,6 +152,8 @@ in {
         SHELL = lib.getExe pkgs.bashInteractive;
         OWNLOOM_ROOT = config.ownloom.root;
         OWNLOOM_WIKI_ROOT = config.ownloom.wiki.root;
+        OWNLOOM_WIKI_ROOT_PERSONAL = config.ownloom.wiki.roots.personal;
+        OWNLOOM_WIKI_ROOT_TECHNICAL = config.ownloom.wiki.roots.technical;
         OWNLOOM_WIKI_WORKSPACE = config.ownloom.wiki.workspace;
         OWNLOOM_WIKI_DEFAULT_DOMAIN = config.ownloom.wiki.defaultDomain;
         OWNLOOM_WIKI_HOST = config.networking.hostName;

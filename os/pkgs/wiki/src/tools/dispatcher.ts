@@ -37,6 +37,10 @@ function wikiRootForTool(domain: string | undefined): string {
   return getWikiRootForDomain(domain);
 }
 
+function effectiveDomain(domain: string | undefined): string {
+  return domain ?? getWorkspaceProfile().defaultDomain;
+}
+
 function maybeRebuild(wikiRoot: string, result: HarnessToolResult, mutatesWiki: boolean): HarnessToolResult {
   if (mutatesWiki && !result.isError) rebuildAllMeta(wikiRoot);
   return result;
@@ -112,7 +116,7 @@ function handleSessionCaptureInline(
   if (relatedPages.length) bullets.push(...relatedPages.map((p) => `  - related: [[${p}]]`));
   if (commands.length) bullets.push(...commands.map((c) => `  - ran: \`${c}\``));
 
-  const appendResult = handleDailyAppend(wikiRoot, bullets, { section: "Captured" });
+  const appendResult = handleDailyAppend(wikiRoot, bullets, { section: "Captured", domain: effectiveDomain(params.domain as string | undefined) });
   if (appendResult.isErr()) return toToolResult(appendResult);
 
   const text = [
@@ -173,7 +177,7 @@ async function callWikiToolUnlocked(name: string, params: Record<string, any>, o
         aliases: params.aliases,
         tags: params.tags,
         hosts: params.hosts,
-        domain: params.domain,
+        domain: effectiveDomain(params.domain),
         areas: params.areas,
         folder: params.folder ?? "objects",
         summary: params.summary,
@@ -196,6 +200,7 @@ async function callWikiToolUnlocked(name: string, params: Record<string, any>, o
       return maybeRebuild(wikiRoot, toToolResult(handleDailyAppend(wikiRoot, params.bullets ?? [], {
         section: params.section,
         date: params.date,
+        domain: effectiveDomain(params.domain),
       })), true);
     }
 
@@ -205,7 +210,7 @@ async function callWikiToolUnlocked(name: string, params: Record<string, any>, o
         channel: params.channel,
         title: params.title,
         summary: params.summary,
-        domain: params.domain,
+        domain: effectiveDomain(params.domain),
         areas: params.areas,
         tags: params.tags,
       })), true);
@@ -289,13 +294,15 @@ export function buildWikiContextPrompt(): string {
 }
 
 export function buildWikiContext(format: "markdown" | "json" = "markdown") {
+  const workspace = getWorkspaceProfile();
+  const digestRoot = getWikiRootForDomain(workspace.defaultDomain);
   const context = {
     host: getCurrentHost(),
     wikiRoot: getWikiRoot(),
     wikiRoots: getWikiRoots(),
-    workspace: getWorkspaceProfile(),
+    workspace,
     wikiContext: buildWikiContextPrompt(),
-    wikiDigest: buildWikiDigest(getWikiRoot()),
+    wikiDigest: buildWikiDigest(digestRoot, { domain: workspace.defaultDomain }),
   };
 
   if (format === "json") return JSON.stringify(context, null, 2);

@@ -84,6 +84,8 @@ in {
         set -euo pipefail
         export HOME=${humanHome}
         export OWNLOOM_WIKI_ROOT=${config.ownloom.wiki.root}
+        export OWNLOOM_WIKI_ROOT_PERSONAL=${config.ownloom.wiki.roots.personal}
+        export OWNLOOM_WIKI_ROOT_TECHNICAL=${config.ownloom.wiki.roots.technical}
         export OWNLOOM_WIKI_HOST=${config.networking.hostName}
         export NO_COLOR=1
         out=${outPath}

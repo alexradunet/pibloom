@@ -64,11 +64,10 @@
 in
   assert lib.asserts.assertMsg (lib.hasInfix "/bin/ownloom-gateway" execStart) "ownloom-gateway ExecStart must invoke the configured package";
   assert lib.asserts.assertMsg (lib.hasInfix "ownloom-gateway.yml" execStart) "ownloom-gateway ExecStart must include generated YAML config";
-  assert lib.asserts.assertMsg (environment.OWNLOOM_WIKI_ROOT == "/srv/wiki") "ownloom-gateway must expose the single wiki root";
-  assert lib.asserts.assertMsg (!(builtins.hasAttr "OWNLOOM_WIKI_ROOTS" environment)) "ownloom-gateway must not expose split wiki roots";
-  assert lib.asserts.assertMsg (!(builtins.hasAttr "OWNLOOM_WIKI_ROOT_TECHNICAL" environment)) "ownloom-gateway must not expose a split technical wiki root";
-  assert lib.asserts.assertMsg (!(builtins.hasAttr "OWNLOOM_WIKI_ROOT_PERSONAL" environment)) "ownloom-gateway must not expose a split personal wiki root";
-  assert lib.asserts.assertMsg (!(builtins.hasAttr "OWNLOOM_WIKI_ALLOWED_DOMAINS" environment)) "ownloom-gateway must not restrict domains inside the single wiki";
+  assert lib.asserts.assertMsg (environment.OWNLOOM_WIKI_ROOT == "/srv/wiki") "ownloom-gateway must expose the compatibility/default wiki root";
+  assert lib.asserts.assertMsg (environment.OWNLOOM_WIKI_ROOT_PERSONAL == "/home/human/wiki") "ownloom-gateway must expose the personal wiki root";
+  assert lib.asserts.assertMsg (environment.OWNLOOM_WIKI_ROOT_TECHNICAL == "/var/lib/ownloom/wiki") "ownloom-gateway must expose the technical wiki root";
+  assert lib.asserts.assertMsg (!(builtins.hasAttr "OWNLOOM_WIKI_ALLOWED_DOMAINS" environment)) "ownloom-gateway must not restrict wiki domains";
   assert lib.asserts.assertMsg (environment.PI_SYNTHETIC_API_KEY_FILE == "%d/synthetic_api_key") "ownloom-gateway must read the Synthetic key through a systemd credential";
   assert lib.asserts.assertMsg (environment.PI_CODING_AGENT_DIR == "/home/human/.pi/agent") "ownloom-gateway must use the normal Pi SDK agent directory";
   # ReadWritePaths intentionally absent: ProtectSystem is not set so the

@@ -62,6 +62,8 @@
       ReadWritePaths = [
         config.ownloom.root
         config.ownloom.wiki.root
+        config.ownloom.wiki.roots.personal
+        config.ownloom.wiki.roots.technical
         "${userHome}/.pi"
       ];
       PrivateTmp = true;
@@ -73,6 +75,8 @@
         XDG_CACHE_HOME = "${userHome}/.cache";
         PI_CODING_AGENT_DIR = "${userHome}/.pi/agent";
         OWNLOOM_WIKI_ROOT = config.ownloom.wiki.root;
+        OWNLOOM_WIKI_ROOT_PERSONAL = config.ownloom.wiki.roots.personal;
+        OWNLOOM_WIKI_ROOT_TECHNICAL = config.ownloom.wiki.roots.technical;
         OWNLOOM_WIKI_WORKSPACE = config.ownloom.wiki.workspace;
         OWNLOOM_WIKI_DEFAULT_DOMAIN = config.ownloom.wiki.defaultDomain;
         OWNLOOM_WIKI_HOST = config.networking.hostName;

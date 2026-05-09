@@ -13,6 +13,7 @@ import { Type } from "@sinclair/typebox";
 import {
 	callWikiTool,
 	getWikiRoot,
+	getWikiRootForDomain,
 	getWikiRoots,
 	isProtectedPath,
 	isWikiPagePath,
@@ -65,7 +66,7 @@ async function buildTodayDigest(wikiRoot: string): Promise<string> {
 
 	// 3. Active projects (type:project, status:active, recently touched)
 	try {
-		const projectResult = await callWikiTool("wiki_search", { query: "project", type: "project", limit: 8 }, { policy: {} });
+		const projectResult = await callWikiTool("wiki_search", { query: "project", type: "project", domain: "personal", limit: 8 }, { policy: {} });
 		const projectText = projectResult.content[0]?.text ?? "";
 		if (projectText && !projectText.startsWith("No wiki")) {
 			lines.push("", "## 🚀 Active projects", projectText);
@@ -74,7 +75,7 @@ async function buildTodayDigest(wikiRoot: string): Promise<string> {
 
 	// 4. Sources captured in last 7 days not yet compiled
 	try {
-		const srcResult = await callWikiTool("wiki_search", { query: "source captured", type: "source", limit: 6 }, { policy: {} });
+		const srcResult = await callWikiTool("wiki_search", { query: "source captured", type: "source", domain: "personal", limit: 6 }, { policy: {} });
 		const srcText = srcResult.content[0]?.text ?? "";
 		if (srcText && !srcText.startsWith("No wiki")) {
 			lines.push("", "## 📥 Recent sources (may need extraction)", srcText);
@@ -188,7 +189,7 @@ export default function (pi: ExtensionAPI) {
 	pi.registerCommand("today", {
 		description: "Daily briefing: current context, planner, active projects, stale sources, low-confidence pages. Usage: /today",
 		handler: async (_args, ctx) => {
-			const wikiRoot = getWikiRoot();
+			const wikiRoot = getWikiRootForDomain("personal");
 			const digest = await buildTodayDigest(wikiRoot);
 			ctx.ui.notify(digest, "info");
 		},

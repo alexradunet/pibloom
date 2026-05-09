@@ -46,11 +46,18 @@ pkgs.testers.runNixOSTest {
     webdav.succeed("test $(curl -s -o /tmp/propfind.xml -w '%{http_code}' -u human:test -X PROPFIND http://127.0.0.1:4918/ -H 'Depth: 1') = 207")
 
     # PUT creates intermediate directories, GET reads the file, DELETE removes it.
+    # The compatibility root remains the personal wiki.
     webdav.succeed("printf '# WebDAV wiki smoke\\n' > /tmp/webdav-smoke.md")
     webdav.succeed("curl -s -f -u human:test -T /tmp/webdav-smoke.md http://127.0.0.1:4918/objects/webdav-smoke.md")
     webdav.succeed("test -f /home/human/wiki/objects/webdav-smoke.md")
     webdav.succeed("curl -s -f -u human:test http://127.0.0.1:4918/objects/webdav-smoke.md | grep -q 'WebDAV wiki smoke'")
     webdav.succeed("curl -s -f -u human:test -X DELETE http://127.0.0.1:4918/objects/webdav-smoke.md")
     webdav.fail("test -e /home/human/wiki/objects/webdav-smoke.md")
+
+    # Split roots are available through explicit WebDAV path prefixes.
+    webdav.succeed("curl -s -f -u human:test -T /tmp/webdav-smoke.md http://127.0.0.1:4918/personal/objects/webdav-smoke.md")
+    webdav.succeed("test -f /home/human/wiki/objects/webdav-smoke.md")
+    webdav.succeed("curl -s -f -u human:test -T /tmp/webdav-smoke.md http://127.0.0.1:4918/technical/objects/webdav-smoke.md")
+    webdav.succeed("test -f /var/lib/ownloom/wiki/objects/webdav-smoke.md")
   '';
 }

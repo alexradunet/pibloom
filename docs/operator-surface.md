@@ -31,12 +31,19 @@ The cockpit proxies Radicale under `/radicale/` instead of installing another we
 
 ## Wiki boundary
 
-- Source of truth: `/home/alex/wiki` plain Markdown files served over loopback WebDAV.
-- AI/CLI path: `ownloom-wiki` remains the canonical machine interface for search, capture, lint, and structured updates.
-- WebDAV path: `services.ownloom-webdav` exposes the wiki root for trusted file editors and sync tools through an SSH tunnel.
-- Metadata path: WebDAV edits are ordinary file edits; generated registry/backlink/FTS metadata is rebuilt by `ownloom-wiki mutate wiki_rebuild` and the WebDAV rebuild timer.
+Ownloom has two Markdown wiki roots:
 
-Git is for the Ownloom code/config repository, not the live wiki substrate.
+- Personal/human wiki: `/home/alex/wiki` for Alex's life context, daily notes, reviews, people/projects, and personal source captures.
+- Technical/operator wiki: `/var/lib/ownloom/wiki` for Ownloom host/service inventory, runbooks, incidents, audits, and architecture decisions.
+
+Rules:
+
+- AI/CLI path: `ownloom-wiki` remains the canonical machine interface for search, capture, lint, and structured updates; callers select the intended root through `domain=personal|technical` or the exported root env vars.
+- WebDAV path: `services.ownloom-webdav` exposes `/` as the compatibility personal wiki root and `/personal/` + `/technical/` as explicit split-root paths for trusted file editors and sync tools through an SSH tunnel.
+- Metadata path: WebDAV edits are ordinary file edits; generated registry/backlink/FTS metadata is rebuilt by `ownloom-wiki mutate wiki_rebuild` and the WebDAV rebuild timer per root.
+- Live tasks/reminders/events stay in CalDAV/iCalendar. Wiki notes may summarize or reference DAV objects, but must not become a second planner database.
+
+Git is for the Ownloom code/config repository (`/home/alex/ownloom`), not the live wiki substrate.
 
 ## Config/Ops boundary
 

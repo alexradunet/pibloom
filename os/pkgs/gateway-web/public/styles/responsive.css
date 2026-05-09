@@ -36,6 +36,20 @@
   .hearth {
     display: none;
   }
+
+  .page-layout,
+  .workbench-shell.thread-rail-open {
+    grid-template-columns: 1fr;
+  }
+
+  .page-sidebar {
+    position: static;
+  }
+
+  .thread-rail {
+    border-inline-start: 0;
+    border-block-start: 1px solid var(--color-border-soft);
+  }
 }
 
 @media (max-width: 900px) {
@@ -64,6 +78,10 @@
   .workbench-shell,
   .workbench-shell.thread-rail-open {
     grid-template-columns: 1fr;
+  }
+
+  #tab-chat > .page-layout {
+    height: 100%;
   }
 
   .workbench-shell::before {
@@ -109,6 +127,12 @@
     padding: var(--space-xs);
   }
 
+  .component-sample,
+  .item,
+  .planner-item {
+    padding: var(--space-xs);
+  }
+
   h1 {
     font-size: var(--text-headline-lg-mobile);
   }
@@ -148,6 +172,9 @@
   .item,
   .message,
   .hearth,
+  .page-sidebar,
+  .swatch,
+  .component-sample,
   .warning-banner,
   .terminal-frame,
   .log {

@@ -63,12 +63,13 @@
             <span class="chip chip-private">Loopback / tunnel only</span>
             <span class="chip chip-system">Planner: local API</span>
             <span id="connectionState" class="pill" role="status" aria-live="polite">disconnected</span>
+            <a class="secondary outline small-button" href="./components.html" role="button">Components</a>
           </div>
         </header>
 
         <section id="tab-chat" class="tab-panel active" role="tabpanel" data-tab-panel="chat" aria-labelledby="tab-chat-button" tabindex="0">
-          <div class="workbench-shell thread-rail-open" data-workbench-shell>
-            <article class="workbench-card" aria-labelledby="chat-heading">
+          <div class="page-layout workbench-shell thread-rail-open" data-workbench-shell>
+            <article class="page-card workbench-card" aria-labelledby="chat-heading">
               <header class="split-header">
                 <div>
                   <small class="section-kicker">Workbench</small>
@@ -105,7 +106,7 @@
               </section>
             </article>
 
-            <aside id="threadRail" class="thread-rail" aria-labelledby="sessions-heading" aria-hidden="false">
+            <aside id="threadRail" class="page-sidebar thread-rail" aria-labelledby="sessions-heading" aria-hidden="false">
               <article>
                 <header class="split-header">
                   <div>
@@ -122,222 +123,290 @@
         </section>
 
         <section id="tab-organizer" class="tab-panel" role="tabpanel" data-tab-panel="organizer" aria-labelledby="tab-organizer-button" tabindex="0" hidden>
-          <article aria-labelledby="planner-heading">
-            <header class="split-header">
-              <div>
-                <small class="section-kicker">Planner</small>
-                <h2 id="planner-heading">Warp a live item to the loom</h2>
-                <p>Backed by Ownloom Planner, CalDAV, iCalendar, VTODO, VEVENT, and VALARM.</p>
-              </div>
-              <div class="actions">
-                <span id="plannerStatus" class="chip" role="status" aria-live="polite">not loaded</span>
-                <button id="plannerRefreshButton" class="secondary outline" type="button">Refresh planner</button>
-              </div>
-            </header>
+          <div class="page-layout">
+            <article class="page-card" aria-labelledby="planner-heading">
+              <header class="split-header">
+                <div>
+                  <small class="section-kicker">Planner</small>
+                  <h2 id="planner-heading">Warp a live item to the loom</h2>
+                  <p>Backed by Ownloom Planner, CalDAV, iCalendar, VTODO, VEVENT, and VALARM.</p>
+                </div>
+                <div class="actions">
+                  <span id="plannerStatus" class="chip" role="status" aria-live="polite">not loaded</span>
+                  <button id="plannerRefreshButton" class="secondary outline" type="button">Refresh planner</button>
+                </div>
+              </header>
 
-            <form id="plannerForm" class="planner-form" aria-label="Add planner item">
-              <label class="planner-title-field">
-                New thread / task
-                <input id="plannerTitle" autocomplete="off" required placeholder="What needs attention?" />
-              </label>
-              <label>
-                Kind
-                <select id="plannerKind">
-                  <option value="task">Task</option>
-                  <option value="reminder">Reminder</option>
-                  <option value="event">Event</option>
-                </select>
-              </label>
-              <label>
-                <span id="plannerWhenText">Due</span>
-                <input id="plannerWhen" type="datetime-local" />
-              </label>
-              <label id="plannerEndLabel" hidden>
-                End
-                <input id="plannerEnd" type="datetime-local" />
-              </label>
-              <label id="plannerPriorityLabel">
-                Priority
-                <input id="plannerPriority" type="number" min="1" max="9" placeholder="1-9" />
-              </label>
-              <label>
-                Repeat
-                <select id="plannerRepeat">
-                  <option value="">No repeat</option>
-                  <option value="daily">Daily</option>
-                  <option value="weekdays">Weekdays</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="yearly">Yearly</option>
-                </select>
-              </label>
-              <label class="planner-wide">
-                Description
-                <textarea id="plannerDescription" rows="2" placeholder="Optional context"></textarea>
-              </label>
-              <label>
-                Categories
-                <input id="plannerCategories" autocomplete="off" placeholder="health, work" />
-              </label>
-              <button type="submit">Add planner item</button>
-            </form>
-          </article>
+              <form id="plannerForm" class="planner-form" aria-label="Add planner item">
+                <label class="planner-title-field">
+                  New thread / task
+                  <input id="plannerTitle" autocomplete="off" required placeholder="What needs attention?" />
+                </label>
+                <label>
+                  Kind
+                  <select id="plannerKind">
+                    <option value="task">Task</option>
+                    <option value="reminder">Reminder</option>
+                    <option value="event">Event</option>
+                  </select>
+                </label>
+                <label>
+                  <span id="plannerWhenText">Due</span>
+                  <input id="plannerWhen" type="datetime-local" />
+                </label>
+                <label id="plannerEndLabel" hidden>
+                  End
+                  <input id="plannerEnd" type="datetime-local" />
+                </label>
+                <label id="plannerPriorityLabel">
+                  Priority
+                  <input id="plannerPriority" type="number" min="1" max="9" placeholder="1-9" />
+                </label>
+                <label>
+                  Repeat
+                  <select id="plannerRepeat">
+                    <option value="">No repeat</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekdays">Weekdays</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                </label>
+                <label class="planner-wide">
+                  Description
+                  <textarea id="plannerDescription" rows="2" placeholder="Optional context"></textarea>
+                </label>
+                <label>
+                  Categories
+                  <input id="plannerCategories" autocomplete="off" placeholder="health, work" />
+                </label>
+                <button type="submit">Add planner item</button>
+              </form>
 
-          <section class="grid planner-grid" aria-label="Planner bento views">
-            <article class="planner-list-card planner-overdue" aria-labelledby="planner-overdue-heading">
-              <header class="list-card-header">
-                <span class="status-dot status-dot-danger" aria-hidden="true"></span>
-                <div>
-                  <h2 id="planner-overdue-heading">Overdue</h2>
-                  <p>Past due items from the live planner.</p>
-                </div>
-                <span class="chip planner-count" data-planner-count>—</span>
-              </header>
-              <ul id="plannerOverdueList" class="list empty planner-list" aria-label="Overdue planner items"><li>Open Planner to load items.</li></ul>
+              <section class="grid planner-grid" aria-label="Planner bento views">
+                <article class="planner-list-card planner-overdue" aria-labelledby="planner-overdue-heading">
+                  <header class="list-card-header">
+                    <span class="status-dot status-dot-danger" aria-hidden="true"></span>
+                    <div>
+                      <h2 id="planner-overdue-heading">Overdue</h2>
+                      <p>Past due items from the live planner.</p>
+                    </div>
+                    <span class="chip planner-count" data-planner-count>—</span>
+                  </header>
+                  <ul id="plannerOverdueList" class="list empty planner-list" aria-label="Overdue planner items"><li>Open Planner to load items.</li></ul>
+                </article>
+                <article class="planner-list-card planner-today" aria-labelledby="planner-today-heading">
+                  <header class="list-card-header">
+                    <span class="status-dot status-dot-warning" aria-hidden="true"></span>
+                    <div>
+                      <h2 id="planner-today-heading">Today</h2>
+                      <p>Due now, reminders, and calendar blocks.</p>
+                    </div>
+                    <span class="chip planner-count" data-planner-count>—</span>
+                  </header>
+                  <ul id="plannerTodayList" class="list empty planner-list" aria-label="Today planner items"><li>Open Planner to load items.</li></ul>
+                </article>
+                <article class="planner-list-card planner-upcoming" aria-labelledby="planner-upcoming-heading">
+                  <header class="list-card-header">
+                    <span class="status-dot status-dot-system" aria-hidden="true"></span>
+                    <div>
+                      <h2 id="planner-upcoming-heading">Upcoming</h2>
+                      <p>Next horizon, excluding today.</p>
+                    </div>
+                    <span class="chip planner-count" data-planner-count>—</span>
+                  </header>
+                  <ul id="plannerUpcomingList" class="list empty planner-list" aria-label="Upcoming planner items"><li>Open Planner to load items.</li></ul>
+                </article>
+                <article class="planner-list-card planner-undated" aria-labelledby="planner-undated-heading">
+                  <header class="list-card-header">
+                    <span class="status-dot" aria-hidden="true"></span>
+                    <div>
+                      <h2 id="planner-undated-heading">No date</h2>
+                      <p>Open tasks without due dates stay visible here.</p>
+                    </div>
+                    <span class="chip planner-count" data-planner-count>—</span>
+                  </header>
+                  <ul id="plannerUndatedList" class="list empty planner-list" aria-label="Undated planner items"><li>Open Planner to load items.</li></ul>
+                </article>
+              </section>
             </article>
-            <article class="planner-list-card planner-today" aria-labelledby="planner-today-heading">
-              <header class="list-card-header">
-                <span class="status-dot status-dot-warning" aria-hidden="true"></span>
-                <div>
-                  <h2 id="planner-today-heading">Today</h2>
-                  <p>Due now, reminders, and calendar blocks.</p>
-                </div>
-                <span class="chip planner-count" data-planner-count>—</span>
-              </header>
-              <ul id="plannerTodayList" class="list empty planner-list" aria-label="Today planner items"><li>Open Planner to load items.</li></ul>
-            </article>
-            <article class="planner-list-card planner-upcoming" aria-labelledby="planner-upcoming-heading">
-              <header class="list-card-header">
-                <span class="status-dot status-dot-system" aria-hidden="true"></span>
-                <div>
-                  <h2 id="planner-upcoming-heading">Upcoming</h2>
-                  <p>Next horizon, excluding today.</p>
-                </div>
-                <span class="chip planner-count" data-planner-count>—</span>
-              </header>
-              <ul id="plannerUpcomingList" class="list empty planner-list" aria-label="Upcoming planner items"><li>Open Planner to load items.</li></ul>
-            </article>
-            <article class="planner-list-card planner-undated" aria-labelledby="planner-undated-heading">
-              <header class="list-card-header">
-                <span class="status-dot" aria-hidden="true"></span>
-                <div>
-                  <h2 id="planner-undated-heading">No date</h2>
-                  <p>Open tasks without due dates stay visible here.</p>
-                </div>
-                <span class="chip planner-count" data-planner-count>—</span>
-              </header>
-              <ul id="plannerUndatedList" class="list empty planner-list" aria-label="Undated planner items"><li>Open Planner to load items.</li></ul>
-            </article>
-          </section>
+
+            <aside class="page-sidebar" aria-label="Planner context rail">
+              <article>
+                <small class="section-kicker">Live source</small>
+                <h2>Planner rail</h2>
+                <p>Every item here comes from the loopback Ownloom Planner API backed by CalDAV/iCalendar.</p>
+                <ul class="rail-list">
+                  <li><strong>Canonical</strong><br /><small>Do not mirror these as wiki task pages.</small></li>
+                  <li><strong>Views</strong><br /><small>Overdue, today, upcoming, and no-date stay visible in the main card.</small></li>
+                  <li><strong>State</strong><br /><small>The status chip tells you when the rail is loading or stale.</small></li>
+                </ul>
+              </article>
+              <article>
+                <small class="section-kicker">Quick rule</small>
+                <p>Use reminders for alarmed nudges, tasks for open loops, and events for calendar blocks.</p>
+              </article>
+            </aside>
+          </div>
         </section>
 
         <section id="tab-config" class="tab-panel" role="tabpanel" data-tab-panel="config" aria-labelledby="tab-config-button" tabindex="0" hidden>
-          <article aria-label="Gateway connection settings">
-            <header class="split-header access-hero">
-              <div>
-                <small class="section-kicker">Access</small>
-                <h2>Gateway access</h2>
-                <p>Pair this browser to the local operator gateway. Runtime tokens remain masked and local to this browser when remembered.</p>
-              </div>
-              <div>
-                <span class="chip chip-private">Full-operator runtime client</span>
-                <button id="pairButton" type="button">Pair this browser</button>
-                <p><small>Best path for trusted loopback or SSH-tunneled browsers.</small></p>
-              </div>
-            </header>
-
-            <details>
-              <summary>Advanced connection controls</summary>
-              <div class="grid access-grid">
-                <label>
-                  Gateway HTTP URL
-                  <input id="httpUrl" value="http://127.0.0.1:8081" autocomplete="off" />
-                </label>
-                <label>
-                  Bearer token
-                  <input id="token" type="password" placeholder="paste named client token" autocomplete="off" />
-                </label>
-                <label>
-                  Session key
-                  <input id="sessionKey" value="web-main" autocomplete="off" />
-                </label>
-                <label>
-                  <input id="rememberSettings" type="checkbox" role="switch" checked />
-                  Remember locally
-                </label>
-              </div>
-              <footer class="actions end">
-                <button id="connectButton" class="secondary outline" type="button">Connect manually</button>
-                <button id="disconnectButton" class="secondary outline" type="button" disabled>Disconnect</button>
-                <button id="healthButton" class="secondary outline" type="button" disabled>Health</button>
-                <button id="refreshButton" class="secondary outline" type="button" disabled>Refresh lists</button>
-              </footer>
-            </details>
-          </article>
-
-          <section class="grid access-lists" aria-label="Gateway runtime state">
-            <article aria-labelledby="clients-heading">
-              <header>
-                <small class="section-kicker">Runtime</small>
-                <h2 id="clients-heading">Runtime clients</h2>
-                <p>Current, paired browser, config-managed, and revoked clients.</p>
+          <div class="page-layout">
+            <article class="page-card" aria-label="Gateway access workspace">
+              <header class="split-header access-hero">
+                <div>
+                  <small class="section-kicker">Access</small>
+                  <h2>Gateway access</h2>
+                  <p>Pair this browser to the local operator gateway. Runtime tokens remain masked and local to this browser when remembered.</p>
+                </div>
+                <div>
+                  <span class="chip chip-private">Full-operator runtime client</span>
+                  <button id="pairButton" type="button">Pair this browser</button>
+                  <p><small>Best path for trusted loopback or SSH-tunneled browsers.</small></p>
+                </div>
               </header>
-              <ul id="clients" class="list empty" aria-label="Clients"><li>Connect and refresh.</li></ul>
-            </article>
-            <article aria-labelledby="queues-heading">
-              <header>
-                <small class="section-kicker">Gateway queues</small>
-                <h2 id="queues-heading">Delivery and command queue</h2>
-                <p>Live gateway lists; admin actions appear only when authorized.</p>
-              </header>
-              <h3 id="deliveries-heading">Delivery queue</h3>
-              <ul id="deliveries" class="list empty" aria-labelledby="deliveries-heading"><li>Connect and refresh.</li></ul>
-              <h3 id="commands-heading">Command queue</h3>
-              <ul id="commands" class="list empty" aria-labelledby="commands-heading"><li>Connect and refresh.</li></ul>
-            </article>
-          </section>
 
-          <article class="danger-zone" aria-labelledby="danger-heading">
-            <div>
-              <small class="section-kicker">Danger zone</small>
-              <h2 id="danger-heading">Forget local browser settings</h2>
-              <p>Clears the remembered token/settings from local storage and the token field. It does not revoke this browser id or any gateway runtime client.</p>
-            </div>
-            <button id="clearSettingsButton" class="button-danger" type="button">Forget local settings</button>
-          </article>
+              <details>
+                <summary>Advanced connection controls</summary>
+                <div class="grid access-grid">
+                  <label>
+                    Gateway HTTP URL
+                    <input id="httpUrl" value="http://127.0.0.1:8081" autocomplete="off" />
+                  </label>
+                  <label>
+                    Bearer token
+                    <input id="token" type="password" placeholder="paste named client token" autocomplete="off" />
+                  </label>
+                  <label>
+                    Session key
+                    <input id="sessionKey" value="web-main" autocomplete="off" />
+                  </label>
+                  <label>
+                    <input id="rememberSettings" type="checkbox" role="switch" checked />
+                    Remember locally
+                  </label>
+                </div>
+                <footer class="actions end">
+                  <button id="connectButton" class="secondary outline" type="button">Connect manually</button>
+                  <button id="disconnectButton" class="secondary outline" type="button" disabled>Disconnect</button>
+                  <button id="healthButton" class="secondary outline" type="button" disabled>Health</button>
+                  <button id="refreshButton" class="secondary outline" type="button" disabled>Refresh lists</button>
+                </footer>
+              </details>
+
+              <section class="grid access-lists" aria-label="Gateway runtime state">
+                <article aria-labelledby="clients-heading">
+                  <header>
+                    <small class="section-kicker">Runtime</small>
+                    <h2 id="clients-heading">Runtime clients</h2>
+                    <p>Current, paired browser, config-managed, and revoked clients.</p>
+                  </header>
+                  <ul id="clients" class="list empty" aria-label="Clients"><li>Connect and refresh.</li></ul>
+                </article>
+                <article aria-labelledby="queues-heading">
+                  <header>
+                    <small class="section-kicker">Gateway queues</small>
+                    <h2 id="queues-heading">Delivery and command queue</h2>
+                    <p>Live gateway lists; admin actions appear only when authorized.</p>
+                  </header>
+                  <h3 id="deliveries-heading">Delivery queue</h3>
+                  <ul id="deliveries" class="list empty" aria-labelledby="deliveries-heading"><li>Connect and refresh.</li></ul>
+                  <h3 id="commands-heading">Command queue</h3>
+                  <ul id="commands" class="list empty" aria-labelledby="commands-heading"><li>Connect and refresh.</li></ul>
+                </article>
+              </section>
+
+              <article class="danger-zone" aria-labelledby="danger-heading">
+                <div>
+                  <small class="section-kicker">Danger zone</small>
+                  <h2 id="danger-heading">Forget local browser settings</h2>
+                  <p>Clears the remembered token/settings from local storage and the token field. It does not revoke this browser id or any gateway runtime client.</p>
+                </div>
+                <button id="clearSettingsButton" class="button-danger" type="button">Forget local settings</button>
+              </article>
+            </article>
+
+            <aside class="page-sidebar" aria-label="Access context rail">
+              <article>
+                <small class="section-kicker">Boundary</small>
+                <h2>Access rail</h2>
+                <p>This browser is an operator surface. Keep access loopback or tunneled unless the network model changes explicitly.</p>
+                <ul class="rail-list">
+                  <li><strong>Pair</strong><br /><small>Creates a runtime client for this browser.</small></li>
+                  <li><strong>Remember</strong><br /><small>Stores token/settings only in this browser.</small></li>
+                  <li><strong>Forget</strong><br /><small>Clears local storage; it does not revoke server clients.</small></li>
+                </ul>
+              </article>
+              <article>
+                <small class="section-kicker">Token rule</small>
+                <p>Tokens stay masked and should never be echoed into trace output or copied into notes.</p>
+              </article>
+            </aside>
+          </div>
         </section>
 
         <section id="tab-terminal" class="tab-panel" role="tabpanel" data-tab-panel="terminal" aria-labelledby="tab-terminal-button" tabindex="0" hidden>
-          <article>
-            <header class="split-header">
-              <div>
-                <small class="section-kicker">Shell</small>
-                <h2>Interactive shell</h2>
-                <p>Advanced Zellij shell for Pi TUI and coding sessions. The iframe loads only when this tab is selected.</p>
-              </div>
-              <div class="actions end">
-                <button id="copyTerminalTokenButton" class="secondary outline" type="button">Copy Zellij token</button>
-                <a id="openTerminalLink" href="/terminal/ownloom" target="_blank" rel="noopener noreferrer" role="button" class="secondary outline">Open full terminal</a>
-                <span id="terminalTokenStatus" class="chip" role="status" aria-live="polite">Token stays local.</span>
-              </div>
-            </header>
-            <p class="warning-banner" role="note"><strong>Local shell boundary.</strong> Use through loopback or an SSH tunnel. The terminal proxy remains same-origin and no-store.</p>
-            <iframe id="terminalFrame" class="terminal-frame" title="Ownloom terminal" data-src="/terminal/ownloom"></iframe>
-          </article>
+          <div class="page-layout">
+            <article class="page-card">
+              <header class="split-header">
+                <div>
+                  <small class="section-kicker">Shell</small>
+                  <h2>Interactive shell</h2>
+                  <p>Advanced Zellij shell for Pi TUI and coding sessions. The iframe loads only when this tab is selected.</p>
+                </div>
+                <div class="actions end">
+                  <button id="copyTerminalTokenButton" class="secondary outline" type="button">Copy Zellij token</button>
+                  <a id="openTerminalLink" href="/terminal/ownloom" target="_blank" rel="noopener noreferrer" role="button" class="secondary outline">Open full terminal</a>
+                  <span id="terminalTokenStatus" class="chip" role="status" aria-live="polite">Token stays local.</span>
+                </div>
+              </header>
+              <p class="warning-banner" role="note"><strong>Local shell boundary.</strong> Use through loopback or an SSH tunnel. The terminal proxy remains same-origin and no-store.</p>
+              <iframe id="terminalFrame" class="terminal-frame" title="Ownloom terminal" data-src="/terminal/ownloom"></iframe>
+            </article>
+
+            <aside class="page-sidebar" aria-label="Shell context rail">
+              <article>
+                <small class="section-kicker">Power tool</small>
+                <h2>Shell rail</h2>
+                <p>The shell is intentionally advanced and local. It is for direct operator work when chat is not enough.</p>
+                <ul class="rail-list">
+                  <li><strong>Lazy load</strong><br /><small>The iframe loads only after opening this tab.</small></li>
+                  <li><strong>No-store</strong><br /><small>Terminal proxy responses stay uncached.</small></li>
+                  <li><strong>Loopback</strong><br /><small>Use SSH tunnel or local browser access.</small></li>
+                </ul>
+              </article>
+            </aside>
+          </div>
         </section>
 
         <section id="tab-log" class="tab-panel" role="tabpanel" data-tab-panel="log" aria-labelledby="tab-log-button" tabindex="0" hidden>
-          <article>
-            <header class="split-header">
-              <div>
-                <small class="section-kicker">Trace</small>
-                <h2>Local event trace</h2>
-                <p>Redacted browser-side gateway events, useful for operator diagnosis.</p>
-              </div>
-              <span class="chip chip-system">textContent only</span>
-            </header>
-            <pre id="log" class="log" aria-label="Local event trace"></pre>
-          </article>
+          <div class="page-layout">
+            <article class="page-card">
+              <header class="split-header">
+                <div>
+                  <small class="section-kicker">Trace</small>
+                  <h2>Local event trace</h2>
+                  <p>Redacted browser-side gateway events, useful for operator diagnosis.</p>
+                </div>
+                <span class="chip chip-system">textContent only</span>
+              </header>
+              <pre id="log" class="log" aria-label="Local event trace"></pre>
+            </article>
+
+            <aside class="page-sidebar" aria-label="Trace context rail">
+              <article>
+                <small class="section-kicker">Ephemeral</small>
+                <h2>Trace rail</h2>
+                <p>This is browser-side operator trace, not durable memory and not a wiki source.</p>
+                <ul class="rail-list">
+                  <li><strong>Redacted</strong><br /><small>Keep tokens and secrets out of normal logs.</small></li>
+                  <li><strong>Local</strong><br /><small>Useful for diagnosing this cockpit session.</small></li>
+                  <li><strong>Temporary</strong><br /><small>Reloading clears the visible trace.</small></li>
+                </ul>
+              </article>
+            </aside>
+          </div>
         </section>
       </div>
     </main>

@@ -41,6 +41,7 @@ The UI is organized as native ES modules:
 ```text
 public/
   app.js                  # tiny compatibility bootstrap
+  components.html         # static Ownloom component catalog / storybook-like loom
   js/
     app.js                # app composition/root controller
     constants.js          # storage keys, protocol constants
@@ -95,14 +96,14 @@ It also rejects non-loopback `Host`/`Origin` headers to reduce DNS-rebinding exp
 
 ## Current features
 
-- flat Digital Scoarță / pixel-loom workbench shell for Workbench, Planner, Access, Shell, and Trace
+- flat Digital Scoarță / pixel-loom shell with a main card plus right context rail on every cockpit tab
 - accessible ARIA tab navigation with keyboard support
 - no PWA manifest/service-worker; old PWA caches are cleaned up on load
 - loopback-only browser pairing into a full-operator runtime client
 - protocol/v1 WebSocket `connect`
 - `health`
 - `agent.wait` chat with stable `sessionKey`
-- clean centered Workbench conversation, slide-out thread rail, New thread, web session switching, and local attach to existing WhatsApp sessions; conversation changes are blocked while an agent run is active
+- clean centered Workbench conversation with no main background card, slide-out/right thread rail, New thread, web session switching, and local attach to existing WhatsApp sessions; conversation changes are blocked while an agent run is active
 - streamed `agent` event display
 - REST attachment upload using one-shot attachment refs
 - sessions, clients, deliveries, and commands list panels
@@ -113,6 +114,7 @@ It also rejects non-loopback `Host`/`Origin` headers to reduce DNS-rebinding exp
 - confirmations for destructive session, delivery, and runtime-client actions
 - Shell tab that embeds `/terminal/ownloom` when the loopback Zellij web service is enabled
 - loopback-only helper button to copy the generated Zellij web login token
+- static `components.html` component loom for atoms, cards, rails, messages, planner/list patterns, and trace surfaces
 
 The gateway client transport is still expected to stay loopback-only until HTTPS/reverse-proxy/pairing is designed.
 

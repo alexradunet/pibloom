@@ -11,6 +11,7 @@ runCommand "ownloom-gateway-web-smoke" {
     server=${ownloom-gateway-web}/share/ownloom-gateway-web/server.mjs
 
     test -f "$root/index.html"
+    test -f "$root/components.html"
     test -f "$root/app.js"
     test -f "$root/style.css"
     test ! -e "$root/manifest.webmanifest"
@@ -43,6 +44,12 @@ runCommand "ownloom-gateway-web-smoke" {
     node --check "$server"
 
     grep -qi 'Ownloom Cockpit' "$root/index.html"
+    grep -qi 'Ownloom Component Loom' "$root/components.html"
+    grep -q 'page-layout' "$root/index.html"
+    grep -q 'page-sidebar' "$root/index.html"
+    grep -q 'components.html' "$root/index.html"
+    grep -q 'component-index' "$root/components.html"
+    ! grep -q 'type="module"' "$root/components.html"
     ! grep -q 'rel="manifest"' "$root/index.html"
     ! grep -q 'pwaStatus' "$root/index.html"
     grep -q 'role="tablist"' "$root/index.html"
@@ -57,6 +64,8 @@ runCommand "ownloom-gateway-web-smoke" {
     grep -q 'plannerRefreshButton' "$root/index.html"
     grep -q 'plannerOverdueList' "$root/index.html"
     grep -q 'plannerUndatedList' "$root/index.html"
+    grep -q 'Gateway access workspace' "$root/index.html"
+    grep -q 'Trace rail' "$root/index.html"
     grep -R -q '/api/planner' "$root"
     grep -R -q 'agent.wait' "$root"
     grep -R -q 'data-session-switch-chat' "$root"
@@ -117,6 +126,11 @@ runCommand "ownloom-gateway-web-smoke" {
     grep -qi 'content-security-policy:' /tmp/index.headers
     grep -qi 'x-content-type-options: nosniff' /tmp/index.headers
     grep -qi 'referrer-policy: no-referrer' /tmp/index.headers
+
+    curl -fsS -D /tmp/components.headers http://127.0.0.1:18090/components.html >/tmp/components.html
+    grep -qi 'content-type: text/html' /tmp/components.headers
+    grep -qi 'Ownloom Component Loom' /tmp/components.html
+    grep -q 'Back to cockpit' /tmp/components.html
 
     curl -fsS -D /tmp/style.headers http://127.0.0.1:18090/style.css >/tmp/style.css
     grep -qi 'content-type: text/css' /tmp/style.headers

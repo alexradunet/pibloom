@@ -11,6 +11,7 @@ This package implements that system for the static local cockpit. If this file a
 - Keep runtime assets self-hosted. No remote scripts, styles, fonts, icons, analytics, or image assets.
 - Preserve CSP compatibility: `style-src 'self'`, `font-src 'self'`, loopback-only API/WebSocket/frame assumptions.
 - Preserve required IDs, `data-*` hooks, ARIA tabs, terminal hooks, planner hooks, and protocol behavior.
+- Keep `components.html` as a static no-JS component loom for reusable Ownloom atoms, molecules, and page patterns.
 
 ## Core visual contract
 
@@ -45,6 +46,20 @@ public/styles/responsive.css  # mobile/zoom/reduced-motion/forced-colors
 - **Access:** operator clarity; never echo tokens in normal text/logs.
 - **Shell:** clearly local/loopback; iframe lazy-load stays tab-gated.
 - **Trace:** local redacted diagnostics, monospace, readable, not durable memory.
+- **Component catalog:** `components.html` demonstrates real classes/components without loading cockpit JS.
+
+## Page layout pattern
+
+Every cockpit tab should use a two-part layout:
+
+```html
+<div class="page-layout">
+  <article class="page-card">Main work surface</article>
+  <aside class="page-sidebar">Right context rail</aside>
+</div>
+```
+
+The main work surface is carded like the Planner. The Workbench/chat exception keeps `.workbench-card` transparent so the conversation itself has no card background, while the right thread rail still participates in the same sidebar pattern.
 
 ## Change checklist
 

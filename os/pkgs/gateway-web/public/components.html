@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="description" content="Ownloom Digital Scoarță component catalog." />
+    <meta name="application-name" content="Ownloom Components" />
+    <meta name="theme-color" content="#1a110f" />
+    <title>Ownloom Component Loom</title>
+    <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#component-content">Skip to component catalog</a>
+
+    <main class="catalog-shell container-fluid">
+      <header class="top-lintel">
+        <div>
+          <small class="section-kicker">Component loom</small>
+          <h1>Ownloom Components</h1>
+          <p>Static Digital Scoarță / Pixel Loom atoms, molecules, and page patterns used by the local cockpit.</p>
+        </div>
+        <div class="header-status" aria-label="Catalog navigation">
+          <span class="chip chip-system">Pico + Ownloom tokens</span>
+          <span class="chip chip-private">self-hosted assets</span>
+          <a class="secondary outline small-button" href="./" role="button">Back to cockpit</a>
+        </div>
+      </header>
+
+      <section id="component-content" class="tab-panel component-catalog" aria-labelledby="component-heading">
+        <div class="page-layout">
+          <article class="page-card">
+            <header class="split-header">
+              <div>
+                <small class="section-kicker">Design inventory</small>
+                <h2 id="component-heading">Atomic component catalog</h2>
+                <p>This page is a no-JS, self-hosted storybook-like reference for the actual CSS classes used in Ownloom Gateway Web.</p>
+              </div>
+              <span class="pill connected">local reference</span>
+            </header>
+
+            <section id="tokens" class="component-section" aria-labelledby="tokens-heading">
+              <header>
+                <small class="section-kicker">Atoms</small>
+                <h2 id="tokens-heading">Palette tokens</h2>
+                <p>Warm tonal layers, wool text, and restrained madder/ochre/system states.</p>
+              </header>
+              <div class="swatch-grid" aria-label="Color swatches">
+                <div class="swatch swatch-surface"><strong>Surface</strong><small>#1a110f</small></div>
+                <div class="swatch swatch-lowest"><strong>Lowest</strong><small>#150c0a</small></div>
+                <div class="swatch swatch-low"><strong>Low</strong><small>#231916</small></div>
+                <div class="swatch swatch-card"><strong>Card</strong><small>#332016</small></div>
+                <div class="swatch swatch-highest"><strong>Highest</strong><small>#3e322f</small></div>
+                <div class="swatch swatch-wool"><strong>Wool</strong><small>#f1dfd9</small></div>
+                <div class="swatch swatch-primary"><strong>Madder</strong><small>#b85736</small></div>
+                <div class="swatch swatch-secondary"><strong>Ochre</strong><small>#e9c267</small></div>
+                <div class="swatch swatch-tertiary"><strong>System</strong><small>#76d5dc</small></div>
+                <div class="swatch swatch-success"><strong>Moss</strong><small>#c4d694</small></div>
+                <div class="swatch swatch-error"><strong>Ember</strong><small>#93000a</small></div>
+              </div>
+            </section>
+
+            <section id="typography" class="component-section" aria-labelledby="type-heading">
+              <header>
+                <small class="section-kicker">Atoms</small>
+                <h2 id="type-heading">Typography</h2>
+              </header>
+              <div class="component-sample type-specimen">
+                <span class="headline-large">Newsreader headline: woven context, local control.</span>
+                <span class="body-large">Work Sans body text keeps the cockpit readable, calm, and operator-friendly.</span>
+                <span class="label-line">JetBrains Mono label / metadata / trace rhythm</span>
+              </div>
+            </section>
+
+            <section id="buttons" class="component-section" aria-labelledby="buttons-heading">
+              <header>
+                <small class="section-kicker">Atoms</small>
+                <h2 id="buttons-heading">Buttons and links</h2>
+              </header>
+              <div class="component-sample">
+                <div class="button-row">
+                  <button type="button">Primary action</button>
+                  <button class="secondary" type="button">Secondary</button>
+                  <button class="secondary outline" type="button">Outline</button>
+                  <button class="small-button secondary outline" type="button">Small</button>
+                  <button class="button-danger" type="button">Danger</button>
+                  <a class="secondary outline" href="./" role="button">Link button</a>
+                </div>
+              </div>
+            </section>
+
+            <section id="forms" class="component-section" aria-labelledby="forms-heading">
+              <header>
+                <small class="section-kicker">Atoms</small>
+                <h2 id="forms-heading">Inputs</h2>
+              </header>
+              <form class="grid component-form-grid" aria-label="Static input examples">
+                <label>
+                  Thread title
+                  <input autocomplete="off" placeholder="What needs attention?" />
+                </label>
+                <label>
+                  Kind
+                  <select>
+                    <option>Task</option>
+                    <option>Reminder</option>
+                    <option>Event</option>
+                  </select>
+                </label>
+                <label>
+                  When
+                  <input type="datetime-local" />
+                </label>
+                <label>
+                  Notes
+                  <textarea rows="3" placeholder="Optional context"></textarea>
+                </label>
+                <label>
+                  <input type="checkbox" role="switch" checked />
+                  Remember locally
+                </label>
+                <button type="button">Static submit</button>
+              </form>
+            </section>
+
+            <section id="status" class="component-section" aria-labelledby="status-heading">
+              <header>
+                <small class="section-kicker">Atoms</small>
+                <h2 id="status-heading">Chips, pills, and status dots</h2>
+              </header>
+              <div class="component-sample status-row">
+                <span class="chip chip-thread">Conversation: web-main</span>
+                <span class="chip chip-private">Loopback / tunnel only</span>
+                <span class="chip chip-system">Planner: local API</span>
+                <span class="status-chip-success chip">connected</span>
+                <span class="status-chip-error chip">error</span>
+                <span class="pill connected">connected</span>
+                <span class="pill error">disconnected</span>
+                <span class="status-dot status-dot-success" aria-label="success"></span>
+                <span class="status-dot status-dot-warning" aria-label="warning"></span>
+                <span class="status-dot status-dot-danger" aria-label="danger"></span>
+                <span class="status-dot status-dot-system" aria-label="system"></span>
+              </div>
+            </section>
+
+            <section id="cards" class="component-section" aria-labelledby="cards-heading">
+              <header>
+                <small class="section-kicker">Molecules</small>
+                <h2 id="cards-heading">Cards and lists</h2>
+              </header>
+              <div class="grid component-grid">
+                <article>
+                  <header class="list-card-header">
+                    <span class="status-dot status-dot-warning" aria-hidden="true"></span>
+                    <div>
+                      <h2>Today</h2>
+                      <p>Due now and reminders.</p>
+                    </div>
+                    <span class="chip planner-count">3</span>
+                  </header>
+                  <ul class="list">
+                    <li class="item"><strong>Weekly Review</strong><small>task · today · repeats</small></li>
+                    <li class="item"><strong>Update snapshot</strong><small>reminder · 18:00</small></li>
+                  </ul>
+                </article>
+                <article>
+                  <header>
+                    <small class="section-kicker">Runtime</small>
+                    <h2>Client item</h2>
+                    <p>Structured list rows carry text and explicit actions.</p>
+                  </header>
+                  <ul class="list">
+                    <li class="item client-item-current">
+                      <strong>web-main</strong>
+                      <small>paired browser · current</small>
+                      <div class="item-actions"><button class="small-button secondary outline" type="button">Rotate</button><button class="small-button button-danger" type="button">Revoke</button></div>
+                    </li>
+                  </ul>
+                </article>
+              </div>
+            </section>
+
+            <section id="messages-example" class="component-section" aria-labelledby="messages-heading">
+              <header>
+                <small class="section-kicker">Molecules</small>
+                <h2 id="messages-heading">Messages and composer</h2>
+              </header>
+              <div class="component-sample component-message-stack">
+                <div class="message system">System note: local event trace is redacted.</div>
+                <div class="message">Ownloom response sits left in a quiet card.</div>
+                <div class="message user">User message sits right in madder clay.</div>
+                <section class="composer" aria-label="Static composer example">
+                  <header>
+                    <small class="section-kicker">One-shot materials</small>
+                    <div class="attachments"><span class="chip">photo.png</span><span class="chip chip-system">voice.m4a</span></div>
+                  </header>
+                  <div class="grid composer-grid">
+                    <label>Attach material<input type="file" /></label>
+                    <label>Next instruction<textarea rows="3" placeholder="Message Ownloom…"></textarea></label>
+                  </div>
+                  <footer class="actions end"><button type="button">Send</button><button class="secondary outline" type="button">Clear view</button></footer>
+                </section>
+              </div>
+            </section>
+
+            <section id="page-pattern" class="component-section" aria-labelledby="page-pattern-heading">
+              <header>
+                <small class="section-kicker">Organism</small>
+                <h2 id="page-pattern-heading">Page card + right rail pattern</h2>
+                <p>Every cockpit tab uses this structure: one main card for work, one right rail for context and rules. Chat keeps its central field transparent.</p>
+              </header>
+              <div class="component-sample">
+                <div class="page-layout">
+                  <article class="page-card">
+                    <small class="section-kicker">Main card</small>
+                    <h2>Primary work surface</h2>
+                    <p>Forms, lists, terminal, trace, or planner cards live here.</p>
+                  </article>
+                  <aside class="page-sidebar">
+                    <article>
+                      <small class="section-kicker">Right rail</small>
+                      <h2>Context</h2>
+                      <p>Rules, state explanations, and local-first boundaries live here.</p>
+                    </article>
+                  </aside>
+                </div>
+              </div>
+            </section>
+
+            <section id="trace-example" class="component-section" aria-labelledby="trace-heading">
+              <header>
+                <small class="section-kicker">Organism</small>
+                <h2 id="trace-heading">Trace and warning surfaces</h2>
+              </header>
+              <p class="warning-banner" role="note"><strong>Local shell boundary.</strong> Use through loopback or an SSH tunnel.</p>
+              <pre class="log" aria-label="Static trace example">[trace] connected
+[trace] planner refreshed
+[trace] token values stay redacted</pre>
+            </section>
+          </article>
+
+          <aside class="page-sidebar" aria-label="Component catalog rail">
+            <article>
+              <small class="section-kicker">Index</small>
+              <h2>Catalog rail</h2>
+              <p>Use this page before inventing new CSS or UI shapes.</p>
+              <ul class="component-index">
+                <li><a href="#tokens">Palette</a></li>
+                <li><a href="#typography">Typography</a></li>
+                <li><a href="#buttons">Buttons</a></li>
+                <li><a href="#forms">Inputs</a></li>
+                <li><a href="#status">Status</a></li>
+                <li><a href="#cards">Cards/lists</a></li>
+                <li><a href="#messages-example">Messages</a></li>
+                <li><a href="#page-pattern">Page pattern</a></li>
+                <li><a href="#trace-example">Trace</a></li>
+              </ul>
+            </article>
+            <article>
+              <small class="section-kicker">Rule</small>
+              <p>Prefer these existing atoms and page patterns. Add new components only when they preserve the Digital Scoarță system.</p>
+            </article>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

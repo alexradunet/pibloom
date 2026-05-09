@@ -13,12 +13,12 @@ export function renderSessions(target, sessions, options) {
     const current = chatId === options.currentChatId;
     const switchLabel = chatId.startsWith("client:") ? "Switch" : "Attach";
     const switchButton = current ? null : actionButton(switchLabel, { sessionSwitchChat: chatId }, {
-      class: "button-small button-secondary",
+      class: "small-button secondary outline",
       disabled: options.agentRunning,
       "aria-label": `${switchLabel} to ${options.sessionTitle(chatId)}`,
     });
     const resetButton = options.admin ? actionButton("Reset", { sessionReset: chatId }, {
-      class: "button-small button-danger",
+      class: "small-button button-danger",
       disabled: options.agentRunning,
       "aria-label": `Reset ${options.sessionTitle(chatId)}`,
     }) : null;

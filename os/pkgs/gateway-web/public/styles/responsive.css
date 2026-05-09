@@ -1,37 +1,31 @@
 @media (max-width: 1100px) {
-  .cockpit-layout {
+  .app-shell {
     grid-template-columns: 1fr;
     grid-template-rows: auto minmax(0, 1fr);
   }
 
-  .cockpit-sidebar {
+  .app-content {
+    height: auto;
+  }
+
+  .app-sidebar {
     min-height: auto;
     max-height: 18rem;
     grid-template-rows: auto auto;
-    border-right: 0;
-    border-bottom: 1px solid var(--color-border-soft);
-    overflow: auto;
+    border-inline-end: 0;
+    border-block-end: 1px solid var(--color-border-soft);
   }
 
-  .cockpit-sidebar::before {
+  .app-sidebar::before {
     inset-block: auto 0;
     inset-inline: 0;
     inline-size: auto;
     block-size: 0.25rem;
-    background: repeating-linear-gradient(
-      90deg,
-      var(--palette-loom-300) 0 0.5rem,
-      var(--palette-thread-500) 0.5rem 1rem,
-      transparent 1rem 1.5rem
-    );
-  }
-
-  .sidebar-note {
-    display: none;
+    background: repeating-linear-gradient(90deg, var(--palette-loom-300) 0 0.5rem, var(--palette-thread-500) 0.5rem 1rem, transparent 1rem 1.5rem);
   }
 
   .sidebar-tabs {
-    flex-direction: row;
+    display: flex;
     overflow-x: auto;
   }
 
@@ -39,63 +33,37 @@
     min-inline-size: 12rem;
   }
 
-  .cockpit-content {
-    height: auto;
-  }
-
-  .hearth-fixed {
+  .hearth {
     display: none;
   }
 }
 
 @media (max-width: 900px) {
-  .settings.access-hero,
-  .settings-grid,
-  .grid,
-  .config-grid,
-  .organizer-grid,
-  .planner-form,
-  .planner-grid,
-  .composer-row {
-    grid-template-columns: 1fr;
-  }
-
-  .planner-title-field,
-  .planner-wide,
-  .advanced-connection {
-    grid-column: auto;
-  }
-
-  .access-actions,
-  .composer-actions,
-  .terminal-actions {
-    justify-content: flex-start;
-  }
-
   .top-lintel,
-  header,
-  .danger-zone {
+  .danger-zone,
+  .split-header {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .top-lintel,
-  header {
-    min-height: auto;
-    flex-basis: auto;
-    padding-block: var(--space-4);
+  .header-status,
+  .actions.end {
+    justify-content: flex-start;
   }
 
-  .header-status { justify-content: flex-start; }
+  .planner-form,
+  .composer-grid {
+    grid-template-columns: 1fr;
+  }
 
-  .tab-panel {
-    padding: var(--space-4);
+  .planner-title-field,
+  .planner-wide {
+    grid-column: auto;
   }
 
   .workbench-shell,
   .workbench-shell.thread-rail-open {
     grid-template-columns: 1fr;
-    min-height: calc(100dvh - 12rem);
   }
 
   .workbench-shell::before {
@@ -103,10 +71,10 @@
     position: fixed;
     inset: 0;
     z-index: 15;
-    background: rgb(18 12 9 / 0.48);
+    background: rgb(18 12 9 / 0.5);
     opacity: 0;
     pointer-events: none;
-    transition: opacity var(--duration-fast) var(--ease-standard);
+    transition: opacity 120ms ease-in-out;
   }
 
   .workbench-shell.thread-rail-open::before {
@@ -120,14 +88,11 @@
     inset-block: 0;
     inset-inline-end: 0;
     width: min(25rem, calc(100vw - 1.5rem));
-    max-height: none;
-    border-radius: 0;
-    border-top: 0;
-    border-right: 0;
-    border-bottom: 0;
+    border-inline-start: 1px solid var(--color-border-soft);
     transform: translateX(100%);
     opacity: 0;
     pointer-events: none;
+    transition: transform 180ms ease-in-out, opacity 120ms ease-in-out;
   }
 
   .workbench-shell.thread-rail-open .thread-rail {
@@ -137,92 +102,56 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 560px) {
+  .top-lintel,
+  .tab-panel,
+  .workbench-card {
+    padding: 0.75rem;
+  }
+
   .thread-rail {
     inset-inline: 0;
     width: auto;
   }
-}
 
-@media (max-width: 520px) {
-  .shell {
-    width: 100vw;
+  .message {
+    max-width: 96%;
   }
 
-  .cockpit-sidebar,
-  .top-lintel,
-  header,
-  .card {
-    padding: var(--space-4);
-  }
-
-  .workbench-card { padding: 0; }
-
-  .workbench-heading,
-  .thread-messages,
-  .composer { padding-inline: var(--space-3); }
-
-  .thread-messages {
-    min-height: 18rem;
-    max-height: none;
-  }
-
-  button,
-  .button-link,
-  .gateway-pair-button { width: 100%; }
-
-  .tabs:not(.sidebar-tabs) .tab-button { width: auto; }
-
-  .sidebar-tabs .tab-button {
-    min-inline-size: 10rem;
-    width: auto;
-  }
-
-  .message { max-width: 96%; }
-
-  .section-register {
-    grid-template-columns: 1fr;
-  }
-
-  .planner-item-header,
+  .list-card-header,
   .item-header,
-  .card-header {
-    align-items: stretch;
+  .planner-item-header {
     flex-direction: column;
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @media (forced-colors: active) {
-  button,
-  .button-link,
-  .tab-button.active,
-  .tab-button[aria-selected="true"],
-  .cockpit-sidebar,
+  article,
+  .app-sidebar,
   .chip,
   .pill,
-  .pill.connected,
-  .pill.error,
-  .card,
   .item,
+  .message,
   .hearth,
   .warning-banner,
-  input,
-  select,
-  textarea {
+  .terminal-frame,
+  .log {
     border: 1px solid CanvasText;
   }
 
-  .tab-button.active,
-  .tab-button[aria-selected="true"] {
-    outline: 2px solid CanvasText;
-  }
-
-  .pixel-notch::after,
-  .woven-accent::after,
-  .card::before,
-  .top-lintel::before,
-  header::before,
-  .cockpit-sidebar::before {
+  .app-sidebar::before,
+  article::before {
     display: none;
   }
 }

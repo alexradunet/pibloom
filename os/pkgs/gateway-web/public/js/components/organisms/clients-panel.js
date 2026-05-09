@@ -14,10 +14,10 @@ export function renderClients(target, payload) {
   for (const client of rows) {
     const name = client.identity?.displayName ?? client.displayName ?? client.clientId ?? client.id ?? client.connId ?? "client";
     const rotateButton = admin && !client.current && client.canRotate
-      ? actionButton("Rotate token", { clientRotate: client.id }, { class: "button-small button-secondary", "aria-label": `Rotate token for ${name}` })
+      ? actionButton("Rotate token", { clientRotate: client.id }, { class: "small-button secondary outline", "aria-label": `Rotate token for ${name}` })
       : null;
     const revokeButton = admin && !client.current && client.canRevoke
-      ? actionButton("Revoke", { clientRevoke: client.id }, { class: "button-small button-danger", "aria-label": `Revoke ${name}` })
+      ? actionButton("Revoke", { clientRevoke: client.id }, { class: "small-button button-danger", "aria-label": `Revoke ${name}` })
       : null;
     target.append(clientItem(client, name, actionRow([rotateButton, revokeButton])));
   }

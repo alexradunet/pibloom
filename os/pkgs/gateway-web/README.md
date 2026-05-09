@@ -54,8 +54,10 @@ public/
       molecules.js
       organisms/*.js
     controllers/*.js
+  vendor/
+    pico.min.css            # self-hosted Pico CSS v2 base (CSP stays style-src 'self')
   styles/
-    tokens.css
+    tokens.css              # Ownloom palette mapped to --pico-* variables
     base.css
     layout.css
     components.css
@@ -73,7 +75,7 @@ Atomic Design is used as file organization, not framework ceremony:
 
 Dynamic UI is rendered with DOM APIs and `textContent`; avoid `innerHTML`, `outerHTML`, and `insertAdjacentHTML`.
 
-CSS is split through `public/style.css` with cascade layers and tokenized colors/spacing/focus treatment. Keep it no-build: add new CSS files explicitly and include them in the smoke check when needed.
+CSS is Pico-first: `public/style.css` imports the vendored `public/vendor/pico.min.css` base, then a small Ownloom theme/app layer maps Digital Scoarță colors and covers only the cockpit layout that Pico does not provide. Keep it no-build: add new CSS files explicitly and include them in the smoke check when needed.
 
 ## Mobile/PWA status
 

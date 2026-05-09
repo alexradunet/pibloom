@@ -17,6 +17,9 @@ runCommand "ownloom-gateway-web-smoke" {
     test ! -e "$root/sw.js"
     test ! -e "$root/js/pwa.js"
     test -f "$root/icons/icon.svg"
+    test -f "$root/vendor/pico.min.css"
+    grep -q 'Pico CSS' "$root/vendor/pico.min.css"
+    grep -q './vendor/pico.min.css' "$root/style.css"
     test -f "$root/styles/tokens.css"
     test -f "$root/styles/base.css"
     test -f "$root/styles/layout.css"
@@ -106,6 +109,14 @@ runCommand "ownloom-gateway-web-smoke" {
     grep -qi 'content-security-policy:' /tmp/index.headers
     grep -qi 'x-content-type-options: nosniff' /tmp/index.headers
     grep -qi 'referrer-policy: no-referrer' /tmp/index.headers
+
+    curl -fsS -D /tmp/style.headers http://127.0.0.1:18090/style.css >/tmp/style.css
+    grep -qi 'content-type: text/css' /tmp/style.headers
+    grep -q './vendor/pico.min.css' /tmp/style.css
+
+    curl -fsS -D /tmp/pico.headers http://127.0.0.1:18090/vendor/pico.min.css >/tmp/pico.min.css
+    grep -qi 'content-type: text/css' /tmp/pico.headers
+    grep -q 'Pico CSS' /tmp/pico.min.css
 
     curl -sS -D /tmp/manifest.headers http://127.0.0.1:18090/manifest.webmanifest >/tmp/manifest.webmanifest || true
     grep -q '404' /tmp/manifest.headers

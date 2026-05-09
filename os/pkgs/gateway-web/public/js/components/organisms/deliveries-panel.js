@@ -12,8 +12,8 @@ export function renderDeliveries(target, deliveries, { admin }) {
     const id = delivery.id ?? "";
     const status = delivery.deadAt ? "dead" : delivery.nextAttemptAt ? "waiting" : "queued";
     const recipient = delivery.recipientId ?? delivery.target ?? delivery.recipient ?? "local gateway";
-    const retryButton = admin ? actionButton("Retry", { deliveryRetry: id }, { class: "button-small button-secondary", "aria-label": `Retry delivery ${id}` }) : null;
-    const deleteButton = admin ? actionButton("Delete", { deliveryDelete: id }, { class: "button-small button-danger", "aria-label": `Delete delivery ${id}` }) : null;
+    const retryButton = admin ? actionButton("Retry", { deliveryRetry: id }, { class: "small-button secondary outline", "aria-label": `Retry delivery ${id}` }) : null;
+    const deleteButton = admin ? actionButton("Delete", { deliveryDelete: id }, { class: "small-button button-danger", "aria-label": `Delete delivery ${id}` }) : null;
     target.append(deliveryItem({ id, status, recipient, nextAttemptAt: delivery.nextAttemptAt, deadAt: delivery.deadAt }, actionRow([retryButton, deleteButton])));
   }
 }

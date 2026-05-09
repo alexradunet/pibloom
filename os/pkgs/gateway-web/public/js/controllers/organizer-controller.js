@@ -254,10 +254,10 @@ function renderPlannerItem(item) {
   return li;
 }
 
-function actionButton(action, label, extraClass = "button-secondary") {
+function actionButton(action, label, extraClass = "secondary outline") {
   const button = document.createElement("button");
   button.type = "button";
-  button.className = `button-small ${extraClass}`;
+  button.className = `small-button ${extraClass}`;
   button.dataset.plannerAction = action;
   button.textContent = label;
   return button;

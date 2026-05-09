@@ -1,12 +1,8 @@
-:root {
+:root,
+[data-theme="dark"] {
   color-scheme: dark;
 
-  /*
-   * Ownloom primitives: Digital Scoarță / Pixel Loom Minimalism.
-   * These keep the existing token names stable while aligning the real UI
-   * with the root mockups: charred walnut, clay, wool, madder, ochre,
-   * moss, muted indigo, and ember.
-   */
+  /* Ownloom Digital Scoarță palette, kept as named primitives for JS/CSS compatibility. */
   --palette-void-950: #1a110f;
   --palette-void-975: #150c0a;
   --palette-ink-925: #231916;
@@ -21,135 +17,101 @@
   --palette-mist-200: #dcc1b8;
   --palette-mist-300: #c9aba1;
   --palette-mist-500: #a48b84;
-  --palette-mist-600: #8f746c;
   --palette-thread-200: #ffdbd0;
   --palette-thread-300: #ffb59d;
   --palette-thread-400: #df7d5a;
   --palette-thread-500: #b85736;
   --palette-thread-700: #7e2c0e;
-  --palette-thread-900: #391107;
   --palette-loom-300: #e9c267;
-  --palette-loom-400: #c7972f;
-  --palette-loom-700: #755800;
   --palette-loom-900: #251a00;
   --palette-moss-300: #c4d694;
-  --palette-moss-500: #8aa05f;
-  --palette-moss-900: #182211;
   --palette-ember-300: #ffb4ab;
-  --palette-ember-400: #e67362;
   --palette-ember-700: #93000a;
-  --palette-ember-950: #3a0808;
-  --palette-madder-300: #ffb59d;
-  --palette-madder-500: #b85736;
-  --palette-madder-800: #5d1800;
   --palette-indigo-300: #76d5dc;
-  --palette-indigo-500: #008087;
   --palette-indigo-900: #10282c;
-  --palette-clay-500: #9e6040;
-  --palette-walnut-700: #4a2f1d;
 
-  /* Typography: system fonts only, with editorial/technical hierarchy. */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-md: 1.0625rem;
-  --text-lg: 1.25rem;
-  --text-xl: clamp(1.65rem, 1.28rem + 1.4vw, 2.5rem);
-  --line-tight: 1.2;
-  --line-normal: 1.5;
-  --line-relaxed: 1.65;
-  --font-normal: 400;
-  --font-medium: 600;
-  --font-bold: 700;
-
-  /* Existing numeric spacing names kept for compatibility. */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-7: 2rem;
-  --space-8: 2.5rem;
-  --space-10: 3rem;
-  --space-12: 4rem;
-  --space-page: var(--space-6);
-  --space-card: var(--space-6);
-  --space-section: var(--space-8);
-  --space-row: var(--space-3);
-  --space-control-x: var(--space-4);
-  --space-control-y: 0.68rem;
-  --space-control-gap: var(--space-2);
-
-  /* Shape and flat tonal depth. */
-  --radius-xs: 0.125rem;
-  --radius-sm: 0.1875rem;
-  --radius-md: 0.25rem;
-  --radius-lg: 0.32rem;
-  --radius-xl: 0.38rem;
-  --radius-2xl: 0.45rem;
-  --radius-pill: 0.25rem;
-  --notch-size: 0.25rem;
-  --stitch-step: 0.5rem;
-  --shadow-card: 0 1px 0 rgb(255 250 249 / 0.035);
-  --shadow-raised: 0 1px 0 rgb(255 250 249 / 0.045);
-
-  /* Motion. */
-  --duration-fast: 120ms;
-  --duration-normal: 180ms;
-  --duration-slow: 260ms;
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1.12);
-
-  /* Semantic colors. */
+  /* Compatibility names for the small app-specific layer. */
   --color-bg: var(--palette-void-950);
   --color-bg-deep: var(--palette-void-975);
   --color-surface: var(--palette-ink-925);
   --color-surface-2: var(--palette-ink-900);
   --color-surface-3: var(--palette-ink-850);
-  --color-surface-hover: var(--palette-ink-800);
-  --color-border: rgb(164 139 132 / 0.28);
-  --color-border-soft: rgb(86 66 60 / 0.72);
-  --color-border-strong: rgb(164 139 132 / 0.55);
+  --color-border-soft: rgb(164 139 132 / 0.24);
+  --color-border-strong: rgb(164 139 132 / 0.48);
   --color-text: var(--palette-mist-150);
   --color-muted: var(--palette-mist-200);
   --color-subtle: var(--palette-mist-300);
   --color-faint: var(--palette-mist-500);
   --color-accent: var(--palette-thread-300);
   --color-accent-hover: var(--palette-thread-200);
-  --color-accent-text: #390b00;
-  --color-success: var(--palette-moss-300);
-  --color-on-success: #111707;
   --color-warning: var(--palette-loom-300);
-  --color-on-warning: var(--palette-loom-900);
+  --color-success: var(--palette-moss-300);
   --color-system: var(--palette-indigo-300);
-  --color-on-system: #00363a;
   --color-danger: var(--palette-ember-300);
-  --color-danger-hover: #ffdad6;
   --color-on-danger: #690005;
-  --color-focus: var(--palette-loom-300);
-  --color-disabled: rgb(220 193 184 / 0.44);
-
-  /* Component roles. */
-  --focus-ring: 2px solid var(--color-focus);
-  --card-bg: rgb(39 29 26 / 0.96);
-  --card-border: 1px solid var(--color-border-soft);
-  --button-primary-bg: var(--palette-thread-500);
-  --button-primary-text: var(--palette-mist-100);
-  --button-secondary-bg: rgb(62 50 47 / 0.78);
-  --button-secondary-text: var(--color-muted);
-  --button-danger-bg: var(--palette-ember-700);
-  --button-danger-text: var(--palette-mist-100);
-  --chip-bg: rgb(62 50 47 / 0.64);
-  --chip-border: rgb(164 139 132 / 0.36);
-  --message-user-bg: #5d1800;
-  --message-agent-bg: #322824;
-  --message-system-bg: #10282c;
-  --input-bg: rgb(21 12 10 / 0.94);
   --terminal-bg: #120c09;
-  --shell-width: 1320px;
-  --sidebar-width: 16rem;
-  --sidebar-bg: rgb(35 25 22 / 0.98);
+  --sidebar-width: 15rem;
+
+  /* Pico design-system mapping. */
+  --pico-font-family-sans-serif: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --pico-font-family-monospace: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --pico-font-family: var(--pico-font-family-sans-serif);
+  --pico-line-height: 1.5;
+  --pico-border-radius: 0.38rem;
+  --pico-spacing: 1rem;
+  --pico-typography-spacing-vertical: 0.85rem;
+  --pico-block-spacing-vertical: 1rem;
+  --pico-block-spacing-horizontal: 1rem;
+  --pico-form-element-spacing-vertical: 0.68rem;
+  --pico-form-element-spacing-horizontal: 0.85rem;
+
+  --pico-background-color: var(--color-bg);
+  --pico-color: var(--color-text);
+  --pico-muted-color: var(--color-subtle);
+  --pico-muted-border-color: var(--color-border-soft);
+  --pico-primary: var(--palette-thread-300);
+  --pico-primary-background: var(--palette-thread-500);
+  --pico-primary-border: var(--palette-thread-500);
+  --pico-primary-hover: var(--palette-thread-200);
+  --pico-primary-hover-background: #c76746;
+  --pico-primary-hover-border: var(--palette-thread-300);
+  --pico-primary-focus: rgb(233 194 103 / 0.38);
+  --pico-primary-inverse: var(--palette-mist-100);
+  --pico-primary-underline: rgb(255 181 157 / 0.55);
+
+  --pico-secondary: var(--palette-mist-200);
+  --pico-secondary-background: var(--palette-ink-800);
+  --pico-secondary-border: rgb(164 139 132 / 0.38);
+  --pico-secondary-hover: var(--palette-mist-100);
+  --pico-secondary-hover-background: rgb(233 194 103 / 0.14);
+  --pico-secondary-hover-border: rgb(233 194 103 / 0.46);
+  --pico-secondary-focus: rgb(233 194 103 / 0.25);
+  --pico-secondary-inverse: var(--palette-mist-100);
+
+  --pico-contrast: var(--palette-mist-100);
+  --pico-contrast-background: var(--palette-ink-750);
+  --pico-contrast-border: var(--palette-ink-750);
+  --pico-contrast-hover: #ffffff;
+  --pico-contrast-hover-background: var(--palette-ink-600);
+  --pico-contrast-hover-border: var(--palette-mist-300);
+  --pico-contrast-focus: rgb(220 193 184 / 0.24);
+  --pico-contrast-inverse: var(--palette-void-950);
+
+  --pico-card-background-color: rgb(39 29 26 / 0.95);
+  --pico-card-border-color: var(--color-border-soft);
+  --pico-card-sectioning-background-color: rgb(35 25 22 / 0.74);
+  --pico-card-box-shadow: 0 1px 0 rgb(255 250 249 / 0.035);
+  --pico-form-element-background-color: rgb(21 12 10 / 0.92);
+  --pico-form-element-border-color: var(--color-border-strong);
+  --pico-form-element-active-background-color: var(--palette-void-975);
+  --pico-form-element-active-border-color: var(--palette-thread-300);
+  --pico-form-element-focus-color: var(--palette-loom-300);
+  --pico-form-element-color: var(--palette-mist-150);
+  --pico-form-element-placeholder-color: var(--palette-mist-500);
+  --pico-h1-color: var(--palette-thread-300);
+  --pico-h2-color: var(--palette-mist-150);
+  --pico-h3-color: var(--palette-mist-200);
+  --pico-code-background-color: var(--terminal-bg);
+  --pico-code-color: var(--palette-indigo-300);
+  --pico-table-border-color: var(--color-border-soft);
 }

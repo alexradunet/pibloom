@@ -1,8 +1,9 @@
-@layer tokens, base, layout, components, utilities, responsive;
+@layer pico, theme, app, utilities;
 
-@import url("./styles/tokens.css") layer(tokens);
-@import url("./styles/base.css") layer(base);
-@import url("./styles/layout.css") layer(layout);
-@import url("./styles/components.css") layer(components);
+@import url("./vendor/pico.min.css") layer(pico);
+@import url("./styles/tokens.css") layer(theme);
+@import url("./styles/base.css") layer(app);
+@import url("./styles/layout.css") layer(app);
+@import url("./styles/components.css") layer(app);
 @import url("./styles/utilities.css") layer(utilities);
-@import url("./styles/responsive.css") layer(responsive);
+@import url("./styles/responsive.css") layer(app);

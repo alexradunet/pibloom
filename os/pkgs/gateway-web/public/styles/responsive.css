@@ -1,13 +1,46 @@
 @media (max-width: 1100px) {
   .cockpit-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .cockpit-sidebar {
-    position: static;
     min-height: auto;
-    max-height: none;
-    overflow: visible;
+    max-height: 18rem;
+    grid-template-rows: auto auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border-soft);
+    overflow: auto;
+  }
+
+  .cockpit-sidebar::before {
+    inset-block: auto 0;
+    inset-inline: 0;
+    inline-size: auto;
+    block-size: 0.25rem;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--palette-loom-300) 0 0.5rem,
+      var(--palette-thread-500) 0.5rem 1rem,
+      transparent 1rem 1.5rem
+    );
+  }
+
+  .sidebar-note {
+    display: none;
+  }
+
+  .sidebar-tabs {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .sidebar-tabs .tab-button {
+    min-inline-size: 12rem;
+  }
+
+  .cockpit-content {
+    height: auto;
   }
 
   .hearth-fixed {
@@ -46,20 +79,74 @@
     flex-direction: column;
   }
 
+  .top-lintel,
+  header {
+    min-height: auto;
+    flex-basis: auto;
+    padding-block: var(--space-4);
+  }
+
   .header-status { justify-content: flex-start; }
+
+  .tab-panel {
+    padding: var(--space-4);
+  }
+
+  .workbench-shell,
+  .workbench-shell.thread-rail-open {
+    grid-template-columns: 1fr;
+    min-height: calc(100dvh - 12rem);
+  }
+
+  .workbench-shell::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 15;
+    background: rgb(18 12 9 / 0.48);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-fast) var(--ease-standard);
+  }
+
+  .workbench-shell.thread-rail-open::before {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .thread-rail {
+    position: fixed;
+    z-index: 20;
+    inset-block: 0;
+    inset-inline-end: 0;
+    width: min(25rem, calc(100vw - 1.5rem));
+    max-height: none;
+    border-radius: 0;
+    border-top: 0;
+    border-right: 0;
+    border-bottom: 0;
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .workbench-shell.thread-rail-open .thread-rail {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 @media (max-width: 640px) {
   .thread-rail {
-    inset-inline: 0.5rem;
+    inset-inline: 0;
     width: auto;
   }
 }
 
 @media (max-width: 520px) {
   .shell {
-    width: min(100vw - 1rem, var(--shell-width));
-    padding-block-start: var(--space-4);
+    width: 100vw;
   }
 
   .cockpit-sidebar,
@@ -86,7 +173,10 @@
 
   .tabs:not(.sidebar-tabs) .tab-button { width: auto; }
 
-  .sidebar-tabs .tab-button { width: 100%; }
+  .sidebar-tabs .tab-button {
+    min-inline-size: 10rem;
+    width: auto;
+  }
 
   .message { max-width: 96%; }
 

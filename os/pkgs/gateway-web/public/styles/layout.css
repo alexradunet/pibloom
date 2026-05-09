@@ -1,37 +1,46 @@
 .shell {
-  width: min(var(--shell-width), calc(100vw - 1.5rem));
+  width: 100vw;
   min-height: 100dvh;
-  margin-inline: auto;
-  padding-block: var(--space-page) 2rem;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 .cockpit-layout {
   display: grid;
-  grid-template-columns: minmax(14rem, var(--sidebar-width)) minmax(0, 1fr);
-  align-items: start;
-  gap: var(--space-6);
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  width: 100vw;
+  height: 100dvh;
+  min-height: 0;
+  gap: 0;
 }
 
 .cockpit-content {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--color-bg);
 }
 
 .cockpit-sidebar {
-  position: sticky;
-  inset-block-start: var(--space-page);
+  position: relative;
   display: grid;
-  min-height: calc(100dvh - var(--space-page) - var(--space-page));
-  max-height: calc(100dvh - var(--space-page) - var(--space-page));
+  min-height: 100dvh;
+  max-height: 100dvh;
   overflow: auto;
   grid-template-rows: auto 1fr auto;
   gap: var(--space-6);
-  border: 1px solid var(--color-border-soft);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
+  border: 0;
+  border-right: 1px solid var(--color-border-soft);
+  border-radius: 0;
+  padding: var(--space-6) var(--space-4);
   background:
-    linear-gradient(180deg, rgb(62 50 47 / 0.24), transparent 18rem),
+    linear-gradient(180deg, rgb(62 50 47 / 0.18), transparent 18rem),
     var(--sidebar-bg);
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
 }
 
 .cockpit-sidebar::before {
@@ -40,7 +49,7 @@
   inset-inline-start: 0;
   inset-block: 0;
   inline-size: 0.25rem;
-  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  border-radius: 0;
   background: repeating-linear-gradient(
     0deg,
     var(--palette-loom-300) 0 0.5rem,
@@ -63,10 +72,10 @@
 }
 
 .sidebar-brand {
-  border: 1px solid rgb(164 139 132 / 0.22);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
-  background: rgb(21 12 10 / 0.42);
+  border: 0;
+  border-radius: 0;
+  padding: 0 var(--space-2) var(--space-5);
+  background: transparent;
 }
 
 .sidebar-note {
@@ -76,10 +85,10 @@
 
 .sidebar-title {
   margin: 0;
-  color: var(--color-text);
-  font-size: var(--text-lg);
+  color: var(--color-accent);
+  font-size: 1.75rem;
   font-weight: var(--font-bold);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 .eyebrow,
@@ -97,16 +106,17 @@ header {
   position: relative;
   overflow: hidden;
   display: flex;
-  align-items: flex-start;
+  flex: 0 0 4rem;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--space-7);
-  padding: var(--space-6);
-  border: 1px solid var(--color-border-soft);
-  border-radius: var(--radius-lg);
-  background:
-    linear-gradient(135deg, rgb(184 87 54 / 0.12), transparent 42%),
-    rgb(35 25 22 / 0.96);
-  box-shadow: var(--shadow-card);
+  gap: var(--space-5);
+  min-height: 4rem;
+  padding: 0 var(--space-6);
+  border: 0;
+  border-bottom: 1px solid var(--color-border-soft);
+  border-radius: 0;
+  background: var(--color-surface-2);
+  box-shadow: none;
 }
 
 .top-lintel::before,
@@ -114,15 +124,14 @@ header::before {
   content: "";
   position: absolute;
   inset-inline: 0;
-  inset-block-start: 0;
-  block-size: 0.25rem;
+  inset-block-end: 0;
+  block-size: 1px;
   background: repeating-linear-gradient(
     90deg,
-    var(--palette-loom-300) 0 0.5rem,
-    var(--palette-thread-500) 0.5rem 1rem,
-    transparent 1rem 1.5rem
+    rgb(164 139 132 / 0.72) 0 0.25rem,
+    transparent 0.25rem 0.5rem
   );
-  opacity: 0.86;
+  opacity: 0.75;
 }
 
 .top-lintel > *,
@@ -133,10 +142,26 @@ header > * {
 
 .lintel-copy {
   display: grid;
-  gap: var(--space-2);
+  gap: 0;
 }
 
-header p { max-width: 56rem; }
+.lintel-copy .eyebrow {
+  display: none;
+}
+
+.top-lintel h1,
+header h1 {
+  margin: 0;
+  color: var(--color-accent);
+  font-size: 1.25rem;
+  line-height: var(--line-tight);
+}
+
+.top-lintel p,
+header p {
+  max-width: 48rem;
+  font-size: var(--text-sm);
+}
 
 .header-status {
   display: flex;
@@ -163,18 +188,49 @@ header p { max-width: 56rem; }
   padding-block-end: 0;
 }
 
+.tab-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-6);
+}
+
+.tab-panel > .card,
+.tab-panel > .grid,
+.tab-panel > .workbench-shell {
+  width: min(100%, 1280px);
+  margin-inline: auto;
+}
+
+#tab-chat.tab-panel {
+  padding: 0;
+}
+
+#tab-chat > .workbench-shell {
+  width: 100%;
+  height: 100%;
+  margin-inline: 0;
+}
+
 .tab-panel[hidden] { display: none; }
 
 .card {
   position: relative;
   overflow: visible;
   container-type: inline-size;
-  margin-block-start: var(--space-6);
+  margin-block-start: 0;
   border: var(--card-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   background: var(--card-bg);
   padding: var(--space-card);
   box-shadow: var(--shadow-card);
+}
+
+.card + .card,
+.card + .grid,
+.grid + .card,
+.grid + .grid {
+  margin-block-start: var(--space-6);
 }
 
 .card::before {
@@ -229,23 +285,17 @@ header p { max-width: 56rem; }
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  align-items: start;
+  align-items: stretch;
+  gap: 0;
+  min-height: 0;
+}
+
+.workbench-shell.thread-rail-open {
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
 }
 
 .workbench-shell::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 15;
-  background: rgb(18 12 9 / 0.48);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--duration-fast) var(--ease-standard);
-}
-
-.workbench-shell.thread-rail-open::before {
-  opacity: 1;
-  pointer-events: auto;
+  content: none;
 }
 
 .config-grid,
@@ -261,10 +311,13 @@ header p { max-width: 56rem; }
 }
 
 .workbench-card {
-  width: min(100%, 61rem);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(100%, 52rem);
+  min-height: 100%;
   justify-self: center;
   gap: 0;
-  padding: 0;
+  padding: var(--space-6) var(--space-6) var(--space-4);
   border-color: transparent;
   background: transparent;
   box-shadow: none;
@@ -284,31 +337,37 @@ header p { max-width: 56rem; }
 }
 
 .workbench-heading {
-  padding: var(--space-6) 0 var(--space-4);
+  padding: 0 0 var(--space-4);
+}
+
+.workbench-card .thread-messages {
+  min-height: 0;
+  max-height: none;
 }
 
 .chat-heading h2 { margin: 0; }
 
 .thread-rail {
-  position: fixed;
-  z-index: 20;
-  inset-block-start: var(--space-page);
-  inset-block-end: var(--space-page);
-  inset-inline-end: max(0.75rem, calc((100vw - var(--shell-width)) / 2 + 0.75rem));
-  width: min(25rem, calc(100vw - 1.5rem));
+  position: relative;
+  z-index: 1;
+  inset: auto;
+  width: auto;
+  height: 100%;
+  max-height: none;
   overflow: auto;
-  transform: translateX(calc(100% + 2rem));
-  opacity: 0;
-  pointer-events: none;
+  border-radius: 0;
+  border-block: 0;
+  border-inline-end: 0;
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
   transition:
     opacity var(--duration-fast) var(--ease-standard),
     transform var(--duration-normal) var(--ease-standard);
 }
 
-.workbench-shell.thread-rail-open .thread-rail {
-  transform: translateX(0);
-  opacity: 1;
-  pointer-events: auto;
+.workbench-shell:not(.thread-rail-open) .thread-rail {
+  display: none;
 }
 
 .settings.access-hero {

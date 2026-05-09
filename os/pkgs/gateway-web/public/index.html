@@ -69,7 +69,7 @@
           </header>
 
           <section id="tab-chat" class="tab-panel active" role="tabpanel" data-tab-panel="chat" aria-labelledby="tab-chat-button" tabindex="0">
-            <section class="workbench-shell" data-workbench-shell>
+            <section class="workbench-shell thread-rail-open" data-workbench-shell>
               <section class="card chat workbench-card woven-accent" aria-labelledby="chat-heading">
                 <div class="chat-heading workbench-heading">
                   <div>
@@ -78,7 +78,7 @@
                     <p>Centered conversation space. The thread rail stays closed until you ask for it.</p>
                   </div>
                   <div class="row workbench-actions">
-                    <button id="threadRailToggle" class="button-secondary" type="button" aria-controls="threadRail" aria-expanded="false">Threads</button>
+                    <button id="threadRailToggle" class="button-secondary" type="button" aria-controls="threadRail" aria-expanded="true">Threads</button>
                     <button id="newChatButton" class="button-secondary" type="button">New thread</button>
                   </div>
                 </div>
@@ -107,7 +107,7 @@
                 </div>
               </section>
 
-              <aside id="threadRail" class="card side thread-rail woven-accent" aria-labelledby="sessions-heading" aria-hidden="true" hidden>
+              <aside id="threadRail" class="card side thread-rail woven-accent" aria-labelledby="sessions-heading" aria-hidden="false">
                 <div class="card-header thread-rail-header">
                   <div>
                     <span class="section-kicker">Threads</span>

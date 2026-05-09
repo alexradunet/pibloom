@@ -15,48 +15,50 @@ type ChatMessage = {
   text: string;
 };
 
-const shellClass = "loom-shell flex h-dvh overflow-hidden bg-background text-on-background";
+const shellClass = "loom-shell flex h-dvh flex-col overflow-hidden bg-background text-on-background";
+const appRowClass = "loom-main-row flex min-h-0 flex-1 overflow-hidden";
 const sideNavClass = "loom-sidebar flex h-full w-64 shrink-0 flex-col border-r border-dashed border-outline-variant bg-surface-container-lowest py-md";
 const mainClass = "loom-content flex min-w-0 flex-1 flex-col overflow-hidden bg-surface";
-const topbarClass = "loom-topbar flex h-16 shrink-0 items-center justify-between gap-sm border-b border-dashed border-outline-variant bg-background px-margin";
-const navLinkClass = "group flex items-start gap-xs rounded border border-transparent px-sm py-xs text-on-surface-variant no-underline transition-colors hover:border-outline-variant hover:bg-surface-container hover:text-primary";
+const topbarClass = "loom-topbar flex h-16 w-full shrink-0 items-center justify-between gap-sm border-b border-outline-variant bg-surface px-margin";
+const navLinkClass = "group flex items-center gap-3 rounded border border-transparent px-3 py-2 pl-2 text-on-surface-variant no-underline transition-all hover:bg-surface-container hover:text-primary";
 
 export class OwnloomPersonalApp extends OwnloomLightElement {
   render() {
     return html`<main id="main" class=${shellClass}>
       <a class="skip-link" href="#personal-content">Skip to personal content</a>
-      <aside class=${sideNavClass} aria-label="Ownloom personal menu">
-        <header class="px-sm pb-sm">
-          <small class="font-label-sm text-label-sm uppercase tracking-[0.05em] text-secondary">Personal mode</small>
-          <h1 class="m-0 mt-xs font-headline-md text-headline-md text-primary">ownloom</h1>
-          <p class="m-0 text-sm text-on-surface-variant">Local-first hearth for today, planner, journal, people, and documents.</p>
-        </header>
-        <nav class="flex-1 space-y-xs overflow-y-auto px-sm" aria-label="Ownloom modes">
-          <a class="${navLinkClass} border-primary/50 bg-primary-container/30 text-on-primary-container" href="/" aria-current="page"><ownloom-icon name="workbench"></ownloom-icon><span><span class="font-label-md text-label-md">Personal</span><small class="block text-[12px] leading-snug text-on-surface-variant">Ask, capture, and plan.</small></span></a>
-          <a class=${navLinkClass} href="/admin?tab=chat"><ownloom-icon name="shell"></ownloom-icon><span><span class="font-label-md text-label-md">Workbench</span><small class="block text-[12px] leading-snug text-on-surface-variant">Operator conversation.</small></span></a>
-          <a class=${navLinkClass} href="/admin?tab=organizer"><ownloom-icon name="planner"></ownloom-icon><span><span class="font-label-md text-label-md">Planner</span><small class="block text-[12px] leading-snug text-on-surface-variant">Radicale collections.</small></span></a>
-          <a class=${navLinkClass} href="/admin?tab=config"><ownloom-icon name="access"></ownloom-icon><span><span class="font-label-md text-label-md">Access</span><small class="block text-[12px] leading-snug text-on-surface-variant">Pair trusted clients.</small></span></a>
-        </nav>
-        <div class="mx-sm space-y-xs border-t border-dashed border-outline-variant pt-sm">
-          <a class=${navLinkClass} href="/admin"><ownloom-icon name="settings"></ownloom-icon><span class="font-label-md text-label-md">Admin cockpit</span></a>
+      <header class=${topbarClass}>
+        <a class="topbar-brand flex shrink-0 items-center gap-base text-primary no-underline active:scale-95" href="/" aria-label="Ownloom personal home">
+          <ownloom-icon name="shell"></ownloom-icon><span class="font-headline-md text-headline-md font-semibold tracking-tight">Ownloom</span>
+        </a>
+        <div class="topbar-search hidden max-w-lg flex-1 md:block">
+          <label class="relative m-0 block"><span class="search-icon"><ownloom-icon name="search"></ownloom-icon></span><input aria-label="Search Atelier" class="w-full bg-surface-container border-b border-outline-variant border-l-0 border-r-0 border-t-0 py-2 pl-10 pr-4 font-label-md text-on-surface outline-none transition-colors focus:border-primary" placeholder="Search Atelier…" type="search" /></label>
         </div>
-        <ownloom-hearth heading="Personal first" detail="Operator controls stay behind admin."></ownloom-hearth>
-      </aside>
-
-      <div id="personal-content" class=${mainClass} tabindex="-1">
-        <header class=${topbarClass}>
-          <a class="flex shrink-0 items-center gap-sm text-primary no-underline active:scale-95" href="/" aria-label="Ownloom personal home">
-            <ownloom-icon name="menu"></ownloom-icon><span class="font-headline-md text-headline-md tracking-tight">ownloom</span>
-          </a>
-          <div class="flex-1"></div>
-          <div class="flex shrink-0 items-center gap-xs">
-            <span class="chip chip-thread">Conversation: web-personal-main</span>
-            <span class="chip chip-private hidden lg:inline-flex">Loopback / tunnel only</span>
-            <a class="secondary outline small-button" href="/admin" role="button">Open admin</a>
+        <div class="topbar-actions flex shrink-0 items-center gap-4">
+          <span class="chip chip-thread hidden xl:inline-flex">Conversation: web-personal-main</span>
+          <a class="icon-button" href="/admin?tab=config" aria-label="Settings"><ownloom-icon name="settings"></ownloom-icon></a>
+          <button class="icon-button notification-button" type="button" aria-label="Notifications"><ownloom-icon name="notify"></ownloom-icon></button>
+          <a class="icon-button" href="/admin" aria-label="Open admin"><ownloom-icon name="mesh"></ownloom-icon></a>
+          <a class="hearth-avatar" href="/admin" aria-label="Hearth status"><ownloom-icon name="hearth"></ownloom-icon></a>
+        </div>
+      </header>
+      <div class=${appRowClass}>
+        <aside class=${sideNavClass} aria-label="Ownloom personal menu">
+          <nav class="flex-1 space-y-2 overflow-y-auto px-4" aria-label="Ownloom modes">
+            <a class="${navLinkClass} border-l-2 border-primary bg-surface-container text-secondary" href="/" aria-current="page"><ownloom-icon name="workbench"></ownloom-icon><span class="font-label-md text-label-md">Workbench</span></a>
+            <a class=${navLinkClass} href="/admin?tab=organizer"><ownloom-icon name="planner"></ownloom-icon><span class="font-label-md text-label-md">Planner</span></a>
+            <a class=${navLinkClass} href="/admin?tab=memory"><ownloom-icon name="memory"></ownloom-icon><span class="font-label-md text-label-md">Memory</span></a>
+            <a class=${navLinkClass} href="/admin?tab=config"><ownloom-icon name="access"></ownloom-icon><span class="font-label-md text-label-md">Access</span></a>
+            <a class=${navLinkClass} href="/admin?tab=terminal"><ownloom-icon name="shell"></ownloom-icon><span class="font-label-md text-label-md">Shell</span></a>
+            <a class=${navLinkClass} href="/admin?tab=log"><ownloom-icon name="trace"></ownloom-icon><span class="font-label-md text-label-md">Trace</span></a>
+          </nav>
+          <div class="mx-4 mt-auto space-y-2 border-t border-dashed border-outline-variant pt-4">
+            <a class=${navLinkClass} href="/admin?tab=config"><ownloom-icon name="settings"></ownloom-icon><span class="font-label-md text-label-md">Settings</span></a>
+            <a class=${navLinkClass} href="/admin"><ownloom-icon name="hearth"></ownloom-icon><span class="font-label-md text-label-md">Hearth</span></a>
           </div>
-        </header>
+        </aside>
 
-        <section class="flex-1 overflow-hidden p-sm" aria-label="Personal Ownloom workspace">
+        <div id="personal-content" class=${mainClass} tabindex="-1">
+          <section class="flex-1 overflow-hidden p-sm" aria-label="Personal Ownloom workspace">
           <div class="loom-personal-grid grid h-full grid-cols-[minmax(0,1fr)_minmax(17rem,20rem)] gap-sm">
             <ownloom-personal-chat></ownloom-personal-chat>
             <aside class="page-sidebar personal-notes" aria-label="Personal mode notes">
@@ -65,6 +67,7 @@ export class OwnloomPersonalApp extends OwnloomLightElement {
             </aside>
           </div>
         </section>
+        </div>
       </div>
     </main>`;
   }

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "secondary": "#e9c267",
+                  "outline": "#a48b84",
+                  "inverse-primary": "#9d4323",
+                  "on-error-container": "#ffdad6",
+                  "on-secondary-fixed-variant": "#5b4300",
+                  "inverse-on-surface": "#392e2b",
+                  "secondary-container": "#755800",
+                  "on-primary-container": "#fffaf9",
+                  "surface-bright": "#423733",
+                  "tertiary": "#76d5dc",
+                  "secondary-fixed-dim": "#e9c267",
+                  "on-surface": "#f1dfd9",
+                  "surface-container": "#271d1a",
+                  "surface-tint": "#ffb59d",
+                  "surface-container-low": "#231916",
+                  "surface-container-lowest": "#150c0a",
+                  "on-tertiary-fixed": "#002022",
+                  "on-error": "#690005",
+                  "secondary-fixed": "#ffdf9b",
+                  "tertiary-fixed-dim": "#76d5dc",
+                  "surface-container-high": "#322824",
+                  "background": "#1a110f",
+                  "on-primary-fixed": "#390b00",
+                  "on-surface-variant": "#dcc1b8",
+                  "on-tertiary-container": "#ecfeff",
+                  "on-tertiary": "#00363a",
+                  "error-container": "#93000a",
+                  "primary": "#ffb59d",
+                  "on-primary-fixed-variant": "#7e2c0e",
+                  "surface-container-highest": "#3e322f",
+                  "surface-dim": "#1a110f",
+                  "on-secondary-container": "#f8d074",
+                  "primary-fixed": "#ffdbd0",
+                  "surface-variant": "#3e322f",
+                  "on-secondary": "#3f2e00",
+                  "surface": "#1a110f",
+                  "primary-container": "#b85736",
+                  "error": "#ffb4ab",
+                  "primary-fixed-dim": "#ffb59d",
+                  "on-background": "#f1dfd9",
+                  "inverse-surface": "#f1dfd9",
+                  "on-secondary-fixed": "#251a00",
+                  "outline-variant": "#56423c",
+                  "on-primary": "#5d1800",
+                  "on-tertiary-fixed-variant": "#004f54",
+                  "tertiary-fixed": "#93f2f9",
+                  "tertiary-container": "#008087"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.125rem",
+                  "lg": "0.25rem",
+                  "xl": "0.5rem",
+                  "full": "0.75rem"
+          },
+          "spacing": {
+                  "margin": "32px",
+                  "xs": "8px",
+                  "md": "24px",
+                  "sm": "16px",
+                  "gutter": "24px",
+                  "xl": "64px",
+                  "base": "4px",
+                  "lg": "40px"
+          },
+          "fontFamily": {
+                  "headline-md": ["Newsreader"],
+                  "label-sm": ["JetBrains Mono"],
+                  "headline-lg": ["Newsreader"],
+                  "headline-lg-mobile": ["Newsreader"],
+                  "label-md": ["JetBrains Mono"],
+                  "body-lg": ["Work Sans"],
+                  "body-md": ["Work Sans"]
+          },
+          "fontSize": {
+                  "headline-md": ["28px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                  "label-sm": ["12px", {"lineHeight": "1.4", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                  "headline-lg": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                  "headline-lg-mobile": ["32px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                  "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                  "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                  "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .pixel-stitch-h {
+      background-image: linear-gradient(to right, currentColor 50%, rgba(255,255,255,0) 0%);
+      background-position: bottom;
+      background-size: 8px 1px;
+      background-repeat: repeat-x;
+    }
+    .pixel-stitch-v {
+      background-image: linear-gradient(to bottom, currentColor 50%, rgba(255,255,255,0) 0%);
+      background-position: right;
+      background-size: 1px 8px;
+      background-repeat: repeat-y;
+    }
+    .woven-accent {
+      position: relative;
+    }
+    .woven-accent::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 8px;
+      height: 8px;
+      background-color: #b85736;
+      box-shadow: -4px 0 0 #b85736, 0 4px 0 #b85736, -4px 4px 0 #b85736;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface flex h-screen overflow-hidden">
+<!-- SideNavBar -->
+<aside class="flex flex-col h-full py-md bg-surface-container-low border-r border-outline-variant h-screen w-64 shrink-0">
+<div class="px-md mb-xl">
+<div class="font-headline-md text-headline-md text-primary">Ownloom</div>
+<div class="font-label-md text-label-md text-on-surface-variant opacity-70">Local-First Cockpit</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center px-md py-sm transition-colors hover:bg-surface-container-high text-on-surface-variant" href="#">
+<span class="material-symbols-outlined mr-sm" data-icon="edit_square">edit_square</span>
+<span class="font-label-md text-label-md">Workbench</span>
+</a>
+<a class="flex items-center px-md py-sm transition-colors hover:bg-surface-container-high text-on-surface-variant" href="#">
+<span class="material-symbols-outlined mr-sm" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-md text-label-md">Planner</span>
+</a>
+<!-- Active Tab: Memory -->
+<a class="flex items-center px-md py-sm transition-all text-on-primary-container bg-primary-container border-l-4 border-primary scale-[0.98]" href="#">
+<span class="material-symbols-outlined mr-sm" data-icon="database" style="font-variation-settings: 'FILL' 1;">database</span>
+<span class="font-label-md text-label-md">Memory</span>
+</a>
+<a class="flex items-center px-md py-sm transition-colors hover:bg-surface-container-high text-on-surface-variant" href="#">
+<span class="material-symbols-outlined mr-sm" data-icon="key">key</span>
+<span class="font-label-md text-label-md">Access</span>
+</a>
+<a class="flex items-center px-md py-sm transition-colors hover:bg-surface-container-high text-on-surface-variant" href="#">
+<span class="material-symbols-outlined mr-sm" data-icon="terminal">terminal</span>
+<span class="font-label-md text-label-md">Shell</span>
+</a>
+<a class="flex items-center px-md py-sm transition-colors hover:bg-surface-container-high text-on-surface-variant" href="#">
+<span class="material-symbols-outlined mr-sm" data-icon="history">history</span>
+<span class="font-label-md text-label-md">Trace</span>
+</a>
+</nav>
+<div class="px-md mt-auto pt-md border-t border-outline-variant/30">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 bg-surface-container-highest border border-outline-variant rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="account_circle">account_circle</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface">Operator</span>
+<span class="font-label-sm text-[10px] text-tertiary">SYNCING: LOCAL</span>
+</div>
+</div>
+</div>
+</aside>
+<div class="flex-1 flex flex-col min-w-0">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-md h-16 bg-surface-container border-b border-outline-variant shrink-0">
+<div class="flex items-center gap-md">
+<span class="font-headline-md text-headline-md text-primary">Memory</span>
+<div class="h-4 w-px bg-outline-variant"></div>
+<div class="flex gap-sm">
+<button class="font-label-sm text-label-sm text-primary font-bold border-b-2 border-primary pb-1">All Objects</button>
+<button class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-opacity">Collections</button>
+<button class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-opacity">Index</button>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="relative group">
+<input class="bg-surface-container-low border-b border-outline-variant text-on-surface font-label-md py-1 px-8 focus:outline-none focus:border-primary w-64 transition-all" placeholder="Search archive..." type="text"/>
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-outline-variant text-sm" data-icon="search">search</span>
+</div>
+<div class="flex gap-sm">
+<span class="material-symbols-outlined text-secondary cursor-pointer hover:opacity-80" data-icon="sensors">sensors</span>
+<span class="material-symbols-outlined text-secondary cursor-pointer hover:opacity-80" data-icon="dns">dns</span>
+<span class="material-symbols-outlined text-secondary cursor-pointer hover:opacity-80" data-icon="hub">hub</span>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto p-md space-y-lg">
+<!-- Top Action Row -->
+<section class="flex justify-between items-end border-b border-outline-variant/20 pb-sm">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Archive Ledger</h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xl">A sovereign local knowledge layer. Permanent, durable, and indexed for high-focus recall.</p>
+</div>
+<button class="bg-primary-container text-on-primary-container px-md py-sm font-label-md flex items-center gap-sm rounded hover:scale-[0.98] transition-all">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+          Capture Note
+        </button>
+</section>
+<!-- Bento Grid for Memory Objects -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Today's Note (Large) -->
+<article class="md:col-span-8 bg-surface-container-high border border-outline-variant p-md flex flex-col woven-accent">
+<div class="flex justify-between items-start mb-md">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="today">today</span>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-widest">Daily Note</span>
+</div>
+<span class="bg-primary/10 text-primary border border-primary/20 px-xs py-0.5 font-label-sm text-[10px] uppercase">Active Session</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-sm text-on-surface italic">Tuesday, October 24, 2023</h3>
+<div class="font-body-md text-body-md text-on-surface-variant prose-invert space-y-base flex-1">
+<p>08:45 — Morning ritual complete. Syncing local nodes via peer mesh.</p>
+<p>10:15 — <strong>Reflection:</strong> The distinction between "Tools for Thought" and "Environments for Operation" is critical. Ownloom must remain an environment.</p>
+<p>14:30 — WhatsApp intake processed. 3 concepts promoted to Concepts layer.</p>
+</div>
+<div class="mt-md pt-md pixel-stitch-h text-outline-variant flex gap-sm">
+<span class="font-label-sm">#morning-pages</span>
+<span class="font-label-sm">#sovereignty</span>
+<span class="font-label-sm">#cockpit-dev</span>
+</div>
+</article>
+<!-- Use CalDAV (Decision) -->
+<article class="md:col-span-4 bg-surface-container border border-outline-variant p-md flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-sm mb-md">
+<span class="material-symbols-outlined text-tertiary" data-icon="gavel">gavel</span>
+<span class="font-label-sm text-label-sm text-outline uppercase">Decision Log</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-sm text-on-surface">Use CalDAV for Planner</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Opting for CalDAV over proprietary sync for the Planner module to maintain protocol-level independence.</p>
+</div>
+<div class="mt-xl flex justify-between items-center">
+<div class="flex items-center gap-xs">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+<span class="font-label-sm text-label-sm text-tertiary">Finalized</span>
+</div>
+<span class="font-label-sm text-outline-variant">2 days ago</span>
+</div>
+</article>
+<!-- Project: Ownloom (Wide) -->
+<article class="md:col-span-6 bg-surface-container border border-outline-variant p-md woven-accent">
+<div class="flex items-center gap-sm mb-md">
+<span class="material-symbols-outlined text-secondary" data-icon="folder_managed">folder_managed</span>
+<span class="font-label-sm text-label-sm text-outline uppercase">Project Space</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-sm text-on-surface">Ownloom Core</h3>
+<div class="grid grid-cols-2 gap-md mt-md">
+<div class="border-l border-outline-variant pl-sm">
+<span class="block font-label-sm text-on-surface-variant">Active Sub-tasks</span>
+<span class="block font-headline-md text-primary">12</span>
+</div>
+<div class="border-l border-outline-variant pl-sm">
+<span class="block font-label-sm text-on-surface-variant">Completion</span>
+<span class="block font-headline-md text-secondary">68%</span>
+</div>
+</div>
+<p class="mt-md font-body-md text-body-md text-on-surface-variant line-clamp-2">Building the local-first "cockpit" for the modern operator. Focusing on the weaver aesthetic and markdown persistence.</p>
+</article>
+<!-- Local-First AI (Concept) -->
+<article class="md:col-span-6 bg-surface-container-highest border border-outline-variant p-md flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-sm mb-md">
+<span class="material-symbols-outlined text-primary" data-icon="psychology">psychology</span>
+<span class="font-label-sm text-label-sm text-outline uppercase">Core Concept</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-sm text-on-surface">Local-first AI Orchestration</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">AI should be a guest in the user's house, not a landlord. Large Language Models must operate as local agents against the Memory Layer.</p>
+</div>
+<div class="mt-md flex items-center gap-md">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded bg-primary border border-background"></div>
+<div class="w-6 h-6 rounded bg-secondary border border-background"></div>
+<div class="w-6 h-6 rounded bg-tertiary border border-background"></div>
+</div>
+<span class="font-label-sm text-on-surface-variant">3 connected entities</span>
+</div>
+</article>
+<!-- WhatsApp Capture (Source) -->
+<article class="md:col-span-4 bg-surface-container border border-outline-variant p-md relative">
+<div class="flex items-center gap-sm mb-md">
+<span class="material-symbols-outlined text-[#25D366]" data-icon="chat_bubble">chat_bubble</span>
+<span class="font-label-sm text-label-sm text-outline uppercase">External Inbound</span>
+</div>
+<div class="bg-background/50 p-sm border-l-2 border-[#25D366] mb-md italic">
+<p class="font-body-md text-on-surface-variant">"Think about using the loom metaphor for the UI grids. Like a digital Scoarță."</p>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-label-sm text-outline-variant">Source: WhatsApp</span>
+<button class="font-label-sm text-primary uppercase hover:underline">Distill</button>
+</div>
+</article>
+<!-- Meta Stats (Small Detail) -->
+<article class="md:col-span-8 bg-surface-container-low border border-outline-variant p-md border-dashed">
+<div class="flex flex-col md:flex-row justify-between items-center h-full gap-md">
+<div class="flex-1">
+<span class="font-label-sm text-outline uppercase block mb-xs">Memory Health</span>
+<div class="w-full bg-outline-variant/20 h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[92%]"></div>
+</div>
+<span class="font-label-sm text-on-surface-variant mt-xs inline-block">92% Index coverage • 1.4GB Local Storage</span>
+</div>
+<div class="flex gap-lg">
+<div class="text-center">
+<span class="block font-headline-md text-on-surface">4.2k</span>
+<span class="font-label-sm text-outline-variant uppercase">Notes</span>
+</div>
+<div class="text-center">
+<span class="block font-headline-md text-on-surface">156</span>
+<span class="font-label-sm text-outline-variant uppercase">Projects</span>
+</div>
+<div class="text-center">
+<span class="block font-headline-md text-on-surface">12</span>
+<span class="font-label-sm text-outline-variant uppercase">Nodes</span>
+</div>
+</div>
+</div>
+</article>
+</div>
+</main>
+<!-- The Hearth (Local-First Indicator) -->
+<div class="fixed bottom-sm right-sm bg-surface-container-highest border border-outline-variant p-2 flex items-center gap-sm shadow-xl">
+<div class="relative">
+<span class="material-symbols-outlined text-primary" data-icon="local_fire_department" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+<div class="absolute -top-1 -right-1 w-2 h-2 bg-tertiary rounded-full animate-pulse"></div>
+</div>
+<div class="pr-xs">
+<div class="font-label-sm text-[10px] text-on-surface-variant leading-none">DATABASE</div>
+<div class="font-label-sm text-[11px] text-on-surface font-bold leading-none">WARM &amp; SYNCED</div>
+</div>
+</div>
+</div>
+</body></html>

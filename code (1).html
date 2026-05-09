@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;500;600;700&amp;family=Work+Sans:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#e9c267",
+                        "outline": "#a48b84",
+                        "inverse-primary": "#9d4323",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#5b4300",
+                        "inverse-on-surface": "#392e2b",
+                        "secondary-container": "#755800",
+                        "on-primary-container": "#fffaf9",
+                        "surface-bright": "#423733",
+                        "tertiary": "#76d5dc",
+                        "secondary-fixed-dim": "#e9c267",
+                        "on-surface": "#f1dfd9",
+                        "surface-container": "#271d1a",
+                        "surface-tint": "#ffb59d",
+                        "surface-container-low": "#231916",
+                        "surface-container-lowest": "#150c0a",
+                        "on-tertiary-fixed": "#002022",
+                        "on-error": "#690005",
+                        "secondary-fixed": "#ffdf9b",
+                        "tertiary-fixed-dim": "#76d5dc",
+                        "surface-container-high": "#322824",
+                        "background": "#1a110f",
+                        "on-primary-fixed": "#390b00",
+                        "on-surface-variant": "#dcc1b8",
+                        "on-tertiary-container": "#ecfeff",
+                        "on-tertiary": "#00363a",
+                        "error-container": "#93000a",
+                        "primary": "#ffb59d",
+                        "on-primary-fixed-variant": "#7e2c0e",
+                        "surface-container-highest": "#3e322f",
+                        "surface-dim": "#1a110f",
+                        "on-secondary-container": "#f8d074",
+                        "primary-fixed": "#ffdbd0",
+                        "surface-variant": "#3e322f",
+                        "on-secondary": "#3f2e00",
+                        "surface": "#1a110f",
+                        "primary-container": "#b85736",
+                        "error": "#ffb4ab",
+                        "primary-fixed-dim": "#ffb59d",
+                        "on-background": "#f1dfd9",
+                        "inverse-surface": "#f1dfd9",
+                        "on-secondary-fixed": "#251a00",
+                        "outline-variant": "#56423c",
+                        "on-primary": "#5d1800",
+                        "on-tertiary-fixed-variant": "#004f54",
+                        "tertiary-fixed": "#93f2f9",
+                        "tertiary-container": "#008087"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin": "32px",
+                        "xs": "8px",
+                        "md": "24px",
+                        "sm": "16px",
+                        "gutter": "24px",
+                        "xl": "64px",
+                        "base": "4px",
+                        "lg": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Newsreader"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-lg": ["Newsreader"],
+                        "headline-lg-mobile": ["Newsreader"],
+                        "label-md": ["JetBrains Mono"],
+                        "body-lg": ["Work Sans"],
+                        "body-md": ["Work Sans"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["28px", {"lineHeight": "1.3", "fontWeight": "500"}],
+                        "label-sm": ["12px", {"lineHeight": "1.4", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "headline-lg": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["32px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .pixel-stitch {
+            background-image: linear-gradient(to right, currentColor 50%, rgba(255,255,255,0) 0%);
+            background-position: bottom;
+            background-size: 8px 1px;
+            background-repeat: repeat-x;
+        }
+        .pixel-corner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 4px;
+            height: 4px;
+            background-color: #b85736;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface flex min-h-screen overflow-hidden">
+<!-- SideNavBar -->
+<aside class="flex flex-col h-full py-md h-screen w-64 border-r border-outline-variant bg-surface-container-low dark:bg-surface-container-low">
+<div class="px-md mb-lg">
+<h1 class="font-headline-md text-headline-md text-primary dark:text-primary">Ownloom</h1>
+<p class="font-label-sm text-label-sm text-outline">Local-First Cockpit</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center px-md py-sm transition-colors text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined mr-sm" data-icon="edit_square">edit_square</span>
+<span class="font-label-md text-label-md">Workbench</span>
+</a>
+<a class="flex items-center px-md py-sm transition-all text-on-primary-container dark:text-on-primary-container bg-primary-container dark:bg-primary-container border-l-4 border-primary scale-[0.98]" href="#">
+<span class="material-symbols-outlined mr-sm" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-md text-label-md">Planner</span>
+</a>
+<a class="flex items-center px-md py-sm transition-colors text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined mr-sm" data-icon="database">database</span>
+<span class="font-label-md text-label-md">Memory</span>
+</a>
+<a class="flex items-center px-md py-sm transition-colors text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined mr-sm" data-icon="key">key</span>
+<span class="font-label-md text-label-md">Access</span>
+</a>
+<a class="flex items-center px-md py-sm transition-colors text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined mr-sm" data-icon="terminal">terminal</span>
+<span class="font-label-md text-label-md">Shell</span>
+</a>
+<a class="flex items-center px-md py-sm transition-colors text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined mr-sm" data-icon="history">history</span>
+<span class="font-label-md text-label-md">Trace</span>
+</a>
+</nav>
+<div class="px-md py-sm mt-auto">
+<div class="flex items-center space-x-sm">
+<div class="w-8 h-8 bg-surface-container-highest border border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="local_fire_department" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-[10px] uppercase tracking-widest text-outline">Hearth Active</span>
+<span class="font-label-sm text-[10px] text-tertiary">Local Sync: 100%</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Workspace -->
+<div class="flex-1 flex flex-col min-w-0">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-md h-16 bg-surface-container dark:bg-surface-container border-b border-outline-variant">
+<div class="flex items-center space-x-md">
+<span class="font-label-sm text-label-sm text-primary font-bold border-b-2 border-primary pb-1">Calendar</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-opacity cursor-pointer">Agenda</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-opacity cursor-pointer">Logbook</span>
+</div>
+<div class="flex-1 max-w-md px-lg">
+<div class="relative">
+<input class="w-full bg-surface-container-low border-b border-outline-variant focus:border-primary px-sm py-xs font-label-sm text-label-sm outline-none placeholder-outline-variant" placeholder="Find event or craft task..." type="text"/>
+<span class="material-symbols-outlined absolute right-sm top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+</div>
+</div>
+<div class="flex items-center space-x-sm">
+<button class="p-xs text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="sensors">sensors</span></button>
+<button class="p-xs text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="dns">dns</span></button>
+<button class="p-xs text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="hub">hub</span></button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline">
+<img alt="User avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAt6Q1AhTeRXQwevlrVMdk9qb1MBqKHduCkootRofQjzcI1Fg8mvqzJ34GgJuJ0w9b7ez9j0u6sXDO4JOdE5XCTxxJ8yVzDoY59tz6E7LIj5lpbkVZkGCPW_pyYl3E1REntH_B_jogM7CE_UQxL1vbyisB4ZxKl4oi66pyozactLVjBk2Q9RiUOB7W2hhzg2TbOlwm-rMH49Huf5TgucBZEqCJBei_pEfEq8_pKoPqPiCyJK4DfjhlPYMaeRERd2Y61IfpUY7iDxuY0"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<main class="flex-1 overflow-y-auto bg-background p-md">
+<div class="max-w-[1280px] mx-auto">
+<!-- Add-Item Form -->
+<section class="mb-lg p-md bg-surface-container border border-outline-variant relative">
+<div class="absolute top-0 right-0 w-8 h-8 opacity-20" style="background-image: radial-gradient(circle, currentColor 1px, transparent 1px); background-size: 4px 4px; color: #e9c267;"></div>
+<div class="flex flex-col md:flex-row gap-md items-end">
+<div class="flex-1 w-full">
+<label class="font-label-sm text-label-sm text-outline mb-xs block">New Thread / Task</label>
+<input class="w-full bg-surface-container-low border-b border-outline-variant focus:border-primary-container px-sm py-xs font-body-md text-body-md text-on-surface outline-none" placeholder="Describe the focus area..." type="text"/>
+</div>
+<div class="w-full md:w-48">
+<label class="font-label-sm text-label-sm text-outline mb-xs block">Scheduled</label>
+<input class="w-full bg-surface-container-low border-b border-outline-variant focus:border-primary-container px-sm py-xs font-label-sm text-label-sm text-on-surface outline-none" type="datetime-local"/>
+</div>
+<button class="bg-primary-container text-on-primary-container px-md py-sm font-label-md text-label-md rounded flex items-center hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined mr-xs" data-icon="add">add</span>
+                            Warp to Loom
+                        </button>
+</div>
+</section>
+<!-- Bento Grid for Planner -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Overdue Section -->
+<div class="lg:col-span-4 space-y-md">
+<div class="flex items-center justify-between border-b border-error-container pb-xs mb-md">
+<h3 class="font-label-md text-label-md text-error flex items-center uppercase tracking-widest">
+<span class="material-symbols-outlined mr-xs text-[18px]" data-icon="history_toggle_off">history_toggle_off</span>
+                                Overdue
+                            </h3>
+<span class="font-label-sm text-label-sm text-outline">2 Threads</span>
+</div>
+<!-- Overdue Card 1 -->
+<div class="bg-surface-container border border-primary-container p-md relative pixel-corner">
+<div class="flex justify-between items-start mb-sm">
+<span class="font-label-sm text-[10px] text-error uppercase">Yesterday 14:00</span>
+<div class="px-xs py-[2px] bg-error/10 border border-error text-error text-[10px] font-label-sm uppercase">Priority</div>
+</div>
+<h4 class="font-body-lg text-body-lg mb-md text-on-surface">Review encryption schemas</h4>
+<div class="flex justify-between items-center">
+<div class="flex space-x-xs">
+<button class="w-8 h-8 border border-outline-variant flex items-center justify-center text-outline hover:text-primary"><span class="material-symbols-outlined text-[18px]" data-icon="check">check</span></button>
+<button class="w-8 h-8 border border-outline-variant flex items-center justify-center text-outline hover:text-primary"><span class="material-symbols-outlined text-[18px]" data-icon="update">update</span></button>
+</div>
+<span class="font-label-sm text-label-sm text-outline italic">engineering</span>
+</div>
+</div>
+</div>
+<!-- Today Section -->
+<div class="lg:col-span-4 space-y-md">
+<div class="flex items-center justify-between border-b border-secondary pb-xs mb-md">
+<h3 class="font-label-md text-label-md text-secondary flex items-center uppercase tracking-widest">
+<span class="material-symbols-outlined mr-xs text-[18px]" data-icon="today">today</span>
+                                Today
+                            </h3>
+<span class="font-label-sm text-label-sm text-outline">4 Threads</span>
+</div>
+<!-- Specific Item 1: Task -->
+<div class="bg-surface-container border border-outline-variant p-md hover:border-secondary transition-colors relative group">
+<div class="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<div class="w-1 h-1 bg-secondary"></div>
+<div class="w-1 h-1 bg-secondary"></div>
+</div>
+<div class="flex justify-between items-start mb-sm">
+<span class="font-label-sm text-[10px] text-secondary uppercase">Today 17:00</span>
+<div class="px-xs py-[2px] bg-secondary/10 border border-secondary text-secondary text-[10px] font-label-sm uppercase">Finance</div>
+</div>
+<h4 class="font-body-lg text-body-lg mb-md text-on-surface">Calculate the budget</h4>
+<div class="flex justify-between items-center">
+<div class="flex space-x-xs">
+<button class="w-8 h-8 border border-outline-variant flex items-center justify-center text-outline hover:text-secondary"><span class="material-symbols-outlined text-[18px]" data-icon="check">check</span></button>
+<button class="w-8 h-8 border border-outline-variant flex items-center justify-center text-outline hover:text-secondary"><span class="material-symbols-outlined text-[18px]" data-icon="snooze">snooze</span></button>
+<button class="w-8 h-8 border border-outline-variant flex items-center justify-center text-outline hover:text-secondary"><span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span></button>
+</div>
+</div>
+</div>
+<!-- Specific Item 2: Reminder -->
+<div class="bg-surface-container border border-outline-variant p-md hover:border-secondary transition-colors">
+<div class="flex justify-between items-start mb-sm">
+<span class="font-label-sm text-[10px] text-secondary uppercase">Today 19:00</span>
+<div class="px-xs py-[2px] bg-tertiary/10 border border-tertiary text-tertiary text-[10px] font-label-sm uppercase">Family</div>
+</div>
+<h4 class="font-body-lg text-body-lg mb-md text-on-surface">Call mom</h4>
+<div class="flex justify-between items-center">
+<div class="flex space-x-xs">
+<button class="w-8 h-8 border border-outline-variant flex items-center justify-center text-outline hover:text-secondary"><span class="material-symbols-outlined text-[18px]" data-icon="check">check</span></button>
+<button class="w-8 h-8 border border-outline-variant flex items-center justify-center text-outline hover:text-secondary"><span class="material-symbols-outlined text-[18px]" data-icon="snooze">snooze</span></button>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="notifications_active">notifications_active</span>
+</div>
+</div>
+</div>
+<!-- Upcoming Section -->
+<div class="lg:col-span-4 space-y-md">
+<div class="flex items-center justify-between border-b border-outline pb-xs mb-md">
+<h3 class="font-label-md text-label-md text-outline flex items-center uppercase tracking-widest">
+<span class="material-symbols-outlined mr-xs text-[18px]" data-icon="calendar_month">calendar_month</span>
+                                Upcoming
+                            </h3>
+<span class="font-label-sm text-label-sm text-outline">Next 48h</span>
+</div>
+<!-- Specific Item 3: Event -->
+<div class="bg-surface-container-low border border-outline-variant p-md opacity-80 hover:opacity-100 transition-opacity">
+<div class="flex justify-between items-start mb-sm">
+<span class="font-label-sm text-[10px] text-outline uppercase">Tomorrow 09:00–11:00</span>
+<div class="px-xs py-[2px] bg-outline/10 border border-outline text-outline text-[10px] font-label-sm uppercase">Work</div>
+</div>
+<div class="flex items-center mb-md">
+<div class="w-1 h-8 bg-tertiary mr-md"></div>
+<h4 class="font-body-lg text-body-lg text-on-surface">Deep work block</h4>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-label-sm text-label-sm text-outline italic">CalDAV Synced</span>
+<div class="flex space-x-xs">
+<button class="w-8 h-8 border border-outline-variant flex items-center justify-center text-outline hover:text-primary"><span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span></button>
+</div>
+</div>
+</div>
+<!-- Extra Context Card -->
+<div class="p-md border border-dashed border-outline-variant bg-surface-container-low flex flex-col items-center justify-center text-center space-y-sm">
+<div class="relative w-full h-32 mb-sm overflow-hidden">
+<img class="w-full h-full object-cover grayscale opacity-30" data-alt="A moody, atmospheric photograph of a rustic wooden loom in a sun-drenched workshop. Soft morning light filters through a dusty window, illuminating the intricate threads and wooden textures. The color palette consists of deep charred walnuts, warm clays, and muted ochre tones, creating a grounded and artisan feel consistent with the digital hearth aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQHDd7qtGEPHizoXtfu4gp4rfkg7duEQofXm3JyLStGoO9tUnWUmx9fg5hvshCdA7_oH5xSdkLKd5I15tnGEro_7WHjrSHVhp5HscXFVb-CYZ9y2EsOEstJTaz8jW7DZTaBO_9_nueNjkRwt-LAgNT_4m4zLPL1F19YNuJ3_k8l_009yr5Xitxnr-ohQyR-bEMIEkYieOzcXRGpBZooSLfjfm8xKvkdmj3Lu0AVpCH45LNDjHtLBbOD5SV2fW_b8KAnOCEdr4L2ms1"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
+</div>
+<p class="font-label-sm text-label-sm text-outline">Keep the loom moving. Your local focus is the engine of sovereignty.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

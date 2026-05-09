@@ -63,6 +63,7 @@
       nixos-planner-radicale = import ./nixos-tests/planner-radicale.nix {inherit lib pkgs;};
       nixos-ollama-smoke = import ./nixos-tests/ollama-smoke.nix {inherit lib pkgs;};
       nixos-planner-pi-e2e = import ./nixos-tests/planner-pi-e2e.nix {inherit lib pkgs;};
+      nixos-webdav-wiki = import ./nixos-tests/webdav-wiki.nix {inherit pkgs;};
       nixos-gateway-loopback = import ./nixos-tests/gateway-loopback.nix {inherit lib pkgs;};
       nixos-ownloom-services-boot-smoke = import ./nixos-tests/services-boot-smoke.nix {inherit lib pkgs;};
     };

@@ -16,7 +16,6 @@ import { queryFts } from "./fts.ts";
 
 export interface SearchMatch {
 	type: string;
-	objectType?: string;
 	path: string;
 	folder: string;
 	title: string;
@@ -39,7 +38,6 @@ export interface SearchResult {
 
 export interface SearchOptions {
 	type?: WikiPageType | string;
-	objectType?: string;
 	limit?: number;
 	hostScope?: "current" | "all";
 	host?: string;
@@ -156,7 +154,6 @@ export function searchRegistry(registry: RegistryData, query: string, options: S
 
 	const matches = registry.pages
 		.filter((entry) => !options.type || entry.type === options.type)
-		.filter((entry) => !options.objectType || entry.objectType === options.objectType)
 		.filter((entry) => hostScope === "all" || appliesToHost(entry.hosts, host))
 		.filter((entry) => !domain || entry.domain === domain)
 		.filter((entry) => matchesAreas(entry, areas))
@@ -167,7 +164,6 @@ export function searchRegistry(registry: RegistryData, query: string, options: S
 		.slice(0, options.limit ?? 10)
 		.map(({ entry, score }) => ({
 			type: entry.type,
-			objectType: entry.objectType,
 			path: entry.path,
 			folder: entry.folder,
 			title: entry.title,
@@ -189,14 +185,12 @@ export function searchRegistry(registry: RegistryData, query: string, options: S
 			const entry = registry.pages.find((p) => p.path === hit.path);
 			if (!entry) continue;
 			if (options.type && entry.type !== options.type) continue;
-			if (options.objectType && entry.objectType !== options.objectType) continue;
 			if (hostScope !== "all" && !appliesToHost(entry.hosts, host)) continue;
 			if (domain && entry.domain !== domain) continue;
 			if (!matchesAreas(entry, areas)) continue;
 			if (folder && !folderMatches(entry.folder, folder)) continue;
 			matches.push({
 				type: entry.type,
-				objectType: entry.objectType,
 				path: entry.path,
 				folder: entry.folder,
 				title: entry.title,
@@ -238,12 +232,9 @@ export function handleWikiSearch(registry: RegistryData, query: string, options:
 
 	const lines = [
 		`Top matches for${scopeText}: ${query}`,
-		...result.matches.map((match) => {
-			const typeLabel = match.objectType && match.objectType !== match.type
-				? `${match.type}/${match.objectType}`
-				: match.type;
-			return `- [${match.score}] ${match.title} (${typeLabel}) — ${match.path}${formatDomainSuffix(match.domain)}${formatAreasSuffix(match.areas)}${formatHostsSuffix(match.hosts)}`;
-		}),
+		...result.matches.map((match) =>
+			`- [${match.score}] ${match.title} (${match.type}) — ${match.path}${formatDomainSuffix(match.domain)}${formatAreasSuffix(match.areas)}${formatHostsSuffix(match.hosts)}`,
+		),
 	];
 	return ok({ text: lines.join("\n"), details: result });
 }

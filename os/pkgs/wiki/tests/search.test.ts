@@ -5,8 +5,8 @@ import type { RegistryData, RegistryEntry } from "../src/wiki/types.ts";
 function makeEntry(overrides: Partial<RegistryEntry>): RegistryEntry {
   return {
     type: "concept",
-    path: "pages/resources/technical/default.md",
-    folder: "resources/technical",
+    path: "objects/default.md",
+    folder: "objects",
     title: "Default",
     aliases: [],
     summary: "",
@@ -35,8 +35,8 @@ function makeRegistry(pages: RegistryEntry[]): RegistryData {
 describe("searchRegistry", () => {
   it("ranks exact title matches first", () => {
     const registry = makeRegistry([
-      makeEntry({ title: "Attention Mechanism", path: "pages/resources/technical/attention-mechanism.md" }),
-      makeEntry({ title: "Attention", path: "pages/resources/technical/attention.md" }),
+      makeEntry({ title: "Attention Mechanism", path: "objects/attention-mechanism.md" }),
+      makeEntry({ title: "Attention", path: "objects/attention.md" }),
     ]);
 
     const result = searchRegistry(registry, "Attention");
@@ -51,7 +51,7 @@ describe("searchRegistry", () => {
         aliases: ["nix flakes"],
         domain: "technical",
         areas: ["nixos", "infrastructure"],
-        path: "pages/resources/technical/flake-patterns.md",
+        path: "objects/flake-patterns.md",
       }),
     ]);
 
@@ -67,7 +67,7 @@ describe("searchRegistry", () => {
         headings: ["Kernel Tuning"],
         tags: ["performance"],
         sourceIds: ["SRC-2026-04-19-001"],
-        path: "pages/resources/technical/system-landscape.md",
+        path: "objects/system-landscape.md",
       }),
     ]);
 
@@ -77,41 +77,40 @@ describe("searchRegistry", () => {
     expect(searchRegistry(registry, "system-landscape").matches[0]?.title).toBe("System Landscape");
   });
 
-  it("filters by folder, host, domain, type, objectType, and area conjunction", () => {
+  it("filters by folder, host, domain, type, and area conjunction", () => {
     const registry = makeRegistry([
       makeEntry({
         title: "pad Host Notes",
-        objectType: "host",
-        path: "pages/resources/technical/pad.md",
-        folder: "resources/technical",
+        type: "host",
+        path: "objects/pad.md",
+        folder: "objects",
         hosts: ["yoga-nixos"],
         domain: "technical",
         areas: ["infra", "ops"],
       }),
       makeEntry({
         title: "Personal Identity",
-        type: "identity",
-        objectType: "person",
-        path: "pages/areas/personal/personal-identity.md",
-        folder: "areas/personal",
+        type: "person",
+        path: "objects/personal-identity.md",
+        folder: "objects",
         domain: "personal",
         areas: ["identity"],
       }),
     ]);
 
-    expect(searchRegistry(registry, "notes", { folder: "resources/technical", host: "yoga-nixos" }).matches).toHaveLength(1);
-    expect(searchRegistry(registry, "notes", { folder: "resources/technical", host: "vps-nixos" }).matches).toHaveLength(0);
-    expect(searchRegistry(registry, "identity", { domain: "personal", type: "identity" }).matches[0]?.title).toBe("Personal Identity");
-    expect(searchRegistry(registry, "identity", { objectType: "person", hostScope: "all" }).matches[0]?.title).toBe("Personal Identity");
-    expect(searchRegistry(registry, "notes", { objectType: "host", host: "yoga-nixos" }).matches[0]?.title).toBe("pad Host Notes");
+    expect(searchRegistry(registry, "notes", { folder: "objects", host: "yoga-nixos" }).matches).toHaveLength(1);
+    expect(searchRegistry(registry, "notes", { folder: "objects", host: "vps-nixos" }).matches).toHaveLength(0);
+    expect(searchRegistry(registry, "identity", { domain: "personal", type: "person" }).matches[0]?.title).toBe("Personal Identity");
+    expect(searchRegistry(registry, "identity", { type: "person", hostScope: "all" }).matches[0]?.title).toBe("Personal Identity");
+    expect(searchRegistry(registry, "notes", { type: "host", host: "yoga-nixos" }).matches[0]?.title).toBe("pad Host Notes");
     expect(searchRegistry(registry, "notes", { areas: ["infra", "ops"], host: "yoga-nixos" }).matches).toHaveLength(1);
     expect(searchRegistry(registry, "notes", { areas: ["infra", "missing"], host: "yoga-nixos" }).matches).toHaveLength(0);
   });
 
   it("includes host-specific pages only in hostScope=all or matching host", () => {
     const registry = makeRegistry([
-      makeEntry({ title: "Shared", path: "pages/resources/technical/shared.md", hosts: [] }),
-      makeEntry({ title: "Laptop", path: "pages/resources/technical/laptop.md", hosts: ["yoga-nixos"] }),
+      makeEntry({ title: "Shared", path: "objects/shared.md", hosts: [] }),
+      makeEntry({ title: "Laptop", path: "objects/laptop.md", hosts: ["yoga-nixos"] }),
     ]);
 
     expect(searchRegistry(registry, "laptop", { host: "vps-nixos" }).matches).toHaveLength(0);
@@ -122,21 +121,21 @@ describe("searchRegistry", () => {
 
   it("normalizes query options and enforces limits", () => {
     const registry = makeRegistry([
-      makeEntry({ title: "Alpha Note", areas: ["infra"], path: "pages/resources/technical/alpha-note.md" }),
-      makeEntry({ title: "Alpha Systems", areas: ["infra"], path: "pages/resources/technical/alpha-systems.md" }),
-      makeEntry({ title: "Alpha Docs", areas: ["infra"], path: "pages/resources/technical/alpha-docs.md" }),
+      makeEntry({ title: "Alpha Note", areas: ["infra"], path: "objects/alpha-note.md" }),
+      makeEntry({ title: "Alpha Systems", areas: ["infra"], path: "objects/alpha-systems.md" }),
+      makeEntry({ title: "Alpha Docs", areas: ["infra"], path: "objects/alpha-docs.md" }),
     ]);
 
     const result = searchRegistry(registry, "Alpha Alpha", {
       domain: " Technical ",
       areas: [" Infra "],
-      folder: " resources/technical ",
+      folder: " objects ",
       limit: 2,
     });
 
     expect(result.domain).toBe("technical");
     expect(result.areas).toEqual(["infra"]);
-    expect(result.folder).toBe("resources/technical");
+    expect(result.folder).toBe("objects");
     expect(result.matches).toHaveLength(2);
   });
 
@@ -149,13 +148,13 @@ describe("searchRegistry", () => {
 describe("handleWikiSearch", () => {
   it("renders scope info in successful search output", () => {
     const registry = makeRegistry([
-      makeEntry({ title: "Daily Journal", type: "journal", path: "pages/journal/daily/2026-04-19.md", folder: "journal/daily", domain: "personal", areas: ["journal"] }),
+      makeEntry({ title: "Daily Journal", type: "journal", path: "daily/2026-04-19.md", folder: "daily", domain: "personal", areas: ["journal"] }),
     ]);
 
     const result = handleWikiSearch(registry, "daily", {
       domain: "personal",
       areas: ["journal"],
-      folder: "journal/daily",
+      folder: "daily",
       host: "yoga-nixos",
     });
 
@@ -163,25 +162,25 @@ describe("handleWikiSearch", () => {
     if (result.isOk()) {
       expect(result.value.text).toContain("domain=personal");
       expect(result.value.text).toContain("areas=journal");
-      expect(result.value.text).toContain("folder=journal/daily");
+      expect(result.value.text).toContain("folder=daily");
     }
   });
 
   it("renders no-match output with scope info", () => {
-    const result = handleWikiSearch(makeRegistry([]), "ghost", { domain: "technical", folder: "resources/technical" });
+    const result = handleWikiSearch(makeRegistry([]), "ghost", { domain: "technical", folder: "objects" });
     expect(result.isOk()).toBe(true);
     if (result.isOk()) {
       expect(result.value.text).toContain("No wiki matches");
       expect(result.value.text).toContain("domain=technical");
-      expect(result.value.text).toContain("folder=resources/technical");
+      expect(result.value.text).toContain("folder=objects");
     }
   });
 
-  it("renders domain, area, host, and objectType suffixes for successful matches", () => {
+  it("renders domain, area, and host suffixes for successful matches", () => {
     const registry = makeRegistry([
       makeEntry({
         title: "Laptop Note",
-        objectType: "host",
+        type: "host",
         hosts: ["yoga-nixos"],
         domain: "technical",
         areas: ["infra", "ops"],
@@ -192,7 +191,7 @@ describe("handleWikiSearch", () => {
     const result = handleWikiSearch(registry, "laptop", { host: "yoga-nixos" });
     expect(result.isOk()).toBe(true);
     if (result.isOk()) {
-      expect(result.value.text).toContain("(concept/host)");
+      expect(result.value.text).toContain("(host)");
       expect(result.value.text).toContain("[domain: technical]");
       expect(result.value.text).toContain("[areas: infra, ops]");
       expect(result.value.text).toContain("[hosts: yoga-nixos]");

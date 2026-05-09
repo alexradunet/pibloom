@@ -53,7 +53,7 @@ export class PersonalJournalService {
     const date = formatLocalDate(now);
     const time = formatLocalTimeMinute(now);
     const wikiRoot = getPersonalWikiRoot();
-    const filePath = path.join(wikiRoot, "pages", "journal", "daily", `${date}.md`);
+    const filePath = path.join(wikiRoot, "daily", `${date}.md`);
 
     const raw = ensureDailyNote(filePath, date);
     const line = `${time} - ${entryText}`;

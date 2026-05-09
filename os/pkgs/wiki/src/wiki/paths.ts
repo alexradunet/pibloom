@@ -39,7 +39,7 @@ function firstEnv(...names: string[]): string | undefined {
 }
 
 export function getWikiRoot(): string {
-	return firstEnv("OWNLOOM_WIKI_ROOT", "OWNLOOM_WIKI_DIR", "NIXPI_WIKI_ROOT", "NIXPI_WIKI_DIR") ?? path.join(os.homedir(), "wiki");
+	return firstEnv("OWNLOOM_WIKI_ROOT", "OWNLOOM_WIKI_DIR") ?? path.join(os.homedir(), "wiki");
 }
 
 export function getWikiRoots(): Record<string, string> {
@@ -53,8 +53,8 @@ export function getWikiRootForDomain(_domain: string | undefined): string {
 export function getWorkspaceProfile(): WikiWorkspaceProfile {
 	const root = getWikiRoot();
 	return {
-		name: normalizeWorkspace(firstEnv("OWNLOOM_WIKI_WORKSPACE", "NIXPI_WIKI_WORKSPACE")),
-		defaultDomain: normalizeDomain(firstEnv("OWNLOOM_WIKI_DEFAULT_DOMAIN", "NIXPI_WIKI_DEFAULT_DOMAIN")) ?? "technical",
+		name: normalizeWorkspace(firstEnv("OWNLOOM_WIKI_WORKSPACE")),
+		defaultDomain: normalizeDomain(firstEnv("OWNLOOM_WIKI_DEFAULT_DOMAIN")) ?? "technical",
 		domains: {
 			technical: { root },
 			personal: { root },
@@ -71,7 +71,7 @@ function normalizeHost(host: string): string {
 }
 
 export function getCurrentHost(): string {
-	return normalizeHost(firstEnv("OWNLOOM_WIKI_HOST", "NIXPI_WIKI_HOST") ?? os.hostname());
+	return normalizeHost(firstEnv("OWNLOOM_WIKI_HOST") ?? os.hostname());
 }
 
 export function normalizeHosts(hosts: string[] | undefined): string[] {
@@ -119,13 +119,12 @@ export function normalizePageFolder(folder: string | undefined): string | undefi
 
 export function buildPagePath(slug: string, folder?: string): string {
 	const normalizedFolder = normalizePageFolder(folder);
-	return normalizedFolder ? `pages/${normalizedFolder}/${slug}.md` : `pages/${slug}.md`;
+	return normalizedFolder ? `${normalizedFolder}/${slug}.md` : `objects/${slug}.md`;
 }
 
 export function getPageFolder(relativePath: string): string {
 	const normalizedPath = relativePath.replace(/\\/g, "/");
-	const withoutPagesPrefix = normalizedPath.startsWith("pages/") ? normalizedPath.slice("pages/".length) : normalizedPath;
-	const dir = path.posix.dirname(withoutPagesPrefix);
+	const dir = path.posix.dirname(normalizedPath);
 	return dir === "." ? "" : dir;
 }
 
@@ -201,9 +200,8 @@ export function isProtectedPath(wikiRoot: string, absolutePath: string): boolean
 export function isWikiPagePath(wikiRoot: string, absolutePath: string): boolean {
 	const rel = path.relative(wikiRoot, absolutePath);
 	if (rel.startsWith("..") || path.isAbsolute(rel)) return false;
-	// v2 layout: pages/, daily/, objects/, sources/, types/, meta/about-alex/, meta/audit/
+	// v2 layout: daily/, objects/, sources/, types/, meta/about-alex/, meta/audit/
 	return (
-		startsWithDir(rel, "pages") ||
 		startsWithDir(rel, "daily") ||
 		startsWithDir(rel, "objects") ||
 		startsWithDir(rel, "sources") ||
@@ -222,9 +220,7 @@ export function normalizeWikiLink(target: string): string | undefined {
 	for (const prefix of v2TopLevel) {
 		if (pathTarget.startsWith(`${prefix}/`) || pathTarget === prefix) return `${pathTarget}.md`;
 	}
-	// legacy: pages/ prefix
-	if (pathTarget.startsWith("pages/")) return `${pathTarget}.md`;
-	return `pages/${pathTarget}.md`;
+	return `objects/${pathTarget}.md`;
 }
 
 function isExternalLink(target: string): boolean {

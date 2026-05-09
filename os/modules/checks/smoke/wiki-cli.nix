@@ -9,8 +9,8 @@ runCommand "ownloom-wiki-cli-smoke" {
   set -euo pipefail
   export OWNLOOM_WIKI_ROOT="$TMPDIR/wiki"
   export OWNLOOM_WIKI_HOST="smoke-host"
-  mkdir -p "$OWNLOOM_WIKI_ROOT/pages/resources/technical"
-  cat > "$OWNLOOM_WIKI_ROOT/pages/resources/technical/smoke.md" <<'EOF'
+  mkdir -p "$OWNLOOM_WIKI_ROOT/objects"
+  cat > "$OWNLOOM_WIKI_ROOT/objects/smoke.md" <<'EOF'
   ---
   type: concept
   title: Smoke Page

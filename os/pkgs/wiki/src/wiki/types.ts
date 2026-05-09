@@ -75,9 +75,7 @@ export interface SourceManifest {
 
 export interface SourcePageFrontmatter {
 	id: string;
-	schema_version: number;
 	type: "source";
-	object_type: "source";
 	source_id: string;
 	title: string;
 	kind: string;
@@ -93,7 +91,6 @@ export interface SourcePageFrontmatter {
 	hosts: string[];
 	domain?: string;
 	areas: string[];
-	validation_level?: string;
 	source_ids: string[];
 	integration_targets: string[];
 	summary: string;
@@ -116,12 +113,7 @@ export interface CanonicalPageFrontmatter {
 	decay?: string;
 	supersedes?: string;
 	created?: string;
-	// v1 legacy fields (kept for pages/ archive compatibility)
-	schema_version?: number;
-	object_type?: string;
-	validation_level?: string;
 	aliases?: string[];
-	review_cycle_days?: number;
 	last_reviewed?: string;
 	next_review?: string;
 	source_ids?: string[];
@@ -165,10 +157,6 @@ export interface RegistryEntry {
 	wordCount: number;
 	// object-model fields
 	id?: string;
-	objectType?: string;
-	schemaVersion?: number;
-	validationLevel?: string;
-	reviewCycleDays?: number;
 	nextReview?: string;
 	supersedes?: string;
 }

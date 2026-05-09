@@ -101,22 +101,13 @@ function writeFileIfMissing(filePath: string, content: string, stats: InitWikiSt
 
 function canonicalWikiDirs(root: string): string[] {
   return [
-    "pages/home",
-    "pages/planner/tasks",
-    "pages/planner/calendar",
-    "pages/planner/reminders",
-    "pages/planner/reviews",
-    "pages/projects",
-    "pages/areas",
-    "pages/resources/knowledge",
-    "pages/resources/people",
-    "pages/resources/technical",
-    "pages/sources",
-    "pages/journal/daily",
-    "pages/journal/weekly",
-    "pages/journal/monthly",
-    "pages/archives",
-    "meta",
+    "daily",
+    "objects",
+    "sources",
+    "types",
+    "meta/about-alex",
+    "meta/audit",
+    "meta/events",
     "raw",
   ].map((relativePath) => path.join(root, relativePath));
 }

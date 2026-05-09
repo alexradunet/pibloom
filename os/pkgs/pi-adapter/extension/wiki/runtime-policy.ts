@@ -6,8 +6,7 @@ export type SavedContext = { savedAt: string; host?: string; cwd?: string };
 function agentDir(): string {
   return process.env.OWNLOOM_AGENT_DIR
     ?? process.env.PI_CODING_AGENT_DIR
-    ?? process.env.NIXPI_AGENT_DIR
-    ?? join(process.env.NIXPI_HOME || process.env.HOME || "/tmp", ".pi", "agent");
+    ?? join(process.env.HOME || "/tmp", ".pi", "agent");
 }
 
 export function saveContext(data: SavedContext): void {

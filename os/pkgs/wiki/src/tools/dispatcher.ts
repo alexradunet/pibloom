@@ -156,7 +156,6 @@ async function callWikiToolUnlocked(name: string, params: Record<string, any>, o
       const wikiRoot = wikiRootForTool(params.domain);
       return toToolResult(handleWikiSearch(loadRegistry(wikiRoot), params.query, {
         type: params.type,
-        objectType: params.object_type,
         limit: params.limit,
         hostScope: params.host_scope,
         domain: params.domain,
@@ -166,9 +165,7 @@ async function callWikiToolUnlocked(name: string, params: Record<string, any>, o
       }));
     }
 
-    case "wiki_ensure_object":
-    case "wiki_ensure_page": {
-      // wiki_ensure_page kept as alias for backward compat with extension tool declarations
+    case "wiki_ensure_object": {
       const wikiRoot = wikiRootForTool(params.domain);
       return maybeRebuild(wikiRoot, toToolResult(handleEnsurePage(wikiRoot, {
         type: params.type,
@@ -275,7 +272,7 @@ export function buildWikiContextPrompt(): string {
     "- Wiki v2 layout: daily/ (spine), objects/ (typed objects), types/ (schemas), sources/ (evidence), meta/about-alex/ (agent model of Alex).",
     "- domain: technical or personal separates system and personal knowledge. areas: [...] for long-lived themes.",
     "- Frontmatter: id, type, title, domain, areas, confidence (high|medium|low), last_confirmed, decay (slow|normal|fast), created, updated, summary.",
-    "- Dropped from v1: schema_version, validation_level, object_type, aliases, review_cycle_days.",
+    "- No v1 compatibility: pages/ archive scanning, wiki_ensure_page, and NIXPI_* wiki env fallbacks are removed.",
     "- Types defined in types/<type>.md — extensible by dropping a new file.",
     "- wiki_search: query, type, domain, areas, hosts, folder, host_scope filters.",
     "- wiki_ensure_object: resolves or creates a typed object in objects/; reads types/<type>.md for schema.",

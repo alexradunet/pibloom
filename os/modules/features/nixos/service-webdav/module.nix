@@ -6,7 +6,11 @@
 }: let
   cfg = config.services.ownloom-webdav;
   userName = config.ownloom.human.name;
-  isLoopback = builtins.elem cfg.address ["127.0.0.1" "::1" "localhost"];
+  isLoopback = builtins.elem cfg.address [
+    "127.0.0.1"
+    "::1"
+    "localhost"
+  ];
 in {
   options.services.ownloom-webdav = {
     enable = lib.mkEnableOption "loopback WebDAV server for the ownloom wiki (access via SSH tunnel)";
@@ -42,12 +46,30 @@ in {
       '';
     };
 
+    htpasswdFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = ''
+        Optional direct htpasswd file path. Prefer htpasswdSecret + sopsFile on
+        real hosts; this is useful for tests and throwaway local deployments.
+      '';
+    };
+
     sopsFile = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
       default = null;
       description = ''
         Path to the host's sops-encrypted secrets file that contains the
         htpasswd secret. Typically set to ./secrets.yaml in the host config.
+      '';
+    };
+
+    metadataRebuildInterval = lib.mkOption {
+      type = lib.types.str;
+      default = "15min";
+      description = ''
+        How often to rebuild generated wiki metadata for edits made through
+        WebDAV clients. Set to "0" to disable the timer.
       '';
     };
   };
@@ -57,6 +79,10 @@ in {
       {
         assertion = isLoopback;
         message = "services.ownloom-webdav.address must stay loopback-only; use an SSH tunnel for remote access.";
+      }
+      {
+        assertion = cfg.htpasswdFile != null || cfg.sopsFile != null;
+        message = "services.ownloom-webdav requires either htpasswdFile or sopsFile.";
       }
     ];
 
@@ -92,7 +118,11 @@ in {
 
             # Basic auth — credentials file is decrypted by sops at runtime.
             auth_basic "ownloom Wiki";
-            auth_basic_user_file /run/secrets/${cfg.htpasswdSecret};
+            auth_basic_user_file ${
+              if cfg.htpasswdFile != null
+              then cfg.htpasswdFile
+              else "/run/secrets/${cfg.htpasswdSecret}"
+            };
 
             # Let WebDAV clients discover directory contents.
             autoindex on;
@@ -104,9 +134,52 @@ in {
       };
     };
 
+    systemd = {
+      # The NixOS nginx module sets ProtectHome=yes by default, which blocks
+      # access to /home even for processes running as the home directory owner.
+      # Since this nginx instance is loopback-only and runs as the wiki owner,
+      # we disable that restriction so workers can read/write ~/wiki.
+      services.nginx.serviceConfig.ProtectHome = lib.mkForce false;
+
+      # Ensure the wiki directory exists with correct ownership before nginx starts.
+      tmpfiles.rules = [
+        "d ${cfg.wikiRoot} 0750 ${userName} users -"
+      ];
+
+      services.ownloom-webdav-wiki-rebuild = lib.mkIf (cfg.metadataRebuildInterval != "0") {
+        description = "Rebuild Ownloom wiki metadata for WebDAV edits";
+        after = ["nginx.service"];
+        serviceConfig = {
+          Type = "oneshot";
+          User = userName;
+          Group = "users";
+          WorkingDirectory = cfg.wikiRoot;
+        };
+        environment = {
+          OWNLOOM_WIKI_ROOT = cfg.wikiRoot;
+          OWNLOOM_WIKI_WORKSPACE = config.ownloom.wiki.workspace;
+          OWNLOOM_WIKI_DEFAULT_DOMAIN = config.ownloom.wiki.defaultDomain;
+          OWNLOOM_WIKI_HOST = config.networking.hostName;
+        };
+        script = ''
+          ${pkgs.ownloom-wiki}/bin/ownloom-wiki mutate wiki_rebuild '{}' --json >/dev/null
+        '';
+      };
+
+      timers.ownloom-webdav-wiki-rebuild = lib.mkIf (cfg.metadataRebuildInterval != "0") {
+        wantedBy = ["timers.target"];
+        timerConfig = {
+          OnBootSec = "5min";
+          OnUnitActiveSec = cfg.metadataRebuildInterval;
+          AccuracySec = "1min";
+          Persistent = true;
+        };
+      };
+    };
+
     # Decrypt the htpasswd file via sops-nix; owned by root, readable only
     # by root — nginx reads it as root before dropping privileges.
-    sops = lib.mkIf (cfg.sopsFile != null) {
+    sops = lib.mkIf (cfg.sopsFile != null && cfg.htpasswdFile == null) {
       age.sshKeyPaths = lib.mkDefault ["/etc/ssh/ssh_host_ed25519_key"];
       secrets.${cfg.htpasswdSecret} = {
         inherit (cfg) sopsFile;
@@ -115,16 +188,5 @@ in {
         mode = "0400";
       };
     };
-
-    # The NixOS nginx module sets ProtectHome=yes by default, which blocks
-    # access to /home even for processes running as the home directory owner.
-    # Since this nginx instance is loopback-only and runs as the wiki owner,
-    # we disable that restriction so workers can read/write ~/wiki.
-    systemd.services.nginx.serviceConfig.ProtectHome = lib.mkForce false;
-
-    # Ensure the wiki directory exists with correct ownership before nginx starts.
-    systemd.tmpfiles.rules = [
-      "d ${cfg.wikiRoot} 0750 ${userName} users -"
-    ];
   };
 }

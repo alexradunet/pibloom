@@ -22,9 +22,8 @@ describe("actions-meta", () => {
 
   beforeEach(() => {
     wikiRoot = mkdtempSync(path.join(os.tmpdir(), "ownloom-wiki-meta-"));
-    mkdirSync(path.join(wikiRoot, "pages", "resources", "technical"), { recursive: true });
-    mkdirSync(path.join(wikiRoot, "pages", "areas", "personal"), { recursive: true });
-    mkdirSync(path.join(wikiRoot, "pages", "journal", "daily"), { recursive: true });
+    mkdirSync(path.join(wikiRoot, "objects"), { recursive: true });
+    mkdirSync(path.join(wikiRoot, "daily"), { recursive: true });
   });
 
   afterEach(() => {
@@ -34,10 +33,11 @@ describe("actions-meta", () => {
 
   it("scanPages and buildRegistry preserve folder, domain, areas, and hosts", () => {
     writeFileSync(
-      path.join(wikiRoot, "pages", "resources", "technical", "system-landscape.md"),
+      path.join(wikiRoot, "objects", "system-landscape.md"),
       `---
 type: concept
 title: System Landscape
+domain: technical
 tags: [nixos]
 hosts: []
 areas: [infrastructure, ai]
@@ -48,12 +48,12 @@ summary: Shared technical map
 ---
 # System Landscape
 
-See [[areas/personal/personal-identity]].
+See [[objects/personal-identity]].
 `,
       "utf8",
     );
     writeFileSync(
-      path.join(wikiRoot, "pages", "areas", "personal", "personal-identity.md"),
+      path.join(wikiRoot, "objects", "personal-identity.md"),
       `---
 type: identity
 title: Personal Identity
@@ -76,25 +76,26 @@ summary: Stable personal notes
 
     expect(registry.pages).toHaveLength(2);
     expect(registry.pages[0]).toMatchObject({
-      folder: "areas/personal",
+      folder: "objects",
       domain: "personal",
       areas: ["identity"],
     });
     expect(registry.pages[1]).toMatchObject({
-      folder: "resources/technical",
+      folder: "objects",
       domain: "technical",
       areas: ["infrastructure", "ai"],
     });
   });
 
   it("scanPages tolerates missing or unreadable directories", () => {
-    rmSync(path.join(wikiRoot, "pages"), { recursive: true, force: true });
+    rmSync(path.join(wikiRoot, "objects"), { recursive: true, force: true });
+    rmSync(path.join(wikiRoot, "daily"), { recursive: true, force: true });
     expect(scanPages(wikiRoot)).toEqual([]);
 
-    mkdirSync(path.join(wikiRoot, "pages", "resources", "technical"), { recursive: true });
-    mkdirSync(path.join(wikiRoot, "pages", "restricted"), { recursive: true });
+    mkdirSync(path.join(wikiRoot, "objects"), { recursive: true });
+    mkdirSync(path.join(wikiRoot, "objects", "restricted"), { recursive: true });
     writeFileSync(
-      path.join(wikiRoot, "pages", "resources", "technical", "visible.md"),
+      path.join(wikiRoot, "objects", "visible.md"),
       `---
 type: concept
 title: Visible
@@ -108,21 +109,22 @@ summary: Visible page
       "utf8",
     );
 
-    chmodSync(path.join(wikiRoot, "pages", "restricted"), 0o000);
+    chmodSync(path.join(wikiRoot, "objects", "restricted"), 0o000);
     try {
       const pages = scanPages(wikiRoot);
-      expect(pages.map((page) => page.relativePath)).toContain("pages/resources/technical/visible.md");
+      expect(pages.map((page) => page.relativePath)).toContain("objects/visible.md");
     } finally {
-      chmodSync(path.join(wikiRoot, "pages", "restricted"), 0o755);
+      chmodSync(path.join(wikiRoot, "objects", "restricted"), 0o755);
     }
   });
 
   it("buildRegistry normalizes fallback values and buildBacklinks dedupes links", () => {
     const pages = [
       {
-        relativePath: "pages/resources/technical/fallback.md",
+        relativePath: "objects/fallback.md",
         frontmatter: {
           type: "unknown",
+          domain: "technical",
           aliases: "aka fallback",
           tags: "nixos",
           hosts: " Yoga-Nixos ",
@@ -131,16 +133,16 @@ summary: Visible page
         },
         body: "Body",
         headings: ["Heading"],
-        rawLinks: ["resources/technical/target", "resources/technical/target", "ghost"],
+        rawLinks: ["objects/target", "objects/target", "ghost"],
         normalizedLinks: [
-          "pages/resources/technical/target.md",
-          "pages/resources/technical/target.md",
-          "pages/ghost.md",
+          "objects/target.md",
+          "objects/target.md",
+          "objects/ghost.md",
         ],
         wordCount: 1,
       },
       {
-        relativePath: "pages/resources/technical/target.md",
+        relativePath: "objects/target.md",
         frontmatter: {
           type: "concept",
           title: "Target",
@@ -175,17 +177,17 @@ summary: Visible page
       areas: ["infra"],
       sourceIds: ["SRC-2026-04-19-001"],
     });
-    expect(backlinks.byPath["pages/resources/technical/fallback.md"]?.outbound).toEqual([
-      "pages/resources/technical/target.md",
+    expect(backlinks.byPath["objects/fallback.md"]?.outbound).toEqual([
+      "objects/target.md",
     ]);
-    expect(backlinks.byPath["pages/resources/technical/target.md"]?.inbound).toEqual([
-      "pages/resources/technical/fallback.md",
+    expect(backlinks.byPath["objects/target.md"]?.inbound).toEqual([
+      "objects/fallback.md",
     ]);
   });
 
   it("buildBacklinks and deriveWikiMetaArtifacts compute links and index metadata", () => {
     writeFileSync(
-      path.join(wikiRoot, "pages", "resources", "technical", "system-landscape.md"),
+      path.join(wikiRoot, "objects", "system-landscape.md"),
       `---
 type: concept
 title: System Landscape
@@ -200,12 +202,12 @@ summary: Shared technical map
 ---
 # System Landscape
 
-See [[areas/personal/personal-identity]].
+See [[objects/personal-identity]].
 `,
       "utf8",
     );
     writeFileSync(
-      path.join(wikiRoot, "pages", "areas", "personal", "personal-identity.md"),
+      path.join(wikiRoot, "objects", "personal-identity.md"),
       `---
 type: identity
 title: Personal Identity
@@ -227,8 +229,8 @@ summary: Stable personal notes
     const artifacts = deriveWikiMetaArtifacts(pages, []);
     const backlinks = buildBacklinks(artifacts.registry);
 
-    expect(backlinks.byPath["pages/areas/personal/personal-identity.md"]?.inbound).toContain(
-      "pages/resources/technical/system-landscape.md",
+    expect(backlinks.byPath["objects/personal-identity.md"]?.inbound).toContain(
+      "objects/system-landscape.md",
     );
     expect(artifacts.index).toContain("[domain: technical]");
     expect(artifacts.index).toContain("[areas: infrastructure]");
@@ -238,7 +240,7 @@ summary: Stable personal notes
 
   it("includes standard markdown links in registry links and backlinks", () => {
     writeFileSync(
-      path.join(wikiRoot, "pages", "resources", "technical", "source.md"),
+      path.join(wikiRoot, "objects", "source.md"),
       `---
 type: concept
 title: Source
@@ -254,13 +256,13 @@ summary: Source page
 # Source
 
 [Relative](./target#Deep Heading)
-[Absolute](/pages/resources/technical/target.md)
+[Absolute](/objects/target.md)
 [External](https://example.com)
 `,
       "utf8",
     );
     writeFileSync(
-      path.join(wikiRoot, "pages", "resources", "technical", "target.md"),
+      path.join(wikiRoot, "objects", "target.md"),
       `---
 type: concept
 title: Target
@@ -284,9 +286,9 @@ summary: Target page
     const source = registry.pages.find((page) => page.title === "Source");
     const backlinks = buildBacklinks(registry);
 
-    expect(source?.linksOut).toEqual(["pages/resources/technical/target.md"]);
-    expect(backlinks.byPath["pages/resources/technical/target.md"]?.inbound).toEqual([
-      "pages/resources/technical/source.md",
+    expect(source?.linksOut).toEqual(["objects/target.md"]);
+    expect(backlinks.byPath["objects/target.md"]?.inbound).toEqual([
+      "objects/source.md",
     ]);
   });
 
@@ -300,8 +302,8 @@ summary: Target page
         pages: [
           {
             type: "concept",
-            path: "pages/resources/technical/system-landscape.md",
-            folder: "resources/technical",
+            path: "objects/system-landscape.md",
+            folder: "objects",
             title: "System Landscape",
             aliases: [],
             summary: "Shared technical map",
@@ -318,8 +320,8 @@ summary: Target page
           },
           {
             type: "journal",
-            path: "pages/journal/daily/2026-04-19.md",
-            folder: "journal/daily",
+            path: "daily/2026-04-19.md",
+            folder: "daily",
             title: "2026-04-19 Daily Journal",
             aliases: [],
             summary: "",
@@ -344,11 +346,11 @@ summary: Target page
 
         ## Concept Pages
 
-        - [System Landscape](../pages/resources/technical/system-landscape.md) [domain: technical] [areas: infrastructure] [hosts: yoga-nixos] — Shared technical map
+        - [System Landscape](../objects/system-landscape.md) [domain: technical] [areas: infrastructure] [hosts: yoga-nixos] — Shared technical map
 
         ## Journal Pages
 
-        - [2026-04-19 Daily Journal](../pages/journal/daily/2026-04-19.md) [domain: personal] [areas: journal]
+        - [2026-04-19 Daily Journal](../daily/2026-04-19.md) [domain: personal] [areas: journal]
         "
       `);
       expect(
@@ -363,7 +365,7 @@ summary: Target page
             ts: "2026-04-19T12:05:00Z",
             kind: "page-create",
             title: "Created page",
-            pagePaths: ["pages/resources/technical/system-landscape.md"],
+            pagePaths: ["objects/system-landscape.md"],
           },
         ]),
       ).toMatchInlineSnapshot(`
@@ -373,7 +375,7 @@ summary: Target page
         - Sources: SRC-2026-04-19-001
 
         ## [2026-04-19 12:05 UTC] page-create | Created page
-        - Pages: pages/resources/technical/system-landscape.md
+        - Pages: objects/system-landscape.md
         "
       `);
     } finally {
@@ -383,7 +385,7 @@ summary: Target page
 
   it("rebuildAllMeta writes registry, backlinks, index, and log", () => {
     writeFileSync(
-      path.join(wikiRoot, "pages", "journal", "daily", "2026-04-19.md"),
+      path.join(wikiRoot, "daily", "2026-04-19.md"),
       `---
 type: journal
 title: 2026-04-19 Daily Journal
@@ -404,7 +406,7 @@ summary: Daily note
       kind: "rebuild",
       title: "Rebuilt wiki metadata",
       sourceIds: ["SRC-2026-04-19-001"],
-      pagePaths: ["pages/journal/daily/2026-04-19.md"],
+      pagePaths: ["daily/2026-04-19.md"],
     });
 
     const { registry } = rebuildAllMeta(wikiRoot);
@@ -420,7 +422,7 @@ summary: Daily note
 
   it("loadRegistry rebuilds from invalid registry files and readEvents tolerates bad json", () => {
     writeFileSync(
-      path.join(wikiRoot, "pages", "resources", "technical", "rebuilt.md"),
+      path.join(wikiRoot, "objects", "rebuilt.md"),
       `---
 type: concept
 title: Rebuilt
@@ -465,7 +467,7 @@ summary: Rebuilt page
   it("handleWikiStatus reports domain counts and visible pages for the current host", () => {
     process.env.OWNLOOM_WIKI_HOST = "yoga-nixos";
     writeFileSync(
-      path.join(wikiRoot, "pages", "resources", "technical", "host-note.md"),
+      path.join(wikiRoot, "objects", "host-note.md"),
       `---
 type: concept
 title: Host Note
@@ -483,7 +485,7 @@ summary: Host specific note
       "utf8",
     );
     writeFileSync(
-      path.join(wikiRoot, "pages", "areas", "personal", "personal-identity.md"),
+      path.join(wikiRoot, "objects", "personal-identity.md"),
       `---
 type: identity
 title: Personal Identity
@@ -516,12 +518,13 @@ summary: Stable personal notes
 
   it("handleWikiStatus counts sources, journals, and unspecified domains", () => {
     process.env.OWNLOOM_WIKI_HOST = "yoga-nixos";
-    mkdirSync(path.join(wikiRoot, "pages", "sources"), { recursive: true });
+    mkdirSync(path.join(wikiRoot, "sources"), { recursive: true });
     writeFileSync(
-      path.join(wikiRoot, "pages", "resources", "technical", "global-note.md"),
+      path.join(wikiRoot, "objects", "global-note.md"),
       `---
 type: concept
 title: Global Note
+domain: technical
 tags: []
 hosts: []
 areas: [infrastructure]
@@ -535,7 +538,7 @@ summary: No explicit domain
       "utf8",
     );
     writeFileSync(
-      path.join(wikiRoot, "pages", "sources", "captured.md"),
+      path.join(wikiRoot, "sources", "captured.md"),
       `---
 type: source
 source_id: SRC-2026-04-19-001
@@ -556,7 +559,7 @@ summary: Captured source
       "utf8",
     );
     writeFileSync(
-      path.join(wikiRoot, "pages", "sources", "integrated.md"),
+      path.join(wikiRoot, "sources", "integrated.md"),
       `---
 type: source
 source_id: SRC-2026-04-19-002
@@ -577,7 +580,7 @@ summary: Integrated source
       "utf8",
     );
     writeFileSync(
-      path.join(wikiRoot, "pages", "journal", "daily", "2026-04-20.md"),
+      path.join(wikiRoot, "daily", "2026-04-20.md"),
       `---
 type: journal
 title: 2026-04-20 Daily Journal
@@ -614,7 +617,7 @@ summary: Daily note
   it("buildWikiDigest filters by host and excludes identity and journal pages", () => {
     process.env.OWNLOOM_WIKI_HOST = "yoga-nixos";
     writeFileSync(
-      path.join(wikiRoot, "pages", "resources", "technical", "shared.md"),
+      path.join(wikiRoot, "objects", "shared.md"),
       `---
 type: concept
 title: Shared Technical Note
@@ -634,7 +637,7 @@ ${"word ".repeat(50)}
       "utf8",
     );
     writeFileSync(
-      path.join(wikiRoot, "pages", "resources", "technical", "laptop.md"),
+      path.join(wikiRoot, "objects", "laptop.md"),
       `---
 type: concept
 title: Laptop Technical Note
@@ -654,7 +657,7 @@ ${"word ".repeat(60)}
       "utf8",
     );
     writeFileSync(
-      path.join(wikiRoot, "pages", "journal", "daily", "2026-04-19.md"),
+      path.join(wikiRoot, "daily", "2026-04-19.md"),
       `---
 type: journal
 title: 2026-04-19 Daily Journal
@@ -671,7 +674,7 @@ summary: Daily note
       "utf8",
     );
     writeFileSync(
-      path.join(wikiRoot, "pages", "areas", "personal", "personal-identity.md"),
+      path.join(wikiRoot, "objects", "personal-identity.md"),
       `---
 type: identity
 title: Personal Identity
@@ -699,7 +702,7 @@ summary: Stable personal notes
   it("buildWikiDigest returns empty when no active canonical pages are visible", () => {
     process.env.OWNLOOM_WIKI_HOST = "yoga-nixos";
     writeFileSync(
-      path.join(wikiRoot, "pages", "resources", "technical", "draft.md"),
+      path.join(wikiRoot, "objects", "draft.md"),
       `---
 type: concept
 title: Draft Note
@@ -717,7 +720,7 @@ summary: Draft note
       "utf8",
     );
     writeFileSync(
-      path.join(wikiRoot, "pages", "journal", "daily", "2026-04-19.md"),
+      path.join(wikiRoot, "daily", "2026-04-19.md"),
       `---
 type: journal
 title: 2026-04-19 Daily Journal
@@ -742,7 +745,7 @@ summary: Daily note
     process.env.OWNLOOM_WIKI_HOST = "yoga-nixos";
     for (let i = 0; i < 16; i += 1) {
       writeFileSync(
-        path.join(wikiRoot, "pages", "resources", "technical", `note-${i}.md`),
+        path.join(wikiRoot, "objects", `note-${i}.md`),
         `---
 type: concept
 title: Note ${i}
@@ -774,7 +777,7 @@ ${"word ".repeat(i === 0 ? 100 : 20 + i)}
       ts: "2026-04-19T12:00:00Z",
       kind: "page-create",
       title: "Created page",
-      pagePaths: ["pages/resources/technical/system-landscape.md"],
+      pagePaths: ["objects/system-landscape.md"],
     });
 
     const events = readEvents(wikiRoot);

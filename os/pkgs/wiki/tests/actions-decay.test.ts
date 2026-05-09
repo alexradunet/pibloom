@@ -199,7 +199,7 @@ describe("handleDecayPass", () => {
     }
   });
 
-  it("skips legacy pages without lifecycle metadata", () => {
+  it("skips pages without lifecycle metadata", () => {
     writePage(wikiRoot, "objects", "v1-legacy", {
       id: "concept/v1-legacy",
       type: "concept",

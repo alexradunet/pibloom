@@ -27,7 +27,7 @@ export function validStatusesForType(type: WikiPageType): ReadonlySet<string> {
 	return CANONICAL_STATUSES;
 }
 
-const OBJECT_TYPE_ID_PREFIXES: Record<string, readonly string[]> = {
+const TYPE_ID_PREFIXES: Record<string, readonly string[]> = {
 	dashboard: ["home"],
 	"daily-note": ["journal"],
 	daily_note: ["journal"],
@@ -35,8 +35,8 @@ const OBJECT_TYPE_ID_PREFIXES: Record<string, readonly string[]> = {
 	"evolution-index": ["evolution"],
 };
 
-export function validIdPrefixesForObjectType(objectType: string): readonly string[] {
-	return OBJECT_TYPE_ID_PREFIXES[objectType] ?? [objectType];
+export function validIdPrefixesForType(type: string): readonly string[] {
+	return TYPE_ID_PREFIXES[type] ?? [type];
 }
 
 export const REQUIRED_FRONTMATTER_FIELDS: Record<WikiPageType, readonly string[]> = {

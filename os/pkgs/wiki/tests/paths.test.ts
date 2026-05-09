@@ -132,25 +132,25 @@ describe("domain, area, and host normalization", () => {
 
 describe("folder helpers", () => {
   it("normalizes wiki folders and blocks traversal", () => {
-    expect(normalizePageFolder(" resources/technical ")).toBe("resources/technical");
+    expect(normalizePageFolder(" objects ")).toBe("objects");
     expect(() => normalizePageFolder("../bad")).toThrow(/Invalid wiki folder/);
   });
 
   it("builds page paths and extracts folders", () => {
-    expect(buildPagePath("foo", "resources/technical")).toBe("pages/resources/technical/foo.md");
-    expect(buildPagePath("foo")).toBe("pages/foo.md");
+    expect(buildPagePath("foo", "objects")).toBe("objects/foo.md");
+    expect(buildPagePath("foo")).toBe("objects/foo.md");
   });
 
   it("matches folders by exact prefix", () => {
-    expect(folderMatches("resources/technical", undefined)).toBe(true);
-    expect(folderMatches("resources/technical", "resources")).toBe(true);
-    expect(folderMatches("resources/technical", "areas")).toBe(false);
+    expect(folderMatches("objects", undefined)).toBe(true);
+    expect(folderMatches("objects", "objects")).toBe(true);
+    expect(folderMatches("objects", "daily")).toBe(false);
   });
 
   it("infers domains from convenience folders", () => {
     expect(inferDomainFromFolder("technical")).toBe("technical");
-    expect(inferDomainFromFolder("areas/personal")).toBe("personal");
-    expect(inferDomainFromFolder("resources/mixed")).toBeUndefined();
+    expect(inferDomainFromFolder("personal")).toBe("personal");
+    expect(inferDomainFromFolder("objects")).toBeUndefined();
   });
 });
 
@@ -171,15 +171,15 @@ describe("slug, ids, and wiki links", () => {
     expect(normalizeWikiLink("sources/SRC-2026-04-19-001")).toBe("sources/SRC-2026-04-19-001.md");
     // v2: objects/ is a top-level directory
     expect(normalizeWikiLink("objects/ownloom-vps")).toBe("objects/ownloom-vps.md");
-    // legacy pages/ still works
-    expect(normalizeWikiLink("pages/resources/technical/system-landscape")).toBe(
-      "pages/resources/technical/system-landscape.md",
+    // Bare top-level object paths stay in objects/.
+    expect(normalizeWikiLink("objects/system-landscape")).toBe(
+      "objects/system-landscape.md",
     );
-    expect(normalizeWikiLink("resources/technical/system-landscape")).toBe(
-      "pages/resources/technical/system-landscape.md",
+    expect(normalizeWikiLink("objects/system-landscape")).toBe(
+      "objects/system-landscape.md",
     );
-    expect(normalizeWikiLink("resources/technical/system-landscape#Overview")).toBe(
-      "pages/resources/technical/system-landscape.md",
+    expect(normalizeWikiLink("objects/system-landscape#Overview")).toBe(
+      "objects/system-landscape.md",
     );
   });
 });
@@ -187,18 +187,18 @@ describe("slug, ids, and wiki links", () => {
 describe("path protection and markdown extraction", () => {
   const wikiRoot = "/tmp/ownloom-wiki";
 
-  it("protects raw and meta but allows pages", () => {
+  it("protects raw and meta but allows wiki page folders", () => {
     expect(isProtectedPath(wikiRoot, `${wikiRoot}/raw/SRC-001/manifest.json`)).toBe(true);
     expect(isProtectedPath(wikiRoot, `${wikiRoot}/meta/registry.json`)).toBe(true);
-    expect(isProtectedPath(wikiRoot, `${wikiRoot}/pages/resources/technical/foo.md`)).toBe(false);
-    expect(isWikiPagePath(wikiRoot, `${wikiRoot}/pages/resources/technical/foo.md`)).toBe(true);
+    expect(isProtectedPath(wikiRoot, `${wikiRoot}/objects/foo.md`)).toBe(false);
+    expect(isWikiPagePath(wikiRoot, `${wikiRoot}/objects/foo.md`)).toBe(true);
     expect(isWikiPagePath(wikiRoot, `${wikiRoot}/sources/web/2026-05-09.md`)).toBe(true);
     expect(isWikiPagePath(wikiRoot, `${wikiRoot}/raw/SRC-001/manifest.json`)).toBe(false);
   });
 
   it("extracts wiki links, headings, and word counts", () => {
-    const markdown = `# Hello\n\nSee [[resources/technical/system-landscape#Next Step|System Landscape]].\n\n## Next Step`;
-    expect(extractWikiLinks(markdown)).toEqual(["resources/technical/system-landscape#Next Step"]);
+    const markdown = `# Hello\n\nSee [[objects/system-landscape#Next Step|System Landscape]].\n\n## Next Step`;
+    expect(extractWikiLinks(markdown)).toEqual(["objects/system-landscape#Next Step"]);
     expect(extractHeadings(markdown)).toEqual(["Hello", "Next Step"]);
     expect(countWords("one two three")).toBe(3);
   });

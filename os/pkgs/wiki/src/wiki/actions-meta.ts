@@ -83,8 +83,8 @@ function listMarkdownFiles(dir: string): string[] {
 }
 
 export function scanPages(wikiRoot: string): ParsedPage[] {
-	// v2 layout: scan pages/ (legacy), daily/, objects/, sources/, meta/about-alex/
-	const scanDirs = ["pages", "daily", "objects", "sources", "meta/about-alex", "meta/audit"];
+	// v2 layout: scan daily/, objects/, sources/, meta/about-alex/
+	const scanDirs = ["daily", "objects", "sources", "meta/about-alex", "meta/audit"];
 	const files: string[] = [];
 	for (const dir of scanDirs) {
 		const dirPath = path.join(wikiRoot, dir);
@@ -149,10 +149,6 @@ export function buildRegistry(pages: ParsedPage[]): RegistryData {
 			wordCount: page.wordCount,
 			// object-model fields
 			...(frontmatter.id ? { id: asString(frontmatter.id) } : {}),
-			...(frontmatter.object_type ? { objectType: asString(frontmatter.object_type) } : {}),
-			...(typeof frontmatter.schema_version === "number" ? { schemaVersion: frontmatter.schema_version } : {}),
-			...(frontmatter.validation_level ? { validationLevel: asString(frontmatter.validation_level) } : {}),
-			...(typeof frontmatter.review_cycle_days === "number" ? { reviewCycleDays: frontmatter.review_cycle_days } : {}),
 			...(frontmatter.next_review ? { nextReview: asString(frontmatter.next_review) } : {}),
 			...(frontmatter.supersedes ? { supersedes: asString(frontmatter.supersedes) } : {}),
 		};
@@ -245,7 +241,7 @@ export function renderIndex(registry: RegistryData): string {
 		if (entries.length === 0) continue;
 		lines.push(`## ${sectionLabel[type]}`, "");
 		for (const entry of entries) {
-			const displayPath = entry.path.replace(/^pages\//, "").replace(/\.md$/, "");
+			const displayPath = entry.path.replace(/\.md$/, "");
 			const label = entry.title || displayPath;
 			const summary = entry.summary ? ` — ${entry.summary}` : "";
 			lines.push(
@@ -357,8 +353,8 @@ function countByDomain(pages: RegistryEntry[]): Record<string, number> {
 }
 
 export function handleWikiStatus(wikiRoot: string): ActionResult<WikiStatusDetails> {
-	// v2: check daily/ or objects/ or legacy pages/
-	const initialized = ["pages", "daily", "objects"].some((d) => existsSync(path.join(wikiRoot, d)));
+	// v2: check daily/ or objects/
+	const initialized = ["daily", "objects"].some((d) => existsSync(path.join(wikiRoot, d)));
 	if (!initialized) {
 		return ok({ text: "Wiki not initialized.", details: { initialized: false, root: wikiRoot, host: getCurrentHost() } });
 	}
@@ -413,7 +409,7 @@ export interface WikiDigestOptions {
 
 export function buildWikiDigest(wikiRoot: string, options: WikiDigestOptions = {}): string {
 	const registryPath = path.join(wikiRoot, "meta", "registry.json");
-	const initialized = ["pages", "daily", "objects"].some((d) => existsSync(path.join(wikiRoot, d)));
+	const initialized = ["daily", "objects"].some((d) => existsSync(path.join(wikiRoot, d)));
 	if (!existsSync(registryPath) && !initialized) return "";
 
 	const host = getCurrentHost();
@@ -429,12 +425,12 @@ export function buildWikiDigest(wikiRoot: string, options: WikiDigestOptions = {
 	// Today's daily note
 	const todayNote = registry.pages.find(
 		(p) => (p.type === "journal" || p.type === "daily-note") &&
-			(p.path.includes(`journal/daily/${today}`) || p.path.includes(`daily/${today}`)) &&
+			p.path.includes(`daily/${today}`) &&
 			visible(p),
 	);
 	lines.push(todayNote
 		? `- TODAY NOTE: ${todayNote.path}`
-		: `- TODAY NOTE: none yet for ${today} — create with wiki_ensure_page type=journal`);
+		: `- TODAY NOTE: none yet for ${today} — create with wiki_daily action=append`);
 
 	// Active knowledge notes (top 10 by word count, non-operational)
 	const knowledge = registry.pages
@@ -448,7 +444,7 @@ export function buildWikiDigest(wikiRoot: string, options: WikiDigestOptions = {
 		for (const entry of knowledge) {
 			const summary = entry.summary ? ` — ${entry.summary}` : "";
 			lines.push(
-				`- ${entry.title} (${entry.objectType ?? entry.type})${formatDomainSuffix(entry.domain)}${formatAreasSuffix(entry.areas)}${summary}`,
+				`- ${entry.title} (${entry.type})${formatDomainSuffix(entry.domain)}${formatAreasSuffix(entry.areas)}${summary}`,
 			);
 		}
 	}

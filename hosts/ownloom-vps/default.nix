@@ -264,7 +264,7 @@ in {
 
     ownloom-planner = {
       enable = true;
-      # Standards-first planner foundation: CalDAV/iCalendar VTODO.
+      # Full-DAV planner foundation: CalDAV/iCalendar VTODO/VEVENT/VALARM.
       # Loopback-only until a TLS/authenticated public access path is chosen.
     };
 
@@ -272,7 +272,7 @@ in {
       enable = true;
       sopsFile = ./secrets.yaml;
       # Loopback-only — access via: ssh -L 4918:127.0.0.1:4918 ownloom-vps
-      # then point Joplin WebDAV to http://localhost:4918
+      # then use http://localhost:4918 with trusted Markdown/WebDAV clients.
     };
 
     ownloom-ollama = {

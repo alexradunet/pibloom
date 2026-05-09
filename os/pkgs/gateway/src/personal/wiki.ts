@@ -65,7 +65,7 @@ export function wikiSearch(query: string, limit = 5): string {
 
   const lines: string[] = [`*Wiki: ${query}*`];
   for (const { entry } of matches) {
-    const slug = entry.path.replace(/^pages\//, "").replace(/\.md$/, "");
+    const slug = entry.path.replace(/\.md$/, "");
     lines.push("");
     lines.push(`*${entry.title}*`);
     if (entry.summary) {

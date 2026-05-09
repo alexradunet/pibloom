@@ -37,7 +37,7 @@ OWNLOOM_WIKI_DEFAULT_DOMAIN=personal
 OWNLOOM_WIKI_HOST=ownloom-vps
 ```
 
-Legacy `NIXPI_WIKI_*` environment variables are still accepted for compatibility. If no root is configured, the default root is:
+No legacy `NIXPI_*` wiki environment variables are accepted. If no root is configured, the default root is:
 
 ```text
 ~/wiki
@@ -53,7 +53,6 @@ objects/                            typed object pages
 sources/                            captured evidence and research
 meta/about-alex/                    agent model/context
 meta/audit/                         reviews and audit notes
-pages/                              legacy pages archive, if present
 types/                              type schemas
 ```
 
@@ -67,7 +66,7 @@ Generated metadata lives under `meta/` and can be rebuilt with:
 ownloom-wiki mutate wiki_rebuild '{"domain":"personal"}'
 ```
 
-Read tools rebuild missing generated metadata when needed.
+Read tools rebuild missing generated metadata when needed. External WebDAV edits are normal file edits; run `ownloom-wiki mutate wiki_rebuild '{}'` when immediate search/backlink freshness matters. On NixOS hosts, `services.ownloom-webdav` can run the rebuild timer automatically.
 
 ## Safety model
 

@@ -15,9 +15,9 @@ This document defines what an AI agent adapter must provide to participate in ow
 The shared ownloom surface is CLI-first. An agent must be able to call these commands from its normal shell/tool environment:
 
 - `ownloom-context --format markdown|json [--health]` — print live ownloom context for prompt injection.
-- `ownloom-wiki` — search, inspect, ingest, lint, and update the Markdown wiki.
+- `ownloom-wiki` — search, inspect, ingest, lint, rebuild metadata, and update the WebDAV-served Markdown wiki.
 - `ownloom-planner` — manage live tasks, reminders, and calendar items through CalDAV/iCalendar.
-- Standard Nix/Git/systemd tools — `git`, `nix flake check`, `nixos-rebuild`, and `systemctl` for repository, validation, deployment, and service work.
+- Standard Nix/Git/systemd tools — `git`, `nix flake check`, `nixos-rebuild`, and `systemctl` for repository, validation, deployment, and service work. Git applies to the Ownloom code/config repo, not the live wiki substrate.
 
 Operational workflows that used to be wrapper CLIs now live as skills under `os/skills/` (`ownloom-config`, `ownloom-svc`, `ownloom-reboot`, `ownloom-evolution`, and `ownloom-audit`). Safety and allowlist behavior belongs in the underlying NixOS config, sudo policy, systemd units, and shared CLIs. Agent adapters may add extra hooks, but must not be the only enforcement point.
 
@@ -72,6 +72,7 @@ Agent adapters should enforce, where the harness supports it:
 - Run `nix flake check --accept-flake-config` before `nixos-rebuild switch`.
 - Use `git status --short` and `git diff --stat` before summarizing or changing repo/config state.
 - Use `systemctl status <unit>` before service mutations.
+- Treat the wiki as plain Markdown files served over WebDAV; use `ownloom-wiki mutate wiki_rebuild` after out-of-band file edits when immediate search freshness matters.
 - Block or redirect direct writes to protected wiki areas such as `raw/` and `meta/proposals/`.
 - Prefer read-only diagnosis before mutation.
 - Preserve the current host identity; never assume a different fleet host unless the user names it.

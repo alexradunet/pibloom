@@ -55,7 +55,7 @@ export function handleDecayPass(wikiRoot: string, dryRun = false): ActionResult<
     const decay = String(fm.decay ?? "normal");
     const lastConfirmed = String(fm.last_confirmed ?? fm.created ?? "");
 
-    // Skip pages without lifecycle metadata (legacy pages in pages/)
+    // Skip pages without lifecycle metadata.
     if (!confidence || !lastConfirmed) continue;
     // Skip planner-backed types and daily notes — they are historical records not living claims
     const type = String(fm.type ?? "");

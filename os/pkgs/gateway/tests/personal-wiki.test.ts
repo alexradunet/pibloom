@@ -45,7 +45,7 @@ test("personal journal append keeps multiline entries under one markdown bullet"
     assert.ok(result);
 
     const today = formatLocalDate(new Date());
-    const journalFile = path.join(wikiRoot, "pages", "journal", "daily", `${today}.md`);
+    const journalFile = path.join(wikiRoot, "daily", `${today}.md`);
     const content = readFileSync(journalFile, "utf-8");
 
     assert.match(content, /### WhatsApp\n- \d\d:\d\d - User: first line\n  second line\n  third line/);
@@ -60,7 +60,7 @@ test("personal WhatsApp auto-capture writes ordinary conversation turns to the d
 
     assert.equal(captured, true);
 
-    const journalFile = path.join(wikiRoot, "pages", "journal", "daily", "2026-04-28.md");
+    const journalFile = path.join(wikiRoot, "daily", "2026-04-28.md");
     const content = readFileSync(journalFile, "utf-8");
 
     assert.match(content, /### WhatsApp conversation/);
@@ -92,7 +92,7 @@ test("personal journal uses local date instead of UTC date near Bucharest midnig
       assert.equal(result.date, "2026-04-26");
       assert.equal(result.time, "00:30");
 
-      const journalFile = path.join(wikiRoot, "pages", "journal", "daily", "2026-04-26.md");
+      const journalFile = path.join(wikiRoot, "daily", "2026-04-26.md");
       const content = readFileSync(journalFile, "utf-8");
       assert.match(content, /00:30 - User: local midnight check/);
     });

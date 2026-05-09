@@ -9,9 +9,9 @@ describe("actions-meta wiki digest", () => {
 
   beforeEach(() => {
     wikiRoot = mkdtempSync(path.join(os.tmpdir(), "ownloom-wiki-digest-"));
-    mkdirSync(path.join(wikiRoot, "pages", "journal", "daily"), { recursive: true });
-    mkdirSync(path.join(wikiRoot, "pages", "resources", "knowledge"), { recursive: true });
-    mkdirSync(path.join(wikiRoot, "pages", "planner", "tasks"), { recursive: true });
+    mkdirSync(path.join(wikiRoot, "daily"), { recursive: true });
+    mkdirSync(path.join(wikiRoot, "objects"), { recursive: true });
+    mkdirSync(path.join(wikiRoot, "objects"), { recursive: true });
     mkdirSync(path.join(wikiRoot, "meta"), { recursive: true });
   });
 
@@ -27,7 +27,7 @@ describe("actions-meta wiki digest", () => {
     process.env.OWNLOOM_WIKI_HOST = "vps-nixos";
 
     writeFileSync(
-      path.join(wikiRoot, "pages", "journal", "daily", "2026-04-21.md"),
+      path.join(wikiRoot, "daily", "2026-04-21.md"),
       `---
 type: journal
 title: 2026-04-21
@@ -43,10 +43,9 @@ summary: Daily note
     );
 
     writeFileSync(
-      path.join(wikiRoot, "pages", "resources", "knowledge", "planner-policy.md"),
+      path.join(wikiRoot, "objects", "planner-policy.md"),
       `---
 type: concept
-object_type: concept
 title: Planner Policy
 domain: technical
 areas: [planning]
@@ -62,10 +61,9 @@ CalDAV is the live planner backend. Wiki pages keep context and reviews.
     );
 
     writeFileSync(
-      path.join(wikiRoot, "pages", "planner", "tasks", "context.md"),
+      path.join(wikiRoot, "objects", "context.md"),
       `---
 type: task
-object_type: task
 title: Context Task
 domain: technical
 areas: [planning]
@@ -82,7 +80,7 @@ summary: context only
     const digest = buildWikiDigest(wikiRoot);
 
     expect(digest).toContain("[WIKI DIGEST");
-    expect(digest).toContain("TODAY NOTE: pages/journal/daily/2026-04-21.md");
+    expect(digest).toContain("TODAY NOTE: daily/2026-04-21.md");
     expect(digest).toContain("Planner Policy");
     expect(digest).not.toContain("Context Task");
   });
@@ -93,10 +91,9 @@ summary: context only
 
     for (const [domain, title] of [["personal", "Personal Note"], ["technical", "Technical Note"]] as const) {
       writeFileSync(
-        path.join(wikiRoot, "pages", "resources", "knowledge", `${domain}.md`),
+        path.join(wikiRoot, "objects", `${domain}.md`),
         `---
 type: concept
-object_type: concept
 title: ${title}
 domain: ${domain}
 areas: [planning]

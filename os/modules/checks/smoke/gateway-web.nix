@@ -39,6 +39,7 @@ runCommand "ownloom-gateway-web-smoke" {
     test -f "$root/styles/utilities.css"
     test -f "$root/styles/responsive.css"
     test -f "$root/js/app.js"
+    test -f "$root/js/pwa-cleanup.js"
     test -f "$root/js/gateway-client.js"
     test -f "$root/js/components/atoms.js"
     test -f "$root/js/components/molecules.js"
@@ -65,16 +66,22 @@ runCommand "ownloom-gateway-web-smoke" {
     ! grep -R -q 'cdn.tailwindcss.com' "$root"
     ! grep -R -q 'fonts.googleapis.com' "$root"
     grep -q 'Personal mode' "$root/index.html"
+    grep -q 'app-shell container-fluid' "$root/index.html"
+    grep -q 'app-sidebar' "$root/index.html"
+    grep -q 'top-lintel' "$root/index.html"
+    grep -q 'tab-panel active' "$root/index.html"
+    grep -q 'personal-layout' "$root/index.html"
     grep -q 'ownloom-personal-chat' "$root/index.html"
-    grep -q './generated/ownloom-lit.css' "$root/index.html"
-    grep -q './generated/ownloom-personal.js' "$root/index.html"
+    grep -q '/generated/ownloom-lit.css' "$root/index.html"
+    grep -q '/generated/ownloom-personal.js' "$root/index.html"
     grep -q 'Admin cockpit' "$root/index.html"
-    grep -q 'Operator terminal' "$root/index.html"
     grep -q '/admin' "$root/index.html"
-    grep -q '/terminal/ownloom' "$root/index.html"
-    grep -q '/radicale/' "$root/index.html"
-    grep -q 'components.html' "$root/index.html"
-    grep -q 'components-lit.html' "$root/index.html"
+    grep -q '/admin?tab=organizer' "$root/index.html"
+    ! grep -q '/terminal/ownloom' "$root/index.html"
+    ! grep -q '/radicale/' "$root/index.html"
+    ! grep -q 'components.html' "$root/index.html"
+    ! grep -q 'components-lit.html' "$root/index.html"
+    ! grep -q 'Foundation' "$root/index.html"
     ! grep -q 'pairButton' "$root/index.html"
     ! grep -q 'terminalFrame' "$root/index.html"
     ! grep -q './generated/ownloom-lit.js' "$root/index.html"
@@ -113,7 +120,8 @@ runCommand "ownloom-gateway-web-smoke" {
     grep -R -q 'clients.list' "$root"
     grep -R -q 'createTabController' "$root"
     grep -R -q 'copyTerminalToken' "$root"
-    grep -R -q 'cleanupOldServiceWorkers' "$root"
+    grep -R -q 'cleanupOldPwaState' "$root"
+    grep -q 'cleanupOldPwaState' "$root/js/pwa-cleanup.js"
     grep -R -q 'setupThreadRail' "$root"
     ! grep -R -q 'registerPwa' "$root"
     ! grep -q 'application/manifest+json' "$server"
@@ -161,10 +169,12 @@ runCommand "ownloom-gateway-web-smoke" {
       sleep 0.1
     done
     grep -qi 'Ownloom Web' /tmp/index.html
+    grep -q 'app-shell container-fluid' /tmp/index.html
+    grep -q 'top-lintel' /tmp/index.html
     grep -q 'ownloom-personal-chat' /tmp/index.html
-    grep -q './generated/ownloom-personal.js' /tmp/index.html
+    grep -q '/generated/ownloom-personal.js' /tmp/index.html
     grep -q '/admin' /tmp/index.html
-    grep -q '/terminal/ownloom' /tmp/index.html
+    ! grep -q '/terminal/ownloom' /tmp/index.html
     grep -qi 'content-security-policy:' /tmp/index.headers
     grep -qi 'x-content-type-options: nosniff' /tmp/index.headers
     grep -qi 'referrer-policy: no-referrer' /tmp/index.headers

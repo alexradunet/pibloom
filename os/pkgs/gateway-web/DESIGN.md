@@ -48,7 +48,7 @@ public/generated/ownloom-personal.js # bundled self-hosted personal chat island 
 
 ## Component guidance
 
-- **Personal shell (`/`):** calm user-mode entry point with a small gateway-backed text chat island, plus clear links to planner/admin/terminal surfaces. Keep attachments/artifacts deferred until explicitly scoped.
+- **Personal shell (`/`):** calm user-mode entry point using the same left sidebar and top lintel as admin, with the gateway-backed text chat as a full-width stacked work surface. Link operator surfaces through `/admin`; do not expose direct shell controls on the root page. Keep attachments/artifacts deferred until explicitly scoped.
 - **Admin cockpit (`/admin`):** preserve the existing operator behavior and hooks until a deliberate migration step moves one flow at a time.
 - **Sidebar:** the admin loom frame. It should carry a restrained stitched edge and active tab state that is visible beyond color.
 - **Top lintel:** title, purpose, and live status in one quiet band.
@@ -71,7 +71,7 @@ Every admin cockpit tab should use a two-part layout:
 </div>
 ```
 
-The main work surface is carded consistently. The Workbench/chat exception keeps `.workbench-card` transparent so the conversation itself has no card background, while the right thread rail still participates in the same sidebar pattern.
+The main work surface is carded consistently. The Workbench/chat exception keeps `.workbench-card` transparent so the conversation itself has no card background, while the right thread rail still participates in the same sidebar pattern. The personal root uses the same `.app-shell`, `.app-sidebar`, and `.top-lintel` chrome, but keeps `.personal-layout` stacked so the chat is never squeezed by a right rail.
 
 ## Change checklist
 

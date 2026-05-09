@@ -8,80 +8,91 @@
     <meta name="application-name" content="Ownloom Web" />
     <meta name="theme-color" content="#1a110f" />
     <title>Ownloom Web</title>
-    <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./style.css" />
-    <link rel="stylesheet" href="./generated/ownloom-lit.css" />
-    <script type="module" src="./generated/ownloom-personal.js"></script>
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/generated/ownloom-lit.css" />
+    <script type="module" src="/generated/ownloom-personal.js"></script>
   </head>
   <body>
-    <a class="skip-link" href="#personal-content">Skip to personal mode</a>
+    <a class="skip-link" href="#personal-content">Skip to personal content</a>
 
-    <main id="personal-content" class="container component-catalog" tabindex="-1" aria-labelledby="personal-heading">
-      <header class="component-hero">
-        <div>
+    <main id="main" class="app-shell container-fluid">
+      <aside class="app-sidebar" aria-label="Ownloom personal menu">
+        <header class="sidebar-brand">
           <small class="section-kicker">Personal mode</small>
-          <h1 id="personal-heading">Ownloom Web</h1>
-          <p>
-            A calm local-first home for today, planner, journal, documents, and personal context. The first
-            gateway-backed personal chat surface is live here now.
-          </p>
-        </div>
-        <nav class="actions" aria-label="Ownloom routes">
-          <a class="secondary outline small-button" href="/admin" role="button">Admin cockpit</a>
-          <a class="secondary outline small-button" href="/terminal/ownloom" role="button">Operator terminal</a>
+          <h1>Ownloom</h1>
+          <p>Local-first hearth for today, planner, journal, people, and documents.</p>
+        </header>
+
+        <nav class="sidebar-tabs" aria-label="Ownloom modes">
+          <a class="tab-button active secondary outline" href="/" aria-current="page">
+            <span>Personal</span>
+            <small>Ask, capture, and plan.</small>
+          </a>
+          <a class="tab-button secondary outline" href="/admin">
+            <span>Admin cockpit</span>
+            <small>Operator controls and diagnostics.</small>
+          </a>
+          <a class="tab-button secondary outline" href="/admin?tab=organizer">
+            <span>Planner admin</span>
+            <small>Radicale collections via cockpit.</small>
+          </a>
         </nav>
-      </header>
 
-      <section class="component-section" aria-label="Personal chat surface">
-        <div class="personal-layout">
-          <ownloom-personal-chat>
-            <article class="page-card">
-              <small class="section-kicker">Gateway-backed personal chat</small>
-              <h2>Ask Ownloom</h2>
-              <p>Loading the personal chat island. If this stays visible, open `/admin` and refresh this page.</p>
-            </article>
-          </ownloom-personal-chat>
+        <footer class="hearth" aria-label="Personal hearth status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <p><strong>Personal first</strong><br /><small>Operator surfaces stay behind admin.</small></p>
+        </footer>
+      </aside>
 
-          <aside class="page-sidebar personal-mode-rail" aria-label="Mode rail">
-            <article>
-              <small class="section-kicker">Mode split</small>
-              <h2>Personal first</h2>
-              <p>This page is intentionally not the operator cockpit. Coding, config, trace, token, and shell controls stay behind the admin route.</p>
-              <ul class="rail-list">
-                <li><strong>Personal</strong><br /><small>Today, planner, journal, people, documents.</small></li>
-                <li><strong>Admin</strong><br /><small>Existing Workbench, Access, Shell, Trace.</small></li>
-                <li><strong>Shared</strong><br /><small>Same Ownloom gateway, CLIs, wiki, planner, skills.</small></li>
-              </ul>
-            </article>
-            <article>
-              <small class="section-kicker">Advanced</small>
-              <p>Use admin and terminal only when you intend operator/coding mode.</p>
-              <footer class="actions">
-                <a class="secondary outline small-button" href="/admin" role="button">Open admin</a>
-                <a class="secondary outline small-button" href="/radicale/" target="_blank" rel="noopener noreferrer" role="button">Planner collections</a>
-                <a class="secondary outline small-button" href="/terminal/ownloom" role="button">Open terminal</a>
-              </footer>
-            </article>
-          </aside>
-        </div>
-      </section>
+      <div id="personal-content" class="app-content" tabindex="-1">
+        <header class="top-lintel">
+          <div>
+            <small class="section-kicker">Woven context, personal default</small>
+            <h1>Ownloom Web</h1>
+            <p>A calm local-first home for today, planner, journal, documents, and personal context.</p>
+          </div>
+          <div class="header-status" aria-label="Personal mode status">
+            <span class="chip chip-thread">Conversation: web-personal-main</span>
+            <span class="chip chip-private">Loopback / tunnel only</span>
+            <span class="chip chip-system">Planner: CalDAV/Radicale</span>
+            <a class="secondary outline small-button" href="/admin" role="button">Open admin</a>
+          </div>
+        </header>
 
-      <section class="component-section" aria-labelledby="foundation-heading">
-        <article class="page-card" aria-labelledby="foundation-heading">
-          <header class="split-header">
-            <div>
-              <small class="section-kicker">Foundation</small>
-              <h2 id="foundation-heading">Component path</h2>
-              <p>The personal chat surface now uses the generated self-hosted component path while the admin cockpit keeps the stable Pico/static JS flow.</p>
-            </div>
-            <span class="chip chip-system">Personal island active</span>
-          </header>
-          <footer class="actions">
-            <a class="secondary outline small-button" href="./components.html" role="button">Static components</a>
-            <a class="secondary outline small-button" href="./components-lit.html" role="button">Lit catalog</a>
-          </footer>
-        </article>
-      </section>
+        <section id="tab-personal" class="tab-panel active" aria-label="Personal Ownloom workspace" tabindex="0">
+          <div class="personal-layout">
+            <ownloom-personal-chat>
+              <article class="page-card">
+                <small class="section-kicker">Gateway-backed personal chat</small>
+                <h2>Ask Ownloom</h2>
+                <p>Loading the personal chat island. If this stays visible, open `/admin` and refresh this page.</p>
+              </article>
+            </ownloom-personal-chat>
+
+            <aside class="page-sidebar personal-notes" aria-label="Personal mode notes">
+              <article>
+                <small class="section-kicker">Mode split</small>
+                <h2>Personal first</h2>
+                <p>This page is intentionally not the operator cockpit. Coding, config, trace, token, and shell controls stay behind the admin route.</p>
+                <ul class="rail-list">
+                  <li><strong>Personal</strong><br /><small>Today, planner, journal, people, documents.</small></li>
+                  <li><strong>Admin</strong><br /><small>Workbench, access, shell, trace, and runtime controls.</small></li>
+                  <li><strong>Shared</strong><br /><small>Same Ownloom gateway, CLIs, wiki, planner, and skills.</small></li>
+                </ul>
+              </article>
+              <article>
+                <small class="section-kicker">Planner</small>
+                <h2>Live items stay in CalDAV</h2>
+                <p>Ask Ownloom to work with tasks, reminders, and events. Collection management stays available through the admin cockpit.</p>
+                <footer class="actions">
+                  <a class="secondary outline small-button" href="/admin?tab=organizer" role="button">Open planner admin</a>
+                </footer>
+              </article>
+            </aside>
+          </div>
+        </section>
+      </div>
     </main>
   </body>
 </html>

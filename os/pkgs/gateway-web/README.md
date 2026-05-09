@@ -1,6 +1,6 @@
 # ownloom-gateway-web
 
-Small loopback-only Ownloom web surface with a gateway-backed personal chat shell and an operator cockpit.
+Small loopback-only Ownloom web surface with a gateway-backed personal chat shell and a matching operator cockpit.
 
 It serves a static HTML/CSS/JS runtime. A small build step is allowed for generated Tailwind v4 CSS and Lit/mini-lit-style component islands, but the deployed browser assets remain self-hosted files with no runtime bundler, CDN, or framework server. The existing live cockpit still uses native ES modules plus a pragmatic Atomic Design layout while generated islands are introduced incrementally.
 
@@ -20,7 +20,7 @@ From another machine, use an SSH tunnel:
 ssh -L 8090:127.0.0.1:8090 ownloom-vps
 ```
 
-Then open <http://127.0.0.1:8090> for the personal/user-mode chat shell, or <http://127.0.0.1:8090/admin> for the existing operator cockpit. The personal shell can pair and remember this browser itself; `/admin` remains the fallback for manual token and operator controls. Pairing stores a loopback-only trusted runtime token in local storage so the personal shell can reconnect automatically.
+Then open <http://127.0.0.1:8090> for the personal/user-mode chat shell, or <http://127.0.0.1:8090/admin> for the existing operator cockpit. Both use the same left-sidebar/header shell language; the personal page keeps its chat as a full-width stacked work surface. The personal shell can pair and remember this browser itself; `/admin` remains the fallback for manual token and operator controls. Pairing stores a loopback-only trusted runtime token in local storage so the personal shell can reconnect automatically without changing the admin thread selection.
 
 You can still paste a named client token manually and click **Connect** in `/admin` if needed.
 
@@ -40,7 +40,7 @@ The UI is organized as native ES modules:
 
 ```text
 public/
-  index.html              # personal/user-mode landing shell
+  index.html              # personal/user-mode app shell
   admin.html              # existing operator cockpit and JS hooks
   app.js                  # tiny compatibility bootstrap used by admin.html
   components.html         # static Ownloom component catalog / storybook-like loom
@@ -54,6 +54,7 @@ public/
     constants.js          # storage keys, protocol constants
     state.js              # app state and chat/session helpers
     storage.js            # localStorage helpers
+    pwa-cleanup.js        # shared cleanup for old pre-removal service workers/caches
     dom.js                # safe DOM helpers
     gateway-client.js     # protocol/v1 WebSocket + REST wrappers
     a11y.js               # ARIA tab controller
@@ -88,7 +89,7 @@ CSS is Pico-first for existing live flows: `public/style.css` imports the vendor
 
 ## Mobile/PWA status
 
-There is intentionally no PWA manifest or service worker for now. A proper mobile app can be designed later without carrying a half-PWA shell. The browser app unregisters any old `ownloom-gateway-web-*` service workers/caches left by earlier builds.
+There is intentionally no PWA manifest or service worker for now. A proper mobile app can be designed later without carrying a half-PWA shell. Both `/` and `/admin` reuse the same cleanup implementation that unregisters any old service workers and removes `ownloom-gateway-web-*` caches left by earlier builds; `/admin` imports the module directly, while `/` includes it through the bundled personal island.
 
 ## Security headers
 
@@ -105,7 +106,7 @@ The `/radicale/` proxy deliberately keeps Radicale same-origin so it works throu
 
 ## Current features
 
-- `/` personal/user-mode shell with a gateway-backed text chat island using `agent.wait`, streaming agent events, and the `web-personal-main` session
+- `/` personal/user-mode shell with the same left sidebar/header chrome as admin, a full-width stacked gateway-backed text chat island using `agent.wait`, streaming agent events, and the `web-personal-main` session
 - `/admin` flat Digital Scoarță / pixel-loom operator cockpit with a main card plus right context rail on every cockpit tab
 - accessible ARIA tab navigation with keyboard support
 - no PWA manifest/service-worker; old PWA caches are cleaned up on load

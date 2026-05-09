@@ -13,6 +13,7 @@ import { renderDeliveries } from "./components/organisms/deliveries-panel.js";
 import { renderSessions } from "./components/organisms/sessions-panel.js";
 import { setConnectionState, updateSendControls as renderSendControls } from "./components/organisms/settings-panel.js";
 import { ensureTerminalLoaded } from "./components/organisms/terminal-panel.js";
+import { cleanupOldPwaState } from "./pwa-cleanup.js";
 
 export function startApp() {
   const state = createAppState();
@@ -125,7 +126,7 @@ export function startApp() {
     },
   });
 
-  cleanupOldServiceWorkers(log);
+  cleanupOldPwaState(log);
 
   setConnection("disconnected");
   if (els.rememberSettings.checked && els.token.value.trim()) {
@@ -205,27 +206,6 @@ function setupThreadRail(els) {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && shell.classList.contains("thread-rail-open")) setOpen(false);
   });
-}
-
-function cleanupOldServiceWorkers(log) {
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistrations()
-      .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
-      .then((results) => {
-        if (results.some(Boolean)) log("old service workers unregistered");
-      })
-      .catch((error) => log("service worker cleanup failed", error.message));
-  }
-
-  if (!("caches" in window)) return;
-  caches.keys()
-    .then((names) => Promise.all(names
-      .filter((name) => name.startsWith("ownloom-gateway-web-"))
-      .map((name) => caches.delete(name))))
-    .then((results) => {
-      if (results.some(Boolean)) log("old pwa caches cleared");
-    })
-    .catch((error) => log("pwa cache cleanup failed", error.message));
 }
 
 function applyInitialSettings(els, state, log) {

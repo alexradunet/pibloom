@@ -165,9 +165,9 @@
   min-width: 0;
 }
 
-.personal-mode-rail {
+.personal-notes {
   position: static;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  grid-template-columns: 1fr;
 }
 
 .page-card {

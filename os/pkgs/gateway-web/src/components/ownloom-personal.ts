@@ -1,8 +1,10 @@
 import { createGatewayClient } from "../../public/js/gateway-client.js";
+import { cleanupOldPwaState } from "../../public/js/pwa-cleanup.js";
 import { browserDisplayName, getBrowserClientId, loadSettings, saveSettings } from "../../public/js/storage.js";
 
 const PERSONAL_SESSION_KEY = "web-personal-main";
 const PERSONAL_CHAT_ID = `client:${PERSONAL_SESSION_KEY}`;
+const ADMIN_DEFAULT_SESSION_KEY = "web-main";
 
 type ChatMessage = {
   id: string;
@@ -43,6 +45,7 @@ class OwnloomPersonalChat extends HTMLElement {
     if (this.initialized) return;
     this.initialized = true;
     this.renderShell();
+    cleanupOldPwaState((message, detail) => console.debug("ownloom personal", message, detail ?? ""));
     const saved = loadSettings((message, detail) => console.debug("ownloom personal", message, detail));
     this.httpUrl = saved.httpUrl || window.location.origin;
     this.token = saved.token || "";
@@ -159,11 +162,12 @@ class OwnloomPersonalChat extends HTMLElement {
         displayName: `${browserDisplayName()} personal`,
       });
       this.token = result.token || "";
+      const saved = loadSettings((message, detail) => console.debug("ownloom personal", message, detail));
       saveSettings({
         httpUrl: this.httpUrl,
         token: this.token,
-        sessionKey: PERSONAL_SESSION_KEY,
-        chatId: PERSONAL_CHAT_ID,
+        sessionKey: saved.sessionKey || ADMIN_DEFAULT_SESSION_KEY,
+        chatId: saved.chatId || "",
         remember: true,
       });
       this.note("Browser paired and remembered locally for personal mode.");
